@@ -120,10 +120,9 @@ order or channel that caused it. The movements are append-only and are what
 make a discrepancy investigable; the column is what makes a read fast.
 
 The public storefront never sees `stock_quantity`. It sees a derived
-`stock_status` of in stock / low stock / out of stock (REQ-006), computed in
-the domain layer, and the raw number is not present in any public API response
-(D-024). The threshold for "low" is undefined (Q-019), so it is a
-configuration value with no default written into code.
+`stock_status` of **in stock or out of stock only** (REQ-006, D-065), computed
+in the domain layer, and the raw number is not present in any public API
+response (D-024). Low stock is removed from scope (Q-019).
 
 ## Concurrency rules
 

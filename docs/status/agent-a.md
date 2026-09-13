@@ -15,8 +15,7 @@ or you become blocked. Do not edit `agent-b.md`.*
 
 ## Blocked on
 
-- Q-001 — the source document is not signed off, so no requirement is agreed.
-- Q-013 and Q-014 — the option model and SKU format decide the shape of the catalogue, so plan 002 cannot start.
+- Q-013 and Q-014 — the practical option-type cap (Shopee/Lazada research) and the SKU format (a BigSeller data-inspection session) decide the shape of the catalogue, so plan 002 cannot start.
 - Ownership assignments in `../09-coding-guidelines.md` Part 2 are still TODO.
 
 ## Next

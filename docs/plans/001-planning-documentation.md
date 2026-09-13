@@ -33,12 +33,15 @@ Medusa JS and K-Payment.
 - [x] External systems consolidated — `../14-integrations.md`
 - [x] Backend approach decided and recorded — `../adr/ADR-0001-backend-approach.md`
 - [x] Hosting decision framed and deliberately deferred — `../adr/ADR-0002-hosting-and-deployment.md`
+- [x] Client answers to `../13-open-questions.md` recorded, 2026-09-13 — 37 RESOLVED, 5 PARTIALLY RESOLVED, 13 still UNRESOLVED
+- [x] Acceptance criteria and sign-off process drafted — `../15-acceptance-criteria.md`
+- [x] Proposed schedule and budget recorded — `../02-scope-and-phases.md#schedule-and-budget`
 - [ ] Path ownership assigned between the two developers — `../09-coding-guidelines.md` Part 2
 - [ ] Research: **Medusa JS** — done as part of ADR-0001, which evaluated and did not choose it
-- [ ] Research: **K-Payment** — status NOT RESEARCHED, blocked by Q-033 (no merchant account)
-- [ ] Research: **Shopee** — status NOT RESEARCHED, blocked by Q-042 (no partner account)
-- [ ] Research: **BigSeller** — status NOT RESEARCHED, blocked by Q-043 and Q-044
-- [ ] Research: **Cloudflare** — status NOT RESEARCHED, blocked by Q-054 (scope undefined)
+- [ ] Research: **K-Payment** — status NOT RESEARCHED; merchant/test credentials now supplied (Q-033), sandbox testing is the next concrete step
+- [ ] Research: **Shopee** — status NOT RESEARCHED, still blocked by Q-042 (no partner account)
+- [ ] Research: **BigSeller** — status NOT RESEARCHED; account exists (Q-044), a data-inspection session is the next concrete step (resolves Q-007, Q-011, Q-012, Q-014, Q-044 together)
+- [ ] Research: **Cloudflare** — scope and plan now decided (Free, security/bot only, D-087); configuration itself waits on DNS access (Q-053 residual)
 
 ## Manual test checklist
 
@@ -63,6 +66,17 @@ every `REQ-0NN` identifier preserved.
 The backend approach was decided during this work (ADR-0001, Accepted) and
 hosting was deliberately deferred to phase 7 (ADR-0002, Deferred).
 
-**Not complete.** Ownership is unassigned, four of the five named research
-subjects remain unresearched because each is blocked on an account or an
-answer the client has not provided, and the manual checklist has not been run.
+On 2026-09-13, the client answered all 55 open questions through the project
+owner. `13-open-questions.md`, `02-scope-and-phases.md`, `11-decisions.md`,
+`12-glossary.md`, `14-integrations.md`, and every technical document (03–10)
+were updated to match, `15-acceptance-criteria.md` was created for Q-052, and
+plans 002–009 were revised for the resulting scope, phase and schedule
+changes — most significantly, K-Payment moving from plan 004 into plan 003
+because bank transfer was removed (Q-030), and plan 004 shrinking
+substantially with the removal of carrier integration and refunds.
+
+**Still not complete.** Ownership is unassigned. Of the five named research
+subjects, K-Payment and BigSeller now have credentials/accounts but have not
+been exercised against real data; Shopee still has no account; Cloudflare's
+scope is decided but not configured. The manual checklist has not been run,
+and a named client approver for phase sign-off does not yet exist.
