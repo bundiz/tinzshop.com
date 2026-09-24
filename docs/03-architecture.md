@@ -229,5 +229,5 @@ today, and adopting one now would be inventing a requirement.
 | Where any of it runs | [ADR-0002](adr/ADR-0002-hosting-and-deployment.md) — deferred to phase 7 |
 | The order status set and its transitions | Q-023 — a candidate is proposed, not adopted |
 | Parent SKU / ModelSKU format | Q-007, Q-014, Q-044 — the BigSeller data-inspection dependency |
-| Practical maximum option types enforced by the UI/import | Q-013 — the model already supports any number; research sets the enforced limit |
+| Practical maximum option types enforced by the UI/import | Q-013 — the model already supports any number; the Shopee/Lazada research is done, the enforced limit now waits on the client |
 | Shopee/BigSeller discrepancy-detection mechanism | Q-045 — the authority rule (Shopee wins) is decided; detection waits on real export formats |

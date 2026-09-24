@@ -22,8 +22,8 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
 | **RESOLVED** | 37 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
-| **PARTIALLY RESOLVED** | 5 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 13 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
+| **UNRESOLVED** | 12 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -118,11 +118,40 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 - **Ask:** BigSeller data inspection
 
 ### Q-013: Maximum number of option types per product
-- **Status:** UNRESOLVED — research required before a limit is set
+- **Status:** PARTIALLY RESOLVED — the requested research is done (2026-09-13); the project's own cap is still a client decision
 - **Question:** Is two option types per product (e.g. colour + capacity) enough, or are more needed?
 - **Answer:** "Check the real product/variant structures used by Shopee and Lazada before deciding the maximum number of option types. Do not arbitrarily limit it to two options."
-- **Effect:** One thing is settled now: **no hard-coded cap of two.** `05-database.md`'s option model is already a join table (`option_type` / `option_value` / `variant_option_value`) precisely because the number was unknown, so this answer requires no schema change — it rules out ever adding a two-option assumption to validation or the UI. What Shopee's and Lazada's actual variant structures allow, and what practical maximum the import/UI should therefore enforce, is a research task that has not been done.
-- **Ask:** research (Shopee and Lazada seller documentation)
+- **Effect:** One thing was already settled: **no hard-coded cap of two.** `05-database.md`'s option model is a join table (`option_type` / `option_value` / `variant_option_value`) precisely because the number was unknown, so this answer requires no schema change — it rules out ever adding a two-option assumption to validation or the UI. The requested research has now been carried out and is recorded below. It establishes that **both marketplaces cap at two, and that this is a constraint of theirs rather than a requirement of ours** — which is what "do not arbitrarily limit it to two" anticipated. It does **not** establish the number this project should enforce. That remains the residual ask, and plan 002 stays blocked on it.
+
+#### Research: Shopee and Lazada option structures — 2026-09-13
+
+**Shopee — a hard cap of two option types.** The Open Platform Developer Guide (*Variant management*, updated 2024-05-28) states: "Shopee supports defining variant structures with up to two levels of specifications. The total number of variants cannot exceed 50." `v2.product.init_tier_variation` repeats it: "Defining only color creates one tier, while color + size creates two tiers (maximum supported)." The Seller Education hubs for SG, MY and PH all say "Each product can have up to 2 types of variations." Shopee calls an axis a *tier variation* and a concrete combination a *model*, carrying a seller-assigned `model_sku`.
+
+**Shopee's own combination limits contradict each other across its documentation, and no Thailand-specific figure was found:**
+
+| Source | Stated limit |
+| :--- | :--- |
+| Open Platform Developer Guide | total variants ≤ 50 |
+| `v2.product.init_tier_variation` error codes | options per tier ≤ 20; model count < 20 (50 for TW); 2-level combinations < 50 |
+| MY and SG Seller Education | single tier ≤ 100 options; combinations ≤ 100 |
+
+Per Rule 6 this contradiction is recorded, not resolved. Any number this project adopts should not be justified by citing one of these rows as though it were authoritative for Thailand.
+
+**Lazada — no tier model at all; the axes are category-defined.** A Lazada product is a flat `Skus` array, and each SKU carries `SellerSku` plus whichever category attributes are marked `isSaleProp`, retrieved per category through `GetCategoryAttributes`. Lazada's Create/Update Product Q&A states: "The number of variant attributes that can be used is different for each category." There is therefore no single platform-wide Lazada cap to copy. A third-party integrator's help documentation — a secondary source, not Lazada's own — reports Lazada rejecting listings since July 2025 with `The Variations Size Exceeds Maximum Size Limit, The Size Limit is: 2`, and reports categories exposing only one flexible `Variation` attribute. **This figure should be confirmed directly in Lazada Seller Centre before it is relied on.**
+
+**What the shop's own live listings do with the two-tier cap.** Tinzshop's real merchandising already needs three axes — edition/colour × distributor (which determines the warranty) × bundle set — and each channel works around the cap differently:
+
+- A Shopee console listing flattens seven distinct products onto a single axis: "1. [Synnex] OLED White … 4. [Synnex] กล่องแดง Gen2 Neon … 7. [Synnex] Animal เขียว Turquoise NoGame".
+- A Lazada console listing folds the distributor into the colour label — "สีขาว White (Maxsoft)" and "สีขาว White (Synnex)" as separate colours — then multiplies that by bundle "ชุด A B C".
+- The shop's existing website makes every combination a separate product: "ชุดโปรโมชั่น NS2 Set # 013", "# 014", … "# 048", and "PS5 Set # 003", "# 012", "# 020".
+
+This is the substantive finding for the cap decision: **a cap of two would reproduce on the new site the workaround the shop already runs on three channels**, rather than removing it.
+
+**Contribution to Q-014 (SKU format):** none, beyond confirming vocabulary. Shopee's per-combination field is literally `model_sku` and its examples are free-form (`sku-black`, `sku-red-L`); Lazada's `SellerSku` is documented as "usually freely assigned". Neither platform imposes a format, so Q-014's answer lies entirely in BigSeller's data and that question is untouched by this research. Note also that a SKU is never rendered on a Shopee buyer-facing page — inspecting the public storefront cannot answer Q-014, only Seller Centre or BigSeller can.
+
+**Sources consulted:** Shopee Open Platform Developer Guide 219 (*Variant management*); Shopee Open Platform `v2.product.init_tier_variation`; Shopee Seller Education SG article 14234, MY article 695, PH article 2990; Lazada Open Platform *Create/Update Product Q&A*; Lazada Seller Center `CreateProduct` and *Guide for Creating Products*; the shop's own public Shopee and Lazada listings, and `tinzshop.com/shop`.
+
+- **Ask (residual):** client — two numbers. (1) The maximum number of option types per product the admin UI and the Excel import should enforce; the research rules out inheriting the marketplaces' two but does not choose the replacement. (2) The maximum number of variant combinations per product. The trade-off to put to the client either way: a product on the new site using more option types than a channel permits cannot round-trip to that channel without being flattened — which is the position the shop is in today.
 
 ### Q-014: Parent SKU and ModelSKU format rules are unknown
 - **Status:** UNRESOLVED — waiting on BigSeller data inspection
