@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlayStation 5 Slim — Tinzshop (Design mockup)</title>
+  <link rel="icon" href="assets/logo-mark.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.6l2.3 11.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.5-1.2L21 7.5H6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c1.4-3.6 4.4-5.5 8-5.5s6.6 1.9 8 5.5"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.4-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.6 12 20 12 20Z"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6.5h11v9H3zM14 9.5h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5.5 12v8h13v-8M10 20v-4.5h4V20"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4.5 5.5h15v10h-8.5l-4.5 3.5v-3.5h-2Z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4M8.2 13.2l7.6 4"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.2 8 7.5 9.5 4.3-1.5 7.5-5 7.5-9.5V6Z"/><path d="m8.8 12 2.2 2.2 4.2-4.4"/></symbol>
+  </svg>
+
+  <div class="mockup-note">ตัวอย่างงานออกแบบ (Design mockup) — ชื่อสินค้า ราคา และรีวิวทั้งหมดเป็นข้อมูลสมมติ</div>
+
+  <div class="utility-bar">
+    <div class="container">
+      <p class="utility-bar__tagline">ร้านเกมและอุปกรณ์ไอทีกว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ออนไลน์ · จัดส่งทั่วประเทศไทย</p>
+      <div class="utility-bar__links">
+        <a href="#">ติดตามคำสั่งซื้อ</a>
+        <a href="#">ช่วยเหลือ</a>
+        <a href="news.html">ข่าวเกม</a>
+        <span class="lang-switch" role="group" aria-label="ภาษา"><span class="is-active">TH</span><span>EN</span></span>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="container site-header__main">
+      <a class="logo" href="index.html" aria-label="Tinzshop หน้าแรก">
+        <img src="assets/logo-mark.png" alt="" width="40" height="40">
+        <span>
+          <span class="logo__word">Tinz<b>shop</b></span>
+          <span class="logo__sub">Games · Consoles · IT Gadgets</span>
+        </span>
+      </a>
+      <form class="search" role="search" action="category.html">
+        <button class="search__scope" type="button">ทุกหมวดหมู่ <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-d"/></svg></button>
+        <label class="visually-hidden" for="q">ค้นหาสินค้า</label>
+        <input class="search__input" id="q" type="search" placeholder="ค้นหาเกม คอนโซล หรืออุปกรณ์ไอที">
+        <button class="search__button" type="submit" aria-label="ค้นหา"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>ค้นหา</span></button>
+      </form>
+      <nav class="header-actions" aria-label="บัญชีผู้ใช้">
+        <a class="header-action" href="#" aria-label="เข้าสู่ระบบ"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg><span class="header-action__label">เข้าสู่ระบบ<strong>บัญชีของฉัน</strong></span></a>
+        <a class="header-action" href="#" aria-label="รายการที่ชอบ"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg><span class="header-action__label">รายการ<strong>ที่ชอบ</strong></span></a>
+        <a class="header-action" href="cart.html" aria-label="ตะกร้าสินค้า 3 รายการ"><svg class="icon" aria-hidden="true"><use href="#i-cart"/></svg><span class="header-action__count">3</span><span class="header-action__label">ตะกร้า<strong>3 รายการ</strong></span></a>
+      </nav>
+    </div>
+  </header>
+
+  <nav class="cat-nav" aria-label="หมวดหมู่หลัก">
+    <div class="container">
+      <a class="cat-nav__all" href="category.html"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-menu"/></svg>หมวดหมู่ทั้งหมด</a>
+      <a href="index.html">หน้าแรก</a>
+      <a href="category.html">Nintendo Switch</a>
+      <a class="is-active" href="category.html">PlayStation 5</a>
+      <a href="category.html">IT Gadgets</a>
+      <a href="category.html">พรีออเดอร์</a>
+      <a href="category.html">ชุดโปรโมชั่น</a>
+      <a href="news.html">ข่าวเกม</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="เส้นทาง">
+        <a href="index.html">หน้าแรก</a>
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg>
+        <a href="category.html">PlayStation 5</a>
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg>
+        <a href="category.html">เครื่องเกม</a>
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg>
+        <span aria-current="page">PlayStation 5 Slim</span>
+      </nav>
+
+      <div class="pdp">
+        <section class="pdp-panel" aria-label="รูปสินค้า">
+          <input class="gallery__radio" type="radio" name="gallery" id="g1" checked>
+          <input class="gallery__radio" type="radio" name="gallery" id="g2">
+          <input class="gallery__radio" type="radio" name="gallery" id="g3">
+          <input class="gallery__radio" type="radio" name="gallery" id="g4">
+          <input class="gallery__radio" type="radio" name="gallery" id="g5">
+          <div class="gallery__stage">
+            <div class="gallery__slide ph ph-deep"><span class="ph__label">ภาพสินค้า 1 / 5</span></div>
+            <div class="gallery__slide ph"><span class="ph__label">ภาพสินค้า 2 / 5</span></div>
+            <div class="gallery__slide ph ph-cool"><span class="ph__label">ภาพสินค้า 3 / 5</span></div>
+            <div class="gallery__slide ph ph-warm"><span class="ph__label">ภาพสินค้า 4 / 5</span></div>
+            <div class="gallery__slide ph"><span class="ph__label">ภาพสินค้า 5 / 5</span></div>
+          </div>
+          <div class="gallery__thumbs">
+            <label for="g1"><span class="ph ph-deep"></span><span class="visually-hidden">ภาพที่ 1</span></label>
+            <label for="g2"><span class="ph"></span><span class="visually-hidden">ภาพที่ 2</span></label>
+            <label for="g3"><span class="ph ph-cool"></span><span class="visually-hidden">ภาพที่ 3</span></label>
+            <label for="g4"><span class="ph ph-warm"></span><span class="visually-hidden">ภาพที่ 4</span></label>
+            <label for="g5"><span class="ph"></span><span class="visually-hidden">ภาพที่ 5</span></label>
+          </div>
+        </section>
+
+        <section class="pdp-panel" aria-labelledby="product-title">
+          <p class="card__cat">PlayStation 5 · เครื่องเกม</p>
+          <h1 class="buybox__title" id="product-title">PlayStation 5 Slim เครื่องเกมคอนโซล ความจุ 1TB</h1>
+          <div class="buybox__meta">
+            <span class="rating"><span class="stars" style="--pct:96%" aria-hidden="true"></span><strong>4.8</strong></span>
+            <span class="sep" aria-hidden="true"></span>
+            <a href="#reviews">312 รีวิว</a>
+          </div>
+
+          <div class="buybox__price">
+            <div class="buybox__price-row">
+              <span class="buybox__price-now">฿17,990</span>
+              <span class="stock stock-in">มีสินค้า</span>
+            </div>
+            <p class="buybox__price-note">ราคารวม VAT แล้ว · ผ่อนชำระผ่าน K-Payment ได้</p>
+          </div>
+
+          <fieldset class="option">
+            <legend class="option__label">รุ่น: <strong>มีช่องใส่แผ่น</strong></legend>
+            <div class="option__values">
+              <input type="radio" name="edition" id="ed1" checked><label for="ed1">มีช่องใส่แผ่น</label>
+              <input type="radio" name="edition" id="ed2"><label for="ed2">Digital Edition</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="option">
+            <legend class="option__label">สี: <strong>ขาว</strong></legend>
+            <div class="option__values">
+              <input type="radio" name="color" id="co1" checked><label for="co1"><span class="swatch" style="background:#f5f5f5"></span>ขาว</label>
+              <input type="radio" name="color" id="co2" disabled><label for="co2"><span class="swatch" style="background:#1f1f1f"></span>ดำ (สินค้าหมด)</label>
+            </div>
+          </fieldset>
+
+          <div class="qty-row">
+            <span class="option__label">จำนวน</span>
+            <div class="qty">
+              <button type="button" aria-label="ลดจำนวน">−</button>
+              <label class="visually-hidden" for="qty">จำนวน</label>
+              <input id="qty" type="text" inputmode="numeric" value="1">
+              <button type="button" aria-label="เพิ่มจำนวน">+</button>
+            </div>
+          </div>
+
+          <div class="buy-actions">
+            <a class="btn btn-primary" href="cart.html"><svg class="icon" aria-hidden="true"><use href="#i-cart"/></svg>เพิ่มลงตะกร้า</a>
+            <a class="btn btn-accent" href="checkout.html">ซื้อเลย</a>
+          </div>
+
+          <div class="buybox__secondary">
+            <a href="#"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg>เพิ่มในรายการที่ชอบ</a>
+            <a href="#"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-share"/></svg>แชร์สินค้า</a>
+          </div>
+        </section>
+
+        <aside class="pdp-panel pdp__service" aria-label="บริการ">
+          <h2 class="panel-title">บริการจาก Tinzshop</h2>
+          <div class="service-list">
+            <div class="service-list__item">
+              <span class="service-list__icon"><svg class="icon" aria-hidden="true"><use href="#i-truck"/></svg></span>
+              <div><strong>จัดส่งทั่วประเทศไทย</strong><p>ค่าจัดส่งคิดตามขนาดสินค้า <a href="#">ดูอัตราค่าส่ง</a></p></div>
+            </div>
+            <div class="service-list__item">
+              <span class="service-list__icon"><svg class="icon" aria-hidden="true"><use href="#i-receipt"/></svg></span>
+              <div><strong>ใบกำกับภาษีอย่างย่อ</strong><p>ออกให้อัตโนมัติทุกคำสั่งซื้อ ต้องการใบกำกับภาษีเต็มรูป แจ้งข้อมูลผู้เสียภาษีได้</p></div>
+            </div>
+            <div class="service-list__item">
+              <span class="service-list__icon"><svg class="icon" aria-hidden="true"><use href="#i-store"/></svg></span>
+              <div><strong>ร้าน Tinzshop</strong><p>หน้าร้านย่านสะพานเหล็ก ให้บริการมากว่า 20 ปี</p></div>
+            </div>
+            <div class="service-list__item">
+              <span class="service-list__icon"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg></span>
+              <div><strong>มีคำถามเกี่ยวกับสินค้า?</strong><p><a href="#">ติดต่อร้าน</a></p></div>
+            </div>
+          </div>
+          <div class="kpay">
+            <strong><svg class="icon icon-sm" aria-hidden="true"><use href="#i-shield"/></svg>ชำระเงินผ่าน K-Payment</strong>
+            <ul>
+              <li>บัตรเครดิต/เดบิต</li>
+              <li>ผ่อนชำระ</li>
+              <li>PromptPay QR</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <section class="tabs" id="reviews" aria-label="ข้อมูลสินค้า">
+        <input class="tabs__radio" type="radio" name="tabs" id="t1" checked>
+        <input class="tabs__radio" type="radio" name="tabs" id="t2">
+        <input class="tabs__radio" type="radio" name="tabs" id="t3">
+        <div class="tabs__list">
+          <label for="t1">รายละเอียดสินค้า</label>
+          <label for="t2">ข้อมูลจำเพาะ</label>
+          <label for="t3">รีวิว (312)</label>
+        </div>
+
+        <div class="tabs__panel tabs__panel--1">
+          <div class="prose">
+            <h3>ประสบการณ์เกมรุ่นใหม่ ในดีไซน์ที่บางลง</h3>
+            <p>PlayStation 5 Slim มาพร้อม SSD ความจุ 1TB โหลดเกมได้รวดเร็ว รองรับภาพสูงสุด 4K และเล่นร่วมกับจอย DualSense ที่ให้การสั่นแบบ Haptic Feedback (ข้อความตัวอย่างสำหรับงานออกแบบ)</p>
+            <h3>จุดเด่น</h3>
+            <ul>
+              <li>SSD ความเร็วสูง ความจุ 1TB</li>
+              <li>รองรับแผ่นเกม PS5 และ Ultra HD Blu-ray (รุ่นมีช่องใส่แผ่น)</li>
+              <li>เล่นเกม PS4 ได้เกือบทั้งหมด</li>
+              <li>แถมจอย DualSense 1 ตัวในกล่อง</li>
+            </ul>
+            <div class="ph ph-deep"><span class="ph__label">ภาพประกอบรายละเอียดสินค้า</span></div>
+          </div>
+        </div>
+
+        <div class="tabs__panel tabs__panel--2">
+          <div class="spec-table-wrap">
+            <table class="spec-table">
+              <tbody>
+                <tr><th scope="row">แบรนด์</th><td>Sony</td></tr>
+                <tr><th scope="row">รุ่น</th><td>PlayStation 5 Slim</td></tr>
+                <tr><th scope="row">ความจุ</th><td>SSD 1TB</td></tr>
+                <tr><th scope="row">ไดรฟ์แผ่น</th><td>Ultra HD Blu-ray (เฉพาะรุ่นมีช่องใส่แผ่น)</td></tr>
+                <tr><th scope="row">ความละเอียดสูงสุด</th><td>4K</td></tr>
+                <tr><th scope="row">อุปกรณ์ในกล่อง</th><td>เครื่อง PS5 Slim, จอย DualSense 1 ตัว, สาย HDMI, สายไฟ, สาย USB</td></tr>
+                <tr><th scope="row">ขนาดสินค้า (สำหรับค่าจัดส่ง)</th><td>ใหญ่</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tabs__panel tabs__panel--3">
+          <div class="review-summary">
+            <div class="review-score">
+              <span class="review-score__num">4.8</span>
+              <div><span class="stars" style="--pct:96%" aria-hidden="true"></span><span>จาก 312 รีวิว</span></div>
+            </div>
+            <div class="review-bars">
+              <div class="review-bar"><span>5 ดาว</span><div class="review-bar__track"><span style="width:84%"></span></div><span>262</span></div>
+              <div class="review-bar"><span>4 ดาว</span><div class="review-bar__track"><span style="width:11%"></span></div><span>34</span></div>
+              <div class="review-bar"><span>3 ดาว</span><div class="review-bar__track"><span style="width:3%"></span></div><span>10</span></div>
+              <div class="review-bar"><span>2 ดาว</span><div class="review-bar__track"><span style="width:1%"></span></div><span>4</span></div>
+              <div class="review-bar"><span>1 ดาว</span><div class="review-bar__track"><span style="width:1%"></span></div><span>2</span></div>
+            </div>
+          </div>
+          <article class="review">
+            <div class="review__head">
+              <span class="review__avatar" aria-hidden="true">ก</span>
+              <span class="review__name">ลูกค้า ก. (ตัวอย่าง)</span>
+              <span class="stars" style="--pct:100%" aria-hidden="true"></span>
+              <span class="review__date">12 ก.ย. 2569</span>
+            </div>
+            <p class="review__variant">รุ่น: มีช่องใส่แผ่น · สี: ขาว</p>
+            <p class="review__text">ของมาไว แพ็กมาดีมาก เครื่องใช้งานได้ปกติ (ข้อความรีวิวตัวอย่าง)</p>
+          </article>
+          <article class="review">
+            <div class="review__head">
+              <span class="review__avatar" aria-hidden="true">ข</span>
+              <span class="review__name">ลูกค้า ข. (ตัวอย่าง)</span>
+              <span class="stars" style="--pct:80%" aria-hidden="true"></span>
+              <span class="review__date">3 ก.ย. 2569</span>
+            </div>
+            <p class="review__variant">รุ่น: Digital Edition · สี: ขาว</p>
+            <p class="review__text">ผ่อนผ่าน K-Payment สะดวกดี ได้ของตามที่สั่ง (ข้อความรีวิวตัวอย่าง)</p>
+          </article>
+          <article class="review">
+            <div class="review__head">
+              <span class="review__avatar" aria-hidden="true">ค</span>
+              <span class="review__name">ลูกค้า ค. (ตัวอย่าง)</span>
+              <span class="stars" style="--pct:100%" aria-hidden="true"></span>
+              <span class="review__date">28 ส.ค. 2569</span>
+            </div>
+            <p class="review__variant">รุ่น: มีช่องใส่แผ่น · สี: ขาว</p>
+            <p class="review__text">ร้านตอบคำถามเร็ว แนะนำดีมากครับ (ข้อความรีวิวตัวอย่าง)</p>
+          </article>
+          <a class="btn btn-outline" href="#">เขียนรีวิว</a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="related-title">
+        <div class="section__head">
+          <h2 class="section__title" id="related-title">สินค้าที่เกี่ยวข้อง</h2>
+          <a class="section__more" href="category.html">ดูทั้งหมด <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+        </div>
+        <div class="rail">
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph"></div>
+            <div class="card__body">
+              <p class="card__cat">จอย</p>
+              <h3 class="card__title"><a href="product.html">จอย DualSense Wireless Controller</a></h3>
+              <div class="rating"><span class="stars" style="--pct:94%" aria-hidden="true"></span><span>4.7 (268)</span></div>
+              <div class="price"><span class="price__now">฿2,290</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">อุปกรณ์เสริม</p>
+              <h3 class="card__title"><a href="product.html">แท่นชาร์จจอย DualSense แบบคู่</a></h3>
+              <div class="rating"><span class="stars" style="--pct:90%" aria-hidden="true"></span><span>4.5 (73)</span></div>
+              <div class="price"><span class="price__now">฿1,190</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">แผ่นเกม</p>
+              <h3 class="card__title"><a href="product.html">เกม Astro Bot (PS5) โซน 3 ภาษาไทย</a></h3>
+              <div class="rating"><span class="stars" style="--pct:98%" aria-hidden="true"></span><span>4.9 (188)</span></div>
+              <div class="price"><span class="price__now">฿1,590</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-cool"></div>
+            <div class="card__body">
+              <p class="card__cat">อุปกรณ์เสริม</p>
+              <h3 class="card__title"><a href="product.html">SSD M.2 NVMe 2TB พร้อมฮีตซิงก์ สำหรับ PS5</a></h3>
+              <div class="rating"><span class="stars" style="--pct:94%" aria-hidden="true"></span><span>4.7 (59)</span></div>
+              <div class="price"><span class="price__now">฿5,490</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph"></div>
+            <div class="card__body">
+              <p class="card__cat">อุปกรณ์เสริม</p>
+              <h3 class="card__title"><a href="product.html">หูฟังไร้สาย Pulse Elite สำหรับ PS5</a></h3>
+              <div class="rating"><span class="stars" style="--pct:88%" aria-hidden="true"></span><span>4.4 (39)</span></div>
+              <div class="price"><span class="price__now">฿5,290</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card is-out">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">อุปกรณ์เสริม</p>
+              <h3 class="card__title"><a href="product.html">PlayStation Portal Remote Player</a></h3>
+              <div class="rating"><span class="stars" style="--pct:86%" aria-hidden="true"></span><span>4.3 (45)</span></div>
+              <div class="price"><span class="price__now">฿7,990</span></div>
+              <div class="card__foot"><span class="stock stock-out">สินค้าหมด</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="index.html" aria-label="Tinzshop หน้าแรก"><img src="assets/logo-mark.png" alt="" width="40" height="40"><span class="logo__word">Tinz<b>shop</b></span></a>
+        <p>ร้านเกม คอนโซล และอุปกรณ์ไอที ให้บริการมากว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ร้านค้าออนไลน์เต็มรูปแบบ</p>
+      </div>
+      <div>
+        <h4>ช้อปปิ้ง</h4>
+        <ul><li><a href="category.html">Nintendo Switch</a></li><li><a href="category.html">PlayStation 5</a></li><li><a href="category.html">IT Gadgets</a></li><li><a href="category.html">พรีออเดอร์</a></li></ul>
+      </div>
+      <div>
+        <h4>ช่วยเหลือ</h4>
+        <ul><li><a href="#">วิธีสั่งซื้อ</a></li><li><a href="#">การชำระเงิน</a></li><li><a href="#">การจัดส่ง</a></li><li><a href="#">ติดตามคำสั่งซื้อ</a></li></ul>
+      </div>
+      <div>
+        <h4>เกี่ยวกับเรา</h4>
+        <ul><li><a href="#">เรื่องราวของ Tinzshop</a></li><li><a href="news.html">ข่าวเกม</a></li><li><a href="#">ติดต่อเรา</a></li></ul>
+      </div>
+      <div>
+        <h4>นโยบาย</h4>
+        <ul><li><a href="#">นโยบายความเป็นส่วนตัว</a></li><li><a href="#">เงื่อนไขการใช้งาน</a></li><li><a href="#">การเคลมสินค้า</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <div class="footer-badges">
+          <span class="pay-badge"><span class="pay-badge__mark">K</span><span><strong>ชำระเงินผ่าน K-Payment</strong>บัตรเครดิต/เดบิต · ผ่อนชำระ · PromptPay QR</span></span>
+          <span class="pay-badge"><span class="pay-badge__mark dbd-mark">DBD</span><span><strong>จดทะเบียนพาณิชย์อิเล็กทรอนิกส์</strong>เครื่องหมาย DBD</span></span>
+        </div>
+        <p class="footer-copy">© 2569 Tinzshop · ตัวอย่างงานออกแบบ ไม่ใช่เว็บไซต์จริง</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

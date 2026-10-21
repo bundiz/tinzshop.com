@@ -270,7 +270,7 @@ full record. What remains:
 | :--- | :--- | :--- |
 | Order status values and transitions | Q-023 | The order state machine, and every email trigger that depends on it (REQ-041). A candidate is proposed but not adopted. |
 | Parent SKU / ModelSKU format | Q-007, Q-014, Q-044 | Identity rules, and the Shopee/BigSeller listing mapping — all wait on one BigSeller data-inspection session |
-| Maximum option types enforced by validation | Q-013 | Nothing structurally — the join table already holds any number — but the practical UI/import limit waits on Shopee/Lazada research |
+| Maximum option types enforced by validation | Q-013 | Nothing structurally — the join table already holds any number. The Shopee/Lazada research is done (both cap at two, which the client's answer rules out inheriting); the number to enforce now waits on the client |
 | Invoice number format | Q-027 | The rendering function over the sequence; also waits on an example invoice |
 | Accounting export columns | Q-050 | `05-database.md` has no row for this — the export query cannot be written |
 | Shopee / BigSeller mapping shape | Q-042, Q-045 | `channel_listing` beyond the fact that it exists — waits on a Shopee account and real export examples |
