@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ข่าวเกม — Tinzshop (Design mockup)</title>
+  <link rel="icon" href="assets/logo-mark.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.6l2.3 11.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.5-1.2L21 7.5H6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c1.4-3.6 4.4-5.5 8-5.5s6.6 1.9 8 5.5"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.4-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.6 12 20 12 20Z"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M8.5 6.5h7a5.5 5.5 0 0 1 5.4 6.6l-.7 3.4A2.6 2.6 0 0 1 16 17.6L14.7 16H9.3L8 17.6a2.6 2.6 0 0 1-4.2-1.1l-.7-3.4A5.5 5.5 0 0 1 8.5 6.5Z"/><path d="M6.5 11h3.5M8.25 9.25v3.5M15.5 10.4h.01M17.6 12.6h.01"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-switch" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 6v12M17 6v12M4.8 10h.01M19.2 14h.01"/></symbol>
+  </svg>
+
+  <div class="mockup-note">ตัวอย่างงานออกแบบ (Design mockup) — หัวข้อข่าวและเนื้อหาทั้งหมดเป็นข้อมูลสมมติ</div>
+
+  <div class="utility-bar">
+    <div class="container">
+      <p class="utility-bar__tagline">ร้านเกมและอุปกรณ์ไอทีกว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ออนไลน์ · จัดส่งทั่วประเทศไทย</p>
+      <div class="utility-bar__links">
+        <a href="#">ติดตามคำสั่งซื้อ</a>
+        <a href="#">ช่วยเหลือ</a>
+        <a href="news.html">ข่าวเกม</a>
+        <span class="lang-switch" role="group" aria-label="ภาษา"><span class="is-active">TH</span><span>EN</span></span>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="container site-header__main">
+      <a class="logo" href="index.html" aria-label="Tinzshop หน้าแรก">
+        <img src="assets/logo-mark.png" alt="" width="40" height="40">
+        <span>
+          <span class="logo__word">Tinz<b>shop</b></span>
+          <span class="logo__sub">Games · Consoles · IT Gadgets</span>
+        </span>
+      </a>
+      <form class="search" role="search" action="category.html">
+        <button class="search__scope" type="button">ทุกหมวดหมู่ <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-d"/></svg></button>
+        <label class="visually-hidden" for="q">ค้นหาสินค้า</label>
+        <input class="search__input" id="q" type="search" placeholder="ค้นหาเกม คอนโซล หรืออุปกรณ์ไอที">
+        <button class="search__button" type="submit" aria-label="ค้นหา"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>ค้นหา</span></button>
+      </form>
+      <nav class="header-actions" aria-label="บัญชีผู้ใช้">
+        <a class="header-action" href="#" aria-label="เข้าสู่ระบบ"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg><span class="header-action__label">เข้าสู่ระบบ<strong>บัญชีของฉัน</strong></span></a>
+        <a class="header-action" href="#" aria-label="รายการที่ชอบ"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg><span class="header-action__label">รายการ<strong>ที่ชอบ</strong></span></a>
+        <a class="header-action" href="cart.html" aria-label="ตะกร้าสินค้า 3 รายการ"><svg class="icon" aria-hidden="true"><use href="#i-cart"/></svg><span class="header-action__count">3</span><span class="header-action__label">ตะกร้า<strong>3 รายการ</strong></span></a>
+      </nav>
+    </div>
+  </header>
+
+  <nav class="cat-nav" aria-label="หมวดหมู่หลัก">
+    <div class="container">
+      <a class="cat-nav__all" href="category.html"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-menu"/></svg>หมวดหมู่ทั้งหมด</a>
+      <a href="index.html">หน้าแรก</a>
+      <a href="category.html">Nintendo Switch</a>
+      <a href="category.html">PlayStation 5</a>
+      <a href="category.html">IT Gadgets</a>
+      <a href="category.html">พรีออเดอร์</a>
+      <a href="category.html">ชุดโปรโมชั่น</a>
+      <a class="is-active" href="news.html" aria-current="page">ข่าวเกม</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="เส้นทาง">
+        <a href="index.html">หน้าแรก</a>
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg>
+        <span aria-current="page">ข่าวเกม</span>
+      </nav>
+
+      <div class="page-title">
+        <h1>ข่าวเกม</h1>
+        <span>ข่าวสารและประกาศจากทีม Tinzshop</span>
+      </div>
+
+      <div class="subcats" role="list">
+        <a class="is-active" href="news.html" role="listitem">ทั้งหมด</a>
+        <a href="news.html" role="listitem">ประกาศจากร้าน</a>
+        <a href="news.html" role="listitem">Nintendo</a>
+        <a href="news.html" role="listitem">PlayStation</a>
+      </div>
+
+      <section class="news-feature" aria-label="ข่าวเด่น">
+        <a class="feature-card feature-card--main" href="#">
+          <svg class="icon icon-bg" aria-hidden="true"><use href="#i-gamepad"/></svg>
+          <span class="feature-card__tag">PlayStation</span>
+          <h2>สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้อข่าว)</h2>
+          <p>รวมทุกเกมที่ประกาศพร้อมกำหนดวางจำหน่าย และเกมที่เปิดให้พรีออเดอร์แล้วที่ร้าน (ข้อความตัวอย่าง)</p>
+          <time datetime="2026-09-22">โดยทีม Tinzshop · 22 ก.ย. 2569</time>
+        </a>
+        <div class="feature-side">
+          <a class="feature-card feature-card--warm" href="#">
+            <svg class="icon icon-bg" aria-hidden="true"><use href="#i-calendar"/></svg>
+            <span class="feature-card__tag">ประกาศจากร้าน</span>
+            <h2>เปิดรับพรีออเดอร์เกมใหม่ประจำเดือนพฤศจิกายน</h2>
+            <time datetime="2026-09-15">15 ก.ย. 2569</time>
+          </a>
+          <a class="feature-card feature-card--dark" href="#">
+            <svg class="icon icon-bg" aria-hidden="true"><use href="#i-switch"/></svg>
+            <span class="feature-card__tag">Nintendo</span>
+            <h2>อัปเดตระบบใหม่ของ Switch 2 มีอะไรเปลี่ยนบ้าง (ตัวอย่าง)</h2>
+            <time datetime="2026-09-19">19 ก.ย. 2569</time>
+          </a>
+        </div>
+      </section>
+
+      <div class="news-layout">
+        <section class="section" aria-labelledby="latest-title">
+          <div class="section__head">
+            <h2 class="section__title" id="latest-title">ข่าวล่าสุด</h2>
+          </div>
+          <div class="news-grid">
+            <a class="news-card" href="#">
+              <div class="ph ph-deep"></div>
+              <div>
+                <p class="news-card__tag">PlayStation</p>
+                <h3>PlayStation ประกาศอัปเดตเฟิร์มแวร์ใหม่ (ตัวอย่าง)</h3>
+                <p class="news-card__excerpt">สรุปฟีเจอร์ใหม่และสิ่งที่เปลี่ยนไปหลังอัปเดต (ข้อความตัวอย่าง)</p>
+                <time datetime="2026-09-21">21 ก.ย. 2569</time>
+              </div>
+            </a>
+            <a class="news-card" href="#">
+              <div class="ph ph-warm"></div>
+              <div>
+                <p class="news-card__tag">Nintendo</p>
+                <h3>รายชื่อเกม Switch 2 ที่จะวางจำหน่ายไตรมาสนี้ (ตัวอย่าง)</h3>
+                <p class="news-card__excerpt">เช็กวันวางจำหน่ายและเกมที่เปิดให้จองแล้ว (ข้อความตัวอย่าง)</p>
+                <time datetime="2026-09-20">20 ก.ย. 2569</time>
+              </div>
+            </a>
+            <a class="news-card" href="#">
+              <div class="ph ph-cool"></div>
+              <div>
+                <p class="news-card__tag">ประกาศจากร้าน</p>
+                <h3>วันหยุดร้านและรอบจัดส่งช่วงเทศกาล (ตัวอย่าง)</h3>
+                <p class="news-card__excerpt">แจ้งวันหยุดหน้าร้านและรอบจัดส่งสินค้า (ข้อความตัวอย่าง)</p>
+                <time datetime="2026-09-18">18 ก.ย. 2569</time>
+              </div>
+            </a>
+            <a class="news-card" href="#">
+              <div class="ph"></div>
+              <div>
+                <p class="news-card__tag">PlayStation</p>
+                <h3>เกมใหม่ PS5 เปิดให้พรีออเดอร์แล้ว (ตัวอย่าง)</h3>
+                <p class="news-card__excerpt">รายละเอียดรุ่นและวันวางจำหน่าย (ข้อความตัวอย่าง)</p>
+                <time datetime="2026-09-16">16 ก.ย. 2569</time>
+              </div>
+            </a>
+            <a class="news-card" href="#">
+              <div class="ph ph-warm"></div>
+              <div>
+                <p class="news-card__tag">Nintendo</p>
+                <h3>สรุปอีเวนต์ออนไลน์ประจำเดือน (ตัวอย่าง)</h3>
+                <p class="news-card__excerpt">ประกาศสำคัญทั้งหมดจากงาน (ข้อความตัวอย่าง)</p>
+                <time datetime="2026-09-12">12 ก.ย. 2569</time>
+              </div>
+            </a>
+            <a class="news-card" href="#">
+              <div class="ph ph-deep"></div>
+              <div>
+                <p class="news-card__tag">ประกาศจากร้าน</p>
+                <h3>ช่องทางติดต่อร้านและเวลาทำการ (ตัวอย่าง)</h3>
+                <p class="news-card__excerpt">ติดต่อสอบถามสินค้าและการเคลมได้ทุกช่องทาง (ข้อความตัวอย่าง)</p>
+                <time datetime="2026-09-10">10 ก.ย. 2569</time>
+              </div>
+            </a>
+          </div>
+          <nav class="pagination" aria-label="เลขหน้า">
+            <a href="#" aria-label="หน้าก่อนหน้า"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-l"/></svg></a>
+            <span class="is-current" aria-current="page">1</span>
+            <a href="#">2</a>
+            <a href="#">3</a>
+            <span class="gap" aria-hidden="true">…</span>
+            <a href="#">12</a>
+            <a href="#" aria-label="หน้าถัดไป"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+          </nav>
+        </section>
+
+        <aside aria-label="แถบข้าง">
+          <section class="side-panel">
+            <h2>ข่าวยอดนิยม</h2>
+            <ol class="rank-list">
+              <li><a href="#">สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่าง)</a></li>
+              <li><a href="#">เปิดรับพรีออเดอร์เกมใหม่ประจำเดือนพฤศจิกายน</a></li>
+              <li><a href="#">อัปเดตระบบใหม่ของ Switch 2 มีอะไรเปลี่ยนบ้าง (ตัวอย่าง)</a></li>
+              <li><a href="#">รายชื่อเกม Switch 2 ที่จะวางจำหน่ายไตรมาสนี้ (ตัวอย่าง)</a></li>
+              <li><a href="#">PlayStation ประกาศอัปเดตเฟิร์มแวร์ใหม่ (ตัวอย่าง)</a></li>
+            </ol>
+          </section>
+          <section class="side-panel">
+            <h2>หมวดหมู่ข่าว</h2>
+            <ul class="filter__list">
+              <li><a href="news.html">ประกาศจากร้าน</a><span class="filter__count">24</span></li>
+              <li><a href="news.html">Nintendo</a><span class="filter__count">58</span></li>
+              <li><a href="news.html">PlayStation</a><span class="filter__count">61</span></li>
+            </ul>
+          </section>
+          <section class="side-panel side-cta">
+            <h2>พรีออเดอร์เกมใหม่</h2>
+            <p>จองเกมและเครื่องใหม่ก่อนวางจำหน่าย</p>
+            <a class="btn btn-primary btn-block" href="category.html">ดูสินค้าพรีออเดอร์</a>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="index.html" aria-label="Tinzshop หน้าแรก"><img src="assets/logo-mark.png" alt="" width="40" height="40"><span class="logo__word">Tinz<b>shop</b></span></a>
+        <p>ร้านเกม คอนโซล และอุปกรณ์ไอที ให้บริการมากว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ร้านค้าออนไลน์เต็มรูปแบบ</p>
+      </div>
+      <div>
+        <h4>ช้อปปิ้ง</h4>
+        <ul><li><a href="category.html">Nintendo Switch</a></li><li><a href="category.html">PlayStation 5</a></li><li><a href="category.html">IT Gadgets</a></li><li><a href="category.html">พรีออเดอร์</a></li></ul>
+      </div>
+      <div>
+        <h4>ช่วยเหลือ</h4>
+        <ul><li><a href="#">วิธีสั่งซื้อ</a></li><li><a href="#">การชำระเงิน</a></li><li><a href="#">การจัดส่ง</a></li><li><a href="#">ติดตามคำสั่งซื้อ</a></li></ul>
+      </div>
+      <div>
+        <h4>เกี่ยวกับเรา</h4>
+        <ul><li><a href="#">เรื่องราวของ Tinzshop</a></li><li><a href="news.html">ข่าวเกม</a></li><li><a href="#">ติดต่อเรา</a></li></ul>
+      </div>
+      <div>
+        <h4>นโยบาย</h4>
+        <ul><li><a href="#">นโยบายความเป็นส่วนตัว</a></li><li><a href="#">เงื่อนไขการใช้งาน</a></li><li><a href="#">การเคลมสินค้า</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <div class="footer-badges">
+          <span class="pay-badge"><span class="pay-badge__mark">K</span><span><strong>ชำระเงินผ่าน K-Payment</strong>บัตรเครดิต/เดบิต · ผ่อนชำระ · PromptPay QR</span></span>
+          <span class="pay-badge"><span class="pay-badge__mark dbd-mark">DBD</span><span><strong>จดทะเบียนพาณิชย์อิเล็กทรอนิกส์</strong>เครื่องหมาย DBD</span></span>
+        </div>
+        <p class="footer-copy">© 2569 Tinzshop · ตัวอย่างงานออกแบบ ไม่ใช่เว็บไซต์จริง</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

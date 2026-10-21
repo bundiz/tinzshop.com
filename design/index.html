@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tinzshop — หน้าแรก (Design mockup)</title>
+  <link rel="icon" href="assets/logo-mark.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.6l2.3 11.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.5-1.2L21 7.5H6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c1.4-3.6 4.4-5.5 8-5.5s6.6 1.9 8 5.5"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.4-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.6 12 20 12 20Z"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6.5h11v9H3zM14 9.5h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5.5 12v8h13v-8M10 20v-4.5h4V20"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4.5 5.5h15v10h-8.5l-4.5 3.5v-3.5h-2Z"/></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M8.5 6.5h7a5.5 5.5 0 0 1 5.4 6.6l-.7 3.4A2.6 2.6 0 0 1 16 17.6L14.7 16H9.3L8 17.6a2.6 2.6 0 0 1-4.2-1.1l-.7-3.4A5.5 5.5 0 0 1 8.5 6.5Z"/><path d="M6.5 11h3.5M8.25 9.25v3.5M15.5 10.4h.01M17.6 12.6h.01"/></symbol>
+    <symbol id="i-switch" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 6v12M17 6v12M4.8 10h.01M19.2 14h.01"/></symbol>
+    <symbol id="i-disc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></symbol>
+    <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 13.5h.01M18 13.5h.01M9 14h6"/></symbol>
+    <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="5.5"/><path d="M12 7v3.5"/></symbol>
+  </svg>
+
+  <div class="mockup-note">ตัวอย่างงานออกแบบ (Design mockup) — ชื่อสินค้า ราคา และรีวิวทั้งหมดเป็นข้อมูลสมมติ</div>
+
+  <div class="utility-bar">
+    <div class="container">
+      <p class="utility-bar__tagline">ร้านเกมและอุปกรณ์ไอทีกว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ออนไลน์ · จัดส่งทั่วประเทศไทย</p>
+      <div class="utility-bar__links">
+        <a href="#">ติดตามคำสั่งซื้อ</a>
+        <a href="#">ช่วยเหลือ</a>
+        <a href="news.html">ข่าวเกม</a>
+        <span class="lang-switch" role="group" aria-label="ภาษา"><span class="is-active">TH</span><span>EN</span></span>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="container site-header__main">
+      <a class="logo" href="index.html" aria-label="Tinzshop หน้าแรก">
+        <img src="assets/logo-mark.png" alt="" width="40" height="40">
+        <span>
+          <span class="logo__word">Tinz<b>shop</b></span>
+          <span class="logo__sub">Games · Consoles · IT Gadgets</span>
+        </span>
+      </a>
+      <form class="search" role="search" action="category.html">
+        <button class="search__scope" type="button">ทุกหมวดหมู่ <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-d"/></svg></button>
+        <label class="visually-hidden" for="q">ค้นหาสินค้า</label>
+        <input class="search__input" id="q" type="search" placeholder="ค้นหาเกม คอนโซล หรืออุปกรณ์ไอที">
+        <button class="search__button" type="submit" aria-label="ค้นหา"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>ค้นหา</span></button>
+      </form>
+      <nav class="header-actions" aria-label="บัญชีผู้ใช้">
+        <a class="header-action" href="#" aria-label="เข้าสู่ระบบ"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg><span class="header-action__label">เข้าสู่ระบบ<strong>บัญชีของฉัน</strong></span></a>
+        <a class="header-action" href="#" aria-label="รายการที่ชอบ"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg><span class="header-action__label">รายการ<strong>ที่ชอบ</strong></span></a>
+        <a class="header-action" href="cart.html" aria-label="ตะกร้าสินค้า 3 รายการ"><svg class="icon" aria-hidden="true"><use href="#i-cart"/></svg><span class="header-action__count">3</span><span class="header-action__label">ตะกร้า<strong>3 รายการ</strong></span></a>
+      </nav>
+    </div>
+  </header>
+
+  <nav class="cat-nav" aria-label="หมวดหมู่หลัก">
+    <div class="container">
+      <a class="cat-nav__all" href="category.html"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-menu"/></svg>หมวดหมู่ทั้งหมด</a>
+      <a class="is-active" href="index.html">หน้าแรก</a>
+      <a href="category.html">Nintendo Switch</a>
+      <a href="category.html">PlayStation 5</a>
+      <a href="category.html">IT Gadgets</a>
+      <a href="category.html">พรีออเดอร์</a>
+      <a href="category.html">ชุดโปรโมชั่น</a>
+      <a href="news.html">ข่าวเกม</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="container">
+
+      <section class="hero-zone" aria-label="แนะนำ">
+        <nav class="cat-rail" aria-label="หมวดหมู่สินค้า">
+          <p class="cat-rail__title">หมวดหมู่สินค้า</p>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-switch"/></svg>Nintendo Switch<svg class="icon icon-sm chev" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-disc"/></svg>PlayStation 5<svg class="icon icon-sm chev" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-cpu"/></svg>IT Gadgets<svg class="icon icon-sm chev" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>พรีออเดอร์<svg class="icon icon-sm chev" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+          <div class="cat-rail__divider"></div>
+          <p class="cat-rail__title">เลือกซื้อยอดนิยม</p>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-gamepad"/></svg>จอยเกม</a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-disc"/></svg>แผ่นเกม</a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-headphones"/></svg>หูฟังเกมมิ่ง</a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-keyboard"/></svg>คีย์บอร์ด</a>
+          <a href="category.html"><svg class="icon" aria-hidden="true"><use href="#i-mouse"/></svg>เมาส์</a>
+        </nav>
+
+        <div class="hero-main">
+          <div class="hero">
+            <div class="hero__art" aria-hidden="true"><svg class="icon"><use href="#i-gamepad"/></svg></div>
+            <div class="hero__content">
+              <span class="hero__eyebrow">มาใหม่ประจำเดือน</span>
+              <h1 class="hero__title">เล่นให้สุด<br>กับ <em>PlayStation 5</em></h1>
+              <p class="hero__text">คอนโซล เกม และอุปกรณ์เสริม ครบในที่เดียว ผ่อนชำระผ่าน K-Payment ได้</p>
+              <div class="hero__cta">
+                <a class="btn btn-accent" href="category.html">ช้อปเลย</a>
+                <a class="btn btn-ghost-light" href="category.html">ดูสินค้าทั้งหมด</a>
+              </div>
+            </div>
+            <div class="hero__dots" aria-hidden="true"><span class="is-active"></span><span></span><span></span><span></span></div>
+          </div>
+          <div class="promo-tiles">
+            <a class="promo promo--warm" href="category.html">
+              <div>
+                <p class="promo__kicker">พรีออเดอร์</p>
+                <p class="promo__title">เกมใหม่เดือนพฤศจิกายน เปิดจองแล้ว</p>
+              </div>
+              <span class="promo__link">ดูรายการ <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></span>
+              <svg class="icon icon-bg" aria-hidden="true"><use href="#i-calendar"/></svg>
+            </a>
+            <a class="promo promo--dark" href="category.html">
+              <div>
+                <p class="promo__kicker">IT Gadgets</p>
+                <p class="promo__title">คีย์บอร์ด เมาส์ หูฟัง สำหรับเกมเมอร์</p>
+              </div>
+              <span class="promo__link">เลือกซื้อ <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></span>
+              <svg class="icon icon-bg" aria-hidden="true"><use href="#i-headphones"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <aside class="welcome" aria-label="บัญชีผู้ใช้">
+          <div class="welcome__hello">
+            <span class="welcome__avatar"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg></span>
+            <div><strong>สวัสดีครับ</strong><span>ยินดีต้อนรับสู่ Tinzshop</span></div>
+          </div>
+          <div class="welcome__actions">
+            <a class="btn btn-primary btn-block" href="#">เข้าสู่ระบบ</a>
+            <a class="btn btn-outline btn-block" href="#">สมัครสมาชิก</a>
+          </div>
+          <p class="welcome__note">เข้าสู่ระบบเพื่อสั่งซื้อและติดตามสถานะคำสั่งซื้อ</p>
+          <div class="welcome__links">
+            <a href="#"><svg class="icon" aria-hidden="true"><use href="#i-package"/></svg>คำสั่งซื้อของฉัน</a>
+            <a href="#"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg>รายการที่ชอบ</a>
+            <a href="#"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>พรีออเดอร์ของฉัน</a>
+            <a href="#"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>ติดต่อร้าน</a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="trust" aria-label="บริการของร้าน">
+        <div class="trust__item">
+          <span class="trust__icon"><svg class="icon" aria-hidden="true"><use href="#i-truck"/></svg></span>
+          <div><strong>จัดส่งทั่วไทย</strong><span>ค่าส่งคิดตามขนาดสินค้า</span></div>
+        </div>
+        <div class="trust__item">
+          <span class="trust__icon"><svg class="icon" aria-hidden="true"><use href="#i-card"/></svg></span>
+          <div><strong>ชำระผ่าน K-Payment</strong><span>บัตร · ผ่อนชำระ · PromptPay QR</span></div>
+        </div>
+        <div class="trust__item">
+          <span class="trust__icon"><svg class="icon" aria-hidden="true"><use href="#i-store"/></svg></span>
+          <div><strong>ร้านจริงกว่า 20 ปี</strong><span>หน้าร้านย่านสะพานเหล็ก</span></div>
+        </div>
+        <div class="trust__item">
+          <span class="trust__icon"><svg class="icon" aria-hidden="true"><use href="#i-receipt"/></svg></span>
+          <div><strong>ใบกำกับภาษีอัตโนมัติ</strong><span>ราคาสินค้ารวม VAT แล้ว</span></div>
+        </div>
+      </section>
+
+      <section class="section bundles" aria-labelledby="bundles-title">
+        <div class="section__head">
+          <h2 class="section__title" id="bundles-title">ชุดโปรโมชั่น</h2>
+          <a class="section__more" href="category.html">ดูทั้งหมด <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+        </div>
+        <p class="section__sub">เครื่อง เกม และอุปกรณ์เสริม จัดเป็นชุดพร้อมเล่น</p>
+        <div class="rail">
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-bundle">ชุดโปรโมชั่น</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">ชุดโปรโมชั่น NS2 Set #013 เครื่อง + เกม + เคสกันกระแทก</a></h3>
+              <div class="rating"><span class="stars" style="--pct:96%" aria-hidden="true"></span><span>4.8 (126)</span></div>
+              <div class="price"><span class="price__now">฿18,990</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-bundle">ชุดโปรโมชั่น</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">ชุดโปรโมชั่น PS5 Set #012 เครื่อง Slim + จอยเพิ่ม 1 ตัว</a></h3>
+              <div class="rating"><span class="stars" style="--pct:94%" aria-hidden="true"></span><span>4.7 (88)</span></div>
+              <div class="price"><span class="price__now">฿19,490</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-bundle">ชุดโปรโมชั่น</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">ชุดโปรโมชั่น NS2 Set #021 เครื่อง + Mario Kart World</a></h3>
+              <div class="rating"><span class="stars" style="--pct:98%" aria-hidden="true"></span><span>4.9 (201)</span></div>
+              <div class="price"><span class="price__now">฿17,990</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-bundle">ชุดโปรโมชั่น</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-cool"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">ชุดโปรโมชั่น PS5 Set #020 เครื่อง Digital + เกม 2 แผ่น</a></h3>
+              <div class="rating"><span class="stars" style="--pct:90%" aria-hidden="true"></span><span>4.5 (42)</span></div>
+              <div class="price"><span class="price__now">฿18,290</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card is-out">
+            <div class="card__badges"><span class="badge badge-bundle">ชุดโปรโมชั่น</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">ชุดโปรโมชั่น NS2 Set #014 เครื่อง + Pro Controller</a></h3>
+              <div class="rating"><span class="stars" style="--pct:92%" aria-hidden="true"></span><span>4.6 (57)</span></div>
+              <div class="price"><span class="price__now">฿19,390</span></div>
+              <div class="card__foot"><span class="stock stock-out">สินค้าหมด</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-bundle">ชุดโปรโมชั่น</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">IT Gadgets</p>
+              <h3 class="card__title"><a href="product.html">ชุดเกมมิ่งเกียร์ คีย์บอร์ด + เมาส์ + แผ่นรองเมาส์</a></h3>
+              <div class="rating"><span class="stars" style="--pct:88%" aria-hidden="true"></span><span>4.4 (33)</span></div>
+              <div class="price"><span class="price__now">฿3,990</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="cats-title">
+        <div class="section__head">
+          <h2 class="section__title" id="cats-title">เลือกตามหมวดหมู่</h2>
+        </div>
+        <div class="showcase">
+          <div class="showcase__item">
+            <div class="ph ph-warm"></div>
+            <div>
+              <h3><a href="category.html">Nintendo Switch</a></h3>
+              <p>เครื่อง เกม และอุปกรณ์เสริม</p>
+              <div class="showcase__tags"><a href="category.html">เครื่องเกม</a><a href="category.html">แผ่นเกม</a><a href="category.html">จอย</a></div>
+            </div>
+          </div>
+          <div class="showcase__item">
+            <div class="ph ph-deep"></div>
+            <div>
+              <h3><a href="category.html">PlayStation 5</a></h3>
+              <p>เครื่อง เกม และอุปกรณ์เสริม</p>
+              <div class="showcase__tags"><a href="category.html">เครื่องเกม</a><a href="category.html">แผ่นเกม</a><a href="category.html">จอย</a></div>
+            </div>
+          </div>
+          <div class="showcase__item">
+            <div class="ph ph-cool"></div>
+            <div>
+              <h3><a href="category.html">IT Gadgets</a></h3>
+              <p>อุปกรณ์ไอทีสำหรับเกมเมอร์</p>
+              <div class="showcase__tags"><a href="category.html">คีย์บอร์ด</a><a href="category.html">เมาส์</a><a href="category.html">หูฟัง</a></div>
+            </div>
+          </div>
+          <div class="showcase__item">
+            <div class="ph"></div>
+            <div>
+              <h3><a href="category.html">พรีออเดอร์</a></h3>
+              <p>จองเกมและเครื่องใหม่ก่อนวางจำหน่าย</p>
+              <div class="showcase__tags"><a href="category.html">เกมใหม่</a><a href="category.html">เครื่องใหม่</a></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="best-title">
+        <div class="section__head">
+          <h2 class="section__title" id="best-title">สินค้าขายดี</h2>
+          <a class="section__more" href="category.html">ดูทั้งหมด <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+        </div>
+        <div class="product-grid product-grid--wide">
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">PlayStation 5 Slim รุ่นมีช่องใส่แผ่น</a></h3>
+              <div class="rating"><span class="stars" style="--pct:96%" aria-hidden="true"></span><span>4.8 (312)</span></div>
+              <div class="price"><span class="price__now">฿17,990</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">Nintendo Switch 2 เครื่องเกมพกพา</a></h3>
+              <div class="rating"><span class="stars" style="--pct:98%" aria-hidden="true"></span><span>4.9 (540)</span></div>
+              <div class="price"><span class="price__now">฿16,900</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">จอย DualSense Wireless Controller</a></h3>
+              <div class="rating"><span class="stars" style="--pct:94%" aria-hidden="true"></span><span>4.7 (268)</span></div>
+              <div class="price"><span class="price__now">฿2,290</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-cool"></div>
+            <div class="card__body">
+              <p class="card__cat">IT Gadgets</p>
+              <h3 class="card__title"><a href="product.html">หูฟังเกมมิ่งไร้สาย 7.1 Surround</a></h3>
+              <div class="rating"><span class="stars" style="--pct:88%" aria-hidden="true"></span><span>4.4 (97)</span></div>
+              <div class="price"><span class="price__now">฿3,490</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card is-out">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">Nintendo Switch 2 Pro Controller</a></h3>
+              <div class="rating"><span class="stars" style="--pct:92%" aria-hidden="true"></span><span>4.6 (143)</span></div>
+              <div class="price"><span class="price__now">฿2,790</span></div>
+              <div class="card__foot"><span class="stock stock-out">สินค้าหมด</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-cool"></div>
+            <div class="card__body">
+              <p class="card__cat">IT Gadgets</p>
+              <h3 class="card__title"><a href="product.html">คีย์บอร์ด Mechanical RGB ขนาด TKL</a></h3>
+              <div class="rating"><span class="stars" style="--pct:90%" aria-hidden="true"></span><span>4.5 (76)</span></div>
+              <div class="price"><span class="price__now">฿2,890</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">เกม Astro Bot (PS5) โซน 3 ภาษาไทย</a></h3>
+              <div class="rating"><span class="stars" style="--pct:98%" aria-hidden="true"></span><span>4.9 (188)</span></div>
+              <div class="price"><span class="price__now">฿1,590</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph"></div>
+            <div class="card__body">
+              <p class="card__cat">IT Gadgets</p>
+              <h3 class="card__title"><a href="product.html">เมาส์เกมมิ่งไร้สาย น้ำหนักเบา 60 กรัม</a></h3>
+              <div class="rating"><span class="stars" style="--pct:92%" aria-hidden="true"></span><span>4.6 (64)</span></div>
+              <div class="price"><span class="price__now">฿1,990</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">เกม Mario Kart World (Switch 2)</a></h3>
+              <div class="rating"><span class="stars" style="--pct:96%" aria-hidden="true"></span><span>4.8 (230)</span></div>
+              <div class="price"><span class="price__now">฿2,390</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-cool"></div>
+            <div class="card__body">
+              <p class="card__cat">IT Gadgets</p>
+              <h3 class="card__title"><a href="product.html">SSD M.2 NVMe 2TB พร้อมฮีตซิงก์ สำหรับ PS5</a></h3>
+              <div class="rating"><span class="stars" style="--pct:94%" aria-hidden="true"></span><span>4.7 (59)</span></div>
+              <div class="price"><span class="price__now">฿5,490</span></div>
+              <div class="card__foot"><span class="stock stock-in">มีสินค้า</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="pre-title">
+        <div class="section__head">
+          <h2 class="section__title" id="pre-title">พรีออเดอร์</h2>
+          <a class="section__more" href="category.html">ดูทั้งหมด <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+        </div>
+        <div class="product-grid product-grid--wide">
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-preorder">พรีออเดอร์</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">เกมใหม่ Switch 2 (ตัวอย่างชื่อเกม) Standard Edition</a></h3>
+              <div class="price"><span class="price__now">฿2,190</span></div>
+              <p class="card__release">วางจำหน่าย 20 พ.ย. 2569</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-preorder">พรีออเดอร์</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-deep"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">เกมใหม่ PS5 (ตัวอย่างชื่อเกม) Deluxe Edition</a></h3>
+              <div class="price"><span class="price__now">฿2,690</span></div>
+              <p class="card__release">วางจำหน่าย 4 ธ.ค. 2569</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-preorder">พรีออเดอร์</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph"></div>
+            <div class="card__body">
+              <p class="card__cat">PlayStation 5</p>
+              <h3 class="card__title"><a href="product.html">จอย DualSense สีใหม่ Limited Edition</a></h3>
+              <div class="price"><span class="price__now">฿2,590</span></div>
+              <p class="card__release">วางจำหน่าย 27 พ.ย. 2569</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-preorder">พรีออเดอร์</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-warm"></div>
+            <div class="card__body">
+              <p class="card__cat">Nintendo Switch</p>
+              <h3 class="card__title"><a href="product.html">amiibo ตัวใหม่ (ตัวอย่าง) ชุดสะสม</a></h3>
+              <div class="price"><span class="price__now">฿890</span></div>
+              <p class="card__release">วางจำหน่าย 11 ธ.ค. 2569</p>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card__badges"><span class="badge badge-preorder">พรีออเดอร์</span></div>
+            <button class="card__wish" type="button" aria-label="เพิ่มในรายการที่ชอบ"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg></button>
+            <div class="ph ph-cool"></div>
+            <div class="card__body">
+              <p class="card__cat">IT Gadgets</p>
+              <h3 class="card__title"><a href="product.html">หูฟังเกมมิ่งรุ่นใหม่ (ตัวอย่าง) Wireless</a></h3>
+              <div class="price"><span class="price__now">฿4,290</span></div>
+              <p class="card__release">วางจำหน่าย 18 ธ.ค. 2569</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="news-title">
+        <div class="section__head">
+          <h2 class="section__title" id="news-title">ข่าวเกมล่าสุด</h2>
+          <a class="section__more" href="news.html">อ่านทั้งหมด <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
+        </div>
+        <div class="news-grid">
+          <a class="news-card" href="news.html">
+            <div class="ph ph-deep"></div>
+            <div>
+              <p class="news-card__tag">PlayStation</p>
+              <h3>สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้อข่าว)</h3>
+              <time datetime="2026-09-22">22 ก.ย. 2569</time>
+            </div>
+          </a>
+          <a class="news-card" href="news.html">
+            <div class="ph ph-warm"></div>
+            <div>
+              <p class="news-card__tag">Nintendo</p>
+              <h3>อัปเดตระบบใหม่ของ Switch 2 มีอะไรเปลี่ยนบ้าง (ตัวอย่าง)</h3>
+              <time datetime="2026-09-19">19 ก.ย. 2569</time>
+            </div>
+          </a>
+          <a class="news-card" href="news.html">
+            <div class="ph ph-cool"></div>
+            <div>
+              <p class="news-card__tag">ประกาศจากร้าน</p>
+              <h3>เปิดรับพรีออเดอร์เกมใหม่ประจำเดือนพฤศจิกายน</h3>
+              <time datetime="2026-09-15">15 ก.ย. 2569</time>
+            </div>
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="index.html" aria-label="Tinzshop หน้าแรก"><img src="assets/logo-mark.png" alt="" width="40" height="40"><span class="logo__word">Tinz<b>shop</b></span></a>
+        <p>ร้านเกม คอนโซล และอุปกรณ์ไอที ให้บริการมากว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ร้านค้าออนไลน์เต็มรูปแบบ</p>
+      </div>
+      <div>
+        <h4>ช้อปปิ้ง</h4>
+        <ul><li><a href="category.html">Nintendo Switch</a></li><li><a href="category.html">PlayStation 5</a></li><li><a href="category.html">IT Gadgets</a></li><li><a href="category.html">พรีออเดอร์</a></li></ul>
+      </div>
+      <div>
+        <h4>ช่วยเหลือ</h4>
+        <ul><li><a href="#">วิธีสั่งซื้อ</a></li><li><a href="#">การชำระเงิน</a></li><li><a href="#">การจัดส่ง</a></li><li><a href="#">ติดตามคำสั่งซื้อ</a></li></ul>
+      </div>
+      <div>
+        <h4>เกี่ยวกับเรา</h4>
+        <ul><li><a href="#">เรื่องราวของ Tinzshop</a></li><li><a href="news.html">ข่าวเกม</a></li><li><a href="#">ติดต่อเรา</a></li></ul>
+      </div>
+      <div>
+        <h4>นโยบาย</h4>
+        <ul><li><a href="#">นโยบายความเป็นส่วนตัว</a></li><li><a href="#">เงื่อนไขการใช้งาน</a></li><li><a href="#">การเคลมสินค้า</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <div class="footer-badges">
+          <span class="pay-badge"><span class="pay-badge__mark">K</span><span><strong>ชำระเงินผ่าน K-Payment</strong>บัตรเครดิต/เดบิต · ผ่อนชำระ · PromptPay QR</span></span>
+          <span class="pay-badge"><span class="pay-badge__mark dbd-mark">DBD</span><span><strong>จดทะเบียนพาณิชย์อิเล็กทรอนิกส์</strong>เครื่องหมาย DBD</span></span>
+        </div>
+        <p class="footer-copy">© 2569 Tinzshop · ตัวอย่างงานออกแบบ ไม่ใช่เว็บไซต์จริง</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
