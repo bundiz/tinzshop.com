@@ -36,7 +36,7 @@ recovered — without choosing where it runs.
 
 Every change you make is recorded in the repository's documentation in the
 same pull request — see *Documentation with every change* in
-`docs/09-coding-guidelines.md` (D-091). For you that means: update
+`docs/09-coding-guidelines.md` (D-092). For you that means: update
 `docs/10-deployment.md` when a pipeline, environment or procedure changes;
 document every new variable in `.env.example`; record any decision in
 `docs/11-decisions.md` with its reasoning; and tick the relevant plan's

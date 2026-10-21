@@ -166,10 +166,10 @@ their file names in `.claude/agents/`.
 | :--- | :--- | :--- | :--- |
 | Plan | แผนงาน | A numbered description of a piece of work in `docs/plans/`, carrying its own checklists. Its checklist is the record of what was done. | `plan` |
 | Project board | บอร์ดโปรเจกต์ | The GitHub project board showing work status, driven by issues. A view of the plans, never the record. See `09-coding-guidelines.md#project-board`. | `project_board` |
-| Planner agent | เอเจนต์วางแผน | Subagent that writes plans and keeps the board's issues in step (D-092). | `planner` |
-| Developer agent | เอเจนต์นักพัฒนา | Subagent that builds features and fixes from a plan (D-092). | `developer` |
-| Tester and security reviewer agent | เอเจนต์ทดสอบและตรวจความปลอดภัย | Subagent that tests and security-reviews a change before merge (D-092). | `tester-security-reviewer` |
-| DevOps agent | เอเจนต์ DevOps | Subagent for CI, environments, configuration, release and backup procedures (D-092). | `devops` |
+| Planner agent | เอเจนต์วางแผน | Subagent that writes plans and keeps the board's issues in step (D-093). | `planner` |
+| Developer agent | เอเจนต์นักพัฒนา | Subagent that builds features and fixes from a plan (D-093). | `developer` |
+| Tester and security reviewer agent | เอเจนต์ทดสอบและตรวจความปลอดภัย | Subagent that tests and security-reviews a change before merge (D-093). | `tester-security-reviewer` |
+| DevOps agent | เอเจนต์ DevOps | Subagent for CI, environments, configuration, release and backup procedures (D-093). | `devops` |
 
 ## Terms deliberately NOT defined here
 

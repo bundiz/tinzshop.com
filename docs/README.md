@@ -61,7 +61,7 @@ not ([ADR-0002](adr/ADR-0002-hosting-and-deployment.md)).
 6. **Do not resolve an ambiguity yourself.** Record it in `13-open-questions.md` and leave it UNRESOLVED.
 7. **Never edit `reference/client-summary-th.md`.** It is the client's document.
 8. **An Accepted ADR is never edited.** Supersede it.
-9. **Every change is recorded in these docs, in the same pull request** (D-091). See `09-coding-guidelines.md#documentation-with-every-change`.
+9. **Every change is recorded in these docs, in the same pull request** (D-092). See `09-coding-guidelines.md#documentation-with-every-change`.
 
 ## What is deliberately not written
 

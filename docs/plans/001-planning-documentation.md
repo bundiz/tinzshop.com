@@ -36,7 +36,7 @@ Medusa JS and K-Payment.
 - [x] Client answers to `../13-open-questions.md` recorded, 2026-09-13 — 37 RESOLVED, 5 PARTIALLY RESOLVED, 13 still UNRESOLVED
 - [x] Acceptance criteria and sign-off process drafted — `../15-acceptance-criteria.md`
 - [x] Proposed schedule and budget recorded — `../02-scope-and-phases.md#schedule-and-budget`
-- [x] Documentation-with-every-change rule (D-091) and the shared agent team in `.claude/agents/` (D-092) — `../09-coding-guidelines.md`
+- [x] Documentation-with-every-change rule (D-092) and the shared agent team in `.claude/agents/` (D-093) — `../09-coding-guidelines.md`
 - [ ] Path ownership assigned between the two developers — `../09-coding-guidelines.md` Part 2
 - [ ] Research: **Medusa JS** — done as part of ADR-0001, which evaluated and did not choose it
 - [ ] Research: **K-Payment** — status NOT RESEARCHED; merchant/test credentials now supplied (Q-033), sandbox testing is the next concrete step

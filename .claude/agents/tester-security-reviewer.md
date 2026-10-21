@@ -50,7 +50,7 @@ Your review does not replace the other developer's review (D-045).
 
 Every change you make is recorded in the repository's documentation in the
 same pull request — see *Documentation with every change* in
-`docs/09-coding-guidelines.md` (D-091). For you that means: record test and
+`docs/09-coding-guidelines.md` (D-092). For you that means: record test and
 manual-check results in the plan's checklists and *Outcome* section, and if
 you find a gap the docs do not cover, add it to `docs/13-open-questions.md`
 rather than deciding it yourself. Also check that the change under review

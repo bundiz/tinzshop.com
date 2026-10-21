@@ -234,7 +234,7 @@ The pre-merge checklist is in `08-security-testing.md`.
 ### Documentation with every change
 
 **Every change is recorded in the repository's documentation, in the same
-pull request as the change (D-091).** Code, configuration, a decision, a
+pull request as the change (D-092).** Code, configuration, a decision, a
 renamed term, a finished checklist item — if it changes what is true about
 the project, the docs say so before it merges.
 
@@ -271,13 +271,16 @@ must never say something the plan does not.
 - An issue is closed in the same change that ticks its checklist item in the plan, and not before.
 - The `planner` agent maintains these issues (`.claude/agents/planner.md`).
 
-The board itself does not exist yet. Its location, status columns, labels and
-automation are recorded here when it is created.
+The board is https://github.com/users/tanasatit/projects/8, owned by Tai's
+personal GitHub account. Its status values are exactly `Todo`, `In progress`
+and `Done`; the labels are `plan`, `blocker`, `blocked` and `phase-1` to
+`phase-9`. No agent edits the board: its built-in workflows add issues and
+move the cards. A pull request links its issue with `Closes #N`.
 
 ### Agent team
 
 Four Claude Code subagents are defined in `.claude/agents/` and committed, so
-everyone working in this repository gets the same ones (D-092). Each one
+everyone working in this repository gets the same ones (D-093). Each one
 works under the ownership of the person running it (Part 2, Rule 4), follows
 `CLAUDE.md`, and follows the documentation rule above.
 

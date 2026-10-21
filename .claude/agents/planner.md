@@ -56,7 +56,7 @@ blocked, not ready (D-047).
 
 Every change you make is recorded in the repository's documentation in the
 same pull request — see *Documentation with every change* in
-`docs/09-coding-guidelines.md` (D-091). For you that means: the plan file is
+`docs/09-coding-guidelines.md` (D-092). For you that means: the plan file is
 updated, a new decision gets a `D-0NN` row in `docs/11-decisions.md` plus its
 reasoning in the document that owns the topic, a new name goes into
 `docs/12-glossary.md`, and a new question goes into

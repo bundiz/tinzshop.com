@@ -38,7 +38,7 @@ docs set, and you record what you did.
 
 Every change you make is recorded in the repository's documentation in the
 same pull request — see *Documentation with every change* in
-`docs/09-coding-guidelines.md` (D-091). For you that means at least:
+`docs/09-coding-guidelines.md` (D-092). For you that means at least:
 
 - tick the build checklist items you finished in the plan, and add anything you learned to its *Outcome* section;
 - update the doc that owns the area if your change alters what it describes (a new table in `05-database.md`, a new route in `06-api.md`, and so on);
