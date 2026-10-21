@@ -263,19 +263,50 @@ reviewer, person or agent, treats code and docs that disagree as a defect.
 
 ### Project board
 
-The team follows status on a GitHub project board. **The plan's checklist
-stays the record of what was actually done; the board is a view of it** and
-must never say something the plan does not.
+The team sees who is doing what on a GitHub Projects board:
+**<https://github.com/users/tanasatit/projects/8>** (D-091).
 
-- The board is driven by GitHub issues. Each plan has one parent issue; each build checklist item of an active plan has a sub-issue; an open question that blocks work has its own issue.
-- An issue is closed in the same change that ticks its checklist item in the plan, and not before.
-- The `planner` agent maintains these issues (`.claude/agents/planner.md`).
+**The board is a view, not the record.** The plan's checklist in
+`docs/plans/` stays the record of truth. Each board card is a GitHub issue in
+`bundiz/tinzshop.com`, and the issue only points back to its plan.
 
-The board is https://github.com/users/tanasatit/projects/8, owned by Tai's
-personal GitHub account. Its status values are exactly `Todo`, `In progress`
-and `Done`; the labels are `plan`, `blocker`, `blocked` and `phase-1` to
-`phase-9`. No agent edits the board: its built-in workflows add issues and
-move the cards. A pull request links its issue with `Closes #N`.
+**Where it lives, and what that costs.** The repository is private and owned
+by `bundiz`, and the board could not be created under that owner, so it is
+owned by the project owner's personal account (`tanasatit`). Because of that:
+
+- It does not appear in the repository's Projects tab. Use the link above.
+- Each teammate needs two kinds of access: to the board (board Settings → *Manage access*) and to the repository, or the cards show as hidden.
+- Issues may have to be added to the board by hand: open the issue, then the right sidebar → *Projects* → the board. Auto-add only works if the board's workflow accepts this repository.
+- A board cannot move to another owner. If `bundiz` later creates a repository-owned board, the same issues are added to it and this section is updated. Nothing is lost, because the issues are the record.
+
+**Columns** are the board's Status field, with exactly these values:
+
+| Status | Means | How a card gets there |
+| :--- | :--- | :--- |
+| `Todo` | Not started | Added to the board |
+| `In progress` | A pull request is open for it | Board workflow *Pull request linked to issue* |
+| `Done` | Finished and closed | Board workflow *Item closed* |
+
+**Nobody drags cards, and no agent edits the board.** Agents in cloud
+sessions can create and close issues but have no access to Projects, so the
+board's built-in workflows move cards from issue and pull-request events. A
+pull request links to its issue by writing `Closes #N` in its description.
+
+**Issues and labels:**
+
+| Label | Used on |
+| :--- | :--- |
+| `plan` | One parent issue per plan in `docs/plans/`, titled with the plan's number and name |
+| `blocker` | One issue per thing a plan is waiting on: a client input, an account, or an open `Q-0NN`. Closed when the question is answered in `13-open-questions.md` |
+| `blocked` | Any issue that cannot start yet. Removed when its blockers close |
+| `phase-1` … `phase-9` | The phase the work belongs to |
+
+The small build steps inside a plan become sub-issues of its `plan` issue
+**only when that plan starts**, so blocked plans do not fill the board with
+cards nobody can work on. An issue is closed in the same change that ticks its
+plan checklist item, never before.
+
+The `planner` agent maintains these issues (`.claude/agents/planner.md`).
 
 ### Agent team
 
