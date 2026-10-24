@@ -79,7 +79,7 @@ Read this file to find out *what* was decided. Follow the link to find out
 | D-045 | Every change reaches `main` through a pull request reviewed by the other developer; an agent review does not substitute. | Accepted | [09](09-coding-guidelines.md#pull-requests) |
 | D-046 | Ownership is a path, never a feature. | Accepted | [09](09-coding-guidelines.md#ownership) |
 | D-047 | A pull request that assumes an answer to an unresolved question does not merge. | Accepted | [09](09-coding-guidelines.md#pull-requests) |
-| D-091 | Work status is tracked as GitHub issues on a Projects board owned by the project owner's account (the repository owner's account could not host it). Columns Todo / In progress / Done move only through the board's built-in workflows; the plan checklist stays the record of truth. | Accepted | [09](09-coding-guidelines.md#project-board) |
+| D-091 | Work status is tracked as GitHub issues on a Projects board owned by `bundiz`, the repository's owner. Columns Todo / In progress / Done move only through the board's built-in workflows; the plan checklist stays the record of truth. | Accepted | [09](09-coding-guidelines.md#project-board) |
 | D-092 | Every change is recorded in the repository's documentation in the same pull request as the change; a pull request with no documentation change says why. | Accepted | [09](09-coding-guidelines.md#documentation-with-every-change) |
 | D-093 | The team's Claude Code subagents — planner, developer, tester-security-reviewer and devops — are defined in `.claude/agents/` and committed, so every developer uses the same roles and rules. | Accepted | [09](09-coding-guidelines.md#agent-team) |
 
