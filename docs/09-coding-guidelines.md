@@ -231,6 +231,94 @@ The pre-merge checklist is in `08-security-testing.md`.
 
 **The other developer reviews. An agent's review does not substitute for it.**
 
+### Documentation with every change
+
+**Every change is recorded in the repository's documentation, in the same
+pull request as the change (D-092).** Code, configuration, a decision, a
+renamed term, a finished checklist item — if it changes what is true about
+the project, the docs say so before it merges.
+
+The reason is the team's shape. Two developers and their agents work in
+parallel, at least one reader follows the project by reading rather than
+writing code, and every agent starts each session knowing only what the
+repository tells it. A change that lives only in the code, a chat or
+someone's memory is invisible to all of them, and the next agent will
+confidently undo it.
+
+What "recorded" means depends on the change:
+
+| The change | Where it is recorded |
+| :--- | :--- |
+| Any work from a plan | The plan in `docs/plans/`: ticked checklist items and the *Outcome* section |
+| What a part of the system does or how it is built | The numbered doc that owns that topic (`03`–`10`, `14`, `15`) |
+| A decision | A row in `11-decisions.md` **and** its reasoning in the owning doc (rule 11 in `CLAUDE.md`) |
+| A new name | `12-glossary.md` |
+| Something unclear or contradictory | `13-open-questions.md`, left UNRESOLVED |
+| A new environment variable | `.env.example`, placeholder only |
+| What you are working on, or blocked by | Your file in `docs/status/` |
+
+A pull request with no documentation change must say in its description why
+none was needed — for example, a typo fix in a doc is itself the record. A
+reviewer, person or agent, treats code and docs that disagree as a defect.
+
+### Project board
+
+The team sees who is doing what on a GitHub Projects board:
+**<https://github.com/users/bundiz/projects/5>** (D-091).
+
+**The board is a view, not the record.** The plan's checklist in
+`docs/plans/` stays the record of truth. Each board card is a GitHub issue in
+`bundiz/tinzshop.com`, and the issue only points back to its plan.
+
+**Where it lives.** The board is owned by `bundiz`, the same account that owns the repository, so it can be linked to the repository's Projects tab and its *Auto-add to project* workflow can watch this repository. The repository is private: each teammate needs access to the board (board Settings → *Manage access*) and to the repository, or the cards show as hidden.
+
+**Columns** are the board's Status field, with exactly these values:
+
+| Status | Means | How a card gets there |
+| :--- | :--- | :--- |
+| `Todo` | Not started | Board workflow *Auto-add to project* (`repo:bundiz/tinzshop.com is:issue`) |
+| `In progress` | A pull request is open for it | Board workflow *Pull request linked to issue* |
+| `Done` | Finished and closed | Board workflow *Item closed* |
+
+**Nobody drags cards, and no agent edits the board.** Agents in cloud
+sessions can create and close issues but have no access to Projects, so the
+board's built-in workflows move cards from issue and pull-request events. A
+pull request links to its issue by writing `Closes #N` in its description.
+
+**Issues and labels:**
+
+| Label | Used on |
+| :--- | :--- |
+| `plan` | One parent issue per plan in `docs/plans/`, titled with the plan's number and name |
+| `blocker` | One issue per thing a plan is waiting on: a client input, an account, or an open `Q-0NN`. Closed when the question is answered in `13-open-questions.md` |
+| `blocked` | Any issue that cannot start yet. Removed when its blockers close |
+| `phase-1` … `phase-9` | The phase the work belongs to |
+
+The small build steps inside a plan become sub-issues of its `plan` issue
+**only when that plan starts**, so blocked plans do not fill the board with
+cards nobody can work on. An issue is closed in the same change that ticks its
+plan checklist item, never before.
+
+The `planner` agent maintains these issues (`.claude/agents/planner.md`).
+
+### Agent team
+
+Four Claude Code subagents are defined in `.claude/agents/` and committed, so
+everyone working in this repository gets the same ones (D-093). Each one
+works under the ownership of the person running it (Part 2, Rule 4), follows
+`CLAUDE.md`, and follows the documentation rule above.
+
+| Agent | File | Does | Does not |
+| :--- | :--- | :--- | :--- |
+| `planner` | `.claude/agents/planner.md` | Writes and maintains plans in `docs/plans/`, keeps the board's issues in step, finds blocking questions | Write application code |
+| `developer` | `.claude/agents/developer.md` | Builds features and fixes from a plan, with their tests and doc updates | Start work without a plan, or past an UNRESOLVED question |
+| `tester-security-reviewer` | `.claude/agents/tester-security-reviewer.md` | Runs checks, writes missing tests, walks the pre-merge and security checklists in `08-security-testing.md`, reports findings | Change application code; replace the other developer's review (D-045) |
+| `devops` | `.claude/agents/devops.md` | CI, environments, `.env.example`, release, backup and restore procedures | Choose or code for a hosting provider before ADR-0002 is decided |
+
+In Claude Code, ask for one by name ("use the planner agent to …") or let
+Claude pick one from its description. Changing an agent's file is a change to
+a shared file (Part 2, Rule 2).
+
 ### Plans
 
 A plan is a written description of a piece of work before it is built. Plans
