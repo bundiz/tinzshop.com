@@ -264,26 +264,23 @@ system worthless.
 ### Project board
 
 The team sees who is doing what on a GitHub Projects board:
-**<https://github.com/users/tanasatit/projects/8>** (D-091).
+**<https://github.com/users/bundiz/projects/5>** (D-091).
 
 **The board is a view, not the record.** The plan's checklist in
 `docs/plans/` stays the record of truth. Each board card is a GitHub issue in
 `bundiz/tinzshop.com`, and the issue only points back to its plan.
 
-**Where it lives, and what that costs.** The repository is private and owned
-by `bundiz`, and the board could not be created under that owner, so it is
-owned by the project owner's personal account (`tanasatit`). Because of that:
-
-- It does not appear in the repository's Projects tab. Use the link above.
-- Each teammate needs two kinds of access: to the board (board Settings → *Manage access*) and to the repository, or the cards show as hidden.
-- Issues may have to be added to the board by hand: open the issue, then the right sidebar → *Projects* → the board. Auto-add only works if the board's workflow accepts this repository.
-- A board cannot move to another owner. If `bundiz` later creates a repository-owned board, the same issues are added to it and this section is updated. Nothing is lost, because the issues are the record.
+**Where it lives.** The board is owned by `bundiz`, the same account that owns
+the repository, so it can be linked to the repository's Projects tab and its
+*Auto-add to project* workflow can watch this repository. The repository is
+private: each teammate needs access to the board (board Settings → *Manage
+access*) and to the repository, or the cards show as hidden.
 
 **Columns** are the board's Status field, with exactly these values:
 
 | Status | Means | How a card gets there |
 | :--- | :--- | :--- |
-| `Todo` | Not started | Added to the board |
+| `Todo` | Not started | Board workflow *Auto-add to project* (`repo:bundiz/tinzshop.com is:issue`) |
 | `In progress` | A pull request is open for it | Board workflow *Pull request linked to issue* |
 | `Done` | Finished and closed | Board workflow *Item closed* |
 
