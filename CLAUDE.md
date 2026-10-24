@@ -52,6 +52,7 @@ confirmation, not at order placement — see D-068, D-072.
 10. **Respect file ownership.** Read `docs/09-coding-guidelines.md` Part 2 before editing. Shared files need agreement first.
 11. **Every decision gets a one-line row in `docs/11-decisions.md`** plus its reasoning in the document that owns the topic — both, in the same change, or neither.
 12. **Never assume an order status.** The set is not defined (Q-023).
+13. **Every change is recorded in the documentation, in the same pull request.** The plan, the doc that owns the topic, the decision log, the glossary or the open questions — whichever the change touches. A pull request with no documentation change says why. See *Documentation with every change* in `docs/09-coding-guidelines.md` (D-092).
 
 ## Where to look
 
@@ -73,6 +74,7 @@ confirmation, not at order placement — see D-068, D-072.
 | An external system (payment, Shopee, BigSeller, mail relay) | `docs/14-integrations.md` |
 | What must pass before a phase is done, and who signs off | `docs/15-acceptance-criteria.md` |
 | What is being worked on now | `docs/plans/` and `docs/status/` |
+| Which agent to use for a task | `docs/09-coding-guidelines.md#agent-team`, agents in `.claude/agents/` |
 
 ## Working notes
 
@@ -81,3 +83,4 @@ confirmation, not at order placement — see D-068, D-072.
 - Do not create empty or placeholder files. A file with no real content reads as "this topic is settled and empty". If it cannot be filled accurately today, list it under *What is deliberately not written* in `docs/README.md` with what blocks it.
 - Plans live flat in `docs/plans/`, numbered `001`, `002`, … There is no active or completed directory: a plan's state is the checklist inside it. **Never tick a manual test box for a check nobody performed.**
 - Every change reaches `main` through a pull request.
+- **Agent team.** `.claude/agents/` defines four subagents — `planner`, `developer`, `tester-security-reviewer`, `devops` (D-093). Each is bound by these rules, including rule 13.

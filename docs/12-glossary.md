@@ -157,6 +157,20 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | PDPA | พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล | Thailand's Personal Data Protection Act. Deletion requests carry an accepted exception for retained tax/accounting data. See Q-028, D-070. | `pdpa` |
 | DBD | เครื่องหมาย DBD | The Department of Business Development registration mark shown on the site. | `dbd` |
 
+## Project process
+
+Terms for how the team works, not for the shop itself. Agent names are also
+their file names in `.claude/agents/`.
+
+| English | Thai | Definition | Identifier |
+| :--- | :--- | :--- | :--- |
+| Plan | แผนงาน | A numbered description of a piece of work in `docs/plans/`, carrying its own checklists. Its checklist is the record of what was done. | `plan` |
+| Project board | บอร์ดโปรเจกต์ | The GitHub project board showing work status, driven by issues. A view of the plans, never the record. See `09-coding-guidelines.md#project-board`. | `project_board` |
+| Planner agent | เอเจนต์วางแผน | Subagent that writes plans and keeps the board's issues in step (D-093). | `planner` |
+| Developer agent | เอเจนต์นักพัฒนา | Subagent that builds features and fixes from a plan (D-093). | `developer` |
+| Tester and security reviewer agent | เอเจนต์ทดสอบและตรวจความปลอดภัย | Subagent that tests and security-reviews a change before merge (D-093). | `tester-security-reviewer` |
+| DevOps agent | เอเจนต์ DevOps | Subagent for CI, environments, configuration, release and backup procedures (D-093). | `devops` |
+
 ## Terms deliberately NOT defined here
 
 These appear in the source but have no definition that can be written today
