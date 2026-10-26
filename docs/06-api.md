@@ -168,6 +168,16 @@ inherits it. Reaching a page is never evidence of the right to act.
 > identity and retry behaviour are unknown (Q-033). The rules above are what
 > any such integration requires; none of them is a claim about K-Payment.
 
+## Scheduled jobs
+
+**Secret-authenticated, safe to call on any schedule.** A job is a `POST` under `/api/jobs/<name>` with `Authorization: Bearer <JOB_SECRET>`. The secret is compared in constant time; a missing header, another scheme or a wrong value is `401` with no detail about which. Responses carry `Cache-Control: no-store`. The job secret is read per request, never at import, and any scheduler that can send a header can call it.
+
+| Endpoint | Method | Auth | Statuses |
+| :--- | :--- | :--- | :--- |
+| `/api/jobs/shopee-sync` | `POST` | `Bearer <JOB_SECRET>` | `200` the run summary, for `succeeded` or `skipped` (another run held the lock). `502` `{ error: { code: 'catalogue_sync.failed', runId } }` when the run failed; the cause is in that `sync_run` row, not in the response. `401` unauthorized. An unexpected exception is `500` |
+
+Called every 10 minutes (plan 010). Overlapping calls are safe: the second returns `skipped`.
+
 ## Pagination, filtering, sorting
 
 For endpoints that list.

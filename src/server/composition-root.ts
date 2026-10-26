@@ -1,10 +1,24 @@
+import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-source';
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { getServerConfig } from '@/server/config';
+import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/advisory-lock';
+import {
+  listKnownItems,
+  markItemsNotFound,
+  upsertCatalogueItem,
+} from '@/server/repositories/catalogue-repository';
 import {
   findChannelAuthorization,
   saveChannelAuthorization,
 } from '@/server/repositories/channel-authorization-repository';
+import {
+  findLastSucceededSyncRun,
+  finishSyncRun,
+  recordSkippedSyncRun,
+  startSyncRun,
+} from '@/server/repositories/sync-run-repository';
+import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel-authorization-service';
 
 // Built on first use, never at import, so `next build` needs no environment.
@@ -35,4 +49,18 @@ export function getChannelAuthorizationService(): ReturnType<
     });
   }
   return authorizationService;
+}
+
+export function getCatalogueSyncRunner(): () => Promise<CatalogueSyncSummary> {
+  return () =>
+    runCatalogueSync({
+      source: createShopeeCatalogueSource({
+        client: getShopeeClient(),
+        credentials: () => getChannelAuthorizationService().getShopCredentials(),
+      }),
+      catalogue: { upsertCatalogueItem, listKnownItems, markItemsNotFound },
+      syncRuns: { startSyncRun, finishSyncRun, recordSkippedSyncRun, findLastSucceededSyncRun },
+      lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
+      now: () => new Date(),
+    });
 }

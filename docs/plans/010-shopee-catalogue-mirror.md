@@ -501,16 +501,16 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `401` with no body detail when the auth is missing or wrong.
   - `Cache-Control: no-store`.
 
-- [ ] **Step 1: Write the failing tests** in `catalogue-sync-controller.test.ts`, with a fake `runSync`:
+- [x] **Step 1: Write the failing tests** in `catalogue-sync-controller.test.ts`, with a fake `runSync`:
   - `refuses a missing secret` → `401`, and `runSync` isn't called.
   - `refuses a wrong secret of the same length` → `401`.
   - `runs and returns the summary` → `200`, and the body equals the fake summary.
   - `reports a skipped run as 200`.
   - `reports a failed run as 502 without detail` → the body is `{ error: { code: 'catalogue_sync.failed', runId: 'r1' } }`.
-- [ ] **Step 2: Run them.** `npx vitest run src/server/controllers/catalogue-sync-controller.test.ts` → FAIL.
-- [ ] **Step 3: Implement** the controller, the route (`export async function POST(request: Request): Promise<Response>`) and `getCatalogueSyncRunner()`.
-- [ ] **Step 4: Run them.** Same command → PASS. Then `npm test && npm run test:integration && npm run typecheck && npm run build` → all PASS.
-- [ ] **Step 5: Commit** — `feat: add secret-protected Shopee catalogue sync job endpoint`
+- [x] **Step 2: Run them.** `npx vitest run src/server/controllers/catalogue-sync-controller.test.ts` → FAIL.
+- [x] **Step 3: Implement** the controller, the route (`export async function POST(request: Request): Promise<Response>`) and `getCatalogueSyncRunner()`.
+- [x] **Step 4: Run them.** Same command → PASS. Then `npm test && npm run test:integration && npm run typecheck && npm run build` → all PASS.
+- [x] **Step 5: Commit** — `feat: add secret-protected Shopee catalogue sync job endpoint`
 
 ---
 
@@ -540,4 +540,4 @@ Each check is run by a person against the **sandbox**, with the result recorded 
 
 ## Outcome
 
-*Not started.*
+Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schema and migration, money and token-encryption helpers, the Shopee client and catalogue mapper, shop authorization, the catalogue and sync-run repositories, the catalogue sync service (time window and stock sweep) and the secret-protected `POST /api/jobs/shopee-sync` endpoint; design rulings R1-R26 are recorded in the controller's ledger. The Manual test checklist has not been performed, so no sandbox result, `api_calls` figure or spec §8 risk outcome is recorded yet.
