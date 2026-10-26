@@ -9,15 +9,15 @@ const CODE = '5a5477794a55537954697169514f4653';
 
 type ConnectShop = (input: { code: string; externalShopId: bigint }) => Promise<void>;
 
-function setup(connectShop: ConnectShop = async () => undefined) {
+function setup(connectShop: ConnectShop = async () => undefined, expectedShopId = 42n) {
   const spy = vi.fn<ConnectShop>(connectShop);
-  const handler = createShopeeAuthorizationCallbackHandler({ connectShop: spy });
+  const handler = createShopeeAuthorizationCallbackHandler({ connectShop: spy, expectedShopId });
   return { spy, call: (query: string) => handler(new Request(`${CALLBACK_URL}?${query}`)) };
 }
 
 describe('createShopeeAuthorizationCallbackHandler', () => {
   it('exchanges the code and reports the connected shop without echoing the code', async () => {
-    const { spy, call } = setup();
+    const { spy, call } = setup(undefined, 602226924n);
     const response = await call(`code=${CODE}&shop_id=602226924`);
 
     expect(spy).toHaveBeenCalledWith({ code: CODE, externalShopId: 602226924n });
@@ -28,6 +28,23 @@ describe('createShopeeAuthorizationCallbackHandler', () => {
       data: { accountType: 'shop', shopId: 602226924, connected: true },
     });
     expect(text).not.toContain(CODE);
+  });
+
+  it('answers 403 without exchanging the code when the shop is not the configured one', async () => {
+    const { spy, call } = setup(undefined, 602226924n);
+    const response = await call(`code=${CODE}&shop_id=43`);
+    const text = await response.text();
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(JSON.parse(text)).toEqual({
+      error: {
+        code: 'shopee.authorization.unexpected_shop',
+        messageKey: 'error.shopee.authorization.unexpectedShop',
+      },
+    });
+    expect(text).not.toContain(CODE);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('answers 422 for a main account and does not exchange the code', async () => {

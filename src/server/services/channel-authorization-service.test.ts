@@ -5,6 +5,7 @@ import type { StoredChannelAuthorization } from '@/server/repositories/channel-a
 
 import {
   ChannelNotConnectedError,
+  ChannelTokenPersistenceError,
   createChannelAuthorizationService,
   type IssuedTokens,
   type TokenIssuer,
@@ -99,5 +100,48 @@ describe('channel authorization service', () => {
     const { service } = setup(null);
 
     await expect(service.getShopCredentials()).rejects.toBeInstanceOf(ChannelNotConnectedError);
+  });
+
+  function setupWithFailingSave(failures: number) {
+    const refresh = vi.fn<TokenIssuer['refresh']>().mockResolvedValue({
+      accessToken: 'acc-2',
+      refreshToken: 'ref-2',
+      expiresInSeconds: 14400,
+    });
+    let calls = 0;
+    const save = vi.fn<(record: StoredChannelAuthorization) => Promise<void>>(async () => {
+      calls += 1;
+      if (calls <= failures) throw new Error('connection lost');
+    });
+    const service = createChannelAuthorizationService({
+      issuer: { exchangeCode: vi.fn(), refresh },
+      repository: { find: async () => storedWith(4), save },
+      encryptionKey: KEY,
+      now: () => NOW,
+    });
+    return { service, save };
+  }
+
+  it('retries the save once so a refreshed single-use token pair is not lost', async () => {
+    const { service, save } = setupWithFailingSave(1);
+
+    await expect(service.getShopCredentials()).resolves.toEqual({
+      accessToken: 'acc-2',
+      externalShopId: SHOP,
+    });
+    expect(save).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws ChannelTokenPersistenceError, without any token, when the retry also fails', async () => {
+    const { service, save } = setupWithFailingSave(2);
+
+    const error = await service.getShopCredentials().catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ChannelTokenPersistenceError);
+    const message = (error as Error).message;
+    expect(message).toBe('New Shopee tokens could not be saved; the shop must be re-authorized.');
+    expect(message).not.toContain('acc-2');
+    expect(message).not.toContain('ref-2');
+    expect(save).toHaveBeenCalledTimes(2);
   });
 });

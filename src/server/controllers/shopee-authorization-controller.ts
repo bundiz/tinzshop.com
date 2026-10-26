@@ -9,6 +9,7 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 
 export function createShopeeAuthorizationCallbackHandler(deps: {
   connectShop: (input: { code: string; externalShopId: bigint }) => Promise<void>;
+  expectedShopId: bigint;
 }): (request: Request) => Promise<Response> {
   return async (request) => {
     const query = Object.fromEntries(new URL(request.url).searchParams);
@@ -44,8 +45,22 @@ export function createShopeeAuthorizationCallbackHandler(deps: {
       );
     }
 
+    // Any shop authorized to this partner app can obtain a valid code; only ours may replace the stored one.
+    const externalShopId = BigInt(grant.shopId);
+    if (externalShopId !== deps.expectedShopId) {
+      return Response.json(
+        {
+          error: {
+            code: 'shopee.authorization.unexpected_shop',
+            messageKey: 'error.shopee.authorization.unexpectedShop',
+          },
+        },
+        { status: 403, headers: NO_STORE },
+      );
+    }
+
     try {
-      await deps.connectShop({ code: grant.code, externalShopId: BigInt(grant.shopId) });
+      await deps.connectShop({ code: grant.code, externalShopId });
     } catch (error) {
       if (error instanceof ShopeeApiError) {
         return Response.json(

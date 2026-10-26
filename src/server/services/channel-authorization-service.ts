@@ -19,6 +19,14 @@ export class ChannelNotConnectedError extends Error {
   }
 }
 
+/** Shopee refresh tokens are single use: if the new pair cannot be stored the shop must be re-authorized. */
+export class ChannelTokenPersistenceError extends Error {
+  constructor() {
+    super('New Shopee tokens could not be saved; the shop must be re-authorized.');
+    this.name = 'ChannelTokenPersistenceError';
+  }
+}
+
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 const REFRESH_TOKEN_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -68,7 +76,15 @@ export function createChannelAuthorizationService(deps: {
         refreshToken: decryptSecret(stored.refreshTokenCiphertext, deps.encryptionKey),
         externalShopId: stored.externalShopId,
       });
-      await store(stored.externalShopId, tokens);
+      try {
+        await store(stored.externalShopId, tokens);
+      } catch {
+        try {
+          await store(stored.externalShopId, tokens);
+        } catch {
+          throw new ChannelTokenPersistenceError();
+        }
+      }
       return { accessToken: tokens.accessToken, externalShopId: stored.externalShopId };
     },
   };

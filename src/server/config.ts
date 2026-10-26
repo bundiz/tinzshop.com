@@ -5,6 +5,7 @@ export type ServerConfig = {
     readonly apiBaseUrl: string;
     readonly partnerId: number;
     readonly partnerKey: string;
+    readonly shopId: bigint;
   };
   readonly jobSecret: string;
   readonly channelTokenEncryptionKey: Buffer;
@@ -26,6 +27,10 @@ const envSchema = z.object({
   ),
   SHOPEE_PARTNER_ID: z.string().regex(/^[1-9][0-9]*$/, 'must be a positive integer'),
   SHOPEE_PARTNER_KEY: z.string().min(1),
+  SHOPEE_SHOP_ID: z
+    .string()
+    .regex(/^[1-9][0-9]*$/, 'must be a positive integer')
+    .refine((value) => Number.isSafeInteger(Number(value)), 'must be within the safe integer range'),
   JOB_SECRET: z.string().min(32, 'must be at least 32 characters'),
   CHANNEL_TOKEN_ENCRYPTION_KEY: z
     .string()
@@ -48,6 +53,7 @@ export function parseServerConfig(env: Readonly<Record<string, string | undefine
       apiBaseUrl: data.SHOPEE_API_BASE_URL,
       partnerId: Number(data.SHOPEE_PARTNER_ID),
       partnerKey: data.SHOPEE_PARTNER_KEY,
+      shopId: BigInt(data.SHOPEE_SHOP_ID),
     },
     jobSecret: data.JOB_SECRET,
     channelTokenEncryptionKey: Buffer.from(data.CHANNEL_TOKEN_ENCRYPTION_KEY, 'base64'),
