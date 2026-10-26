@@ -466,23 +466,23 @@ These five conditions are implied by the spec, but a careless implementation pas
     - A thrown error from `listItems` or the credentials finishes the run `failed`: `errorCode` is `ShopeeApiError.shopeeError`, or `'unexpected'`; `errorDetail` is the error message only. No other write happens.
     - Lock not acquired → `recordSkippedSyncRun`, and it returns `{ outcome: 'skipped' }`.
 
-- [ ] **Step 1: Write the failing source tests** in `catalogue-source.test.ts`, with a fake `ShopeeClient` serving the Task 5 fixtures:
+- [x] **Step 1: Write the failing source tests** in `catalogue-source.test.ts`, with a fake `ShopeeClient` serving the Task 5 fixtures:
   - `fetches base info in batches of 50`: 60 listed ids → `getItemBaseInfo` called twice, with 50 and 10 ids.
   - `reports ids missing from a non-empty batch as not found`.
   - `treats an empty batch response as failures, not as not-found` (Review Focus 2).
   - `isolates a model-list failure to its item`: the other items still produce snapshots.
   - `passes the window to get_item_list and pages until has_next_page is false`.
-- [ ] **Step 2: Write the failing service tests** in `catalogue-sync-service.test.ts`: integration tests with a real database, a fake source, and the real repositories and lock.
+- [x] **Step 2: Write the failing service tests** in `catalogue-sync-service.test.ts`: integration tests with a real database, a fake source, and the real repositories and lock.
   - `first run asks for everything and creates products`: the source sees window `null`, `itemsCreated` equals the snapshot count, and the outcome is `succeeded`.
   - `second run uses an overlapping window`: first `now` T1, second `now` T2 → window `{ from: T1 − 10 min, to: T2 }`.
   - `sweeps known items even when the window returns nothing`: on the second run `listItems` returns `[]`, and `fetchItems` still receives both known ids.
   - `records an item failure as a warning and keeps the rest`.
   - `a failed listing leaves existing products untouched`: `listItems` throws `ShopeeApiError('…/get_item_list', 'error_auth')`, the outcome is `failed` with `errorCode 'error_auth'`, and the product rows are unchanged.
   - `skips when another run holds the lock`: the `lock` fake returns `{ acquired: false }` → `{ outcome: 'skipped' }` and one `skipped` row.
-- [ ] **Step 3: Run them.** `npx vitest run src/server/adapters/shopee/catalogue-source.test.ts && npm run test:integration -- catalogue-sync-service` → FAIL.
-- [ ] **Step 4: Implement** `catalogue-source.ts` and `catalogue-sync-service.ts`.
-- [ ] **Step 5: Run them.** Same commands → PASS. `npm test && npm run test:integration && npm run typecheck` → all PASS.
-- [ ] **Step 6: Commit** — `feat: add catalogue sync with time window and stock sweep`
+- [x] **Step 3: Run them.** `npx vitest run src/server/adapters/shopee/catalogue-source.test.ts && npm run test:integration -- catalogue-sync-service` → FAIL.
+- [x] **Step 4: Implement** `catalogue-source.ts` and `catalogue-sync-service.ts`.
+- [x] **Step 5: Run them.** Same commands → PASS. `npm test && npm run test:integration && npm run typecheck` → all PASS.
+- [x] **Step 6: Commit** — `feat: add catalogue sync with time window and stock sweep`
 
 ---
 
