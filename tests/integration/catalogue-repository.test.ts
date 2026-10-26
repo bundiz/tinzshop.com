@@ -200,6 +200,8 @@ describe('upsertCatalogueItem update branches', () => {
     const without = { ...original, variants: original.variants.filter((v) => v.externalModelId !== 12998740n) };
     await upsertCatalogueItem(without, T2);
     expect((await variantsByModel()).get(12998740n)?.isActive).toBe(false);
+    const gone = await getPrisma().channelListing.findFirstOrThrow({ where: { externalModelId: 12998740n } });
+    expect(gone.externalStatus).toBe('NOT_FOUND');
 
     await upsertCatalogueItem(original, new Date('2026-10-26T03:00:00.000Z'));
     const after = await variantsByModel();
