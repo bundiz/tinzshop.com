@@ -193,6 +193,66 @@ describe('runCatalogueSync', () => {
     expect(failed.errorDetail).toBe('Catalogue source failed: error_auth');
   });
 
+  it('a stuck listing fails the run and the next window starts from the last succeeded run', async () => {
+    const snapshots = [twoTierSnapshot()];
+    await run(fakeSource({ listed: () => snapshots.map(listedOf), snapshots }), T1);
+    const failed = await run(fakeSource({ listed: () => new CatalogueSourceError('listing_stuck') }), T2);
+    expect(failed).toMatchObject({ outcome: 'failed', errorCode: 'listing_stuck' });
+    const T3 = new Date('2026-10-26T03:00:00.000Z');
+    const third = fakeSource({ listed: () => [], snapshots });
+    await run(third, T3);
+    expect(third.listWindows).toEqual([{ from: new Date(T1.getTime() - 10 * 60_000), to: T3 }]);
+  });
+
+  it('ends the run failed when finishing it as succeeded throws once', async () => {
+    const snapshots = [twoTierSnapshot()];
+    let calls = 0;
+    const summary = await runCatalogueSync({
+      source: fakeSource({ listed: () => snapshots.map(listedOf), snapshots }),
+      catalogue: { upsertCatalogueItem, listKnownItems, markItemsNotFound },
+      syncRuns: {
+        startSyncRun,
+        finishSyncRun: async (id, result) => {
+          calls += 1;
+          if (calls === 1) throw new Error('db hiccup');
+          return finishSyncRun(id, result);
+        },
+        recordSkippedSyncRun,
+        findLastSucceededSyncRun,
+      },
+      lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
+      now: () => T1,
+    });
+    expect(summary).toMatchObject({ outcome: 'failed', errorCode: 'unexpected' });
+    const rows = await getPrisma().syncRun.findMany();
+    expect(rows.map((r) => r.outcome)).toEqual(['failed']);
+    expect(rows[0]?.errorDetail).toBe('db hiccup');
+  });
+
+  it('retries a failed-finish once with a minimal result, then rethrows the original error', async () => {
+    let calls = 0;
+    const attempt = runCatalogueSync({
+      source: fakeSource({ listed: () => new Error('original') }),
+      catalogue: { upsertCatalogueItem, listKnownItems, markItemsNotFound },
+      syncRuns: {
+        startSyncRun,
+        finishSyncRun: async () => {
+          calls += 1;
+          throw new Error('finish down');
+        },
+        recordSkippedSyncRun,
+        findLastSucceededSyncRun,
+      },
+      lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
+      now: () => T1,
+    });
+    await expect(attempt).rejects.toThrow('original');
+    expect(calls).toBe(2);
+    // A stale running row never blocks the next run: only the advisory lock does.
+    const next = await run(fakeSource({ listed: () => [] }), T2);
+    expect(next.outcome).toBe('succeeded');
+  });
+
   it('maps a thrown ChannelNotConnectedError to channel_not_connected', async () => {
     const summary = await run(fakeSource({ listed: () => new ChannelNotConnectedError() }), T1);
     expect(summary).toMatchObject({ outcome: 'failed', errorCode: 'channel_not_connected' });

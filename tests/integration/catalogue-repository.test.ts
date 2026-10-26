@@ -33,6 +33,19 @@ async function variantsByModel(): Promise<Map<bigint | null, { id: string; isAct
 }
 
 describe('upsertCatalogueItem', () => {
+  it('keeps stored sales and rating when the snapshot has none', async () => {
+    await upsertCatalogueItem(noModelSnapshot(), T1);
+    await upsertCatalogueItem(noModelSnapshot({ salesCount: null, ratingStar: null, ratingCount: null }), T2);
+    const row = await getPrisma().channelItem.findFirstOrThrow();
+    expect([row.salesCount, Number(row.ratingStar), row.ratingCount]).toEqual([5, 4.5, 2]);
+  });
+
+  it('stores zeros on create when the snapshot has no sales data', async () => {
+    await upsertCatalogueItem(noModelSnapshot({ salesCount: null, ratingStar: null, ratingCount: null }), T1);
+    const row = await getPrisma().channelItem.findFirstOrThrow();
+    expect([row.salesCount, Number(row.ratingStar), row.ratingCount]).toEqual([0, 0, 0]);
+  });
+
   it('creates an inactive product with its variants', async () => {
     const snapshot = twoTierSnapshot();
     expect(await upsertCatalogueItem(snapshot, T1)).toBe('created');

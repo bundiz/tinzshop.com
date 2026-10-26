@@ -119,17 +119,33 @@ async function execute(deps: CatalogueSyncDeps): Promise<Exclude<CatalogueSyncSu
     });
     return { outcome: 'succeeded', runId, ...counts, apiCalls, warnings };
   } catch (error) {
+    // Every path after startSyncRun ends in a finish attempt. A stale 'running' row never blocks a new
+    // run (the advisory lock does that), but it must not be left silently if it can be avoided.
     const errorCode = errorCodeOf(error);
-    const apiCalls = source.apiCallCount();
-    await syncRuns.finishSyncRun(runId, {
-      outcome: 'failed',
-      finishedAt: deps.now(),
-      ...counts,
-      apiCalls,
-      warnings,
-      errorCode,
-      errorDetail: messageOf(error),
-    });
+    let apiCalls = 0;
+    try {
+      apiCalls = source.apiCallCount();
+    } catch {
+      // keep 0
+    }
+    const failed = { outcome: 'failed' as const, finishedAt: deps.now(), errorCode, errorDetail: messageOf(error) };
+    try {
+      await syncRuns.finishSyncRun(runId, { ...failed, ...counts, apiCalls, warnings });
+    } catch {
+      try {
+        await syncRuns.finishSyncRun(runId, {
+          ...failed,
+          itemsSeen: 0,
+          itemsCreated: 0,
+          itemsUpdated: 0,
+          itemsDeactivated: 0,
+          apiCalls: 0,
+          warnings: [],
+        });
+      } catch {
+        throw error;
+      }
+    }
     return { outcome: 'failed', runId, ...counts, apiCalls, warnings, errorCode };
   }
 }

@@ -230,9 +230,9 @@ export function mapShopeeItem(input: {
     images: imagesOf(baseInfo),
     optionTypes,
     variants,
-    salesCount: extraInfo?.sale ?? 0,
-    ratingStar: extraInfo?.rating_star ?? 0,
-    ratingCount: extraInfo?.comment_count ?? 0,
+    salesCount: extraInfo === null ? null : (extraInfo.sale ?? 0),
+    ratingStar: extraInfo === null ? null : (extraInfo.rating_star ?? 0),
+    ratingCount: extraInfo === null ? null : (extraInfo.comment_count ?? 0),
     rawPayload: baseInfo,
   };
 }

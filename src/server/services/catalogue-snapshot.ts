@@ -24,9 +24,10 @@ export type CatalogueItemSnapshot = {
   images: readonly { url: string; externalImageId: string }[];
   optionTypes: readonly { name: string; values: readonly string[] }[];
   variants: readonly CatalogueVariantSnapshot[];
-  salesCount: number;
-  ratingStar: number;
-  ratingCount: number;
+  /** null = the source could not say; a stored value is then kept, never overwritten. */
+  salesCount: number | null;
+  ratingStar: number | null;
+  ratingCount: number | null;
   rawPayload: unknown;
 };
 

@@ -7,6 +7,7 @@ import type { ShopeeItemBaseInfo, ShopeeItemExtraInfo, ShopeeShopCredentials } f
 
 const PAGE_SIZE = 50;
 const BATCH_SIZE = 50;
+const MAX_LIST_PAGES = 1000;
 
 type Credentials = () => Promise<{ accessToken: string; externalShopId: bigint }>;
 
@@ -37,7 +38,8 @@ export function createShopeeCatalogueSource(deps: {
       const items: ListedItem[] = [];
       let offset = 0;
       try {
-        for (;;) {
+        for (let pages = 0; ; pages += 1) {
+          if (pages >= MAX_LIST_PAGES) throw new CatalogueSourceError("listing_too_long");
           const page = await client.getItemList(await fresh(), {
             offset,
             pageSize: PAGE_SIZE,
@@ -51,8 +53,13 @@ export function createShopeeCatalogueSource(deps: {
               isKit: isKitFlagged(item),
             });
           }
-          if (!page.has_next_page || page.item.length === 0) break;
-          offset = page.next_offset ?? offset + page.item.length;
+          if (!page.has_next_page) break;
+          // A page that claims more but is empty or does not advance would end a run on a partial listing.
+          if (page.item.length === 0) throw new CatalogueSourceError("listing_incomplete");
+          if (page.next_offset === undefined || page.next_offset <= offset) {
+            throw new CatalogueSourceError("listing_stuck");
+          }
+          offset = page.next_offset;
         }
       } catch (error) {
         if (error instanceof ShopeeApiError) throw new CatalogueSourceError(error.shopeeError);
@@ -84,7 +91,7 @@ export function createShopeeCatalogueSource(deps: {
           continue;
         }
 
-        let extraInfos: ShopeeItemExtraInfo[] = [];
+        let extraInfos: ShopeeItemExtraInfo[] | null = null;
         try {
           extraInfos = await client.getItemExtraInfo(await fresh(), ids);
         } catch (error) {
@@ -93,7 +100,7 @@ export function createShopeeCatalogueSource(deps: {
         }
 
         const baseById = new Map(baseInfos.map((info) => [info.item_id, info]));
-        const extraById = new Map(extraInfos.map((info) => [info.item_id, info]));
+        const extraById = new Map((extraInfos ?? []).map((info) => [info.item_id, info]));
         for (const item of batch) {
           const baseInfo = baseById.get(item.externalItemId);
           if (baseInfo === undefined) {
@@ -104,14 +111,12 @@ export function createShopeeCatalogueSource(deps: {
             const modelList = baseInfo.has_model
               ? await client.getModelList(await fresh(), item.externalItemId)
               : null;
-            snapshots.push(
-              mapShopeeItem({
-                baseInfo,
-                modelList,
-                extraInfo: extraById.get(item.externalItemId) ?? null,
-                isKit: item.isKit,
-              }),
-            );
+            const extraInfo = extraById.get(item.externalItemId) ?? null;
+            snapshots.push(mapShopeeItem({ baseInfo, modelList, extraInfo, isKit: item.isKit }));
+            if (extraInfo === null) {
+              // Mapped, but without sales data: surfaced as a run warning.
+              failures.push({ externalItemId: item.externalItemId, reason: "extra_info_unavailable" });
+            }
           } catch (error) {
             failures.push({ externalItemId: item.externalItemId, reason: reasonOf(error) });
           }

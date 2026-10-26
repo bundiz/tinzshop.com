@@ -145,8 +145,10 @@ describe("shopee catalogue source", () => {
     });
     const source = createShopeeCatalogueSource({ client, credentials });
     const result = await source.fetchItems([listed(NO_MODEL)]);
-    expect(result.failures).toEqual([]);
-    expect(result.snapshots[0]?.salesCount).toBe(0);
+    expect(result.failures).toEqual([
+      { externalItemId: NO_MODEL, reason: "extra_info_unavailable" },
+    ]);
+    expect(result.snapshots[0]?.salesCount).toBeNull();
   });
 
   it("passes the window to get_item_list and pages until has_next_page is false", async () => {
@@ -172,6 +174,43 @@ describe("shopee catalogue source", () => {
     expect(listCalls[0]?.itemStatuses).toEqual(["NORMAL", "UNLIST"]);
     expect(items.map((i) => i.externalItemId)).toEqual([TWO_TIER, NO_MODEL, 5n]);
     expect(items[2]?.externalStatus).toBe("UNLIST");
+  });
+
+  it("fails with listing_stuck when has_next_page stays true and next_offset does not advance", async () => {
+    for (const nextOffset of [undefined, 0]) {
+      const { client } = fake({
+        getItemList: () =>
+          Promise.resolve({
+            ...listPage,
+            has_next_page: true,
+            ...(nextOffset === undefined ? { next_offset: undefined } : { next_offset: nextOffset }),
+          }),
+      });
+      const source = createShopeeCatalogueSource({ client, credentials });
+      await expect(source.listItems(null)).rejects.toMatchObject({ code: "listing_stuck" });
+    }
+  });
+
+  it("fails with listing_incomplete when an empty page claims there is a next page", async () => {
+    const { client } = fake({
+      getItemList: () =>
+        Promise.resolve({ ...listPage, item: [], has_next_page: true, next_offset: 50 }),
+    });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    await expect(source.listItems(null)).rejects.toMatchObject({ code: "listing_incomplete" });
+  });
+
+  it("fails with listing_too_long after 1000 pages", async () => {
+    let calls = 0;
+    const { client } = fake({
+      getItemList: (_c, query) => {
+        calls += 1;
+        return Promise.resolve({ ...listPage, has_next_page: true, next_offset: query.offset + 50 });
+      },
+    });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    await expect(source.listItems(null)).rejects.toMatchObject({ code: "listing_too_long" });
+    expect(calls).toBe(1000);
   });
 
   it("omits the window when it is null", async () => {

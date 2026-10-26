@@ -136,11 +136,11 @@ describe("mapShopeeItem", () => {
     expect(s.variants.filter((v) => !v.isActive)).toHaveLength(1);
   });
 
-  it("uses extra info when present and zero when absent", () => {
+  it("uses extra info when present and null when absent", () => {
     const s = mapShopeeItem(noModel());
     expect([s.salesCount, s.ratingStar, s.ratingCount]).toEqual([5, 4.5, 2]);
     const z = mapShopeeItem({ ...noModel(), extraInfo: null });
-    expect([z.salesCount, z.ratingStar, z.ratingCount]).toEqual([0, 0, 0]);
+    expect([z.salesCount, z.ratingStar, z.ratingCount]).toEqual([null, null, null]);
   });
 
   it("parses weight given as text or number", () => {
