@@ -248,7 +248,7 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `encryptSecret(plaintext: string, key: Buffer): string` → `v1.<iv>.<tag>.<ciphertext>`, each part base64url, with a 12-byte IV.
   - `decryptSecret(sealed: string, key: Buffer): string` — throws on a bad format, the wrong key, or tampering.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `money.test.ts` → table `converts baht to satang`: `1590 → 159000n`, `2990 → 299000n`, `133.33 → 13333n`, `19.99 → 1999n`, `0.1 + 0.2 → 30n`, `0 → 0n`.
   - `money.test.ts` → `rejects impossible amounts`: `-1`, `NaN`, `Infinity` and `1.234` each throw `RangeError`.
   - `secret-box.test.ts` → `round-trips Thai text` (`'โทเค็นทดสอบ'`).
@@ -256,10 +256,10 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `secret-box.test.ts` → `rejects a tampered ciphertext`: flip one character of the last segment, and it throws.
   - `secret-box.test.ts` → `rejects the wrong key`.
   - `secret-box.test.ts` → `rejects a malformed value`: `'abc'` throws.
-- [ ] **Step 2: Run them.** `npx vitest run src/server/services/money.test.ts src/lib/secret-box.test.ts` → FAIL.
-- [ ] **Step 3: Implement both files.** Use `node:crypto` `createCipheriv('aes-256-gcm', …)`, with no new dependency.
-- [ ] **Step 4: Run them.** Same command → PASS.
-- [ ] **Step 5: Commit** — `feat: add satang conversion and AES-GCM secret box`
+- [x] **Step 2: Run them.** `npx vitest run src/server/services/money.test.ts src/lib/secret-box.test.ts` → FAIL.
+- [x] **Step 3: Implement both files.** Use `node:crypto` `createCipheriv('aes-256-gcm', …)`, with no new dependency.
+- [x] **Step 4: Run them.** Same command → PASS.
+- [x] **Step 5: Commit** — `feat: add satang conversion and AES-GCM secret box`
 
 ---
 
