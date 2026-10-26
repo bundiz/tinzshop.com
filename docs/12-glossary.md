@@ -164,6 +164,7 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Channel listing | รายการรุ่นบนช่องทางขาย | The link between a variant and its Shopee model. | `channel_listing` |
 | Channel authorization | การอนุญาตของช่องทางขาย | The shop's Shopee tokens, stored encrypted. | `channel_authorization` |
 | External item id | รหัสสินค้าของช่องทางขาย | Shopee's `item_id`. Identity of a product on Shopee; stored as a 64-bit integer. See D-103. | `external_item_id` |
+| Channel mirror columns | คอลัมน์สำหรับสะท้อนข้อมูลช่องทางขาย | Plain column names of the Shopee mirror tables (spec 5.2 to 5.4): `raw_payload` (last base-info JSON, debugging only), `rating_star`, `is_kit`, `last_synced_at`, `primary_category_id` (breadcrumb category). | `raw_payload`, `rating_star`, `is_kit`, `last_synced_at`, `primary_category_id` |
 | External model id | รหัสรุ่นของช่องทางขาย | Shopee's `model_id`. Identity of a variant on Shopee; null for an item without models. See D-103. | `external_model_id` |
 | Sync run | รอบการซิงก์ | One recorded attempt of the catalogue sync, with its outcome, counts, API calls and warnings. | `sync_run` |
 | Catalogue sync | การซิงก์แคตตาล็อก | The job that pulls the Shopee catalogue every 10 minutes into our database (D-095). | `catalogue_sync` |

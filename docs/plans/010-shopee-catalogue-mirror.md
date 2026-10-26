@@ -206,21 +206,21 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `enum ShippingSizeTier { small medium large }` (maps to `shipping_size_tier`). `enum Locale { th en }`.
   - `getPrisma(): PrismaClient` — a singleton, cached on `globalThis` in development, built with `new PrismaPg({ connectionString: getDatabaseUrl() })`.
 
-- [ ] **Step 1: Write the failing constraint tests** in `tests/integration/catalogue-schema.test.ts`. Each test starts from `resetDatabase()`.
+- [x] **Step 1: Write the failing constraint tests** in `tests/integration/catalogue-schema.test.ts`. Each test starts from `resetDatabase()`.
   - `rejects negative stock` → updating `variant.stock_quantity` to `-1` throws a check-constraint error.
   - `rejects a second no-model listing for the same item` → two `channel_listing` rows with the same `channel_item_id` and `external_model_id = null` → the second throws a unique violation.
   - `allows distinct model ids for the same item` → `external_model_id` 1n and 2n both insert.
   - `rejects a channel other than shopee` → `channel_item.channel = 'lazada'` throws.
   - `stores int64 ids exactly` → `external_item_id = 9007199254740993n` reads back equal.
-- [ ] **Step 2: Run them.** `npm run test:integration -- catalogue-schema` → FAIL (the tables don't exist).
-- [ ] **Step 3: Write the models** in `prisma/schema.prisma`, column for column as in spec §5.2–§5.4. Rules:
+- [x] **Step 2: Run them.** `npm run test:integration -- catalogue-schema` → FAIL (the tables don't exist).
+- [x] **Step 3: Write the models** in `prisma/schema.prisma`, column for column as in spec §5.2–§5.4. Rules:
   - `@@map` uses snake_case singular names.
   - Money uses `BigInt`, and timestamps use `@db.Timestamptz(6)`.
   - `raw_payload` and `warnings` use `Json`.
   - The only unique constraints are those the spec names: `channel_item (channel, external_item_id)`, `channel_item.product_id`, `channel_listing.variant_id`, `product_translation (product_id, locale)`, `product_image (product_id, position)`, `category.slug`, `channel_authorization (channel, external_shop_id)`.
   - Do **not** declare the `channel_listing (channel_item_id, external_model_id)` unique in Prisma.
   - Add **non-unique** `@@index` on `product.parent_sku` and `variant.model_sku` (spec §5.8, D-103).
-- [ ] **Step 4: Create the migration without applying it.** Run `npx prisma migrate dev --create-only --name catalogue_mirror`, then append to its `migration.sql`:
+- [x] **Step 4: Create the migration without applying it.** Run `npx prisma migrate dev --create-only --name catalogue_mirror`, then append to its `migration.sql`:
   ```sql
   ALTER TABLE variant ADD CONSTRAINT variant_stock_quantity_non_negative CHECK (stock_quantity >= 0);
   ALTER TABLE channel_item ADD CONSTRAINT channel_item_channel_known CHECK (channel = 'shopee');
@@ -229,11 +229,11 @@ These five conditions are implied by the spec, but a careless implementation pas
   INSERT INTO shipping_size_tier_rate (tier, price_satang) VALUES ('small', 5000), ('medium', 10000), ('large', 0);
   ```
   Read the whole SQL file before applying it (D-015).
-- [ ] **Step 5: Apply and check for drift.** Run `npx prisma migrate dev`, then run `npx prisma migrate dev` again.
+- [x] **Step 5: Apply and check for drift.** Run `npx prisma migrate dev`, then run `npx prisma migrate dev` again.
   Expected on the second run: "Already in sync" and no new migration. **If Prisma proposes to drop `channel_listing_item_model_key`, stop and report it; don't work around it.**
-- [ ] **Step 6: Implement `src/server/repositories/prisma.ts`** with the `getPrisma()` signature above, importing `PrismaClient` from `@/generated/prisma/client`.
-- [ ] **Step 7: Run them.** `npm run test:integration -- catalogue-schema` → PASS. `npm run typecheck` → PASS.
-- [ ] **Step 8: Commit** — `feat: add catalogue mirror schema with stock and listing constraints`
+- [x] **Step 6: Implement `src/server/repositories/prisma.ts`** with the `getPrisma()` signature above, importing `PrismaClient` from `@/generated/prisma/client`.
+- [x] **Step 7: Run them.** `npm run test:integration -- catalogue-schema` → PASS. `npm run typecheck` → PASS.
+- [x] **Step 8: Commit** — `feat: add catalogue mirror schema with stock and listing constraints`
 
 ---
 
