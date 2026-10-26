@@ -31,3 +31,5 @@ Thumbs.db
 
 
 /requirements
+# Generated Prisma client
+src/generated/

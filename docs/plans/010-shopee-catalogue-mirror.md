@@ -148,11 +148,11 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `type ServerConfig = { readonly shopee: { readonly apiBaseUrl: string; readonly partnerId: number; readonly partnerKey: string }; readonly jobSecret: string; readonly channelTokenEncryptionKey: Buffer }`
   - `resetDatabase(): Promise<void>` (integration tests only).
 
-- [ ] **Step 1: Install the dependencies.**
+- [x] **Step 1: Install the dependencies.**
   Run: `npx npm@11.21.0 install --save-exact @prisma/client@7.10.0 @prisma/adapter-pg@7.10.0 pg@8.23.1 && npx npm@11.21.0 install --save-exact -D prisma@7.10.0 @types/pg@8.23.1`
   Expected: `found 0 vulnerabilities`.
   Then run `rm -rf node_modules && npm ci`. Expected: success.
-- [ ] **Step 2: Add the local database.**
+- [x] **Step 2: Add the local database.**
   - `compose.yaml`: one service `postgres`, image `postgres:17` pinned to the exact 17.x tag current at implementation.
     - `POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD}`, `POSTGRES_DB: tinzshop`
     - port `5432:5432`, a named volume, and `./docker/postgres/init` mounted at `/docker-entrypoint-initdb.d`
@@ -163,24 +163,24 @@ These five conditions are implied by the spec, but a careless implementation pas
     - `TEST_DATABASE_URL=postgresql://postgres:<password>@localhost:5432/tinzshop_test`
     - `SHOPEE_API_BASE_URL`, `JOB_SECRET`, `CHANNEL_TOKEN_ENCRYPTION_KEY`
   - Remove the stale "NOT RESEARCHED / stack not chosen" header notes, and keep the existing `SHOPEE_*` lines.
-- [ ] **Step 3: Set up Prisma.**
+- [x] **Step 3: Set up Prisma.**
   - `prisma/schema.prisma` has `generator client { provider = "prisma-client" output = "../src/generated/prisma" }` and `datasource db { provider = "postgresql" }`.
   - `prisma.config.ts` uses `defineConfig` with `schema: 'prisma/schema.prisma'`, `migrations: { path: 'prisma/migrations' }`, and `datasource: { url: env('DATABASE_URL') }`.
   - It loads `.env` with Node's `process.loadEnvFile('.env')`, wrapped so a missing file is ignored. No `dotenv` dependency.
   - `.gitignore` gains `src/generated/`.
   - `package.json` scripts: `db:up` (`docker compose up -d postgres`), `db:migrate` (`prisma migrate dev`), `db:generate` (`prisma generate`), `test:integration` (`vitest run --config vitest.integration.config.ts`).
   - Run `npm run db:up && npx prisma validate`. Expected: `The schema at prisma/schema.prisma is valid`.
-- [ ] **Step 4: Write the failing config tests** in `src/server/config.test.ts`. They use the literal env `VALID = { SHOPEE_PARTNER_ID: '1236675', SHOPEE_PARTNER_KEY: 'k'.repeat(64), JOB_SECRET: 'j'.repeat(32), CHANNEL_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64') }`.
+- [x] **Step 4: Write the failing config tests** in `src/server/config.test.ts`. They use the literal env `VALID = { SHOPEE_PARTNER_ID: '1236675', SHOPEE_PARTNER_KEY: 'k'.repeat(64), JOB_SECRET: 'j'.repeat(32), CHANNEL_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64') }`.
   - `parses a valid environment` → `shopee.partnerId === 1236675`, and `channelTokenEncryptionKey.length === 32`.
   - `defaults the Shopee host to the sandbox` → `shopee.apiBaseUrl === 'https://openplatform.sandbox.test-stable.shopee.sg'`.
   - `rejects a missing partner key without echoing secrets` → throws, the message contains `SHOPEE_PARTNER_KEY`, and it does not contain `'j'.repeat(32)`.
   - `rejects an encryption key that is not 32 bytes` → with `Buffer.alloc(31).toString('base64')`, it throws with `CHANNEL_TOKEN_ENCRYPTION_KEY`.
   - `rejects a short job secret` → with `JOB_SECRET: 'short'`, it throws with `JOB_SECRET`.
   - `rejects a non-https Shopee host` → with `SHOPEE_API_BASE_URL: 'http://example.com'`, it throws.
-- [ ] **Step 5: Run them.** `npx vitest run src/server/config.test.ts` → FAIL, because the module isn't found.
-- [ ] **Step 6: Implement `src/server/config.ts`.** It has the Produces signatures above, using a Zod schema. Error messages list the variable names only.
-- [ ] **Step 7: Run them.** `npx vitest run src/server/config.test.ts` → PASS.
-- [ ] **Step 8: Set up the integration runner.**
+- [x] **Step 5: Run them.** `npx vitest run src/server/config.test.ts` → FAIL, because the module isn't found.
+- [x] **Step 6: Implement `src/server/config.ts`.** It has the Produces signatures above, using a Zod schema. Error messages list the variable names only.
+- [x] **Step 7: Run them.** `npx vitest run src/server/config.test.ts` → PASS.
+- [x] **Step 8: Set up the integration runner.**
   - `vitest.config.ts` includes only `src/**/*.test.ts`.
   - `vitest.integration.config.ts`:
     - include `tests/integration/**/*.test.ts`, with `fileParallelism: false`
@@ -189,8 +189,8 @@ These five conditions are implied by the spec, but a careless implementation pas
   - Global setup runs `npx prisma migrate deploy` against that URL.
   - `resetDatabase()` truncates every application table with `RESTART IDENTITY CASCADE`.
   - Test `database-connection.test.ts` → `connects to the test database`: `SELECT current_database()` returns `'tinzshop_test'`.
-- [ ] **Step 9: Run both suites.** `npm test && npm run test:integration` → both PASS.
-- [ ] **Step 10: Commit** — `chore: add local PostgreSQL, Prisma 7 wiring and validated config`
+- [x] **Step 9: Run both suites.** `npm test && npm run test:integration` → both PASS.
+- [x] **Step 10: Commit** — `chore: add local PostgreSQL, Prisma 7 wiring and validated config`
 
 ---
 
