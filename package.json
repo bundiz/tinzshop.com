@@ -1,0 +1,32 @@
+{
+  "name": "tinzshop",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "shopee:token": "node --env-file=.env scripts/shopee-sandbox/get-token.mjs",
+    "shopee:seed": "node --env-file=.env scripts/shopee-sandbox/seed.mjs",
+    "shopee:dump": "node --env-file=.env scripts/shopee-sandbox/dump.mjs"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "4.1.11"
+  }
+}

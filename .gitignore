@@ -4,6 +4,8 @@
 .env.*.local
 *.pem
 *.key
+# Shopee sandbox spike: saved tokens and raw API dumps
+.shopee-sandbox/
 
 # Dependencies
 node_modules/
@@ -11,6 +13,9 @@ node_modules/
 # Build output
 dist/
 build/
+.next/
+next-env.d.ts
+*.tsbuildinfo
 
 # Logs
 *.log
