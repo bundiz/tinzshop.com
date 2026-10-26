@@ -425,8 +425,8 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `tryWithAdvisoryLock<T>(lockKey: bigint, task: () => Promise<T>): Promise<{ acquired: true; value: T } | { acquired: false }>`. It uses a dedicated `pg.Client` on `getDatabaseUrl()`, `pg_try_advisory_lock`, and unlock plus `end()` in `finally`.
   - The constant `CATALOGUE_SYNC_LOCK_KEY = 6_251_010n`.
 
-- [ ] **Step 1: Write snapshot builders** in `tests/integration/fixtures/snapshots.ts`: `twoTierSnapshot(overrides?)` and `noModelSnapshot(overrides?)`, with literal values matching the Task 6 expectations (item `803947690n` with 4 models, item `803947687n`).
-- [ ] **Step 2: Write the failing tests** in `catalogue-repository.test.ts`, each starting from `resetDatabase()`:
+- [x] **Step 1: Write snapshot builders** in `tests/integration/fixtures/snapshots.ts`: `twoTierSnapshot(overrides?)` and `noModelSnapshot(overrides?)`, with literal values matching the Task 6 expectations (item `803947690n` with 4 models, item `803947687n`).
+- [x] **Step 2: Write the failing tests** in `catalogue-repository.test.ts`, each starting from `resetDatabase()`:
   - `creates an inactive product with its variants`: the result is `'created'`; there's 1 product with `is_active false`, 4 variants, 2 option types, 4 values linked per variant pair, 4 listings and a `th` translation named after the snapshot.
   - `updates in place on the second sync`: change one model's `priceSatang` to `279000n` and `stockQuantity` to `0`. The result is `'updated'`, the variant ids are unchanged, and the new values are stored.
   - `keeps variant ids stable and deactivates removed models` (Review Focus 5): remove one model and reverse the option value order. The 3 surviving variant ids are unchanged, the removed variant still exists with `is_active false`, and the option links match the new indexes.
