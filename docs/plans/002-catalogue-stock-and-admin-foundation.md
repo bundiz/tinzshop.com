@@ -5,7 +5,7 @@
 - **Dates (proposed):** 2026-09-16 → 2026-10-13 — see `../02-scope-and-phases.md#schedule-and-budget`
 - **Requirements delivered:** REQ-004, REQ-005, REQ-006, REQ-020, REQ-032, REQ-033, REQ-034, REQ-035, REQ-036, REQ-037, REQ-038, REQ-051
 - **Removed from this plan (2026-09-13 answers):** REQ-040 (audit log — D-066, Q-020)
-- **Blocked by:** the BigSeller data-inspection dependency (Q-007, Q-011, Q-012, Q-014, Q-044); Q-013 (Shopee/Lazada option-count research)
+- **Blocked by:** the BigSeller data-inspection dependency (Q-007, Q-011, Q-012, Q-014, Q-044); Q-013 (the option-count cap — research done, client answer pending)
 - **Depends on plan:** 001
 
 ## Goal
@@ -15,9 +15,11 @@ authentication and role model without which the admin panel cannot be used.
 
 **Nothing in this plan may start while Q-013 and Q-014 are open.** The option
 model and the SKU format are the shape of the catalogue, and building on a
-guess means rebuilding. Both are now narrowed to a single concrete next step:
-one BigSeller data-inspection session (for SKUs, stock and the Excel format)
-and one round of Shopee/Lazada research (for the practical option-count cap).
+guess means rebuilding. Each is now narrowed to a single concrete next step:
+one BigSeller data-inspection session (for SKUs, stock and the Excel format),
+and for Q-013 a client answer — the Shopee/Lazada research the client asked
+for is done and recorded in `../13-open-questions.md`; only the number the
+project should enforce is still outstanding.
 
 **Most of the earlier blockers on this plan are now resolved** — six roles
 (Q-015), owner-edits-only permissions (Q-016), email OTP (Q-017), no low-stock
@@ -28,7 +30,7 @@ for shipping (Q-021, now handled by the shipping-tier model in plan 004). See
 ## Prerequisites the client must supply
 
 - [ ] BigSeller data-inspection session: real stock quantities, real SKU examples, and a sample Excel export — resolves Q-007, Q-011, Q-012, Q-014, Q-044 in one sitting
-- [ ] Practical maximum option types per product, after Shopee/Lazada research (Q-013) — the model itself already supports any number
+- [ ] Practical maximum option types per product, and the maximum variant combinations per product (Q-013) — the Shopee/Lazada research is done; both marketplaces cap at two and the client's answer rules out inheriting that, so the number is now a client decision. The model itself already supports any number
 
 ## Build checklist
 

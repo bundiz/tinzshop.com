@@ -119,7 +119,7 @@ This documentation is the deliverable. No requirement is delivered by it.
 
 - **Dates:** 2026-09-16 → 2026-10-13
 - **Deliverables (from the source):** the product system, product options, stock, and Excel file import.
-- **Blocked by:** the BigSeller data-inspection dependency (Q-007, Q-011, Q-012, Q-014, Q-044) for the catalogue's identity rules and the Excel format; Q-013 (Shopee/Lazada option-count research) for the practical maximum enforced in the UI and import, though the underlying model already supports any number.
+- **Blocked by:** the BigSeller data-inspection dependency (Q-007, Q-011, Q-012, Q-014, Q-044) for the catalogue's identity rules and the Excel format; Q-013 (the practical maximum enforced in the UI and import) — the Shopee/Lazada research is complete, so this now waits on a client answer rather than on research, though the underlying model already supports any number.
 
 > The staff authentication and role requirements (REQ-032 to REQ-035, REQ-051)
 > are placed here because the admin panel cannot be used without them. **The
@@ -131,7 +131,7 @@ This documentation is the deliverable. No requirement is delivered by it.
 Each product carries exactly one Parent SKU, and each model of that product carries its own ModelSKU. The format of both is not invented — it comes from inspecting real BigSeller data (Q-007, Q-014).
 
 **REQ-005 — Multiple option types per product** · §4 · CONFIRMED, cap `[Q-013]`
-A product can have more than one option type (for example colour × capacity), and each resulting combination can carry its own code, price and stock quantity. **No hard-coded cap of two** — the join-table model in `05-database.md` already supports any number. The practical maximum the import/UI enforces still waits on Shopee/Lazada research.
+A product can have more than one option type (for example colour × capacity), and each resulting combination can carry its own code, price and stock quantity. **No hard-coded cap of two** — the join-table model in `05-database.md` already supports any number. The Shopee/Lazada research is done — both marketplaces themselves cap at two, which is why the client's answer rules out inheriting it — so the practical maximum the import/UI enforces now waits on a client answer (Q-013).
 
 **REQ-006 — Public availability status without real quantities** · §4 · CONFIRMED (narrowed)
 The storefront shows availability as **in stock or out of stock** — never a real quantity. Low stock is removed from this requirement (D-065, Q-019).
