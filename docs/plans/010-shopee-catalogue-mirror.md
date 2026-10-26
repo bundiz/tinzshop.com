@@ -383,7 +383,7 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `createShopeeAuthorizationCallbackHandler(deps: { connectShop: (input: { code: string; externalShopId: bigint }) => Promise<void> }): (request: Request) => Promise<Response>`
   - `composition-root.ts`: `getChannelAuthorizationService()` and `getShopeeClient()`, built lazily from `getServerConfig()`.
 
-- [ ] **Step 1: Write the failing unit tests** for the service. They use fakes for the issuer and the repository, and `now = 2026-10-26T00:00:00Z`.
+- [x] **Step 1: Write the failing unit tests** for the service. They use fakes for the issuer and the repository, and `now = 2026-10-26T00:00:00Z`.
   - `connectShop stores only encrypted tokens with correct expiry`:
     - the issuer returns `{ accessToken: 'acc-1', refreshToken: 'ref-1', expiresInSeconds: 14400 }`
     - the saved record's ciphertexts decrypt to `'acc-1'` and `'ref-1'`, and neither ciphertext contains `'acc-1'`
@@ -391,16 +391,16 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `returns the stored token while more than 5 minutes remain`: with 10 minutes left, `refresh` isn't called.
   - `refreshes and saves the new pair when under 5 minutes remain`: with 4 minutes left, `refresh` is called once with `'ref-1'`, the saved record decrypts to the new pair, and the new access token is returned.
   - `throws ChannelNotConnectedError when no shop is connected`.
-- [ ] **Step 2: Update the callback tests** (`shopee-authorization-controller.test.ts`) so the handler is built with a fake `connectShop`:
+- [x] **Step 2: Update the callback tests** (`shopee-authorization-controller.test.ts`) so the handler is built with a fake `connectShop`:
   - shop success → `connectShop` is called with `{ code: '5a54…4653', externalShopId: 602226924n }`, status `200`, body `{ data: { accountType: 'shop', shopId: 602226924, connected: true } }` (with **no `code`**), and `Cache-Control: no-store`
   - main account → `422` with error code `shopee.authorization.main_account_unsupported`
   - `connectShop` rejects with a `ShopeeApiError` → `502` with error code `shopee.authorization.token_exchange_failed`, and the body doesn't contain the code
   - every existing invalid-input test still returns `400`
-- [ ] **Step 3: Write the failing integration test** `channel-authorization-repository.test.ts`: `saves and reads back one authorization per shop` — saving twice for shop `227679200n` leaves one row, and the second save's values win.
-- [ ] **Step 4: Run them.** `npx vitest run src/server && npm run test:integration -- channel-authorization` → FAIL.
-- [ ] **Step 5: Implement** the repository, the service, the token issuer, the handler factory and the composition root with the Produces signatures. The route becomes `export async function GET(request: Request): Promise<Response>`, built from `getChannelAuthorizationService().connectShop`.
-- [ ] **Step 6: Run them.** Same commands → PASS. `npm run typecheck` → PASS.
-- [ ] **Step 7: Commit** — `feat: exchange the Shopee callback code and store tokens encrypted`
+- [x] **Step 3: Write the failing integration test** `channel-authorization-repository.test.ts`: `saves and reads back one authorization per shop` — saving twice for shop `227679200n` leaves one row, and the second save's values win.
+- [x] **Step 4: Run them.** `npx vitest run src/server && npm run test:integration -- channel-authorization` → FAIL.
+- [x] **Step 5: Implement** the repository, the service, the token issuer, the handler factory and the composition root with the Produces signatures. The route becomes `export async function GET(request: Request): Promise<Response>`, built from `getChannelAuthorizationService().connectShop`.
+- [x] **Step 6: Run them.** Same commands → PASS. `npm run typecheck` → PASS.
+- [x] **Step 7: Commit** — `feat: exchange the Shopee callback code and store tokens encrypted`
 
 ---
 
