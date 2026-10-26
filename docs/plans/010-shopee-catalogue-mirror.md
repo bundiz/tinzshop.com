@@ -434,11 +434,11 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `keeps exactly one variant for an item without models`: upsert `noModelSnapshot()` twice → 1 variant.
   - `lists known items and marks not-found ones`: `markItemsNotFound([803947687n])` returns `1`, and `listKnownItems()` then contains only `803947690n`.
   - `records sync runs`: start, then finish `succeeded` with `windowTo` T → `findLastSucceededSyncRun()` returns T. A later `failed` run doesn't change it.
-- [ ] **Step 3: Write the failing test** `advisory-lock.test.ts` → `second holder is refused while the first holds the lock`: inside a held task, a nested `tryWithAdvisoryLock` with the same key returns `{ acquired: false }`; after the first finishes, a new call returns `{ acquired: true }`.
-- [ ] **Step 4: Run them.** `npm run test:integration -- catalogue-repository advisory-lock` → FAIL.
-- [ ] **Step 5: Implement the three repositories.**
-- [ ] **Step 6: Run them.** Same command → PASS.
-- [ ] **Step 7: Commit** — `feat: persist catalogue snapshots, sync runs and the sync lock`
+- [x] **Step 3: Write the failing test** `advisory-lock.test.ts` → `second holder is refused while the first holds the lock`: inside a held task, a nested `tryWithAdvisoryLock` with the same key returns `{ acquired: false }`; after the first finishes, a new call returns `{ acquired: true }`.
+- [x] **Step 4: Run them.** `npm run test:integration -- catalogue-repository advisory-lock` → FAIL.
+- [x] **Step 5: Implement the three repositories.**
+- [x] **Step 6: Run them.** Same command → PASS.
+- [x] **Step 7: Commit** — `feat: persist catalogue snapshots, sync runs and the sync lock`
 
 ---
 
