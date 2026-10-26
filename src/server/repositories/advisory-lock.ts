@@ -13,6 +13,12 @@ export async function tryWithAdvisoryLock<T>(
   task: () => Promise<T>,
 ): Promise<{ acquired: true; value: T } | { acquired: false }> {
   const client = new Client({ connectionString: getDatabaseUrl() });
+  // A dropped connection emits 'error'; without a listener Node would crash the process.
+  // Closing the session releases the lock anyway, so the failure is only noted.
+  let connectionError = false;
+  client.on('error', () => {
+    connectionError = true;
+  });
   await client.connect();
   let acquired = false;
   try {
@@ -25,10 +31,18 @@ export async function tryWithAdvisoryLock<T>(
     const value = await task();
     return { acquired: true, value };
   } finally {
+    // Never let a failed release replace the task's result or error: ending the session frees the lock.
+    if (acquired && !connectionError) {
+      try {
+        await client.query('SELECT pg_advisory_unlock($1::bigint)', [lockKey.toString()]);
+      } catch {
+        // connection already gone
+      }
+    }
     try {
-      if (acquired) await client.query('SELECT pg_advisory_unlock($1::bigint)', [lockKey.toString()]);
-    } finally {
       await client.end();
+    } catch {
+      // already closed
     }
   }
 }

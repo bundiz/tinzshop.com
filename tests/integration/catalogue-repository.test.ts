@@ -174,6 +174,92 @@ describe('upsertCatalogueItem', () => {
   });
 });
 
+describe('upsertCatalogueItem update branches', () => {
+  it('creates a variant and listing for a model added on update', async () => {
+    const original = twoTierSnapshot();
+    const [removed, ...rest] = original.variants;
+    if (removed === undefined) throw new Error('fixture has no variants');
+    await upsertCatalogueItem({ ...original, variants: rest }, T1);
+    const before = await variantsByModel();
+    expect(before.size).toBe(3);
+
+    expect(await upsertCatalogueItem(original, T2)).toBe('updated');
+    const after = await variantsByModel();
+    expect(after.size).toBe(4);
+    for (const [key, value] of before) expect(after.get(key)?.id).toBe(value.id);
+    expect(after.get(removed.externalModelId)?.isActive).toBe(true);
+    expect(await getPrisma().channelListing.count()).toBe(4);
+    expect(await getPrisma().variantOptionValue.count()).toBe(8);
+  });
+
+  it('reactivates the same variant when a removed model reappears', async () => {
+    const original = twoTierSnapshot();
+    await upsertCatalogueItem(original, T1);
+    const before = await variantsByModel();
+
+    const without = { ...original, variants: original.variants.filter((v) => v.externalModelId !== 12998740n) };
+    await upsertCatalogueItem(without, T2);
+    expect((await variantsByModel()).get(12998740n)?.isActive).toBe(false);
+
+    await upsertCatalogueItem(original, new Date('2026-10-26T03:00:00.000Z'));
+    const after = await variantsByModel();
+    expect(after.size).toBe(4);
+    expect(after.get(12998740n)?.id).toBe(before.get(12998740n)?.id);
+    expect(after.get(12998740n)?.isActive).toBe(true);
+    const listing = await getPrisma().channelListing.findFirstOrThrow({ where: { externalModelId: 12998740n } });
+    expect(listing.externalStatus).toBeNull();
+  });
+
+  it('deactivates the null-model variant when an item gains models', async () => {
+    await upsertCatalogueItem(noModelSnapshot(), T1);
+    const before = await variantsByModel();
+    const nullId = before.get(null)?.id;
+
+    const gained = twoTierSnapshot({ externalItemId: 803947687n });
+    expect(await upsertCatalogueItem(gained, T2)).toBe('updated');
+
+    const after = await variantsByModel();
+    expect(after.size).toBe(5);
+    expect(after.get(null)?.id).toBe(nullId);
+    expect(after.get(null)?.isActive).toBe(false);
+    const nullListing = await getPrisma().channelListing.findFirstOrThrow({ where: { externalModelId: null } });
+    expect(nullListing.externalStatus).toBe('NOT_FOUND');
+    expect(after.get(12998741n)?.isActive).toBe(true);
+    expect(await getPrisma().product.count()).toBe(1);
+  });
+
+  it('deactivates model variants and reuses the null-model variant when models disappear', async () => {
+    await upsertCatalogueItem(noModelSnapshot(), T1);
+    const nullId = (await variantsByModel()).get(null)?.id;
+    await upsertCatalogueItem(twoTierSnapshot({ externalItemId: 803947687n }), T2);
+    const mid = await variantsByModel();
+
+    expect(await upsertCatalogueItem(noModelSnapshot(), new Date('2026-10-26T03:00:00.000Z'))).toBe('updated');
+    const after = await variantsByModel();
+    expect(after.size).toBe(5);
+    for (const [key, value] of mid) expect(after.get(key)?.id).toBe(value.id);
+    expect(after.get(null)?.id).toBe(nullId);
+    expect(after.get(null)?.isActive).toBe(true);
+    for (const id of [12998738n, 12998739n, 12998740n, 12998741n]) {
+      expect(after.get(id)?.isActive).toBe(false);
+    }
+    expect(await getPrisma().optionType.count()).toBe(0);
+    expect(await getPrisma().variantOptionValue.count()).toBe(0);
+  });
+
+  it('restores a not-found item when it is upserted again', async () => {
+    await upsertCatalogueItem(noModelSnapshot(), T1);
+    expect(await markItemsNotFound([803947687n], T2)).toBe(1);
+    expect(await listKnownItems()).toEqual([]);
+
+    expect(await upsertCatalogueItem(noModelSnapshot({ externalStatus: 'UNLIST' }), new Date('2026-10-26T03:00:00.000Z'))).toBe('updated');
+    const item = await getPrisma().channelItem.findFirstOrThrow();
+    expect(item.externalStatus).toBe('UNLIST');
+    expect(await listKnownItems()).toEqual([{ externalItemId: 803947687n, externalStatus: 'UNLIST', isKit: false }]);
+    expect(await getPrisma().product.count()).toBe(1);
+  });
+});
+
 describe('known items', () => {
   it('lists known items and marks not-found ones', async () => {
     await upsertCatalogueItem(twoTierSnapshot(), T1);
