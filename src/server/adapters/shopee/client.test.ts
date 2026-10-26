@@ -69,6 +69,48 @@ describe("shopee client", () => {
     });
   });
 
+  it("refreshAccessToken posts refresh_token, shop_id and partner_id with a public signature", async () => {
+    const { client, requests } = build(() =>
+      json({ access_token: "a2", refresh_token: "r2", expire_in: 14400, error: "", message: "" }),
+    );
+    const result = await client.refreshAccessToken({ refreshToken: "r0", shopId: 227679200n });
+    expect(result).toEqual({ accessToken: "a2", refreshToken: "r2", expiresInSeconds: 14400 });
+    const req = requests[0];
+    expect(req?.method).toBe("POST");
+    expect(req?.url.pathname).toBe("/api/v2/auth/access_token/get");
+    expect(req?.url.searchParams.get("partner_id")).toBe("1000001");
+    expect(req?.url.searchParams.get("timestamp")).toBe("1700000000");
+    expect(req?.url.searchParams.get("sign")).toBe(
+      "a89623a2c6f2761df813b9bab322cecbeaa205ccbd559f114ff59094c51f6ef5",
+    );
+    expect(JSON.parse(req?.body ?? "")).toEqual({
+      refresh_token: "r0",
+      shop_id: 227679200,
+      partner_id: 1000001,
+    });
+  });
+
+  it("reports a timeout without leaking the URL", async () => {
+    const failing = (): Promise<Response> =>
+      Promise.reject(
+        new DOMException("timed out https://x/?access_token=test-access-token", "TimeoutError"),
+      );
+    const client = createShopeeClient({
+      baseUrl: "https://shopee.test",
+      partnerId: 1000001,
+      partnerKey: "test-partner-key",
+      fetch: failing,
+      now: () => new Date(1700000000_000),
+    });
+    const err = await client.getModelList(credentials, 1n).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ShopeeApiError);
+    if (!(err instanceof ShopeeApiError)) throw new Error("unreachable");
+    expect(err.shopeeError).toBe("timeout");
+    expect(err.httpStatus).toBe(0);
+    expect(String(err)).not.toContain("test-access-token");
+    expect(String(err)).not.toContain("sign=");
+  });
+
   it("getItemList signs with the shop signature and repeats item_status", async () => {
     const { client, requests } = build(() => new Response(fixture("item-list.json")));
     const page = await client.getItemList(credentials, {
