@@ -1,0 +1,28 @@
+{
+  "error": "",
+  "message": "",
+  "request_id": "fixture",
+  "response": {
+    "item": [
+      {
+        "item_id": 803947690,
+        "item_status": "NORMAL",
+        "update_time": 1793004285,
+        "tag": {
+          "kit": false
+        }
+      },
+      {
+        "item_id": 803947687,
+        "item_status": "NORMAL",
+        "update_time": 1793004260,
+        "tag": {
+          "kit": false
+        }
+      }
+    ],
+    "total_count": 2,
+    "has_next_page": false,
+    "next_offset": 2
+  }
+}

@@ -287,7 +287,7 @@ These five conditions are implied by the spec, but a careless implementation pas
     - `callCount(): number`
     Public calls are POST with a JSON body. Shop calls are GET with query parameters, and the repeated `item_status` parameter. `ids` lists are comma-joined. Shopee returns `time` values in seconds.
 
-- [ ] **Step 1: Create the fixtures** from the newest sandbox dump. It contains no tokens (checked 2026-10-26).
+- [x] **Step 1: Create the fixtures** from the newest sandbox dump. It contains no tokens (checked 2026-10-26).
   ```bash
   python3 -I - <<'EOF'
   import json, glob
@@ -301,7 +301,7 @@ These five conditions are implied by the spec, but a careless implementation pas
   EOF
   ```
   `item-extra-info.json` is written by hand in the shape seen on 2026-10-20: `{"item_list":[{"item_id":803947687,"sale":5,"views":0,"likes":0,"rating_star":4.5,"comment_count":2},{"item_id":803947690,"sale":0,"views":0,"likes":0,"rating_star":0,"comment_count":0}]}`, wrapped in the same envelope.
-- [ ] **Step 2: Write the failing tests.** The literal vectors were computed with `openssl`:
+- [x] **Step 2: Write the failing tests.** The literal vectors were computed with `openssl`:
   - `sign.test.ts` → `signs a public request`: key `'test-partner-key'`, partnerId `1000001`, path `'/api/v2/auth/token/get'`, timestamp `1700000000` → `'6aab77ee2280e403a38937412ca70e35114f12914ecb2c697ca10a6040598254'`.
   - `sign.test.ts` → `signs a shop request`: same key and partner, path `'/api/v2/product/get_item_list'`, accessToken `'test-access-token'`, shopId `227679200n` → `'e1e83b8cba981a89a0708d4684ab92e756b70e4efee746b95f495f58e79c7160'`.
   - The `client.test.ts` tests use a fake `fetch` that records each request, and `now = () => new Date(1700000000_000)`:
@@ -313,10 +313,10 @@ These five conditions are implied by the spec, but a careless implementation pas
     - `error messages never contain the token or the signature` → the response `{ error: 'error_auth', message: 'Invalid access_token.', request_id: 'r1' }` throws `ShopeeApiError` with `shopeeError === 'error_auth'`; `String(err)` does not contain `'test-access-token'` or `'sign='`.
     - `reports a non-JSON response` → a 502 with an HTML body throws `ShopeeApiError` with `shopeeError === 'non_json_response'`.
     - `counts calls` → after 2 calls, `callCount() === 2`.
-- [ ] **Step 3: Run them.** `npx vitest run src/server/adapters/shopee` → FAIL.
-- [ ] **Step 4: Implement** `sign.ts`, `errors.ts`, `schemas.ts` and `client.ts` with the Produces signatures. Use `AbortSignal.timeout(timeoutMs ?? 20000)`. Convert a bigint to a JSON number for request bodies only after checking `Number.isSafeInteger`.
-- [ ] **Step 5: Run them.** `npx vitest run src/server/adapters/shopee` → PASS.
-- [ ] **Step 6: Commit** — `feat: add signed Shopee client with defensive response parsing`
+- [x] **Step 3: Run them.** `npx vitest run src/server/adapters/shopee` → FAIL.
+- [x] **Step 4: Implement** `sign.ts`, `errors.ts`, `schemas.ts` and `client.ts` with the Produces signatures. Use `AbortSignal.timeout(timeoutMs ?? 20000)`. Convert a bigint to a JSON number for request bodies only after checking `Number.isSafeInteger`.
+- [x] **Step 5: Run them.** `npx vitest run src/server/adapters/shopee` → PASS.
+- [x] **Step 6: Commit** — `feat: add signed Shopee client with defensive response parsing`
 
 ---
 
