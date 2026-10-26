@@ -75,7 +75,7 @@ Read this file to find out *what* was decided. Follow the link to find out
 | D-041 | Authorization is checked in the domain layer, never only in the UI, and never inferred from which page the user reached. | Accepted | [08](08-security-testing.md#authorization) |
 | D-042 | No secret is committed in any form, and no document, script or agent reads `.env`. | Accepted | [08](08-security-testing.md#secrets) |
 | D-043 | Testing has three layers: domain unit tests, integration tests against a real PostgreSQL, and a manual checklist inside each plan. | Accepted | [08](08-security-testing.md#the-three-layers) |
-| D-044 | The four invariants — no overselling, gap-free invoice numbers, correct VAT, and permission enforcement — carry integration tests before the code that implements them is merged. | Accepted | [08](08-security-testing.md#the-four-invariants) |
+| D-044 | The four invariants — no overselling, gap-free invoice numbers, correct VAT, and permission enforcement — carry integration tests before the code that implements them is merged. | Accepted; the no-overselling test is withdrawn — see D-096, the remaining three stand | [08](08-security-testing.md#the-four-invariants) |
 | D-045 | Every change reaches `main` through a pull request reviewed by the other developer; an agent review does not substitute. | Accepted | [09](09-coding-guidelines.md#pull-requests) |
 | D-046 | Ownership is a path, never a feature. | Accepted | [09](09-coding-guidelines.md#ownership) |
 | D-047 | A pull request that assumes an answer to an unresolved question does not merge. | Accepted | [09](09-coding-guidelines.md#pull-requests) |

@@ -225,8 +225,9 @@ correcting the code.
 | 3 | VAT is computed exactly (REQ-023) | Wrong tax on issued invoices means reissuing documents and amending filings | Integer satang arithmetic in the domain, one function |
 | 4 | A staff member cannot act beyond their role (REQ-034, REQ-035) | Data is already changed or exposed when it is noticed | Permission check in the domain layer, not the UI |
 
-Each carries an integration test written before the implementation merges
-(D-044, `08-security-testing.md`).
+Invariants 2, 3 and 4 each carry an integration test written before the
+implementation merges (D-044, `08-security-testing.md`); invariant 1's test is
+withdrawn with it (D-096).
 
 Invariant 3's input is now resolved (Q-010, D-060): every displayed price
 already includes 7% VAT, and the single domain function extracts it rather

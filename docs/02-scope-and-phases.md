@@ -47,7 +47,7 @@ assumed here, or if Shopee access (Q-042) arrives late.
 | Phase | Dates (proposed) | Duration | Why this length |
 | :--- | :--- | :--- | :--- |
 | 1 — Planning documentation | 2026-09-01 → 2026-09-15 | 2 weeks | Documentation, mostly complete at time of writing |
-| 2 — Catalogue, stock, admin foundation, Excel | 2026-09-16 → 2026-10-13 | 4 weeks | Scaffold, schema, roles/2FA, product/variant model, Excel import — the foundation everything else sits on |
+| 2 — Catalogue, stock, admin foundation | 2026-09-16 → 2026-10-13 | 4 weeks | Scaffold, schema, roles/2FA, and the Shopee catalogue mirror (plan 010; Excel import removed, REQ-038, D-094) — the foundation everything else sits on |
 | 3 — Storefront, ordering, K-Payment, simplified tax invoice | 2026-10-14 → 2026-11-17 | 5 weeks | Now includes K-Payment integration and testing (moved from phase 4, Q-030) since it is the only payment method and credentials already exist (Q-033) |
 | 4 — Shipping tiers, simple label, case-by-case return/claim contact | 2026-11-18 → 2026-12-08 | 3 weeks | Lighter than originally planned — no carrier API, no refund engine, no return/warranty policy engine (Q-034, Q-035, Q-036, Q-037, Q-038) |
 | 5 — Pre-order, dropship, BigSeller/Shopee sync | 2026-12-09 → 2027-01-12 | 5 weeks | Includes buffer for the BigSeller data-inspection dependency; extends if Shopee access (Q-042) is still unavailable |
@@ -115,11 +115,11 @@ This documentation is the deliverable. No requirement is delivered by it.
 
 ---
 
-## Phase 2 — Products, variants, stock, Excel import
+## Phase 2 — Products, variants, stock (Shopee catalogue mirror)
 
 - **Dates:** 2026-09-16 → 2026-10-13
-- **Deliverables (from the source):** the product system, product options, stock, and Excel file import.
-- **Blocked by:** the BigSeller data-inspection dependency (Q-007, Q-011, Q-012, Q-014, Q-044) for the catalogue's identity rules and the Excel format; Q-013 (the practical maximum enforced in the UI and import) — the Shopee/Lazada research is complete, so this now waits on a client answer rather than on research, though the underlying model already supports any number.
+- **Deliverables (from the source, as revised):** the product system, product options and stock — now delivered as a mirror of the Shopee catalogue (plan 010, D-094, D-095). The source's Excel file import is removed (REQ-038, D-094).
+- **Blocked by:** not blocked (plan 010). Per the project owner's approval of 2026-10-26 (spec §2 *Authority*), the catalogue's shape comes from Shopee, so Q-013 and Q-014 do not block it and the Excel format (Q-012) no longer applies. Still open and outside plan 010: Q-056 (Shopee's API call limit, before go-live) and Q-042 (live go-live and owner authorization).
 
 > **Catalogue mirror (owner, 2026-10-26).** Plan 010
 > (`plans/010-shopee-catalogue-mirror.md`) changes how this phase's catalogue
@@ -298,7 +298,7 @@ No direct carrier integration. Shipping is handled through BigSeller.
 
 - **Dates:** 2026-12-09 → 2027-01-12
 - **Deliverables (from the source):** pre-order, products from distributors (dropship), and Shopee stock linking.
-- **Blocked by:** phase 4 complete; the BigSeller data-inspection dependency; a Shopee Partner account and test shop, not yet available (Q-042); Shopee data/extraction research (Q-045).
+- **Blocked by:** phase 4 complete; the BigSeller data-inspection dependency; Shopee sandbox access now exists (Q-042 PARTIALLY RESOLVED — live go-live and the owner's authorization are pending); Shopee data/extraction research is largely done through plan 010 (Q-045 still UNRESOLVED).
 
 ### Channel sync
 

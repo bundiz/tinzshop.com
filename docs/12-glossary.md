@@ -27,8 +27,8 @@ vocabulary.
 | Variant | รุ่น / ตัวเลือกสินค้า | One specific buyable combination of a product's options, holding its own ModelSKU, price and stock. | `variant` |
 | Option type | ตัวเลือก | An axis a product varies on, such as colour or capacity. Maximum number per product is unknown — see Q-013. | `option_type` |
 | Option value | ค่าตัวเลือก | One value on an option type, such as "black" or "512GB". | `option_value` |
-| Parent SKU | รหัสสินค้าหลัก | The single code identifying a product. Format unknown — defined in a contract that was not provided. See Q-014, Q-007. | `parent_sku` |
-| Model SKU | รหัสรุ่น | The code identifying one variant. Format unknown, and whether it embeds the Parent SKU is unknown. See Q-014. | `model_sku` |
+| Parent SKU | รหัสสินค้าหลัก | The single code identifying a product. Stored as Shopee holds it, with no uniqueness constraint; identity is Shopee's item id (D-103). Our own format rule is unknown — see Q-014, Q-007. | `parent_sku` |
+| Model SKU | รหัสรุ่น | The code identifying one variant. Stored as Shopee holds it, with no uniqueness constraint; identity is Shopee's model id (D-103). Our own format rule, and whether it embeds the Parent SKU, is unknown — see Q-014. | `model_sku` |
 | Category | หมวดหมู่ | A grouping used to browse products. Named in the source: Nintendo Switch, PlayStation 5, IT Gadgets, Pre-Order. Our own menu categories; admin assigns products to them (D-099). | `category` |
 | Category translation | ชื่อหมวดหมู่ตามภาษา | The Thai or English name of a category, one row per locale. | `category_translation` |
 | Product category | หมวดหมู่ของสินค้า | Links a product to one of our categories; a product may sit in several. | `product_category` |
@@ -50,10 +50,10 @@ vocabulary.
 | In stock | มีสินค้า | Public status: available to buy. | `in_stock` |
 | Out of stock | สินค้าหมด | Public status: not available to buy. | `out_of_stock` |
 | Not available for sale | ไม่พร้อมขาย | A status raised in the §4 discussion notes as a manual alternative to setting stock to zero. Not a confirmed requirement. | `not_for_sale` |
-| Stock sync | เชื่อมสต๊อก | Keeping the site's stock and Shopee's stock in agreement, via a daily BigSeller file export/import. Shopee is authoritative when the two disagree — see Q-043, Q-046, D-081, D-082. | `stock_sync` |
+| Stock sync | เชื่อมสต๊อก | Keeping the site's stock and Shopee's stock in agreement, by pulling the Shopee catalogue every 10 minutes (D-095); staff update stock in BigSeller by hand from an admin list (D-096), and BigSeller pushes it to Shopee. The daily BigSeller file (D-081) is superseded for the catalogue. Shopee is authoritative when the two disagree — see Q-043, Q-046, D-082. | `stock_sync` |
 | Stock movement | ความเคลื่อนไหวสต๊อก | An append-only record of a change to a variant's stock quantity — delta, reason, actor, source. Not the same as the removed audit log (D-066); this is the stock-integrity record, kept regardless. | `stock_movement` |
 | Manual stock adjustment | ตัดสต๊อกด้วยมือ | Staff updating stock in BigSeller by hand for a paid website order line, recorded on the order line as adjusted or not needed, with who and when. The website itself never changes stock. See D-096. | `stock_adjustment` |
-| Reservation quota | โควตาจอง | For a pre-order only: a cap on reservations against a release date, held at order time. Not a stock deduction — see `pre_order` and Q-024, D-068. | `reservation_quota` |
+| Reservation quota | โควตาจอง | For a pre-order only: a cap on reservations against a release date, held at order time. Not a stock deduction — see `pre_order` and Q-024. D-068 is superseded by D-096 for normal orders; how pre-orders interact with stock is phase 5 work (spec §5.3, §5.5). | `reservation_quota` |
 
 ## Orders
 
@@ -122,7 +122,7 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 
 | English | Thai | Definition | Identifier |
 | :--- | :--- | :--- | :--- |
-| Pre-order | พรีออเดอร์ | Selling a product before release, with a release date and a reservation quota. Stock is only actually deducted when the goods are received, not at order time. See Q-024, D-068. | `pre_order` |
+| Pre-order | พรีออเดอร์ | Selling a product before release, with a release date and a reservation quota. Website orders never change stock (D-096, which supersedes D-068 for normal orders); how pre-order lines join the manual stock list when goods are received is phase 5 work (spec §5.3, §5.5). See Q-024. | `pre_order` |
 | Release date | วันวางจำหน่าย | The date a pre-ordered product becomes available. | `release_date` |
 | Dropship | สินค้าสั่งจากตัวแทนจำหน่าย | Selling a product the shop does not hold, ordered from a distributor after the sale, gated by a supplier-availability check before payment — see `supplier_availability_check`. | `dropship` |
 | Supplier availability check | ตรวจสอบสินค้ากับซัพพลายเออร์ | The "Contact staff / Check availability" step a dropship customer uses before paying. Staff confirm with the supplier and authorize or cancel the order. See Q-047, D-083. | `supplier_availability_check` |
