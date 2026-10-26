@@ -355,7 +355,7 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `uses extra info when present and zero when absent`: with the fixture, item 803947687 has `salesCount 5`, `ratingStar 4.5`, `ratingCount 2`; with `extraInfo: null`, all three are `0`.
   - `parses weight given as text or number`: `'0.2'` and `0.2` both give `200`; `'abc'` gives `null`.
   - `refuses an item marked has_model without a model list`: throws `CatalogueMappingError`.
-- [x] **Step 2: Run them.** `npx vitest run src/server/adapters/shopee/map-item.test.ts` → FAIL.
+- [ ] **Step 2: Run them.** `npx vitest run src/server/adapters/shopee/map-item.test.ts` → FAIL. (not run before implementation — see task 6 report; behaviour pinned by mutation checks in review)
 - [x] **Step 3: Implement both files.**
 - [x] **Step 4: Run them.** Same command → PASS, and `npm run typecheck` → PASS.
 - [x] **Step 5: Commit** — `feat: map Shopee items to channel-neutral catalogue snapshots`

@@ -197,4 +197,76 @@ describe("mapShopeeItem", () => {
       }),
     ).toThrow(CatalogueMappingError);
   });
+
+  describe("price mapping", () => {
+    const cases: [
+      string,
+      { current_price: number; original_price?: number },
+      bigint,
+      bigint,
+    ][] = [
+      [
+        "distinct original price",
+        { current_price: 100, original_price: 150 },
+        10000n,
+        15000n,
+      ],
+      ["absent original price", { current_price: 100 }, 10000n, 10000n],
+    ];
+    it.each(cases)("no-model item: %s", (_n, price, current, original) => {
+      const s = mapShopeeItem({
+        ...noModel(),
+        baseInfo: { ...base(803947687n), price_info: [price] },
+      });
+      expect(s.variants[0]?.priceSatang).toBe(current);
+      expect(s.variants[0]?.originalPriceSatang).toBe(original);
+    });
+    it.each(cases)("model: %s", (_n, price, current, original) => {
+      const models = modelList.model.map((m) => ({
+        ...m,
+        price_info: [price],
+      }));
+      const s = mapShopeeItem({
+        ...twoTier(),
+        modelList: { ...modelList, model: models },
+      });
+      for (const v of s.variants) {
+        expect(v.priceSatang).toBe(current);
+        expect(v.originalPriceSatang).toBe(original);
+      }
+    });
+  });
+
+  describe("option names", () => {
+    const standardTier = (name: string, values: string[]) => ({
+      variation_name: name,
+      variation_option_list: values.map((v) => ({ variation_option_name: v })),
+    });
+    it("prefers standardise_tier_variation when well-formed", () => {
+      const s = mapShopeeItem({
+        ...twoTier(),
+        modelList: {
+          ...modelList,
+          standardise_tier_variation: [
+            standardTier("Size", ["S1", "S2"]),
+            standardTier("Color", ["C1", "C2"]),
+          ],
+        },
+      });
+      expect(s.optionTypes).toEqual([
+        { name: "Size", values: ["S1", "S2"] },
+        { name: "Color", values: ["C1", "C2"] },
+      ]);
+    });
+    it("falls back to tier_variation when the standardised tier count differs", () => {
+      const s = mapShopeeItem({
+        ...twoTier(),
+        modelList: {
+          ...modelList,
+          standardise_tier_variation: [standardTier("Size", ["S1", "S2"])],
+        },
+      });
+      expect(s.optionTypes.map((o) => o.name)).toEqual(["Capacity", "Colour"]);
+    });
+  });
 });
