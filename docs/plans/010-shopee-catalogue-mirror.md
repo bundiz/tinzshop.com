@@ -342,7 +342,7 @@ These five conditions are implied by the spec, but a careless implementation pas
   - An empty `item_sku` / `model_sku` becomes `null`.
   - A no-model item gets one variant with `externalModelId: null` and `modelSku` = `item_sku`.
 
-- [ ] **Step 1: Write the failing tests** with the Task 5 fixtures:
+- [x] **Step 1: Write the failing tests** with the Task 5 fixtures:
   - `maps a two-tier item`: item `803947690n` →
     - `optionTypes` equals `[{ name: 'Capacity', values: ['1TB', '2TB'] }, { name: 'Colour', values: ['Black', 'Blue'] }]`, and there are 4 variants
     - the variant with `externalModelId === 12998741n` has `modelSku 'SBX-IT-SSD-1TB-BLU'`, `priceSatang 299000n`, `stockQuantity 2`, `optionIndexes [0, 1]` and `isActive true`
@@ -355,10 +355,10 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `uses extra info when present and zero when absent`: with the fixture, item 803947687 has `salesCount 5`, `ratingStar 4.5`, `ratingCount 2`; with `extraInfo: null`, all three are `0`.
   - `parses weight given as text or number`: `'0.2'` and `0.2` both give `200`; `'abc'` gives `null`.
   - `refuses an item marked has_model without a model list`: throws `CatalogueMappingError`.
-- [ ] **Step 2: Run them.** `npx vitest run src/server/adapters/shopee/map-item.test.ts` → FAIL.
-- [ ] **Step 3: Implement both files.**
-- [ ] **Step 4: Run them.** Same command → PASS, and `npm run typecheck` → PASS.
-- [ ] **Step 5: Commit** — `feat: map Shopee items to channel-neutral catalogue snapshots`
+- [x] **Step 2: Run them.** `npx vitest run src/server/adapters/shopee/map-item.test.ts` → FAIL.
+- [x] **Step 3: Implement both files.**
+- [x] **Step 4: Run them.** Same command → PASS, and `npm run typecheck` → PASS.
+- [x] **Step 5: Commit** — `feat: map Shopee items to channel-neutral catalogue snapshots`
 
 ---
 
