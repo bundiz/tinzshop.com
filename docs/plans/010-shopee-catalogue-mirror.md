@@ -88,7 +88,7 @@ These five conditions are implied by the spec, but a careless implementation pas
 **Interfaces:**
 - Produces: decision ids D-094 – D-103 and question Q-056, which later tasks cite in code comments.
 
-- [ ] **Step 1: Add the decision rows to `docs/11-decisions.md`.** Put them in a new section, `## Catalogue mirror (owner, 2026-10-26)`. Every row is `Accepted` and links to the spec.
+- [x] **Step 1: Add the decision rows to `docs/11-decisions.md`.** Put them in a new section, `## Catalogue mirror (owner, 2026-10-26)`. Every row is `Accepted` and links to the spec.
   - D-094: Shopee is the master for product name, description, photos, options, price and stock. Our admin never edits them (spec O-1).
   - D-095: the catalogue is pulled from the Shopee Open API every 10 minutes, and storefront pages never call Shopee. Supersedes D-081 for the catalogue direction (O-2).
   - D-096: website orders never change stock. Staff update stock in BigSeller by hand from an admin list of paid order lines. Supersedes D-068 and removes REQ-020's no-oversell guarantee (O-3).
@@ -100,20 +100,20 @@ These five conditions are implied by the spec, but a careless implementation pas
   - D-102: every website product comes from Shopee; there are no website-only products (O-10).
   - D-103: Parent SKU and ModelSKU are stored as Shopee holds them, with no uniqueness constraint. Identity is Shopee's item and model id (spec §5.8).
   - Also set D-068's status to `Superseded — see D-096`, and D-081's to `Superseded for the catalogue — see D-095`.
-- [ ] **Step 2: Add glossary rows to `docs/12-glossary.md`.** Each needs English, Thai, a definition and the identifier:
+- [x] **Step 2: Add glossary rows to `docs/12-glossary.md`.** Each needs English, Thai, a definition and the identifier:
   - `product_translation`, `product_image`, `category_translation`, `product_category`, `variant_option_value`
   - `shipping_size_tier_rate`
   - `channel_item`, `channel_listing`, `channel_authorization`, `external_item_id`, `external_model_id`
   - `sync_run`, catalogue sync (`catalogue_sync`), `catalogue_item_snapshot`
   - product activation (`is_active`)
   - manual stock adjustment (ตัดสต๊อกด้วยมือ, `stock_adjustment`)
-- [ ] **Step 3: Update `docs/13-open-questions.md`.**
+- [x] **Step 3: Update `docs/13-open-questions.md`.**
   - Q-042 → PARTIALLY RESOLVED: sandbox access has existed since 2026-10-20; the live app still needs go-live and the owner's authorization.
   - Q-043: add a note pointing to D-095.
   - Q-013: add a note that the site mirrors Shopee's two tiers (D-094, spec §2).
   - Add **Q-056**, UNRESOLVED: "What is Shopee's daily API call limit for this app, and does the full stock sweep in plan 010 stay under it at the real catalogue size?" Ask: developers, then Shopee support.
   - Update the status counts table to match.
-- [ ] **Step 4: Update `docs/02-scope-and-phases.md`.**
+- [x] **Step 4: Update `docs/02-scope-and-phases.md`.**
   - REQ-004: per D-103.
   - REQ-020: rewrite per D-096.
   - REQ-021: the mechanism is BigSeller → Shopee → our pull (D-095); the site pushes nothing.
@@ -121,17 +121,17 @@ These five conditions are implied by the spec, but a careless implementation pas
   - REQ-037: narrowed to inline and bulk editing of site-only fields.
   - REQ-038: moved to *Removed* (D-094).
   - Add plan 010 to the phase 2 text.
-- [ ] **Step 5: Update the other docs.**
+- [x] **Step 5: Update the other docs.**
   - `03-architecture.md`: layers per D-101; order flow has no stock lock; invariant 1 per D-096.
   - `04-tech-stack-and-structure.md`: the folder tree per the spec's §4.
   - `05-database.md`: the catalogue and stock sections now point to the spec, with a summary of §5.
   - `14-integrations.md`: Shopee → **RESEARCHED**, citing developer-guide/20, developer-guide/644, `v2.product.add_item`, `v2.product.init_tier_variation`, `v2.bundle_deal.add_bundle_deal`, `v2.product.add_kit_item`, and the sandbox findings of 2026-10-20.
   - `plans/002…`: status line `Superseded in part by plan 010 — 2026-10-26`.
   - `CLAUDE.md` *Current state*: implementation is unblocked for plan 010.
-- [ ] **Step 6: Verify the references resolve.**
+- [x] **Step 6: Verify the references resolve.**
   Run: `for id in D-094 D-095 D-096 D-097 D-098 D-099 D-100 D-101 D-102 D-103 Q-056; do grep -q "$id" docs/11-decisions.md docs/13-open-questions.md || echo "missing $id"; done`
   Expected: no output.
-- [ ] **Step 7: Commit** — `docs: record catalogue-mirror decisions D-094–D-103 and Q-056`
+- [x] **Step 7: Commit** — `docs: record catalogue-mirror decisions D-094–D-103 and Q-056`
 
 ---
 

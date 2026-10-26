@@ -1,6 +1,6 @@
 # 002 — Catalogue, stock, admin foundation, Excel import
 
-- **Status:** Blocked — 2026-09-13
+- **Status:** Superseded in part by plan 010 — 2026-10-26 (catalogue, stock and product-import scope; the staff authentication and role scope is unchanged). Previously: Blocked — 2026-09-13
 - **Phase:** 2
 - **Dates (proposed):** 2026-09-16 → 2026-10-13 — see `../02-scope-and-phases.md#schedule-and-budget`
 - **Requirements delivered:** REQ-004, REQ-005, REQ-006, REQ-020, REQ-032, REQ-033, REQ-034, REQ-035, REQ-036, REQ-037, REQ-038, REQ-051

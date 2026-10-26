@@ -18,7 +18,7 @@ Every external system named in `reference/client-summary-th.md`, in one file.
 | :--- | :--- | :--- | :--- |
 | [K-Payment](#k-payment-kasikorn-bank) | NOT RESEARCHED — credentials in hand, sandbox testing next | Card payment, instalments, PromptPay QR — the **sole** payment method | Phase 3 |
 | [BigSeller](#bigseller) | NOT RESEARCHED — account exists, data inspection pending | Stock management, daily file sync, shipping/fulfilment, labels | Phase 2 (SKU/Excel), Phase 5 (sync) |
-| [Shopee](#shopee) | NOT RESEARCHED — no account yet | Two-way stock sync (Shopee authoritative on conflict), product pairing | Phase 5 |
+| [Shopee](#shopee) | RESEARCHED — sandbox access since 2026-10-20; live go-live pending | Catalogue mirror: pull products, options, prices and stock every 10 minutes (D-094, D-095) | Phase 2 (plan 010) |
 | [Mail relay](#transactional-email) | NOT RESEARCHED — category decided, provider not chosen | Automatic email at every order step | Phase 3 |
 | [Cloudflare](#cloudflare) | DECIDED — Free plan, security/bot scope only | Security, bot verification | Phase 8 |
 | [LINE](#line) | NOT RESEARCHED | Displaying the shop's LINE contact | Phase 6 |
@@ -88,35 +88,48 @@ a claim about K-Payment's actual behaviour until that testing happens.
 
 ## Shopee
 
-- **Status:** NOT RESEARCHED · **Named in:** §4, and phases 1 and 5 of §11 · **Blocks:** Phase 5
+- **Status:** RESEARCHED (2026-10-26) · **Named in:** §4, and phases 1 and 5 of §11 · **Blocks:** Phase 2 catalogue mirror (plan 010); phase 5 for pre-order and dropship specifics
 
 ### What we need it for
 
-Stock linked with Shopee so a sale on either channel adjusts the other
-automatically (REQ-021), and staff able to pair a site product with its Shopee
-listing themselves, without a developer (REQ-022).
+The site mirrors Shopee's catalogue: a background job pulls products, variants,
+options, photos, prices and stock from the Shopee Open API every 10 minutes
+(D-094, D-095), and storefront pages never call Shopee. The site writes nothing
+to Shopee. Stock reaches Shopee from BigSeller, and the site reads it back
+(REQ-021, D-096). The design is
+[the catalogue mirror spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md).
 
-The source also records an open note to find out how to pull data out of
-Shopee, and a phase 2 note asking what Shopee's real-world limitations are and
-whether they can be reflected on the site.
+### What was researched
+
+Sources read, and the sandbox work of 2026-10-20 (Test Partner, sandbox shop;
+real responses captured with `scripts/shopee-sandbox/`):
+
+- **Shopee Open Platform developer-guide/20 and developer-guide/644**, read for the catalogue and authorization design.
+- **`v2.product.init_tier_variation`** — two option tiers at most; a third was tested in the sandbox and rejected (spec §2, consequences of O-1). Recorded in Q-013.
+- **`v2.product.add_item`** — read, with the sandbox, to see how a Shopee listing is created and what the item, price and stock fields look like when read back.
+- **`v2.product.add_kit_item`** — a set can be a *kit item*: a listing built from other items' models with quantities, marked `tag.kit` by `get_item_list`. The sync records it as `channel_item.is_kit`; components are not modelled (spec §2, consequences of O-10).
+- **`v2.bundle_deal.add_bundle_deal`** — Shopee bundle deals are discount rules (fixed price, percent or baht off when buying at least N, with start and end times), not products. They are not mirrored.
+- **Sandbox findings** — the item statuses seen were NORMAL and UNLIST; Shopee's pre-order is only "ships in N days" (the sandbox allowed 3–4), which is why pre-order release dates are ours; `weight` arrives as a string; refresh tokens work once.
 
 ### What we do NOT know
 
-- How to get data out of Shopee at all — the source itself raises this as unanswered. See Q-045.
-- How a discrepancy between Shopee and site stock is detected, given the daily-file sync (Q-043, D-081). **Shopee is now decided as authoritative when the two disagree** (Q-046, D-082) — what remains open is the mechanism, not the rule.
-- How Shopee identifies a listing and how that maps to Parent SKU / ModelSKU, which is itself undefined. See Q-014.
-- Whether Shopee's own constraints make any part of REQ-021 impossible.
-- Any onboarding, approval or review process for partner access.
+- Shopee's daily API call limit for this app, and whether the full stock sweep stays under it at the real catalogue size. See Q-056.
+- Whether `update_time` changes when only stock changes. Until confirmed, the sync sweeps stock for every active product each run (spec §8 risk 1).
+- How kit items' price and stock appear, and how item statuses other than NORMAL and UNLIST appear (spec §8 risks 5 and 6).
+- Shopee push notifications, which could replace the stock sweep later. Not researched.
+- The live app's go-live process and the shop owner's authorization (Q-042).
 
 ### Credential required
 
-A Shopee Partner account and a test shop — §12 item 9, required before phase 5.
-Not yet supplied (Q-042).
+Sandbox: a Test Partner and sandbox shop, held. Live: a Live partner key and the
+shop owner's authorization, **not yet supplied** (Q-042). Neither appears in this
+repository; the partner key comes from the environment only, and tokens are
+encrypted at rest.
 
 ### What it blocks
 
-Phase 5 stock sync. Also feeds the phase 2 stock model, since a product's
-identity has to be mappable to a Shopee listing.
+Plan 010 builds against the sandbox only. Production use waits on the live
+go-live and authorization (Q-042) and on ADR-0002 for where the scheduler runs.
 
 ---
 

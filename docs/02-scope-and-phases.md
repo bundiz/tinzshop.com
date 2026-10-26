@@ -86,7 +86,7 @@ and should be said explicitly, along with what it displaces.
 | Phase | Requirements |
 | :--- | :--- |
 | 1 — Planning documentation | *(none — this documentation is the deliverable)* |
-| 2 — Products, variants, stock, Excel | REQ-004, 005, 006, 020, 032, 033, 034, 035, 036, 037, 038, 051 |
+| 2 — Products, variants, stock, Excel | REQ-004, 005, 006, 020, 032, 033, 034, 035, 036, 037, 038 (REMOVED), 051 |
 | 3 — Storefront, ordering, K-Payment, invoice | REQ-001, 002, 003, 010 (REMOVED), 011, 016, 019, 023, 024, 025, 026, 041, 042, 052, 053 |
 | 4 — Shipping tiers, labels, return/claim contact | REQ-013, 014, 028, 030 |
 | 5 — Pre-order, dropship, Shopee sync | REQ-021, 022, 048, 049, 050 |
@@ -95,7 +95,7 @@ and should be said explicitly, along with what it displaces.
 | 8 — Security and bot verification | *(none written — Cloudflare Free scoped in Q-054)* |
 | 9 — Database backup | *(none written — strategy in `10-deployment.md#backup`)* |
 | Cross-cutting | REQ-007, 008, 009 |
-| Removed | REQ-010, 015, 017, 018, 029, 040 |
+| Removed | REQ-010, 015, 017, 018, 029, 038, 040 |
 | Backlog, not scheduled | Loyalty/gift cards, wishlist (§10, `+`) |
 
 ---
@@ -121,14 +121,22 @@ This documentation is the deliverable. No requirement is delivered by it.
 - **Deliverables (from the source):** the product system, product options, stock, and Excel file import.
 - **Blocked by:** the BigSeller data-inspection dependency (Q-007, Q-011, Q-012, Q-014, Q-044) for the catalogue's identity rules and the Excel format; Q-013 (the practical maximum enforced in the UI and import) — the Shopee/Lazada research is complete, so this now waits on a client answer rather than on research, though the underlying model already supports any number.
 
+> **Catalogue mirror (owner, 2026-10-26).** Plan 010
+> (`plans/010-shopee-catalogue-mirror.md`) changes how this phase's catalogue
+> and stock requirements are met: Shopee is the master for the catalogue
+> (D-094), pulled every 10 minutes (D-095); website orders never change stock
+> (D-096); every product comes from Shopee (D-102). Design: [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md). REQ-004,
+> 020, 036, 037 and 038 below are restated accordingly, and plan 002 is
+> superseded in part by plan 010.
+
 > The staff authentication and role requirements (REQ-032 to REQ-035, REQ-051)
 > are placed here because the admin panel cannot be used without them. **The
 > source does not say this** — it is our sequencing.
 
 ### Catalogue
 
-**REQ-004 — Parent SKU and ModelSKU structure** · §4 · CONFIRMED, format `[Q-014]`
-Each product carries exactly one Parent SKU, and each model of that product carries its own ModelSKU. The format of both is not invented — it comes from inspecting real BigSeller data (Q-007, Q-014).
+**REQ-004 — Parent SKU and ModelSKU structure** · §4 · CONFIRMED, stored as Shopee holds them (D-103)
+Each product carries one Parent SKU, and each model of that product carries its own ModelSKU. Both are stored exactly as Shopee holds them, with no uniqueness constraint and no format rule of our own; identity is Shopee's item and model id (D-103). Empty or duplicate SKUs are reported by the sync rather than rejected. The format question Q-014 is unaffected and stays open.
 
 **REQ-005 — Multiple option types per product** · §4 · CONFIRMED, cap `[Q-013]`
 A product can have more than one option type (for example colour × capacity), and each resulting combination can carry its own code, price and stock quantity. **No hard-coded cap of two** — the join-table model in `05-database.md` already supports any number. The Shopee/Lazada research is done — both marketplaces themselves cap at two, which is why the client's answer rules out inheriting it — so the practical maximum the import/UI enforces now waits on a client answer (Q-013).
@@ -138,8 +146,8 @@ The storefront shows availability as **in stock or out of stock** — never a re
 
 ### Stock
 
-**REQ-020 — True stock deduction with no overselling** · §4 · CONFIRMED (timing decided, D-068)
-Stock is deducted for real and the shop cannot sell more units than it holds. For a normal order, deduction happens when K-Payment confirms payment, not at order placement. For a pre-order, a reservation quota is held at order time and stock is only actually deducted when goods are recorded as received from the supplier — see REQ-048 and Q-024.
+**REQ-020 — Stock changed by staff from a list of paid order lines** · §4 · CONFIRMED (rewritten, D-096)
+A website order never changes stock in the system, so the no-overselling guarantee is **removed**. Instead, admin sees a list of paid order lines and staff update stock in BigSeller by hand (manual stock adjustment, ตัดสต๊อกด้วยมือ); BigSeller pushes it to Shopee, and the next catalogue sync brings the new number back to the site. Between a payment and that sync the site can show stock that is no longer true; staff handle an oversold order outside the system (D-077). Pre-order lines are excluded from the list because stock leaves only when goods arrive (REQ-048). Supersedes D-068; see [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md) §2 and §5.5.
 
 ### Admin back office
 
@@ -155,19 +163,19 @@ Access is divided among six roles: Blogger, Sale-manager, Admin, Top-level Admin
 **REQ-035 — Owner-configurable role permissions, editing only** · §8 · CONFIRMED (narrowed)
 The shop owner can adjust the permissions of each of the six existing roles themselves, without a developer changing code. **There is no "create a new role" capability** (D-063, Q-016).
 
-**REQ-036 — Product list grouped by parent with expandable variants** · §8 · CONFIRMED
-The product management screen lists parent products, and a parent can be expanded to show its variants.
+**REQ-036 — Product list grouped by parent with expandable variants** · §8 · CONFIRMED (kept; Shopee fields read-only)
+The product management screen lists parent products, and a parent can be expanded to show its variants. Fields that come from Shopee (name, description, photos, options, price, stock) are read-only here (D-094).
 
-**REQ-037 — Inline and bulk editing of price, stock and status** · §8 · CONFIRMED
-A staff member can change price, stock and status directly from the product list, and can change several products at once.
-
-**REQ-038 — Excel import and export with validation and dry run** · §8 · CONFIRMED, format `[Q-012]`
-Staff can import and export products as an Excel file. The import can create new products, fully supports multi-option products, reports errors before saving, and offers a trial mode that shows the result without writing anything. The column layout is not invented — it follows BigSeller's actual export format once inspected (Q-012).
+**REQ-037 — Inline and bulk editing of site-only fields** · §8 · CONFIRMED (narrowed, D-094)
+A staff member can edit, inline and for several products at once, only the fields Shopee does not hold: menu category, shipping size tier, pre-order and release date, and activation. Price, stock and the other Shopee fields are no longer editable on the site.
 
 **REQ-051 — Staff roles** · §8 · CONFIRMED (see REQ-034)
 The four staff roles: Blogger (writes news only), Sale-manager (products, stock, orders, finance), Admin (oversees everything), and Top-level Admin (adds and removes staff, and configures the system).
 
 ### Removed
+
+**REQ-038 — Excel import and export with validation and dry run** · §8 · **REMOVED** (D-094)
+Shopee is the master for the catalogue and products arrive by the Shopee pull, so there is no product import. See the *Removed requirements* table.
 
 **REQ-040 — Audit history of changes** · §8 · **REMOVED** (D-066, Q-020)
 No audit log of price, stock or order-status changes is built.
@@ -294,8 +302,8 @@ No direct carrier integration. Shipping is handled through BigSeller.
 
 ### Channel sync
 
-**REQ-021 — Stock linked with Shopee, Shopee authoritative on conflict** · §4 · CONFIRMED
-A sale on either channel adjusts the stock on the other, via the daily BigSeller file sync (D-081, Q-043). When the two disagree, Shopee is the source of truth (D-082, Q-046).
+**REQ-021 — Stock linked with Shopee, Shopee authoritative on conflict** · §4 · CONFIRMED (mechanism changed, D-095)
+The mechanism is BigSeller → Shopee → our pull: staff change stock in BigSeller, BigSeller pushes it to Shopee, and the site's 10-minute pull brings it back (D-095, D-096). The site pushes nothing to Shopee. When the two disagree, Shopee is the source of truth (D-082, Q-046).
 
 **REQ-022 — Staff map products to Shopee without a programmer** · §4 · CONFIRMED
 A staff member can pair a product on the site with its Shopee listing themselves in the admin panel.
@@ -419,6 +427,7 @@ deleted outright, so nobody re-adds them believing they were simply missed.
 | REQ-017 | Standalone PromptPay | D-071, Q-029 |
 | REQ-018 | Full and partial refunds with history | D-077, Q-036 |
 | REQ-029 | Integrate at least one real carrier | D-075, Q-034 |
+| REQ-038 | Excel import and export of products | D-094 |
 | REQ-040 | Audit history of price/stock/order-status changes | D-066, Q-020 |
 
 ---

@@ -29,7 +29,13 @@ vocabulary.
 | Option value | ค่าตัวเลือก | One value on an option type, such as "black" or "512GB". | `option_value` |
 | Parent SKU | รหัสสินค้าหลัก | The single code identifying a product. Format unknown — defined in a contract that was not provided. See Q-014, Q-007. | `parent_sku` |
 | Model SKU | รหัสรุ่น | The code identifying one variant. Format unknown, and whether it embeds the Parent SKU is unknown. See Q-014. | `model_sku` |
-| Category | หมวดหมู่ | A grouping used to browse products. Named in the source: Nintendo Switch, PlayStation 5, IT Gadgets, Pre-Order. | `category` |
+| Category | หมวดหมู่ | A grouping used to browse products. Named in the source: Nintendo Switch, PlayStation 5, IT Gadgets, Pre-Order. Our own menu categories; admin assigns products to them (D-099). | `category` |
+| Category translation | ชื่อหมวดหมู่ตามภาษา | The Thai or English name of a category, one row per locale. | `category_translation` |
+| Product category | หมวดหมู่ของสินค้า | Links a product to one of our categories; a product may sit in several. | `product_category` |
+| Product translation | ข้อความสินค้าตามภาษา | The name and description of a product in one locale. The sync writes Shopee's text into the `th` row; the `en` row is optional and edited in our admin. | `product_translation` |
+| Product image | รูปสินค้า | One photo of a product, with its position and Shopee's image URL (D-097). | `product_image` |
+| Variant option value | ค่าตัวเลือกของรุ่น | Links a variant to each option value that makes up its combination. | `variant_option_value` |
+| Product activation | การเปิดใช้งานสินค้า | The admin switch that makes a product visible on the storefront. A product first seen by the sync is created inactive until admin assigns a category and a shipping size tier. | `is_active` |
 
 > Use `product` only for the parent and `variant` only for the buyable model.
 > Never use "SKU" alone — always `parent_sku` or `model_sku`, because the source
@@ -46,6 +52,7 @@ vocabulary.
 | Not available for sale | ไม่พร้อมขาย | A status raised in the §4 discussion notes as a manual alternative to setting stock to zero. Not a confirmed requirement. | `not_for_sale` |
 | Stock sync | เชื่อมสต๊อก | Keeping the site's stock and Shopee's stock in agreement, via a daily BigSeller file export/import. Shopee is authoritative when the two disagree — see Q-043, Q-046, D-081, D-082. | `stock_sync` |
 | Stock movement | ความเคลื่อนไหวสต๊อก | An append-only record of a change to a variant's stock quantity — delta, reason, actor, source. Not the same as the removed audit log (D-066); this is the stock-integrity record, kept regardless. | `stock_movement` |
+| Manual stock adjustment | ตัดสต๊อกด้วยมือ | Staff updating stock in BigSeller by hand for a paid website order line, recorded on the order line as adjusted or not needed, with who and when. The website itself never changes stock. See D-096. | `stock_adjustment` |
 | Reservation quota | โควตาจอง | For a pre-order only: a cap on reservations against a release date, held at order time. Not a stock deduction — see `pre_order` and Q-024, D-068. | `reservation_quota` |
 
 ## Orders
@@ -109,6 +116,7 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Shipping label | ใบปะหน้า | A simple self-printed address label (name, address, phone) generated from order data — not a carrier's own barcoded label. Exact layout waits on an example. See Q-039, D-075. | `shipping_label` |
 | Shipping size tier | ระดับขนาดสินค้า | The shop-owner-configurable category — small / medium / large — a product is assigned for shipping-cost purposes, replacing a computed weight/dimension calculation. Candidate prices: small 50 THB, medium 100 THB, large free. See Q-040, D-079. | `shipping_size_tier` |
 | Shipping rule | กฎค่าส่ง | A staff-configurable rule, currently the size-tier pricing above. See Q-040. | `shipping_rule` |
+| Shipping size tier rate | ราคาค่าส่งตามระดับขนาด | The price, in satang, of one shipping size tier. Seeded with the candidate values and edited by the owner. See D-079. | `shipping_size_tier_rate` |
 
 ## Selling models
 
@@ -152,6 +160,14 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Shopee | Shopee | Marketplace the shop also sells on; authoritative source of truth for stock on conflict. See Q-046, D-082. | `shopee` |
 | BigSeller | BigSeller | Stock management tool, account already held by the shop. Daily file export/import is the confirmed sync mechanism (Q-043, D-081); SKU mapping still waits on inspecting real data (Q-007, Q-014, Q-044). | `bigseller` |
 | K-Payment | K-Payment | Kasikorn Bank's payment service — the **sole** payment method (card, instalments, PromptPay QR). Merchant/test credentials already exist; sandbox testing is the next step. See Q-030, Q-033, D-072. | `kpayment` |
+| Channel item | สินค้าบนช่องทางขาย | The link between a product and its Shopee item: Shopee's item id, status, sales count and rating. | `channel_item` |
+| Channel listing | รายการรุ่นบนช่องทางขาย | The link between a variant and its Shopee model. | `channel_listing` |
+| Channel authorization | การอนุญาตของช่องทางขาย | The shop's Shopee tokens, stored encrypted. | `channel_authorization` |
+| External item id | รหัสสินค้าของช่องทางขาย | Shopee's `item_id`. Identity of a product on Shopee; stored as a 64-bit integer. See D-103. | `external_item_id` |
+| External model id | รหัสรุ่นของช่องทางขาย | Shopee's `model_id`. Identity of a variant on Shopee; null for an item without models. See D-103. | `external_model_id` |
+| Sync run | รอบการซิงก์ | One recorded attempt of the catalogue sync, with its outcome, counts, API calls and warnings. | `sync_run` |
+| Catalogue sync | การซิงก์แคตตาล็อก | The job that pulls the Shopee catalogue every 10 minutes into our database (D-095). | `catalogue_sync` |
+| Catalogue item snapshot | ภาพรวมสินค้าจากแคตตาล็อก | The catalogue data the sync read for one Shopee item in one run, as it was written into our tables. | `catalogue_item_snapshot` |
 | Mail relay | Mail Relay | The category of transactional email solution decided on; specific provider and sending domain still to be finalized. See Q-032, D-074. | `mail_relay` |
 | Cloudflare | CloudFlare | Free plan, scoped to security and bot protection. See Q-054, D-087. | `cloudflare` |
 | PDPA | พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล | Thailand's Personal Data Protection Act. Deletion requests carry an accepted exception for retained tax/accounting data. See Q-028, D-070. | `pdpa` |

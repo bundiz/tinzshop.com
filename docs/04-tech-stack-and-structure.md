@@ -68,16 +68,18 @@ tinzshop.com/
 ├── public/
 ├── src/
 │   ├── app/
-│   │   └── [locale]/             ← every route is under a locale segment (D-031)
+│   │   ├── api/                  ← route handlers for outside callers (Shopee callback, scheduler, webhooks).
+│   │   │                           OUTSIDE the locale segment: fixed URLs. Thin — each calls a controller
+│   │   └── [locale]/             ← every page route is under a locale segment (D-031)
 │   │       ├── (shop)/           ← storefront — customers and guests
 │   │       ├── (admin)/          ← back office — staff only
-│   │       ├── (news)/           ← game news (REQ-047)
-│   │       └── api/              ← route handlers: webhooks, exports, callbacks only
+│   │       └── (news)/           ← game news (REQ-047)
 │   ├── components/
 │   │   ├── ui/                   ← tier 1: primitives, no domain knowledge
 │   │   └── domain/               ← tier 2: shared domain components
-│   ├── server/
-│   │   ├── domain/               ← business rules. Framework-free (D-002)
+│   ├── server/                   ← layered controller → service → repository (D-101)
+│   │   ├── controllers/          ← read the request, validate with Zod, call ONE service, shape the response
+│   │   ├── services/             ← business rules. Framework-free (D-002): no React, Next or Prisma
 │   │   │   ├── catalog/
 │   │   │   ├── cart/
 │   │   │   ├── order/
@@ -85,14 +87,13 @@ tinzshop.com/
 │   │   │   ├── stock/
 │   │   │   ├── tax/
 │   │   │   └── access/           ← permission evaluation (REQ-035)
-│   │   ├── data/                 ← Prisma queries. The only place Prisma is imported
-│   │   ├── adapters/             ← one directory per external system
-│   │   │   ├── kpayment/         ← sole payment method (D-072); credentials in hand
-│   │   │   ├── shopee/
-│   │   │   ├── bigseller/        ← daily file export/import (D-081); also fulfilment/labels
-│   │   │   └── mail-relay/       ← transactional email (D-074); provider TBD
-│   │   │                         ← no carrier/ — no direct carrier integration (D-075)
-│   │   └── actions/              ← Server Actions. Thin: parse, authorize, call domain
+│   │   ├── repositories/         ← Prisma queries. The only place Prisma is imported
+│   │   └── adapters/             ← one directory per external system
+│   │       ├── kpayment/         ← sole payment method (D-072); credentials in hand
+│   │       ├── shopee/           ← Shopee HTTP, signing, tokens; nothing else builds a Shopee URL
+│   │       ├── bigseller/        ← fulfilment/labels; catalogue direction superseded by D-095
+│   │       └── mail-relay/       ← transactional email (D-074); provider TBD
+│   │                             ← no carrier/ — no direct carrier integration (D-075)
 │   └── lib/                      ← genuinely generic helpers. No domain knowledge
 ├── tests/
 │   ├── integration/              ← runs against a real PostgreSQL
@@ -103,21 +104,21 @@ tinzshop.com/
 
 ### The rules this layout encodes
 
-1. **`src/server/domain/` imports nothing from `src/app/`, `src/components/`, or Prisma.** It takes plain values and returns plain values. This is what makes the four invariants in `03-architecture.md` testable without a running server.
-2. **Prisma is imported in `src/server/data/` and nowhere else.** A page that queries the database directly is a page that will get a business rule wrong in a way no test catches.
-3. **`src/server/adapters/<system>/` is the only place a vendor name appears.** The domain declares an interface — `PaymentGateway`, `Carrier`, `StockChannel` — and the adapter implements it. Since every external system in `14-integrations.md` is NOT RESEARCHED, this is what lets phase 2 and 3 proceed before phase 4 and 5 know what they are talking to.
-4. **`src/server/actions/` files are thin by rule.** Parse input with Zod, resolve the actor, call one domain function, return its result. Logic in an action is logic that cannot be unit-tested.
+1. **`src/server/services/` imports nothing from `src/app/`, `src/components/`, or Prisma.** It takes plain values and returns plain values. This is what makes the four invariants in `03-architecture.md` testable without a running server.
+2. **Prisma is imported in `src/server/repositories/` and nowhere else.** A page that queries the database directly is a page that will get a business rule wrong in a way no test catches.
+3. **`src/server/adapters/<system>/` is the only place a vendor name appears.** A service declares an interface — `PaymentGateway`, `Carrier`, `StockChannel` — and the adapter implements it. Since every external system in `14-integrations.md` is NOT RESEARCHED, this is what lets phase 2 and 3 proceed before phase 4 and 5 know what they are talking to.
+4. **`src/server/controllers/` files are thin by rule.** Parse input with Zod, resolve the actor, call one service, return its result. Logic in a controller is logic that cannot be unit-tested.
 5. **`src/lib/` holds nothing that knows what a product is.** If a helper mentions an order, a SKU or a baht, it belongs in the domain.
 
 ### Where a new file goes
 
 | You are adding | It goes in |
 | :--- | :--- |
-| A business rule, calculation, or state transition | `src/server/domain/<area>/` |
-| A database query | `src/server/data/` |
+| A business rule, calculation, or state transition | `src/server/services/<area>/` |
+| A database query | `src/server/repositories/` |
 | A call to K-Payment, Shopee, a carrier, or an email provider | `src/server/adapters/<system>/` |
-| A mutation the storefront or admin triggers | `src/server/actions/` |
-| An endpoint an outside system calls | `src/app/[locale]/api/` |
+| A mutation the storefront or admin triggers | `src/server/controllers/` |
+| An endpoint an outside system calls | `src/app/api/` (outside the locale segment), calling a controller |
 | A button, input, or other domain-free component | `src/components/ui/` |
 | A component that renders a product, order or variant | `src/components/domain/` |
 | A component only one route uses | Beside that route, not in `components/` |
@@ -133,7 +134,7 @@ the same pull request rather than inventing a local name.
 
 | Thing | Convention | Example |
 | :--- | :--- | :--- |
-| Directory | `kebab-case` | `src/server/domain/order/` |
+| Directory | `kebab-case` | `src/server/services/order/` |
 | React component file | `PascalCase.tsx` | `VariantPicker.tsx` |
 | Everything else `.ts` | `kebab-case.ts` | `price-order.ts` |
 | Type / interface | `PascalCase`, no `I` prefix | `OrderLine` |
@@ -175,6 +176,6 @@ module, so a missing variable fails immediately and loudly rather than as
 | `db:migrate` | Applies migrations locally | — |
 
 The import-boundary rule is not advisory. It fails the build when
-`src/server/domain/` imports React, Next, or Prisma, and when `src/app/`
+`src/server/services/` imports React, Next, or Prisma, and when `src/app/`
 imports Prisma directly. It exists because the layering in
 `03-architecture.md` is worth exactly as much as its enforcement.
