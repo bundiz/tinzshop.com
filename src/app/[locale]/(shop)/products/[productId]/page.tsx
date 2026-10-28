@@ -9,6 +9,7 @@ import SiteHeader from '../../_components/SiteHeader';
 import Breadcrumb from './_components/Breadcrumb';
 import BuyActions from './_components/BuyActions';
 import Gallery from './_components/Gallery';
+import ProductHeading from './_components/ProductHeading';
 import ProductTabs from './_components/ProductTabs';
 import ServicePanel from './_components/ServicePanel';
 import VariantPicker from './_components/VariantPicker';
@@ -62,9 +63,7 @@ export default async function ProductPage({ params }: Props) {
                   )}
                 </p>
               )}
-              <h1 id="product-title" className="text-[22px] leading-[1.5] [overflow-wrap:anywhere]">
-                {product.name}
-              </h1>
+              <ProductHeading name={product.name} isKit={product.isKit} />
               <VariantPicker
                 optionTypes={product.optionTypes}
                 variants={product.variants}

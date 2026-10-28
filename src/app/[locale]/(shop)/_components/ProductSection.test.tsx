@@ -60,4 +60,31 @@ describe('ProductSection', () => {
     const html = render(<ProductSection id="bestSellers" titleKey="home.bestSellers.title" cards={[card]} />);
     expect(html).toMatch(new RegExp(`<a href="#"[^>]*>${th.shop.home.section.more}`));
   });
+
+  it('renders the bundles section as a warm rail with subtitle, view-all and kit badges', () => {
+    const kits = [1, 2, 3].map((n) => ({ ...card, productId: `kit-${n}`, name: `ชุด ${n}`, isKit: true }));
+    const html = render(
+      <ProductSection
+        id="bundles"
+        titleKey="home.bundles.title"
+        subtitleKey="home.bundles.subtitle"
+        cards={kits}
+        layout="rail"
+        tone="warm"
+      />,
+    );
+    expect(html).toContain('id="bundles"');
+    expect(html).toContain(th.shop.home.bundles.title);
+    expect(html).toContain(th.shop.home.bundles.subtitle);
+    expect(html).toContain(th.shop.home.section.more);
+    expect(html).toContain('var(--color-accent-soft)');
+    expect(html).toContain('lg:auto-cols-[calc((100%-50px)/6)]');
+    expect(html.match(new RegExp(`whitespace-nowrap[^>]*>${th.shop.product.badge.bundle}<`, 'g'))).toHaveLength(3);
+  });
+
+  it('omits the bundles section when there are no kits', () => {
+    expect(
+      render(<ProductSection id="bundles" titleKey="home.bundles.title" subtitleKey="home.bundles.subtitle" cards={[]} />),
+    ).toBe('');
+  });
 });

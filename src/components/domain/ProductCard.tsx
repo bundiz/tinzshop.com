@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import ImagePlaceholder from '@/components/domain/ImagePlaceholder';
+import ProductBadge from '@/components/domain/ProductBadge';
 import PriceDisplay from '@/components/domain/PriceDisplay';
 import StockBadge from '@/components/domain/StockBadge';
 import Icon from '@/components/ui/Icon';
@@ -25,8 +26,8 @@ export default function ProductCard({ card }: ProductCardProps) {
     <article className="group relative flex h-full flex-col overflow-hidden rounded-(--radius) border border-border bg-bg shadow-card transition-[box-shadow,border-color,transform] duration-[180ms] hover:-translate-y-0.5 hover:border-[#cbdcf7] hover:shadow-hover has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-primary">
       {(card.isKit || card.isPreOrder) && (
         <div className="absolute top-2 left-2 z-[1] flex flex-wrap gap-1">
-          {card.isKit && <Badge tone="bundle">{t('badge.bundle')}</Badge>}
-          {card.isPreOrder && <Badge tone="preOrder">{t('badge.preOrder')}</Badge>}
+          {card.isKit && <ProductBadge tone="bundle">{t('badge.bundle')}</ProductBadge>}
+          {card.isPreOrder && <ProductBadge tone="preOrder">{t('badge.preOrder')}</ProductBadge>}
         </div>
       )}
       <button
@@ -75,16 +76,5 @@ export default function ProductCard({ card }: ProductCardProps) {
         </div>
       </div>
     </article>
-  );
-}
-
-function Badge({ tone, children }: { tone: 'bundle' | 'preOrder'; children: string }) {
-  const colour = tone === 'bundle' ? 'bg-text text-white' : 'bg-accent text-text';
-  return (
-    <span
-      className={`inline-flex items-center rounded-[4px] px-2 py-px text-xs leading-[1.6] font-semibold whitespace-nowrap ${colour}`}
-    >
-      {children}
-    </span>
   );
 }
