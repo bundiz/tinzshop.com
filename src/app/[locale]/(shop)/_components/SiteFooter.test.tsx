@@ -31,4 +31,12 @@ describe('SiteFooter', () => {
     expect(render('th', now)).toContain('© 2570 Tinzshop');
     expect(render('en', now)).toContain('© 2027 Tinzshop');
   });
+
+  it('renders the design\'s link columns and payment badge', () => {
+    const html = render('th', new Date('2026-10-28T05:00:00Z'));
+    for (const title of [th.shop.footer.shopping.title, th.shop.footer.help.title, th.shop.footer.aboutUs.title, th.shop.footer.policy.title]) {
+      expect(html).toContain(title);
+    }
+    expect(html).toContain(th.shop.footer.payBadge.title);
+  });
 });

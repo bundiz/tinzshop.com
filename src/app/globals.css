@@ -28,6 +28,20 @@
 
   --shadow-card: 0 1px 2px rgba(33, 33, 33, 0.05);
   --shadow-hover: 0 8px 24px rgba(24, 99, 220, 0.14);
+
+  /* The design's breakpoints (480, 640, 900, 1100px), in rem like Tailwind's own so
+     every breakpoint sorts by width: mixing px arbitrary variants with rem ones emitted
+     `sm` after `min-[1100px]` and left the card grid at 3 columns. */
+  /* The design sets font sizes without line heights, so text inherits the body's 1.65
+     (generous for Thai). Tailwind's text-xs/sm/base would otherwise impose tighter ones. */
+  --text-xs--line-height: 1.65;
+  --text-sm--line-height: 1.65;
+  --text-base--line-height: 1.65;
+
+  --breakpoint-xs: 30rem;
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 56.25rem;
+  --breakpoint-lg: 68.75rem;
 }
 
 @layer base {
@@ -51,6 +65,7 @@
   h3,
   h4 {
     line-height: 1.45;
+    font-weight: 700;
   }
 
   /* The design's focus ring: every link and control shows one (07 Accessibility). */

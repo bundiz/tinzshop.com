@@ -44,7 +44,7 @@ export default function TrustStrip() {
 
   return (
     <section aria-label={t('label')} className="mt-4">
-      <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-(--radius) bg-border min-[480px]:grid-cols-2 sm:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-(--radius) bg-border xs:grid-cols-2 sm:grid-cols-4">
         {ITEMS.map(({ key, icon }) => (
           <li key={key} className="flex items-center gap-3 bg-bg p-3.5">
             <span className="grid size-[42px] flex-none place-items-center rounded-full bg-primary-soft text-primary">

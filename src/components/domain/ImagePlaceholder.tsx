@@ -1,16 +1,28 @@
 export type ImagePlaceholderProps = {
-  /** The accessible name, from a message key (`shop.product.imagePlaceholderAlt`). */
-  label: string;
+  /**
+   * The accessible name, from a message key (`shop.product.imagePlaceholderAlt`). Leave it out where the
+   * block is decoration (the category tiles): it is then hidden from assistive technology.
+   */
+  label?: string;
+  /** The design's `.ph` tints: `default`, `.ph-warm`, `.ph-cool` and `.ph-deep`. */
+  tone?: 'default' | 'warm' | 'cool' | 'deep';
+  /** Extra layout utilities, e.g. a radius. */
+  className?: string;
+};
+
+const TONE: Record<NonNullable<ImagePlaceholderProps['tone']>, string> = {
+  default: 'bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#f1f5fd_58%,#e6eefc_100%)]',
+  warm: 'bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#fff7e6_58%,#ffedc6_100%)]',
+  cool: 'bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#eef1f6_58%,#dfe4ee_100%)]',
+  deep: 'bg-[radial-gradient(circle_at_50%_42%,#f5f8ff_0%,#dfe8fb_58%,#c9d8f7_100%)]',
 };
 
 /** The design's `.ph` block, shown where a product has no image: a soft gradient with a faint gamepad mark. */
-export default function ImagePlaceholder({ label }: ImagePlaceholderProps) {
+export default function ImagePlaceholder({ label, tone = 'default', className = '' }: ImagePlaceholderProps) {
+  const a11y = label === undefined ? { 'aria-hidden': true as const } : { role: 'img', 'aria-label': label };
+
   return (
-    <div
-      role="img"
-      aria-label={label}
-      className="grid aspect-square place-items-center bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#f1f5fd_58%,#e6eefc_100%)]"
-    >
+    <div {...a11y} className={`grid aspect-square place-items-center overflow-hidden ${TONE[tone]} ${className}`}>
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"

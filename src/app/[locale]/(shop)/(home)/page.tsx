@@ -3,7 +3,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { getLandingCatalogueReader } from '@/server/composition-root';
-import Hero from '../_components/Hero';
+import CategoryShowcase from '../_components/CategoryShowcase';
+import HeroZone from '../_components/HeroZone';
 import ProductSection, { type ProductSectionId } from '../_components/ProductSection';
 import SiteFooter from '../_components/SiteFooter';
 import SiteHeader from '../_components/SiteHeader';
@@ -18,7 +19,10 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
-/** The storefront landing page, built from the Shopee catalogue mirror (plan 011). */
+/**
+ * The storefront landing page, built from the Shopee catalogue mirror (plan 011) and laid out block for block
+ * as `design/index.html` (D-124). The design's news section is left out: there is no news data yet.
+ */
 export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
@@ -33,10 +37,10 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <>
-      <SiteHeader path="/" />
+      <SiteHeader path="/" activeNav="home" />
       <main className="pt-4 pb-10">
-        <div className="mx-auto max-w-[1280px] px-4 min-[900px]:px-6">
-          <Hero shopNowTarget={catalogue.bestSellers.length > 0 ? BEST_SELLERS : null} />
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6">
+          <HeroZone shopNowTarget={catalogue.bestSellers.length > 0 ? BEST_SELLERS : null} />
           <TrustStrip />
           {isEmpty ? (
             <section className="mt-4 rounded-(--radius) bg-bg p-8 text-center text-text-muted">
@@ -46,13 +50,15 @@ export default async function HomePage({ params }: Props) {
             <>
               <ProductSection
                 id="bundles"
-                titleKey="bundles.title"
-                subtitleKey="bundles.subtitle"
+                titleKey="home.bundles.title"
+                subtitleKey="home.bundles.subtitle"
                 cards={catalogue.bundles}
                 layout="rail"
+                tone="warm"
               />
-              <ProductSection id={BEST_SELLERS} titleKey="bestSellers.title" cards={catalogue.bestSellers} />
-              <ProductSection id="preOrders" titleKey="preOrders.title" cards={catalogue.preOrders} />
+              <CategoryShowcase />
+              <ProductSection id={BEST_SELLERS} titleKey="home.bestSellers.title" cards={catalogue.bestSellers} />
+              <ProductSection id="preOrders" titleKey="home.preOrders.title" cards={catalogue.preOrders} />
             </>
           )}
         </div>

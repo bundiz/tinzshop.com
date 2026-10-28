@@ -28,4 +28,14 @@ describe('ProductCard', () => {
     expect(html).toMatch(/<a[^>]*href="\/en\/products\/0b8e2f0e-1d7c-4f55-9a43-5d1a6a0c2f11"[^>]*>Sandbox SSD<\/a>/);
     expect(html).toContain(en.shop.product.imagePlaceholderAlt);
   });
+
+  it('carries an inert wishlist heart and no rating', () => {
+    const html = renderToStaticMarkup(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
+        <ProductCard card={card} />
+      </NextIntlClientProvider>,
+    );
+    expect(html).toContain(`<button type="button" aria-label="${en.shop.product.wishlist.add}"`);
+    expect(html).not.toContain('★');
+  });
 });

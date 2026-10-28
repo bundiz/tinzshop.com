@@ -14,7 +14,7 @@ export default function ShopError({ retry }: ShopErrorProps) {
   const t = useTranslations('shop.error');
 
   return (
-    <main className="mx-auto max-w-[1280px] px-4 py-10 min-[900px]:px-6">
+    <main className="mx-auto max-w-[1280px] px-4 py-10 md:px-6">
       <section role="alert" className="rounded-(--radius) bg-bg p-8 text-center">
         <h1 className="text-[19px]">{t('title')}</h1>
         <p className="mt-2 text-text-muted">{t('text')}</p>

@@ -29,11 +29,11 @@ const card: LandingProductCard = {
 
 describe('ProductSection', () => {
   it('omits a section with no products', () => {
-    expect(render(<ProductSection id="bestSellers" titleKey="bestSellers.title" cards={[]} />)).toBe('');
+    expect(render(<ProductSection id="bestSellers" titleKey="home.bestSellers.title" cards={[]} />)).toBe('');
   });
 
   it('renders the title and each card with price, stock and the image placeholder', () => {
-    const html = render(<ProductSection id="bestSellers" titleKey="bestSellers.title" cards={[card]} />);
+    const html = render(<ProductSection id="bestSellers" titleKey="home.bestSellers.title" cards={[card]} />);
     expect(html).toContain(th.shop.home.bestSellers.title);
     expect(html).toContain('id="bestSellers"');
     expect(html).toContain(card.name);
@@ -46,7 +46,7 @@ describe('ProductSection', () => {
     const html = render(
       <ProductSection
         id="preOrders"
-        titleKey="preOrders.title"
+        titleKey="home.preOrders.title"
         cards={[{ ...card, imageUrl: 'https://example.test/a.jpg', isPreOrder: true }]}
       />,
     );
@@ -54,5 +54,10 @@ describe('ProductSection', () => {
     expect(html).toContain(`alt="${card.name}"`);
     expect(html).toContain('loading="lazy"');
     expect(html).toContain(th.shop.product.badge.preOrder);
+  });
+
+  it('carries the design\'s "view all" link in the section head', () => {
+    const html = render(<ProductSection id="bestSellers" titleKey="home.bestSellers.title" cards={[card]} />);
+    expect(html).toMatch(new RegExp(`<a href="#"[^>]*>${th.shop.home.section.more}`));
   });
 });
