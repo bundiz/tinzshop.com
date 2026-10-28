@@ -11,9 +11,13 @@ export type ProductTabsProps = {
   shippingSizeTier: ShippingSizeTier | null;
 };
 
-type TabId = 'description' | 'spec';
+type TabId = 'description' | 'spec' | 'reviews';
 
-/** The product information tabs: description and specifications. No reviews tab (O-6). */
+/**
+ * The product information tabs: description and specifications when there is data for them, and reviews.
+ * Only our own reviews may be shown (spec O-6) and none exist yet, so the reviews tab is an empty state:
+ * no stars, scores or counts (D-124).
+ */
 export default function ProductTabs({ description, brandName, shippingSizeTier }: ProductTabsProps) {
   const t = useTranslations('shop.product');
   const idPrefix = useId();
@@ -27,10 +31,10 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
   const tabs: TabId[] = [];
   if (description.trim() !== '') tabs.push('description');
   if (specRows.length > 0) tabs.push('spec');
+  tabs.push('reviews');
 
   const [selected, setSelected] = useState<TabId | undefined>(tabs[0]);
-  const active = selected !== undefined && tabs.includes(selected) ? selected : tabs[0];
-  if (active === undefined) return null;
+  const active: TabId = selected !== undefined && tabs.includes(selected) ? selected : (tabs[0] ?? 'reviews');
 
   // Arrow keys move between tabs, as the WAI-ARIA tabs pattern expects.
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, from: TabId) {
@@ -44,7 +48,7 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
   }
 
   return (
-    <section aria-label={t('tabs.label')} className="mt-4 overflow-hidden rounded-(--radius) bg-bg">
+    <section id="reviews" aria-label={t('tabs.label')} className="mt-4 overflow-hidden rounded-(--radius) bg-bg">
       <div role="tablist" className="flex overflow-x-auto border-b border-border [scrollbar-width:none]">
         {tabs.map((tab) => (
           <button
@@ -76,9 +80,11 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
           aria-labelledby={`${idPrefix}-tab-${tab}`}
           hidden={tab !== active}
           tabIndex={0}
-          className="px-4 py-5 min-[900px]:p-6"
+          className="px-4 py-5 md:p-6"
         >
-          {tab === 'description' ? (
+          {tab === 'reviews' ? (
+            <p className="text-[15px] text-text-muted">{t('reviews.empty')}</p>
+          ) : tab === 'description' ? (
             <p className="max-w-[820px] text-[15px] leading-[1.8] whitespace-pre-line [overflow-wrap:anywhere]">
               {description}
             </p>

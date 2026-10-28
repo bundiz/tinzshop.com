@@ -1,69 +1,79 @@
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
+import Icon, { type IconName } from '@/components/ui/Icon';
 
-const ITEMS: { key: 'shipping' | 'taxInvoice' | 'store'; icon: ReactNode }[] = [
-  {
-    key: 'shipping',
-    icon: (
-      <>
-        <path d="M3 6.5h11v9H3zM14 9.5h4l3 3v3h-7" />
-        <circle cx="7" cy="17.5" r="1.8" />
-        <circle cx="17.5" cy="17.5" r="1.8" />
-      </>
-    ),
-  },
-  {
-    key: 'taxInvoice',
-    icon: (
-      <>
-        <path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z" />
-        <path d="M9 8h6M9 12h6M9 16h3" />
-      </>
-    ),
-  },
-  {
-    key: 'store',
-    icon: (
-      <path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5.5 12v8h13v-8M10 20v-4.5h4V20" />
-    ),
-  },
+const ITEMS: { key: 'shipping' | 'taxInvoice' | 'store'; icon: IconName }[] = [
+  { key: 'shipping', icon: 'truck' },
+  { key: 'taxInvoice', icon: 'receipt' },
+  { key: 'store', icon: 'store' },
 ];
 
+const PAYMENT_CHIPS = ['card', 'instalment', 'promptPay'] as const;
+
 /**
- * The product page's service blurbs from the design: shipping, tax invoice and store.
- * The design's rate link, contact link and payment chips are left out: nothing behind them exists yet.
+ * The product page's service panel from the design: shipping (with the rate link), tax invoice, store,
+ * the contact line and the K-Payment block with its chips (K-Payment is the sole method, D-096). The rate
+ * and contact links are inert until those pages exist (D-124).
  */
 export default function ServicePanel() {
   const t = useTranslations('shop.product.service');
+  const link = 'font-semibold text-primary';
 
   return (
-    <aside
-      aria-label={t('label')}
-      className="rounded-(--radius) bg-bg p-4 min-[900px]:col-span-full min-[1100px]:col-auto"
-    >
+    <aside aria-label={t('label')} className="rounded-(--radius) bg-bg p-4 md:col-span-full lg:col-auto">
       <h2 className="mb-3.5 text-[15px]">{t('title')}</h2>
       <ul className="grid gap-3.5">
         {ITEMS.map(({ key, icon }) => (
           <li key={key} className="grid grid-cols-[36px_1fr] items-start gap-2.5">
-            <span className="grid size-9 place-items-center rounded-full bg-primary-soft text-primary">
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                className="size-5 fill-none stroke-current"
-                strokeWidth={1.8}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                {icon}
-              </svg>
-            </span>
+            <ServiceIcon icon={icon} />
             <div className="min-w-0">
               <strong className="block text-sm leading-[1.5]">{t(`${key}.title`)}</strong>
-              <p className="text-[13px] leading-[1.55] text-text-subtle">{t(`${key}.text`)}</p>
+              <p className="text-[13px] leading-[1.55] text-text-subtle">
+                {t(`${key}.text`)}
+                {key === 'shipping' && (
+                  <>
+                    {' '}
+                    <a href="#" className={link}>
+                      {t('shipping.rateLink')}
+                    </a>
+                  </>
+                )}
+              </p>
             </div>
           </li>
         ))}
+        <li className="grid grid-cols-[36px_1fr] items-start gap-2.5">
+          <ServiceIcon icon="chat" />
+          <div className="min-w-0">
+            <strong className="block text-sm leading-[1.5]">{t('contact.title')}</strong>
+            <p className="text-[13px] leading-[1.55] text-text-subtle">
+              <a href="#" className={link}>
+                {t('contact.link')}
+              </a>
+            </p>
+          </div>
+        </li>
       </ul>
+      <div className="mt-4 rounded-(--radius-sm) border border-dashed border-[#b7d9c5] bg-[#f3faf6] p-3 text-[13px] leading-[1.55]">
+        <strong className="flex items-center gap-2 text-[#0b6b3a]">
+          <Icon name="shield" className="size-4" />
+          {t('payment.title')}
+        </strong>
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {PAYMENT_CHIPS.map((chip) => (
+            <li key={chip} className="rounded-full border border-[#cfe7d9] bg-white px-2 py-px text-xs">
+              {t(`payment.${chip}`)}
+            </li>
+          ))}
+        </ul>
+      </div>
     </aside>
+  );
+}
+
+function ServiceIcon({ icon }: { icon: IconName }) {
+  return (
+    <span className="grid size-9 place-items-center rounded-full bg-primary-soft text-primary">
+      <Icon name={icon} />
+    </span>
   );
 }

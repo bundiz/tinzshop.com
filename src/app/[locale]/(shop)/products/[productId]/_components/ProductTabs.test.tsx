@@ -31,4 +31,11 @@ describe('ProductTabs', () => {
     const html = render(<ProductTabs description="d" brandName="NoBrand" shippingSizeTier={null} />);
     expect(html).not.toContain(th.shop.product.spec.shippingSize);
   });
+
+  it('always has a reviews tab, whose panel is an empty state with no scores or counts', () => {
+    const html = render(<ProductTabs description="" brandName={null} shippingSizeTier={null} />);
+    expect(html).toContain(`>${th.shop.product.tabs.reviews}</button>`);
+    expect(html).toContain(th.shop.product.reviews.empty);
+    expect(html).not.toContain('★');
+  });
 });
