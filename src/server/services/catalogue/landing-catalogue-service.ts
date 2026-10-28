@@ -78,7 +78,7 @@ export function toLandingProductCard(candidate: StorefrontCandidate, locale: Loc
     name: pickProductName(candidate, locale),
     imageUrl: candidate.imageUrl,
     priceSatang,
-    originalPriceSatang: original !== null && original !== priceSatang ? original : null,
+    originalPriceSatang: original !== null && original > priceSatang ? original : null,
     isPriceRange: active.some((variant) => variant.priceSatang !== priceSatang),
     stockStatus: active.some((variant) => variant.stockQuantity > 0) ? 'in_stock' : 'out_of_stock',
     isKit: candidate.isKit,

@@ -65,7 +65,8 @@
         "out_of_stock": "Out of stock"
       },
       "price": {
-        "from": "From {price}"
+        "from": "From {price}",
+        "original": "Original price"
       },
       "badge": {
         "bundle": "Promotion set",

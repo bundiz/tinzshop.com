@@ -26,4 +26,13 @@ describe('Gallery', () => {
     expect(html.match(/<button/g)).toHaveLength(2);
     expect(html).toContain('aria-pressed="true"');
   });
+
+  it('loads the main image eagerly and the thumbnails lazily', () => {
+    const html = render(<Gallery imageUrls={['https://cf.shopee.co.th/file/a', 'https://cf.shopee.co.th/file/b']} name="Sandbox SSD" />);
+    const images = html.match(/<img[^>]*>/g) ?? [];
+    expect(images).toHaveLength(3);
+    expect(images[0]).toContain('alt="Sandbox SSD"');
+    expect(images[0]).not.toContain('loading="lazy"');
+    expect(images.slice(1).every((img) => img.includes('loading="lazy"'))).toBe(true);
+  });
 });

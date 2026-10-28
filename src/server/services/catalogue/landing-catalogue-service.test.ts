@@ -106,6 +106,12 @@ describe('toLandingProductCard', () => {
     const same = toLandingProductCard(candidate({ variants: [variant({ priceSatang: 5n, originalPriceSatang: 5n })] }), 'th');
     expect(same.originalPriceSatang).toBeNull();
 
+    // Only an original price above the price is a discount: 0 or a lower one is not shown.
+    const zero = toLandingProductCard(candidate({ variants: [variant({ priceSatang: 5n, originalPriceSatang: 0n })] }), 'th');
+    expect(zero.originalPriceSatang).toBeNull();
+    const lower = toLandingProductCard(candidate({ variants: [variant({ priceSatang: 500n, originalPriceSatang: 400n })] }), 'th');
+    expect(lower.originalPriceSatang).toBeNull();
+
     const ignoresInactive = toLandingProductCard(
       candidate({ variants: [variant({ priceSatang: 100n, originalPriceSatang: 100n, isActive: false }), variant({ priceSatang: 900n, originalPriceSatang: 900n })] }),
       'th',

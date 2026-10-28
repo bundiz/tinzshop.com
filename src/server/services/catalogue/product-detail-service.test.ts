@@ -72,6 +72,17 @@ describe('getProductDetail', () => {
     // An original price equal to the price is no discount.
     expect(result?.variants[2]?.originalPriceSatang).toBeNull();
 
+    // Only an original price above the price is a discount: 0 or a lower one is not shown.
+    const notHigher = await detail(
+      row({
+        variants: [
+          variant({ variantId: 'zero', priceSatang: 100000n, originalPriceSatang: 0n }),
+          variant({ variantId: 'lower', position: 1, priceSatang: 100000n, originalPriceSatang: 90000n }),
+        ],
+      }),
+    );
+    expect(notHigher?.variants.map((v) => v.originalPriceSatang)).toEqual([null, null]);
+
     const allSoldOut = await detail(
       row({
         variants: [

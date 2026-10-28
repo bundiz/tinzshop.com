@@ -88,7 +88,7 @@ export function toProductDetail(row: StorefrontProductRow, locale: Locale): Prod
       variantId: variant.variantId,
       optionValueIds: variant.optionValueIds,
       priceSatang: variant.priceSatang,
-      originalPriceSatang: variant.originalPriceSatang !== variant.priceSatang ? variant.originalPriceSatang : null,
+      originalPriceSatang: variant.originalPriceSatang > variant.priceSatang ? variant.originalPriceSatang : null,
       stockStatus: variant.stockQuantity > 0 ? 'in_stock' : 'out_of_stock',
     })),
     defaultVariantId: chosen.variantId,

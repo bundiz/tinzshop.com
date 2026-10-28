@@ -22,7 +22,8 @@ export default function Gallery({ imageUrls, name }: GalleryProps) {
       <div className="overflow-hidden rounded-(--radius) border border-border">
         {current !== undefined ? (
           // A plain <img>: the live Shopee image hosts are not known, so no next/image remote config.
-          <img src={current} alt={name} loading="lazy" className="aspect-square w-full bg-bg object-contain" />
+          // Eager: it is the largest image above the fold; thumbnails stay lazy.
+          <img src={current} alt={name} loading="eager" className="aspect-square w-full bg-bg object-contain" />
         ) : (
           <ImagePlaceholder label={t('imagePlaceholderAlt')} />
         )}

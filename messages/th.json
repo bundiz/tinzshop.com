@@ -65,7 +65,8 @@
         "out_of_stock": "สินค้าหมด"
       },
       "price": {
-        "from": "เริ่มต้น {price}"
+        "from": "เริ่มต้น {price}",
+        "original": "ราคาเดิม"
       },
       "badge": {
         "bundle": "ชุดโปรโมชั่น",

@@ -3,7 +3,7 @@ import { useLocale, useTranslations } from 'next-intl';
 export type PriceDisplayProps = {
   /** The price in satang (D-010); this component is the only place it becomes baht. */
   satang: bigint;
-  /** The pre-discount price in satang, shown struck through when given. */
+  /** The pre-discount price in satang, shown struck through when given (only when above `satang`). */
   original?: bigint | null;
   /** True when the product's variants differ in price: `satang` is then the lowest. */
   isRange?: boolean;
@@ -33,7 +33,10 @@ export default function PriceDisplay({ satang, original = null, isRange = false,
         {isRange ? t('from', { price: now }) : now}
       </span>
       {original !== null && (
-        <s className={ORIGINAL_CLASS[size]}>{formatBaht(original, locale)}</s>
+        <s className={ORIGINAL_CLASS[size]}>
+          {/* Strikethrough is not announced, so a screen reader hears what the number is. */}
+          <span className="sr-only">{t('original')}</span> {formatBaht(original, locale)}
+        </s>
       )}
     </p>
   );

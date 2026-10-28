@@ -31,4 +31,10 @@ describe('PriceDisplay', () => {
     expect(html).toContain('<s');
     expect(html).toContain('3,490');
   });
+
+  it('labels the struck-through price for screen readers', () => {
+    const html = render(<PriceDisplay satang={299000n} original={349000n} />);
+    expect(html).toContain(`<span class="sr-only">${th.shop.product.price.original}</span>`);
+    expect(render(<PriceDisplay satang={299000n} />)).not.toContain(th.shop.product.price.original);
+  });
 });
