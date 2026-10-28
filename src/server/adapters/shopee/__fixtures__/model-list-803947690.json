@@ -1,0 +1,283 @@
+{
+  "error": "",
+  "message": "",
+  "request_id": "fixture",
+  "response": {
+    "tier_variation": [
+      {
+        "name": "Capacity",
+        "option_list": [
+          {
+            "option": "1TB"
+          },
+          {
+            "option": "2TB"
+          }
+        ]
+      },
+      {
+        "name": "Colour",
+        "option_list": [
+          {
+            "option": "Black"
+          },
+          {
+            "option": "Blue"
+          }
+        ]
+      }
+    ],
+    "model": [
+      {
+        "model_id": 12998741,
+        "model_name": "1TB,Blue",
+        "promotion_id": 0,
+        "has_promotion": false,
+        "tier_index": [
+          0,
+          1
+        ],
+        "price_info": [
+          {
+            "current_price": 2990,
+            "original_price": 2990,
+            "inflated_price_of_current_price": 2990,
+            "inflated_price_of_original_price": 2990,
+            "currency": "THB"
+          }
+        ],
+        "model_sku": "SBX-IT-SSD-1TB-BLU",
+        "pre_order": {
+          "is_pre_order": false,
+          "days_to_ship": 1
+        },
+        "stock_info_v2": {
+          "summary_info": {
+            "total_reserved_stock": 0,
+            "total_available_stock": 2
+          },
+          "seller_stock": [
+            {
+              "location_id": "THZ",
+              "stock": 2,
+              "if_saleable": true
+            }
+          ],
+          "shopee_stock": [
+            {
+              "location_id": "",
+              "stock": 0
+            }
+          ],
+          "advance_stock": {
+            "sellable_advance_stock": 0,
+            "in_transit_advance_stock": 0
+          }
+        },
+        "model_status": "MODEL_NORMAL",
+        "weight": "0.2",
+        "dimension": {
+          "package_length": 12,
+          "package_width": 8,
+          "package_height": 3
+        },
+        "is_fulfillment_by_shopee": false
+      },
+      {
+        "model_id": 12998740,
+        "model_name": "1TB,Black",
+        "promotion_id": 0,
+        "has_promotion": false,
+        "tier_index": [
+          0,
+          0
+        ],
+        "price_info": [
+          {
+            "current_price": 2990,
+            "original_price": 2990,
+            "inflated_price_of_current_price": 2990,
+            "inflated_price_of_original_price": 2990,
+            "currency": "THB"
+          }
+        ],
+        "model_sku": "SBX-IT-SSD-1TB-BLK",
+        "pre_order": {
+          "is_pre_order": false,
+          "days_to_ship": 1
+        },
+        "stock_info_v2": {
+          "summary_info": {
+            "total_reserved_stock": 0,
+            "total_available_stock": 4
+          },
+          "seller_stock": [
+            {
+              "location_id": "THZ",
+              "stock": 4,
+              "if_saleable": true
+            }
+          ],
+          "shopee_stock": [
+            {
+              "location_id": "",
+              "stock": 0
+            }
+          ],
+          "advance_stock": {
+            "sellable_advance_stock": 0,
+            "in_transit_advance_stock": 0
+          }
+        },
+        "model_status": "MODEL_NORMAL",
+        "weight": "0.2",
+        "dimension": {
+          "package_length": 12,
+          "package_width": 8,
+          "package_height": 3
+        },
+        "is_fulfillment_by_shopee": false
+      },
+      {
+        "model_id": 12998742,
+        "model_name": "2TB,Black",
+        "promotion_id": 0,
+        "has_promotion": false,
+        "tier_index": [
+          1,
+          0
+        ],
+        "price_info": [
+          {
+            "current_price": 4590,
+            "original_price": 4590,
+            "inflated_price_of_current_price": 4590,
+            "inflated_price_of_original_price": 4590,
+            "currency": "THB"
+          }
+        ],
+        "model_sku": "SBX-IT-SSD-2TB-BLK",
+        "pre_order": {
+          "is_pre_order": false,
+          "days_to_ship": 1
+        },
+        "stock_info_v2": {
+          "summary_info": {
+            "total_reserved_stock": 0,
+            "total_available_stock": 3
+          },
+          "seller_stock": [
+            {
+              "location_id": "THZ",
+              "stock": 3,
+              "if_saleable": true
+            }
+          ],
+          "shopee_stock": [
+            {
+              "location_id": "",
+              "stock": 0
+            }
+          ],
+          "advance_stock": {
+            "sellable_advance_stock": 0,
+            "in_transit_advance_stock": 0
+          }
+        },
+        "model_status": "MODEL_NORMAL",
+        "weight": "0.2",
+        "dimension": {
+          "package_length": 12,
+          "package_width": 8,
+          "package_height": 3
+        },
+        "is_fulfillment_by_shopee": false
+      },
+      {
+        "model_id": 12998739,
+        "model_name": "2TB,Blue",
+        "promotion_id": 0,
+        "has_promotion": false,
+        "tier_index": [
+          1,
+          1
+        ],
+        "price_info": [
+          {
+            "current_price": 4590,
+            "original_price": 4590,
+            "inflated_price_of_current_price": 4590,
+            "inflated_price_of_original_price": 4590,
+            "currency": "THB"
+          }
+        ],
+        "model_sku": "SBX-IT-SSD-2TB-BLU",
+        "pre_order": {
+          "is_pre_order": false,
+          "days_to_ship": 1
+        },
+        "stock_info_v2": {
+          "summary_info": {
+            "total_reserved_stock": 0,
+            "total_available_stock": 1
+          },
+          "seller_stock": [
+            {
+              "location_id": "THZ",
+              "stock": 1,
+              "if_saleable": true
+            }
+          ],
+          "shopee_stock": [
+            {
+              "location_id": "",
+              "stock": 0
+            }
+          ],
+          "advance_stock": {
+            "sellable_advance_stock": 0,
+            "in_transit_advance_stock": 0
+          }
+        },
+        "model_status": "MODEL_NORMAL",
+        "weight": "0.2",
+        "dimension": {
+          "package_length": 12,
+          "package_width": 8,
+          "package_height": 3
+        },
+        "is_fulfillment_by_shopee": false
+      }
+    ],
+    "standardise_tier_variation": [
+      {
+        "variation_id": 0,
+        "variation_name": "Capacity",
+        "variation_option_list": [
+          {
+            "variation_option_id": 0,
+            "variation_option_name": "1TB"
+          },
+          {
+            "variation_option_id": 0,
+            "variation_option_name": "2TB"
+          }
+        ]
+      },
+      {
+        "variation_id": 0,
+        "variation_name": "Colour",
+        "variation_option_list": [
+          {
+            "variation_option_id": 0,
+            "variation_option_name": "Black"
+          },
+          {
+            "variation_option_id": 0,
+            "variation_option_name": "Blue"
+          }
+        ]
+      }
+    ]
+  }
+}

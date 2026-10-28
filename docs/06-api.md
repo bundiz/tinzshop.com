@@ -5,6 +5,10 @@ How data gets in and out of Tinzshop.
 Follows from [ADR-0001](adr/ADR-0001-backend-approach.md) and the entry
 surfaces in `03-architecture.md`.
 
+## API docs (OpenAPI)
+
+`docs/openapi.yaml` describes every route handler in this document in OpenAPI 3.1. This document is the authority; the YAML restates it and changes in the same pull request as any endpoint, status or body (D-115). In development, `GET /api/docs` renders it with Swagger UI, served from the pinned `swagger-ui-dist` package (never a CDN), together with `/api/docs/openapi` (the YAML) and `/api/docs/assets/<file>` (two allow-listed files). All three answer `404` when `NODE_ENV` is `production`. Never type the real `JOB_SECRET` into a shared or hosted Swagger tool.
+
 ## Server Actions versus route handlers
 
 **Server Actions for our own front end. Route handlers only for callers we do
@@ -38,6 +42,7 @@ For the handful of endpoints that do exist.
 
 ```
 /api/webhooks/<system>            inbound, from an external system
+/api/callbacks/<system>           a browser redirected back by an external system
 /api/exports/<resource>           file download, staff, authenticated
 /api/jobs/<name>                  scheduled work, secret-authenticated
 ```
@@ -167,6 +172,52 @@ inherits it. Reaching a page is never evidence of the right to act.
 > RESEARCHED** (`14-integrations.md`). K-Payment's signing scheme, event
 > identity and retry behaviour are unknown (Q-033). The rules above are what
 > any such integration requires; none of them is a claim about K-Payment.
+
+## Callbacks
+
+A callback is a `GET` the seller's **browser** makes when an external system
+redirects it back to us, so it carries no signature we can verify and no
+session. It carries a one-time credential in the query string, so every
+response is `Cache-Control: no-store` and no response body ever repeats it.
+
+### `GET /api/callbacks/shopee`
+
+Shopee redirects here after the shop owner authorizes our partner app
+(plan 010, Task 7). The handler exchanges the code for tokens and stores them
+encrypted.
+
+**Query parameters**
+
+| Parameter | Rule |
+| :--- | :--- |
+| `code` | Required, non-empty. The one-time authorization code. |
+| `shop_id` | A positive decimal integer within the safe integer range. Exactly one of `shop_id` and `main_account_id` is present. |
+| `main_account_id` | As `shop_id`. |
+| `state` | Optional, read as a string. |
+
+**Responses** (all `Cache-Control: no-store`)
+
+| Status | Body | When |
+| :--- | :--- | :--- |
+| `200` | `{ "data": { "accountType": "shop", "shopId": <number>, "connected": true } }` | The shop was connected. The code is never in the body. |
+| `400` | `{ "error": { "code": "shopee.authorization.invalid_callback", "messageKey": "error.shopee.authorization.invalidCallback", "details": [{ "path", "message" }] } }` | The query failed validation. |
+| `403` | `{ "error": { "code": "shopee.authorization.unexpected_shop", "messageKey": "error.shopee.authorization.unexpectedShop" } }` | `shop_id` is not the shop configured in `SHOPEE_SHOP_ID`. No token exchange is attempted (D-104). |
+| `422` | `{ "error": { "code": "shopee.authorization.main_account_unsupported", "messageKey": "error.shopee.authorization.mainAccountUnsupported" } }` | A main account authorized instead of a shop. |
+| `502` | `{ "error": { "code": "shopee.authorization.token_exchange_failed", "messageKey": "error.shopee.authorization.tokenExchangeFailed" } }` | Shopee refused or failed the code exchange. |
+
+Any other exception is `500`. The shop allow-list exists because any shop
+that authorizes our partner app can produce a valid code; without it, that
+shop could replace ours and the sync would mirror its catalogue (D-104).
+
+## Scheduled jobs
+
+**Secret-authenticated, safe to call on any schedule.** A job is a `POST` under `/api/jobs/<name>` with `Authorization: Bearer <JOB_SECRET>`. The secret is compared in constant time; a missing header, another scheme or a wrong value is `401` with no detail about which. Responses carry `Cache-Control: no-store`. The job secret is read per request, never at import, and any scheduler that can send a header can call it.
+
+| Endpoint | Method | Auth | Statuses |
+| :--- | :--- | :--- | :--- |
+| `/api/jobs/shopee-sync` | `POST` | `Bearer <JOB_SECRET>` | `200` the run summary, for `succeeded` or `skipped` (another run held the lock). `502` `{ error: { code: 'catalogue_sync.failed', runId } }` when the run failed; the cause is in that `sync_run` row, not in the response; a failed run may still have committed some item upserts (D-109). `401` unauthorized. An unexpected exception is `500` |
+
+Called every 10 minutes (plan 010). Overlapping calls are safe: the second returns `skipped`.
 
 ## Pagination, filtering, sorting
 

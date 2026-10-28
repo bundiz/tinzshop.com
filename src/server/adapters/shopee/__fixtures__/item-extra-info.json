@@ -1,0 +1,25 @@
+{
+  "error": "",
+  "message": "",
+  "request_id": "fixture",
+  "response": {
+    "item_list": [
+      {
+        "item_id": 803947687,
+        "sale": 5,
+        "views": 0,
+        "likes": 0,
+        "rating_star": 4.5,
+        "comment_count": 2
+      },
+      {
+        "item_id": 803947690,
+        "sale": 0,
+        "views": 0,
+        "likes": 0,
+        "rating_star": 0,
+        "comment_count": 0
+      }
+    ]
+  }
+}

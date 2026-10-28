@@ -171,19 +171,21 @@ button. Both are real defects and neither has a unit test.
 ### The four invariants
 
 The four invariants in `03-architecture.md` carry integration tests written
-**before** the implementation merges (D-044). Not after, not "when there's
+**before** the implementation merges (D-044). **Invariant 1 (no overselling) is
+withdrawn for website orders by D-096**, so three invariants now carry tests; the
+withdrawn row stays visible below. Not after, not "when there's
 time". Each produces damage that is discovered late and cannot be undone by
 correcting the code.
 
 | Invariant | The test that proves it |
 | :--- | :--- |
-| No overselling (REQ-020) | N concurrent orders against a stock of 1. Exactly one succeeds; the rest fail with a conflict; the final quantity is 0 and never negative |
+| ~~No overselling (REQ-020)~~ — **withdrawn, D-096** | ~~N concurrent orders against a stock of 1. Exactly one succeeds; the rest fail with a conflict; the final quantity is 0 and never negative~~ Not required: website orders never change stock. What stays testable is the `CHECK (stock_quantity >= 0)` constraint on the mirrored copy |
 | Gap-free invoice numbers (REQ-025) | N concurrent orders, plus orders that fail and roll back. The issued numbers form an unbroken run |
 | VAT correctness (REQ-023) | Table-driven, over mixed carts, odd amounts and rounding boundaries. Lines always sum to the total |
 | Permission enforcement (REQ-034, REQ-035) | Every protected action attempted as every role. Only the permitted combinations succeed |
 
-The first two must be genuinely concurrent — parallel transactions against a
-real database. A sequential test passes on code that oversells, which makes it
+The invoice-number test must be genuinely concurrent — parallel transactions against a
+real database (the withdrawn overselling test was the other). A sequential test passes on code that oversells, which makes it
 worse than no test, because it makes someone confident.
 
 ### What is worth testing

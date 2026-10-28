@@ -41,6 +41,23 @@ Every external system is listed in `14-integrations.md`. Cloudflare's plan and
 scope are decided (Free, security/bot); the rest remain NOT RESEARCHED. **No
 carrier adapter exists** — shipping runs through BigSeller (D-075, Q-034).
 
+## The server layers (D-101)
+
+Server code written for plan 010 and after is layered **controller → service →
+repository → database**, with external systems in adapters (O-9, [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md) §4):
+
+| Layer | Folder | Holds | Must not |
+| :--- | :--- | :--- | :--- |
+| Controller | `src/server/controllers/` | Reads the request, validates it with Zod, calls one service, shapes the response. | Hold business rules. |
+| Service | `src/server/services/` | Business rules. Framework-free (D-002). | Import React, Next or Prisma. |
+| Repository | `src/server/repositories/` | The only place Prisma is imported. | Hold business rules. |
+| Adapter | `src/server/adapters/` | One folder per external system (`shopee/`: HTTP, signing, tokens). | Be bypassed: nothing else builds a Shopee URL or signs a request. |
+
+This maps onto the four layers below: controllers are part of **Route**,
+services are the **Domain**, repositories and adapters are **Data & adapters**.
+Route handlers for outside callers stay under `src/app/api/…` and are thin
+files that call a controller.
+
 ## The four layers
 
 Dependencies point in one direction only, downward. A layer may import from
@@ -74,7 +91,7 @@ functions:
 | :--- | :--- | :--- |
 | **Server Component** | Reading data to render a page. | Session resolved in the layout |
 | **Server Action** | Every mutation initiated by our own front end — add to cart, place order, edit a product, import a spreadsheet. | Session, then a permission check in the domain |
-| **Route handler** | Callers we do not control: payment webhooks, carrier callbacks, scheduled stock imports, file downloads. | Signature verification, never a session |
+| **Route handler** | Callers we do not control: payment webhooks, carrier callbacks, the Shopee authorization callback, the scheduled catalogue sync (plan 010), file downloads. | Signature verification, a shared job secret (scheduled jobs), or the configured-shop check (the Shopee callback, D-104); never a session |
 
 There is no fourth. If a new need seems to require one, it is a sign the
 domain function it wants does not exist yet.
@@ -92,8 +109,8 @@ because getting one wrong is expensive and silent.
 
 ### Placing a normal order (phase 3)
 
-**Resolved (Q-024, D-068): stock is deducted at payment confirmation, not at
-order placement.** Placing an order no longer holds any stock at all.
+**Decided (D-096, superseding D-068): website orders never change stock.**
+Placing an order holds no stock, and neither does payment confirmation.
 
 ```
 Server Action  →  domain: priceOrder()      pure, no I/O
@@ -103,12 +120,17 @@ Server Action  →  domain: priceOrder()      pure, no I/O
                →  redirect to K-Payment
 ```
 
-Placing the order is a lightweight write with nothing to lock, because there
-is nothing yet to protect from overselling.
+Placing the order is a lightweight write with nothing to lock. Adding to the
+cart and placing an order are still refused for an inactive variant, a variant
+with no copied stock, or a quantity above the copied stock
+(`stock.insufficient`, spec §5.6).
 
 ### A K-Payment webhook confirms payment (phase 3)
 
-**This is now where stock is deducted for every normal order.**
+**Under D-096 this flow takes no stock lock and deducts no stock.** It
+verifies, records payment and allocates the invoice number; the paid order
+lines then appear in the admin list for a manual stock adjustment in BigSeller
+(spec §5.5).
 
 ```
 Route handler  →  verify signature                           reject if absent
@@ -117,9 +139,7 @@ Route handler  →  verify signature                           reject if absent
                →  200 OK                                     acknowledge fast
                →  domain: applyPayment()
                     BEGIN TRANSACTION
-                      SELECT ... FOR UPDATE on every variant in the order
-                      check each has enough stock              ← REQ-020
-                      deduct stock, insert stock_movement
+                      record payment
                       nextval() on the invoice sequence        ← REQ-025
                       mark order paid
                     COMMIT
@@ -129,17 +149,14 @@ Route handler  →  verify signature                           reject if absent
 Acknowledging before processing is deliberate. A payment provider that does
 not get a prompt `200` retries, and a retry that arrives while the first is
 still working is how an order gets paid twice. Idempotency by event id is the
-protection; the fast acknowledgement stops us needing it as often. The row
-locks are taken in a **deterministic order** — variants sorted by id — so two
-concurrent payment confirmations cannot deadlock by grabbing them in opposite
-orders.
+protection; the fast acknowledgement stops us needing it as often.
 
-**New failure mode this flow introduces:** since stock is not held at order
-placement, two customers can place orders for the last unit before either
-pays. The first payment webhook to arrive wins the stock; the second
-customer's payment succeeds at K-Payment but `applyPayment()` finds
-insufficient stock — that path (and what it tells a customer whose money has
-already moved) is new design surface, not yet resolved.
+**Accepted consequence of D-096 (owner, 2026-10-26):** between a website
+payment and the next sync after staff update BigSeller, the site shows stock
+that is no longer true. Two customers can pay for the last unit, and a Shopee
+buyer can take it too. A paid order is never rejected on stock grounds — the
+money has already moved; the line is flagged in the admin list and staff
+handle it outside the system (refunds are out of scope, D-077).
 
 **Not designed yet:** K-Payment is NOT RESEARCHED beyond having credentials
 (Q-033 residual). Whether it signs callbacks, what identifies an event, and
@@ -162,15 +179,19 @@ Server Action  →  domain: priceOrder() (deposit or full, per D-080)
                →  redirect to K-Payment for deposit or full amount
 ```
 
-When staff later record the goods as **received** from the supplier, that
-action runs the same locked `stock_quantity` deduction the normal-order flow
-uses, once per pre-order line, and updates the order to `received` (candidate
-status, Q-023) so the balance, if any, can be collected.
+How pre-order lines join the manual stock list when goods are **received**
+from the supplier is phase 5 work (spec §5.5); the order moves to `received`
+(candidate status, Q-023) so the balance, if any, can be collected. The earlier
+locked `stock_quantity` deduction no longer exists (D-096).
 
 ### Stock changing somewhere else (phase 5)
 
-**Resolved (Q-043, D-081): daily file export/import, not a live API.** The
-paid realtime BigSeller API is a future option only, not built now.
+**Superseded for the catalogue (D-095): the site pulls the Shopee Open API
+every 10 minutes.** The mechanism is BigSeller → Shopee → our pull; the site
+pushes nothing to Shopee and storefront pages never call Shopee. The daily
+file flow below (D-081) is what was planned before plan 010 and is kept for
+history; see the spec, section 6, for the sync job. The paid realtime BigSeller
+API remains a future option only.
 
 ```
 Scheduled job  →  export today's stock/order changes to a file          REQ-020 output
@@ -183,9 +204,10 @@ Scheduled job  →  export today's stock/order changes to a file          REQ-02
                     COMMIT
 ```
 
-The site's stock table is authoritative for what the site sells; an incoming
-change from the file import is applied through the same locked transaction the
-payment-confirmation flow uses. **Shopee is authoritative when Shopee and site
+Under that superseded flow, an incoming change from the file import would have
+been applied through the same locked transaction the payment-confirmation flow
+used. Today `variant.stock_quantity` is a read-only copy of Shopee's stock that
+only the sync writes (D-094, D-096). **Shopee is authoritative when Shopee and site
 stock disagree** (D-082, Q-046) — the reconciliation *rule* is decided; the
 detection *mechanism* still waits on seeing real BigSeller/Shopee export
 formats (Q-045, and the BigSeller data-inspection dependency behind Q-007,
@@ -199,13 +221,14 @@ correcting the code.
 
 | # | Invariant | Why it is not recoverable | Enforced at |
 | :--- | :--- | :--- | :--- |
-| 1 | Stock never goes negative and is never sold twice (REQ-020) | The customer has already been charged for goods that do not exist | Row lock inside the order transaction |
+| 1 | ~~Stock never goes negative and is never sold twice~~ — **withdrawn for website orders (D-096)**; the guarantee in REQ-020 no longer exists. What remains: a copied `stock_quantity` is never negative (`CHECK >= 0`) and an order that has been paid is never rejected | Oversold orders are handled by staff outside the system (D-077) | `CHECK` constraint on the mirrored stock; the manual stock list |
 | 2 | Tax invoice numbers run gap-free (REQ-025) | A gap is a legal defect in a document already sent to a customer and filed with an accountant | Postgres sequence in the same transaction |
 | 3 | VAT is computed exactly (REQ-023) | Wrong tax on issued invoices means reissuing documents and amending filings | Integer satang arithmetic in the domain, one function |
 | 4 | A staff member cannot act beyond their role (REQ-034, REQ-035) | Data is already changed or exposed when it is noticed | Permission check in the domain layer, not the UI |
 
-Each carries an integration test written before the implementation merges
-(D-044, `08-security-testing.md`).
+Invariants 2, 3 and 4 each carry an integration test written before the
+implementation merges (D-044, `08-security-testing.md`); invariant 1's test is
+withdrawn with it (D-096).
 
 Invariant 3's input is now resolved (Q-010, D-060): every displayed price
 already includes 7% VAT, and the single domain function extracts it rather
@@ -214,7 +237,7 @@ than adding it on top.
 ## What this architecture deliberately does not have
 
 - **No microservices.** Two developers, one database, one deploy. Service boundaries would be cost with no benefit at this size.
-- **No event bus.** The one place asynchrony is genuinely needed — email, and later the stock import — is a job queue, not a bus.
+- **No event bus.** Where asynchrony is genuinely needed — email as a job queue, and the 10-minute catalogue sync as a scheduled job endpoint — neither is a bus.
 - **No caching layer.** Nothing in the source describes traffic. Adding a cache before there is a measured problem adds a second source of truth for stock, which is the one thing this system must never have.
 - **No GraphQL, no public REST.** See *Entry surfaces*.
 - **No CMS.** REQ-043 and REQ-047 need staff-editable pages and news, which is a table and an editor, not a second system.
@@ -228,6 +251,6 @@ today, and adopting one now would be inventing a requirement.
 | :--- | :--- |
 | Where any of it runs | [ADR-0002](adr/ADR-0002-hosting-and-deployment.md) — deferred to phase 7 |
 | The order status set and its transitions | Q-023 — a candidate is proposed, not adopted |
-| Parent SKU / ModelSKU format | Q-007, Q-014, Q-044 — the BigSeller data-inspection dependency |
+| Parent SKU / ModelSKU format | Q-014 — stored as Shopee holds them (D-103); the format question itself is still open |
 | Practical maximum option types enforced by the UI/import | Q-013 — the model already supports any number; the Shopee/Lazada research is done, the enforced limit now waits on the client |
 | Shopee/BigSeller discrepancy-detection mechanism | Q-045 — the authority rule (Shopee wins) is decided; detection waits on real export formats |

@@ -7,7 +7,8 @@ source for what it must do is `docs/reference/client-summary-th.md`.
 
 ## Current state
 
-**Phase 1 — planning documentation. No application code exists yet.**
+**Phase 1 — planning documentation, plus plan 010's code (the Shopee
+catalogue mirror). No other application code exists yet.**
 
 **The stack is decided.** Next.js (App Router), TypeScript, PostgreSQL and
 Prisma, as one route-grouped application, with the commerce domain written
@@ -20,23 +21,27 @@ code or name a host as chosen.
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 55 open questions have been answered or narrowed —
-see `docs/13-open-questions.md` for the full record: 37 RESOLVED, 5 PARTIALLY
-RESOLVED, 13 still genuinely UNRESOLVED (most waiting on a BigSeller
-data-inspection session or a Shopee account). Total budget is 100,000 THB and
+CONFIRMED, not PROPOSED. 57 open questions are on record —
+see `docs/13-open-questions.md` for the full record: 41 RESOLVED, 6 PARTIALLY
+RESOLVED, 10 still genuinely UNRESOLVED (most waiting on a BigSeller
+data-inspection session, the Shopee live go-live, or Shopee's API call limit). Total budget is 100,000 THB and
 a proposed schedule exists — `docs/02-scope-and-phases.md#schedule-and-budget`
 — but it is a project-side proposal pending client confirmation, not itself a
 client commitment. Only *our own* engineering decisions in
 `docs/11-decisions.md` are Accepted in the strict ADR sense; treat both that
 register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 
-**Implementation has not started and is still blocked.** Plan 002 cannot begin
-while Q-013 (the practical option-type cap, pending Shopee/Lazada research)
-and Q-014 (SKU format, pending a BigSeller data-inspection session) are open —
-they are the shape of the catalogue. Do not scaffold the application to get
-ahead of them. K-Payment is now the **sole** payment method (bank transfer and
-standalone PromptPay are removed) and stock is deducted at payment
-confirmation, not at order placement — see D-068, D-072.
+**Implementation is unblocked for plan 010 only** (the Shopee catalogue
+mirror — `docs/plans/010-shopee-catalogue-mirror.md`), on the project owner's
+approval of 2026-10-26 (`docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`,
+§2 *Authority*). Shopee is the master for the catalogue (D-094), so options and
+SKUs are stored as Shopee holds them and Q-013 and Q-014 no longer block that
+plan. Plan 002 is superseded in part by plan 010; its staff authentication and
+role scope is unchanged. Build only what plan 010 describes — do not scaffold
+the rest of the application to get ahead of the other plans. K-Payment is the
+**sole** payment method (bank transfer and standalone PromptPay are removed),
+and website orders never change stock — staff adjust stock in BigSeller by
+hand from an admin list (D-096, which supersedes D-068; see also D-072).
 
 ## Hard rules
 

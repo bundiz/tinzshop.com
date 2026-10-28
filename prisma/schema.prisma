@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ShippingSizeTier {
+  small
+  medium
+  large
+
+  @@map("shipping_size_tier")
+}
+
+enum Locale {
+  th
+  en
+
+  @@map("locale")
+}
+
+model Category {
+  id           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId     String?               @map("parent_id") @db.Uuid
+  slug         String                @unique
+  position     Int
+  parent       Category?             @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[]            @relation("CategoryTree")
+  translations CategoryTranslation[]
+  products     ProductCategory[]
+  primaryFor   Product[]
+
+  @@map("category")
+}
+
+model CategoryTranslation {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  locale     Locale
+  name       String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@map("category_translation")
+}
+
+model Product {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentSku         String?              @map("parent_sku")
+  brandName         String?              @map("brand_name")
+  weightGrams       Int?                 @map("weight_grams")
+  primaryCategoryId String?              @map("primary_category_id") @db.Uuid
+  shippingSizeTier  ShippingSizeTier?    @map("shipping_size_tier")
+  isPreOrder        Boolean              @default(false) @map("is_pre_order")
+  releaseDate       DateTime?            @map("release_date") @db.Date
+  isActive          Boolean              @default(false) @map("is_active")
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  primaryCategory   Category?            @relation(fields: [primaryCategoryId], references: [id], onDelete: SetNull)
+  translations      ProductTranslation[]
+  images            ProductImage[]
+  categories        ProductCategory[]
+  optionTypes       OptionType[]
+  variants          Variant[]
+  channelItem       ChannelItem?
+
+  @@index([parentSku])
+  @@map("product")
+}
+
+model ProductTranslation {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+  locale      Locale
+  name        String
+  description String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, locale])
+  @@map("product_translation")
+}
+
+model ProductImage {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId       String  @map("product_id") @db.Uuid
+  position        Int
+  url             String
+  externalImageId String  @map("external_image_id")
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, position])
+  @@map("product_image")
+}
+
+model ProductCategory {
+  productId  String   @map("product_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@map("product_category")
+}
+
+model OptionType {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String        @map("product_id") @db.Uuid
+  position  Int
+  name      String
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values    OptionValue[]
+
+  @@map("option_type")
+}
+
+model OptionValue {
+  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  optionTypeId String               @map("option_type_id") @db.Uuid
+  position     Int
+  value        String
+  optionType   OptionType           @relation(fields: [optionTypeId], references: [id], onDelete: Cascade)
+  variants     VariantOptionValue[]
+
+  @@map("option_value")
+}
+
+model Variant {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId           String               @map("product_id") @db.Uuid
+  modelSku            String?              @map("model_sku")
+  priceSatang         BigInt               @map("price_satang")
+  originalPriceSatang BigInt               @map("original_price_satang")
+  stockQuantity       Int                  @map("stock_quantity")
+  isActive            Boolean              @map("is_active")
+  position            Int
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  optionValues        VariantOptionValue[]
+  channelListing      ChannelListing?
+
+  @@index([modelSku])
+  @@map("variant")
+}
+
+model VariantOptionValue {
+  variantId     String      @map("variant_id") @db.Uuid
+  optionValueId String      @map("option_value_id") @db.Uuid
+  variant       Variant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValue   OptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, optionValueId])
+  @@map("variant_option_value")
+}
+
+model ShippingSizeTierRate {
+  tier        ShippingSizeTier @id
+  priceSatang BigInt           @map("price_satang")
+
+  @@map("shipping_size_tier_rate")
+}
+
+model ChannelItem {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId          String           @unique @map("product_id") @db.Uuid
+  channel            String
+  externalItemId     BigInt           @map("external_item_id")
+  externalStatus     String           @map("external_status")
+  externalCategoryId BigInt           @map("external_category_id")
+  isKit              Boolean          @map("is_kit")
+  externalCreatedAt  DateTime         @map("external_created_at") @db.Timestamptz(6)
+  externalUpdatedAt  DateTime         @map("external_updated_at") @db.Timestamptz(6)
+  salesCount         Int              @map("sales_count")
+  ratingStar         Decimal          @map("rating_star") @db.Decimal(2, 1)
+  ratingCount        Int              @map("rating_count")
+  lastSyncedAt       DateTime         @map("last_synced_at") @db.Timestamptz(6)
+  rawPayload         Json             @map("raw_payload")
+  product            Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  listings           ChannelListing[]
+
+  @@unique([channel, externalItemId])
+  @@map("channel_item")
+}
+
+model ChannelListing {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  variantId       String      @unique @map("variant_id") @db.Uuid
+  channelItemId   String      @map("channel_item_id") @db.Uuid
+  externalModelId BigInt?     @map("external_model_id")
+  externalStatus  String?     @map("external_status")
+  lastSyncedAt    DateTime    @map("last_synced_at") @db.Timestamptz(6)
+  variant         Variant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  channelItem     ChannelItem @relation(fields: [channelItemId], references: [id], onDelete: Cascade)
+
+  // The index is created in the migration SQL as NULLS NOT DISTINCT; declared here only so Prisma sees no drift.
+  @@unique([channelItemId, externalModelId], map: "channel_listing_item_model_key")
+  @@map("channel_listing")
+}
+
+model ChannelAuthorization {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  channel                String
+  externalShopId         BigInt    @map("external_shop_id")
+  accessTokenCiphertext  String    @map("access_token_ciphertext")
+  refreshTokenCiphertext String    @map("refresh_token_ciphertext")
+  accessTokenExpiresAt   DateTime  @map("access_token_expires_at") @db.Timestamptz(6)
+  refreshTokenExpiresAt  DateTime  @map("refresh_token_expires_at") @db.Timestamptz(6)
+  authorizationExpiresAt DateTime? @map("authorization_expires_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([channel, externalShopId])
+  @@map("channel_authorization")
+}
+
+model SyncRun {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  channel          String
+  startedAt        DateTime  @map("started_at") @db.Timestamptz(6)
+  finishedAt       DateTime? @map("finished_at") @db.Timestamptz(6)
+  outcome          String
+  windowFrom       DateTime? @map("window_from") @db.Timestamptz(6)
+  windowTo         DateTime? @map("window_to") @db.Timestamptz(6)
+  itemsSeen        Int       @default(0) @map("items_seen")
+  itemsCreated     Int       @default(0) @map("items_created")
+  itemsUpdated     Int       @default(0) @map("items_updated")
+  itemsDeactivated Int       @default(0) @map("items_deactivated")
+  apiCalls         Int       @default(0) @map("api_calls")
+  warnings         Json      @default("[]")
+  errorCode        String?   @map("error_code")
+  errorDetail      String?   @map("error_detail")
+
+  @@map("sync_run")
+}

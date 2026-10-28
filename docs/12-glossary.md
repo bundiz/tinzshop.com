@@ -27,9 +27,15 @@ vocabulary.
 | Variant | รุ่น / ตัวเลือกสินค้า | One specific buyable combination of a product's options, holding its own ModelSKU, price and stock. | `variant` |
 | Option type | ตัวเลือก | An axis a product varies on, such as colour or capacity. Maximum number per product is unknown — see Q-013. | `option_type` |
 | Option value | ค่าตัวเลือก | One value on an option type, such as "black" or "512GB". | `option_value` |
-| Parent SKU | รหัสสินค้าหลัก | The single code identifying a product. Format unknown — defined in a contract that was not provided. See Q-014, Q-007. | `parent_sku` |
-| Model SKU | รหัสรุ่น | The code identifying one variant. Format unknown, and whether it embeds the Parent SKU is unknown. See Q-014. | `model_sku` |
-| Category | หมวดหมู่ | A grouping used to browse products. Named in the source: Nintendo Switch, PlayStation 5, IT Gadgets, Pre-Order. | `category` |
+| Parent SKU | รหัสสินค้าหลัก | The single code identifying a product. Stored as Shopee holds it, with no uniqueness constraint; identity is Shopee's item id (D-103). Our own format rule is unknown — see Q-014, Q-007. | `parent_sku` |
+| Model SKU | รหัสรุ่น | The code identifying one variant. Stored as Shopee holds it, with no uniqueness constraint; identity is Shopee's model id (D-103). Our own format rule, and whether it embeds the Parent SKU, is unknown — see Q-014. | `model_sku` |
+| Category | หมวดหมู่ | A grouping used to browse products. Named in the source: Nintendo Switch, PlayStation 5, IT Gadgets, Pre-Order. Our own menu categories; admin assigns products to them (D-099). | `category` |
+| Category translation | ชื่อหมวดหมู่ตามภาษา | The Thai or English name of a category, one row per locale. | `category_translation` |
+| Product category | หมวดหมู่ของสินค้า | Links a product to one of our categories; a product may sit in several. | `product_category` |
+| Product translation | ข้อความสินค้าตามภาษา | The name and description of a product in one locale. The sync writes Shopee's text into the `th` row; the `en` row is optional and edited in our admin. | `product_translation` |
+| Product image | รูปสินค้า | One photo of a product, with its position and Shopee's image URL (D-097). | `product_image` |
+| Variant option value | ค่าตัวเลือกของรุ่น | Links a variant to each option value that makes up its combination. | `variant_option_value` |
+| Product activation | การเปิดใช้งานสินค้า | The admin switch that makes a product visible on the storefront. A product first seen by the sync is created inactive until admin assigns a category and a shipping size tier. | `is_active` |
 
 > Use `product` only for the parent and `variant` only for the buyable model.
 > Never use "SKU" alone — always `parent_sku` or `model_sku`, because the source
@@ -44,9 +50,10 @@ vocabulary.
 | In stock | มีสินค้า | Public status: available to buy. | `in_stock` |
 | Out of stock | สินค้าหมด | Public status: not available to buy. | `out_of_stock` |
 | Not available for sale | ไม่พร้อมขาย | A status raised in the §4 discussion notes as a manual alternative to setting stock to zero. Not a confirmed requirement. | `not_for_sale` |
-| Stock sync | เชื่อมสต๊อก | Keeping the site's stock and Shopee's stock in agreement, via a daily BigSeller file export/import. Shopee is authoritative when the two disagree — see Q-043, Q-046, D-081, D-082. | `stock_sync` |
+| Stock sync | เชื่อมสต๊อก | Keeping the site's stock and Shopee's stock in agreement, by pulling the Shopee catalogue every 10 minutes (D-095); staff update stock in BigSeller by hand from an admin list (D-096), and BigSeller pushes it to Shopee. The daily BigSeller file (D-081) is superseded for the catalogue. Shopee is authoritative when the two disagree — see Q-043, Q-046, D-082. | `stock_sync` |
 | Stock movement | ความเคลื่อนไหวสต๊อก | An append-only record of a change to a variant's stock quantity — delta, reason, actor, source. Not the same as the removed audit log (D-066); this is the stock-integrity record, kept regardless. | `stock_movement` |
-| Reservation quota | โควตาจอง | For a pre-order only: a cap on reservations against a release date, held at order time. Not a stock deduction — see `pre_order` and Q-024, D-068. | `reservation_quota` |
+| Manual stock adjustment | ตัดสต๊อกด้วยมือ | Staff updating stock in BigSeller by hand for a paid website order line, recorded on the order line as adjusted or not needed, with who and when. The website itself never changes stock. See D-096. | `stock_adjustment` |
+| Reservation quota | โควตาจอง | For a pre-order only: a cap on reservations against a release date, held at order time. Not a stock deduction — see `pre_order` and Q-024. D-068 is superseded by D-096 for normal orders; how pre-orders interact with stock is phase 5 work (spec §5.3, §5.5). | `reservation_quota` |
 
 ## Orders
 
@@ -109,12 +116,13 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Shipping label | ใบปะหน้า | A simple self-printed address label (name, address, phone) generated from order data — not a carrier's own barcoded label. Exact layout waits on an example. See Q-039, D-075. | `shipping_label` |
 | Shipping size tier | ระดับขนาดสินค้า | The shop-owner-configurable category — small / medium / large — a product is assigned for shipping-cost purposes, replacing a computed weight/dimension calculation. Candidate prices: small 50 THB, medium 100 THB, large free. See Q-040, D-079. | `shipping_size_tier` |
 | Shipping rule | กฎค่าส่ง | A staff-configurable rule, currently the size-tier pricing above. See Q-040. | `shipping_rule` |
+| Shipping size tier rate | ราคาค่าส่งตามระดับขนาด | The price, in satang, of one shipping size tier. Seeded with the candidate values and edited by the owner. See D-079. | `shipping_size_tier_rate` |
 
 ## Selling models
 
 | English | Thai | Definition | Identifier |
 | :--- | :--- | :--- | :--- |
-| Pre-order | พรีออเดอร์ | Selling a product before release, with a release date and a reservation quota. Stock is only actually deducted when the goods are received, not at order time. See Q-024, D-068. | `pre_order` |
+| Pre-order | พรีออเดอร์ | Selling a product before release, with a release date and a reservation quota. Website orders never change stock (D-096, which supersedes D-068 for normal orders); how pre-order lines join the manual stock list when goods are received is phase 5 work (spec §5.3, §5.5). See Q-024. | `pre_order` |
 | Release date | วันวางจำหน่าย | The date a pre-ordered product becomes available. | `release_date` |
 | Dropship | สินค้าสั่งจากตัวแทนจำหน่าย | Selling a product the shop does not hold, ordered from a distributor after the sale, gated by a supplier-availability check before payment — see `supplier_availability_check`. | `dropship` |
 | Supplier availability check | ตรวจสอบสินค้ากับซัพพลายเออร์ | The "Contact staff / Check availability" step a dropship customer uses before paying. Staff confirm with the supplier and authorize or cancel the order. See Q-047, D-083. | `supplier_availability_check` |
@@ -152,6 +160,25 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Shopee | Shopee | Marketplace the shop also sells on; authoritative source of truth for stock on conflict. See Q-046, D-082. | `shopee` |
 | BigSeller | BigSeller | Stock management tool, account already held by the shop. Daily file export/import is the confirmed sync mechanism (Q-043, D-081); SKU mapping still waits on inspecting real data (Q-007, Q-014, Q-044). | `bigseller` |
 | K-Payment | K-Payment | Kasikorn Bank's payment service — the **sole** payment method (card, instalments, PromptPay QR). Merchant/test credentials already exist; sandbox testing is the next step. See Q-030, Q-033, D-072. | `kpayment` |
+| Channel item | สินค้าบนช่องทางขาย | The link between a product and its Shopee item: Shopee's item id, status, sales count and rating. | `channel_item` |
+| Channel listing | รายการรุ่นบนช่องทางขาย | The link between a variant and its Shopee model. | `channel_listing` |
+| Channel authorization | การอนุญาตของช่องทางขาย | The shop's Shopee tokens, stored encrypted. | `channel_authorization` |
+| External item id | รหัสสินค้าของช่องทางขาย | Shopee's `item_id`. Identity of a product on Shopee; stored as a 64-bit integer. See D-103. | `external_item_id` |
+| Channel mirror columns | คอลัมน์สำหรับสะท้อนข้อมูลช่องทางขาย | Plain column names of the Shopee mirror tables (spec 5.2 to 5.4): `raw_payload` (last base-info JSON, debugging only), `rating_star`, `is_kit`, `last_synced_at`, `primary_category_id` (breadcrumb category). | `raw_payload`, `rating_star`, `is_kit`, `last_synced_at`, `primary_category_id` |
+| Column conventions | ข้อตกลงการตั้งชื่อคอลัมน์ | Every catalogue and channel table has a uuid primary key `id`, except `product_category` and `variant_option_value`, which use composite keys, and `shipping_size_tier_rate`, which is keyed by `tier`. `product_id`, `variant_id`, `category_id`, `parent_id`, `channel_item_id`, `option_type_id` and `option_value_id` are foreign keys to the named table. The `external_*_id` columns (`external_item_id`, `external_model_id`, `external_shop_id`, `external_category_id`) are Shopee's own int64 identifiers, not foreign keys. `created_at` and `updated_at` are timestamptz. Money columns end `_satang` and are bigint satang. | `id`, `product_id`, `variant_id`, `category_id`, `parent_id`, `channel_item_id`, `option_type_id`, `option_value_id`, `created_at`, `updated_at` |
+| Product columns | คอลัมน์ของสินค้า | Spec 5.2 and 5.3: `brand_name` (Shopee `brand.original_brand_name`), `weight_grams` (informational only, D-067), `is_pre_order` (ours, not Shopee's pre-order), `slug` (unique category slug, on `category`). | `brand_name`, `weight_grams`, `is_pre_order`, `slug` |
+| Variant columns | คอลัมน์ของรุ่นสินค้า | Spec 5.2: `price_satang` and `original_price_satang` (current and crossed-out price, in satang), `stock_quantity` (read-only copy of Shopee stock, never below 0). | `price_satang`, `original_price_satang`, `stock_quantity` |
+| Product image and translation columns | คอลัมน์ของรูปภาพและคำแปลสินค้า | Spec 5.2 and 5.3: `url` (image URL) and `external_image_id` (Shopee image id) on `product_image`; `locale` (`th` or `en`, also the name of the enum), `name` and `description` on the translation tables. | `url`, `external_image_id`, `locale`, `name`, `description` |
+| Ordering and option columns | คอลัมน์ลำดับและตัวเลือก | Spec 5.2 and 5.3: `position` (0-based or display order on `product_image`, `option_type`, `option_value` and `variant`; Shopee's `tier_index` refers to option positions), `value` (`option_value`, Shopee `variation_option_name`), `tier` (primary key of `shipping_size_tier_rate`: small, medium or large). | `position`, `value`, `tier` |
+| Channel item columns | คอลัมน์ของสินค้าบนช่องทางขาย | Spec 5.4: `channel` (always `shopee`), `external_status` (on `channel_item`, Shopee `item_status`; on `channel_listing`, null for a model Shopee still returns and `'NOT_FOUND'` for a vanished one — D-105), `external_category_id` (Shopee's category id, informational), `external_created_at` and `external_updated_at` (Shopee `create_time` and `update_time`), `sales_count` (Shopee `sale`, best-selling sort), `rating_count` (Shopee `comment_count`). | `channel`, `external_status`, `external_category_id`, `external_created_at`, `external_updated_at`, `sales_count`, `rating_count` |
+| Channel authorization columns | คอลัมน์ของการอนุญาตช่องทางขาย | Spec 5.4: `external_shop_id` (Shopee shop id), `access_token_ciphertext` and `refresh_token_ciphertext` (AES-256-GCM encrypted), `access_token_expires_at`, `refresh_token_expires_at`, `authorization_expires_at` (nullable, from `get_shop_info` `expire_time`). | `external_shop_id`, `access_token_ciphertext`, `refresh_token_ciphertext`, `access_token_expires_at`, `refresh_token_expires_at`, `authorization_expires_at` |
+| Sync run columns | คอลัมน์ของการซิงก์ | Spec 5.4, one row per attempt: `started_at`, `finished_at`, `window_from` and `window_to` (the `update_time` window asked for), `items_seen`, `items_created`, `items_updated`, `items_deactivated`, `api_calls` (to watch Shopee's daily limit), `error_code` and `error_detail` (never a token, key, signed URL or personal data), `outcome` (`running` / `succeeded` / `failed` / `skipped`), `warnings` (jsonb, e.g. empty or duplicate SKUs). | `started_at`, `finished_at`, `window_from`, `window_to`, `items_seen`, `items_created`, `items_updated`, `items_deactivated`, `api_calls`, `error_code`, `error_detail`, `outcome`, `warnings` |
+| External model id | รหัสรุ่นของช่องทางขาย | Shopee's `model_id`. Identity of a variant on Shopee; null for an item without models. See D-103. | `external_model_id` |
+| Sync run | รอบการซิงก์ | One recorded attempt of the catalogue sync, with its outcome, counts, API calls and warnings. | `sync_run` |
+| Sync run error codes | รหัสข้อผิดพลาดของการซิงก์ | Values of `sync_run.error_code` for a failed run, besides Shopee's own error strings (D-106, D-108, D-109). Meanings in `14-integrations.md#how-the-sync-behaves-plan-010`. | `listing_stuck`, `listing_incomplete`, `listing_too_long`, `channel_not_connected`, `token_persistence_failed`, `item_failures`, `unexpected` |
+| Sync run warning codes | รหัสคำเตือนของการซิงก์ | Codes in a `sync_run.warnings` entry, written `item <id>: <code>` or `item <id> model <model id>: <code>` (D-111). A Shopee error string may also appear as a code. | `invalid_response`, `empty_batch_response`, `mapping_failed`, `not_returned`, `extra_info_unavailable`, `empty_parent_sku`, `duplicate_parent_sku`, `empty_model_sku`, `duplicate_model_sku` |
+| Catalogue sync | การซิงก์แคตตาล็อก | The job that pulls the Shopee catalogue every 10 minutes into our database (D-095). | `catalogue_sync` |
+| Catalogue item snapshot | ภาพรวมสินค้าจากแคตตาล็อก | The catalogue data the sync read for one Shopee item in one run, as it was written into our tables. | `catalogue_item_snapshot` |
 | Mail relay | Mail Relay | The category of transactional email solution decided on; specific provider and sending domain still to be finalized. See Q-032, D-074. | `mail_relay` |
 | Cloudflare | CloudFlare | Free plan, scoped to security and bot protection. See Q-054, D-087. | `cloudflare` |
 | PDPA | พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล | Thailand's Personal Data Protection Act. Deletion requests carry an accepted exception for retained tax/accounting data. See Q-028, D-070. | `pdpa` |
@@ -169,6 +196,8 @@ their file names in `.claude/agents/`.
 | Planner agent | เอเจนต์วางแผน | Subagent that writes plans and keeps the board's issues in step (D-093). | `planner` |
 | Developer agent | เอเจนต์นักพัฒนา | Subagent that builds features and fixes from a plan (D-093). | `developer` |
 | Tester and security reviewer agent | เอเจนต์ทดสอบและตรวจความปลอดภัย | Subagent that tests and security-reviews a change before merge (D-093). | `tester-security-reviewer` |
+| Module folder | โฟลเดอร์โมดูล | A folder grouping one area's files inside each server layer, with the same name in every layer (`catalogue`, `channel`, `api-docs`); `shared` holds helpers several modules use (D-116). | `catalogue/`, `channel/`, `api-docs/`, `shared/` |
+| API docs | เอกสาร API | The OpenAPI 3.1 description of the endpoints outside systems call, in `docs/openapi.yaml`, rendered by Swagger UI at `/api/docs` in development only (D-115). `06-api.md` stays the authority. | `docs/openapi.yaml`, `/api/docs`, `createApiDocsHandlers` |
 | DevOps agent | เอเจนต์ DevOps | Subagent for CI, environments, configuration, release and backup procedures (D-093). | `devops` |
 
 ## Terms deliberately NOT defined here

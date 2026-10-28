@@ -21,9 +21,9 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
-| **RESOLVED** | 37 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
+| **RESOLVED** | 41 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 12 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 10 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -152,6 +152,8 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 **Sources consulted:** Shopee Open Platform Developer Guide 219 (*Variant management*); Shopee Open Platform `v2.product.init_tier_variation`; Shopee Seller Education SG article 14234, MY article 695, PH article 2990; Lazada Open Platform *Create/Update Product Q&A*; Lazada Seller Center `CreateProduct` and *Guide for Creating Products*; the shop's own public Shopee and Lazada listings, and `tinzshop.com/shop`.
 
 - **Ask (residual):** client — two numbers. (1) The maximum number of option types per product the admin UI and the Excel import should enforce; the research rules out inheriting the marketplaces' two but does not choose the replacement. (2) The maximum number of variant combinations per product. The trade-off to put to the client either way: a product on the new site using more option types than a channel permits cannot round-trip to that channel without being flattened — which is the position the shop is in today.
+
+- **Update — 2026-10-26:** the site mirrors Shopee's two option tiers, because Shopee is the master for options (D-094, [spec §2](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#2-owner-decisions-this-design-rests-on)). The cap the website enforces is therefore Shopee's, not a separate project decision; the client-side numbers above stay recorded as history.
 
 ### Q-014: Parent SKU and ModelSKU format rules are unknown
 - **Status:** UNRESOLVED — waiting on BigSeller data inspection
@@ -390,11 +392,12 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Recorded in:** `11-decisions.md` D-080.
 
 ### Q-042: Shopee Partner account and test shop
-- **Status:** UNRESOLVED — not yet available
+- **Status:** PARTIALLY RESOLVED — sandbox access exists; live go-live and the owner's authorization are pending
 - **Question:** Is a Shopee Partner account and test shop available?
-- **Answer:** "Shopee Partner/Test access is not available yet. Keep this pending."
-- **Effect:** No change. Still blocks any Shopee research or build work.
-- **Ask:** client, no target date set
+- **Answer:** "Shopee Partner/Test access is not available yet. Keep this pending." (2026-09-13)
+- **Update — 2026-10-26:** sandbox access has existed since 2026-10-20 (Test Partner and sandbox shop; see `14-integrations.md`). The live app still needs go-live and the shop owner's authorization before production use.
+- **Effect:** Research and build against the sandbox are unblocked. Anything needing the live host or the live partner key still waits.
+- **Ask:** client, no target date set (live go-live and authorization)
 
 ### Q-043: BigSeller live API versus daily file import — undecided
 - **Status:** RESOLVED — 2026-09-13
@@ -402,6 +405,7 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** "Use daily file export/import as the primary approach. The BigSeller paid API / real-time approach is a secondary/future option, potentially to be implemented later if the purchase/order volume justifies it. Do not make the paid real-time API a Phase 1 dependency."
 - **Effect:** `03-architecture.md`'s "stock changing somewhere else" flow is decided: the scheduled-file-import branch, not the live-API branch. This directly enables Q-024's normal-order flow (deduct at payment, export daily to update BigSeller) and removes the paid API entirely from the phase 5 budget.
 - **Recorded in:** `11-decisions.md` D-081.
+- **Update — 2026-10-26:** for the catalogue direction, the daily BigSeller file is superseded by a 10-minute pull of the Shopee Open API (D-095). Stock now reaches Shopee from BigSeller, and our site reads it from Shopee.
 
 ### Q-044: BigSeller account, codes and pricing
 - **Status:** PARTIALLY RESOLVED — account exists, SKU data still pending
@@ -504,6 +508,24 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** "Keep the backup design lightweight for now. Transaction data is also recorded in BigSeller, and long-term retention of our application's transaction database is not considered a priority at this stage. Please propose a reasonable backup strategy that fits the 100,000 THB total budget without over-engineering it. Keep the final retention/recovery policy documented as a decision that can be revisited later."
 - **Effect:** A lightweight strategy is proposed in `10-deployment.md#backup`: automatic daily full-database backup, 30-day rolling retention, one restore performed and timed before go-live, no point-in-time recovery. It leans on BigSeller already holding a secondary record of transaction data, which is why deep retention is not worth the budget here. Explicitly recorded as revisitable, not a permanent policy.
 - **Recorded in:** `11-decisions.md` D-088.
+
+---
+
+## Blocking Phase 2 — Shopee catalogue mirror
+
+### Q-056: Shopee's daily API call limit for this app
+- **Status:** UNRESOLVED — not yet researched
+- **Question:** What is Shopee's daily API call limit for this app, and does the full stock sweep in plan 010 stay under it at the real catalogue size?
+- **Answer:** None yet.
+- **Effect:** The stock sweep runs every 10 minutes and costs about catalogue ÷ 50 base-info calls plus one `get_model_list` per item with models ([spec §8](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#8-risks-and-what-to-verify-in-the-sandbox-before-building)). The category design shows roughly 700 products. Measure with `sync_run.api_calls` in the sandbox; confirm the limit before go-live.
+- **Ask:** developers, then Shopee support
+
+### Q-057: Do the Shopee sandbox ids count as account identifiers?
+- **Status:** RESOLVED — 2026-10-28 (project owner)
+- **Question:** The sandbox Test Partner id and sandbox shop id appear in test fixtures, the catalogue mirror spec and plan 010. Hard rule 2 forbids committing "a real account identifier". Are sandbox ids such identifiers, to be replaced by invented values, or acceptable as test data?
+- **Answer:** Acceptable as test data. The project owner (2026-10-28): "its the test account that we going to use first". They are the sandbox test account the project develops against, not a live shop (D-112).
+- **Effect:** The sandbox ids stay in fixtures, the spec and plan 010. Hard rule 2 still applies to live shop and partner ids. No secret is involved: the partner key and tokens never appear in the repository (`14-integrations.md#credential-required-1`). If the answer is "replace them", the fixtures, the spec's evidence line and plan 010's test values change; signature test vectors would need recomputing with the invented ids.
+- **Ask:** project owner
 
 ---
 

@@ -75,13 +75,50 @@ Read this file to find out *what* was decided. Follow the link to find out
 | D-041 | Authorization is checked in the domain layer, never only in the UI, and never inferred from which page the user reached. | Accepted | [08](08-security-testing.md#authorization) |
 | D-042 | No secret is committed in any form, and no document, script or agent reads `.env`. | Accepted | [08](08-security-testing.md#secrets) |
 | D-043 | Testing has three layers: domain unit tests, integration tests against a real PostgreSQL, and a manual checklist inside each plan. | Accepted | [08](08-security-testing.md#the-three-layers) |
-| D-044 | The four invariants — no overselling, gap-free invoice numbers, correct VAT, and permission enforcement — carry integration tests before the code that implements them is merged. | Accepted | [08](08-security-testing.md#the-four-invariants) |
+| D-044 | The four invariants — no overselling, gap-free invoice numbers, correct VAT, and permission enforcement — carry integration tests before the code that implements them is merged. | Accepted; the no-overselling test is withdrawn — see D-096, the remaining three stand | [08](08-security-testing.md#the-four-invariants) |
 | D-045 | Every change reaches `main` through a pull request reviewed by the other developer; an agent review does not substitute. | Accepted | [09](09-coding-guidelines.md#pull-requests) |
 | D-046 | Ownership is a path, never a feature. | Accepted | [09](09-coding-guidelines.md#ownership) |
 | D-047 | A pull request that assumes an answer to an unresolved question does not merge. | Accepted | [09](09-coding-guidelines.md#pull-requests) |
 | D-091 | Work status is tracked as GitHub issues on a Projects board owned by `bundiz`, the repository's owner. Columns Todo / In progress / Done move only through the board's built-in workflows; the plan checklist stays the record of truth. | Accepted | [09](09-coding-guidelines.md#project-board) |
 | D-092 | Every change is recorded in the repository's documentation in the same pull request as the change; a pull request with no documentation change says why. | Accepted | [09](09-coding-guidelines.md#documentation-with-every-change) |
 | D-093 | The team's Claude Code subagents — planner, developer, tester-security-reviewer and devops — are defined in `.claude/agents/` and committed, so every developer uses the same roles and rules. | Accepted | [09](09-coding-guidelines.md#agent-team) |
+
+## Catalogue mirror (owner, 2026-10-26)
+
+Approved by the project owner on 2026-10-26; the owner's authority is recorded in spec §2 *Authority*.
+
+| ID | Decision | Status | Detail |
+| :--- | :--- | :--- | :--- |
+| D-094 | Shopee is the master for product name, description, photos, options, price and stock. Our admin never edits them (spec O-1). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#2-owner-decisions-this-design-rests-on) |
+| D-095 | The catalogue is pulled from the Shopee Open API every 10 minutes, and storefront pages never call Shopee. Supersedes D-081 for the catalogue direction (O-2). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#1-intent) |
+| D-096 | Website orders never change stock. Staff update stock in BigSeller by hand from an admin list of paid order lines. Supersedes D-068 and removes REQ-020's no-oversell guarantee (O-3). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#55-orders-and-the-manual-stock-list) |
+| D-097 | Photos are shown from Shopee's image URLs until file storage is chosen (O-5). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#2-owner-decisions-this-design-rests-on) |
+| D-098 | Customers see only our own reviews. Shopee's rating and sales count are stored for sorting only (O-6). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#2-owner-decisions-this-design-rests-on) |
+| D-099 | Admin assigns products to our own menu categories (O-7). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#53-site-only-catalogue-data--edited-in-our-admin) |
+| D-100 | Shopee's orders are not imported (O-8). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#3-goals-non-goals-anti-goals) |
+| D-101 | Server code is layered controllers → services → repositories, with external systems in adapters. Services are framework-free, and Prisma is imported only in repositories (O-9). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#4-constraints) |
+| D-102 | Every website product comes from Shopee; there are no website-only products (O-10). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#2-owner-decisions-this-design-rests-on) |
+| D-103 | Parent SKU and ModelSKU are stored as Shopee holds them, with no uniqueness constraint. Identity is Shopee's item and model id (spec §5.8). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#58-deliberate-departures-from-earlier-documents) |
+
+### Built in plan 010 (engineering, 2026-10-26 to 2026-10-28)
+
+Our own engineering decisions made while building plan 010; they implement the owner decisions above and do not change them.
+
+| ID | Decision | Status | Detail |
+| :--- | :--- | :--- | :--- |
+| D-104 | The Shopee callback accepts only the shop configured in the required `SHOPEE_SHOP_ID`; any other `shop_id` gets `403 shopee.authorization.unexpected_shop` and no token exchange. | Accepted | [06](06-api.md#get-apicallbacksshopee) |
+| D-105 | `channel_listing.external_status` is null for models Shopee still returns and `'NOT_FOUND'` for vanished ones; a returned model's active state is `variant.is_active`. Only `channel_item` is marked not-found for a vanished item. | Accepted | [05](05-database.md#catalogue) |
+| D-106 | The sync service stays vendor-free: the Shopee source turns every Shopee API error into `CatalogueSourceError` carrying the Shopee code, and the service maps errors to `sync_run.error_code` (`channel_not_connected`, `token_persistence_failed`, `unexpected` for the rest). | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-107 | When extra info is unavailable, an item's sales and rating are unknown, not 0: stored values are kept (a newly created item starts at 0) and the run records `extra_info_unavailable`. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-108 | A listing that does not advance, is empty while claiming more, or passes 1000 pages fails the run (`listing_stuck`, `listing_incomplete`, `listing_too_long`); a partial listing is never read as complete. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-109 | A run in which an item not known before the run fails ends `failed` with `item_failures`, keeping committed upserts, so the window does not advance and the item is listed again. A known item's failure stays a warning. Refines spec §6: every item is still processed, but `failed` now also covers this case. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-110 | Not-found items stay in the stock sweep and are restored when returned; a listed item that base info does not return is a failure (`not_returned`), never not-found; base-info elements are parsed one by one; `api_calls` counts one run's calls only. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-111 | Sync warnings are strings `item <id>: <code>` or `item <id> model <model id>: <code>`; empty and duplicate Parent SKUs and ModelSKUs among a run's upserted items are reported this way (REQ-004), never rejected. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-112 | The Shopee sandbox Test Partner id and sandbox shop id may appear in the repository as test data; live shop and partner ids may not (hard rule 2). | Accepted | [13](13-open-questions.md#q-057-do-the-shopee-sandbox-ids-count-as-account-identifiers) |
+| D-113 | Prisma packages pinned at 7.10.1 and Vitest at 4.1.12 (from 7.10.0 / 4.1.11) to clear npm audit advisories, installed 13 days after release on the project owner's instruction. | Accepted | [plan 010](plans/010-shopee-catalogue-mirror.md#global-constraints) |
+| D-114 | A `get_item_list` page without `item` is an empty page, not an invalid response; an `invalid_response` error records the failing field paths and issue codes (never values) in `sync_run.error_detail`. Prompted by two sandbox runs failing on 2026-10-28. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-115 | API docs are a hand-written OpenAPI 3.1 file, `docs/openapi.yaml`, kept in step with `06-api.md` in the same pull request; `/api/docs` renders it with the pinned `swagger-ui-dist` (dev dependency, served locally) and answers 404 in production. | Accepted | [06](06-api.md#api-docs-openapi) |
+| D-116 | `src/server/controllers`, `services` and `repositories` (and `tests/integration`) are split into the same module folders — `catalogue/`, `channel/`, `api-docs/`, … — plus `shared/` for helpers several modules use; a unit test sits beside its file. The module folder is `catalogue/`, matching the code's spelling. | Accepted | [04](04-tech-stack-and-structure.md#repository-shape) |
 
 ## Deployment
 
@@ -109,7 +146,7 @@ force: build to them, and change them only by recording a new answer in
 | D-065 | Low-stock status and the near-out-of-stock dashboard list are removed; public stock status is in stock / out of stock only. | Accepted | [13](13-open-questions.md#q-019-low-stock-threshold-is-not-defined) |
 | D-066 | Audit logging of price, stock and order-status changes is removed from scope. | Accepted | [13](13-open-questions.md#q-020-audit-log-scope-and-retention) |
 | D-067 | Product weight/dimension capture is not required for phase 2; shipping size is a staff-assigned configurable category, not a computed function of a measured value. | Accepted | [13](13-open-questions.md#q-021-product-weight-and-dimension-data) |
-| D-068 | Stock is deducted only when K-Payment confirms payment for a normal order; for a pre-order, a reservation quota is held at order time and the real stock deduction happens only when staff record the goods as received from the supplier. | Accepted | [13](13-open-questions.md#q-024-when-is-stock-deducted) |
+| D-068 | Stock is deducted only when K-Payment confirms payment for a normal order; for a pre-order, a reservation quota is held at order time and the real stock deduction happens only when staff record the goods as received from the supplier. | Superseded — see D-096 | [13](13-open-questions.md#q-024-when-is-stock-deducted) |
 | D-069 | The website generates only a simplified (abbreviated) tax invoice; a full tax invoice, when a customer needs one, is generated by a separate system from customer data (including an optional personal or company tax ID) that we provide to it. | Accepted | [13](13-open-questions.md#q-026-abbreviated-tax-invoice-or-full-tax-invoice) |
 | D-070 | A PDPA deletion request erases personal fields not covered by the five-year retention rule; fields on a retained tax/accounting document are kept as an accepted legal exception. Supersedes the Blocked status of D-017. | Accepted | [13](13-open-questions.md#q-028-pdpa-deletion-versus-5-year-document-retention) |
 | D-071 | PromptPay is never offered standalone; it exists only as the QR option inside the K-Payment flow. | Accepted | [13](13-open-questions.md#q-029-is-promptpay-in-the-first-phase) |
@@ -122,7 +159,7 @@ force: build to them, and change them only by recording a new answer in
 | D-078 | Warranty claims are routed to the product's distributor/representative; the system displays contact information and does not manage a claim workflow. | Accepted | [13](13-open-questions.md#q-038-warranty-claim-workflow) |
 | D-079 | Shipping cost uses three shop-owner-configurable size tiers: small (candidate 50 THB), medium (candidate 100 THB), large (free). The long-term classification basis — weight or dimensions — is still open. | Accepted (tiers) / Blocked — Q-040 (measurement basis) | [13](13-open-questions.md#q-040-shipping-rule-parameters) |
 | D-080 | Pre-order deposit percentage and balance-collection timing are shop-owner-configurable values, never hard-coded. | Accepted | [13](13-open-questions.md#q-041-pre-order-deposit-percentage-and-balance-due-date) |
-| D-081 | Stock sync with BigSeller uses daily file export/import as the primary mechanism; the paid realtime API is a future option, not a phase-1 dependency. | Accepted | [13](13-open-questions.md#q-043-bigseller-live-api-versus-daily-file-import--undecided) |
+| D-081 | Stock sync with BigSeller uses daily file export/import as the primary mechanism; the paid realtime API is a future option, not a phase-1 dependency. | Superseded for the catalogue — see D-095 | [13](13-open-questions.md#q-043-bigseller-live-api-versus-daily-file-import--undecided) |
 | D-082 | Shopee is the authoritative source of truth when Shopee stock and site stock disagree. | Accepted | [13](13-open-questions.md#q-046-stock-discrepancy-detection-and-reconciliation) |
 | D-083 | A dropship order requires a staff-run "Contact staff / Check availability" gate confirming supplier stock before the customer is allowed to pay. | Accepted | [13](13-open-questions.md#q-047-dropship-supplier-confirmation-before-payment) |
 | D-084 | Staff-written blog/news and customer-submitted product reviews are two separate features; customer product reviews (previously ambiguous under the `+` marker) are confirmed in scope. | Accepted | [13](13-open-questions.md#q-048-product-review-means-two-different-things) |

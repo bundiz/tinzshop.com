@@ -33,17 +33,19 @@ developers end up with `variant` and `model` in one schema.
 ## Entity map
 
 ```
-category ──< product ──< variant >──┬── option_value >── option_type
-                          │         │
-                          │         └── (composite: one row per option per variant)
-                          │
-                          ├──< stock_movement          append-only
-                          ├──< order_line >── order ──┬──< payment
-                          │                           ├──< shipment
-                          │                           └──1 tax_invoice
-                          ├──< product_review          customer-written (REQ-054)
-                          ├──1 sale_page                per-product (REQ-055)
-                          └──< channel_listing          Shopee / BigSeller mapping
+category ──< product_category >── product ──< variant >──┬── option_value >── option_type
+                                               │         │
+                                               │         └── (composite: one row per option per variant)
+                                               │
+                                               ├──< stock_movement          append-only
+                                               ├──< order_line >── order ──┬──< payment
+                                               │                           ├──< shipment
+                                               │                           └──1 tax_invoice
+                                               ├──< product_review          customer-written (REQ-054)
+                                               ├──1 sale_page                per-product (REQ-055)
+                                               └──< channel_listing          Shopee model link (spec section 5.4)
+
+product ──1 channel_item ──< channel_listing    Shopee item link (spec section 5.4)
 
 customer ──< order
 customer ──< product_review
@@ -80,54 +82,52 @@ allowed to round money.
 
 ## Catalogue
 
-A **product** is what the customer thinks they are buying and carries one
-`parent_sku`. A **variant** is what they actually buy and carries its own
-`model_sku`, price and stock (REQ-004, REQ-005).
+**The catalogue and stock model is defined in
+[the Shopee catalogue mirror design](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md) (section 5), approved by the
+project owner on 2026-10-26. It replaces the earlier catalogue and stock
+sections of this file.** Shopee is the master for product name, description,
+photos, options, price and stock (D-094); the sync job pulls them every 10
+minutes (D-095) and the site never edits them. This file keeps the rules every
+table obeys; the spec carries the columns. Summary of spec section 5:
 
-```
-product        id, parent_sku (unique), category_id, is_active,
-               shipping_size_tier (small | medium | large), ...
-variant        id, product_id, model_sku (unique), price_satang,
-               stock_quantity, is_active, weight_grams, ...
-option_type    id, product_id, name           e.g. colour, capacity
-option_value   id, option_type_id, value      e.g. black, 512GB
-variant_option_value   variant_id, option_value_id      composite PK
-```
+- **Filled by the sync (5.2).** `product` (one per Shopee item), `product_translation` (Shopee text goes in the `th` row; `en` is optional and edited in our admin), `product_image` (Shopee image URLs, D-097), `option_type`, `option_value`, `variant` (one per Shopee model; stable id across syncs), `variant_option_value`. `variant.stock_quantity` is a read-only copy of Shopee's stock with `CHECK >= 0`.
+- **Site-only data, edited in our admin (5.3).** `category`, `category_translation`, `product_category` (D-099), `shipping_size_tier_rate`, and on `product`: `primary_category_id`, `shipping_size_tier`, `is_pre_order`, `release_date`, and `is_active`. A product first seen by the sync is created **inactive** until admin assigns a category and a shipping size tier.
+- **Shopee link and sync tables (5.4).** `channel_item` (`external_item_id`, status, sales count, rating stored for sorting only, D-098), `channel_listing` (`external_model_id`, null for an item without models; unique with `NULLS NOT DISTINCT`), `channel_authorization` (tokens, encrypted at rest), `sync_run` (one row per attempt, with `api_calls` and `warnings`).
+- **Orders and the manual stock list (5.5).** `order_line` gains `stock_adjustment_outcome`, `stock_adjustment_at` and `stock_adjustment_by_staff_id`, and snapshots `product_name`, `option_summary` and `model_sku`. The admin list is paid, unadjusted, non-pre-order lines (D-096).
+- **Identity (5.8, D-103).** `parent_sku` and `model_sku` are indexed but **not unique**; identity is Shopee's item and model id. Empty or duplicate SKUs are reported in `sync_run.warnings` (codes in `14-integrations.md#how-the-sync-behaves-plan-010`, D-111).
+- **External status (D-105).** `channel_item.external_status` holds Shopee's `item_status`, or `'NOT_FOUND'` once a known item is no longer returned; a not-found item stays in the stock sweep and is restored when Shopee returns it again (D-110). `channel_listing.external_status` is null for every model Shopee still returns and `'NOT_FOUND'` for a model that vanished from its item; whether a returned model is active lives in `variant.is_active` (from Shopee's `MODEL_NORMAL`), because the snapshot carries that flag and not the raw model status. The raw model status is therefore not queryable; `raw_payload` holds base info only. `markItemsNotFound` marks `channel_item` only — the storefront visibility rule already hides any item whose status is not `NORMAL`.
+- **Unchanged (5.9).** Staff, customer, addresses, roles and permissions, cart, tax invoice, product review, sale page, content pages and news.
 
-`shipping_size_tier` carries the configurable shipping cost (REQ-030, D-079)
-as a staff-assigned category. `variant.weight_grams` stays in the model as an
-optional, informational field — it is not load-bearing for any calculation
-(D-067, Q-021); shipping cost reads `shipping_size_tier`, never a computed
-function of weight.
-
-Options are modelled as a join rather than as columns on `variant` because
-the number of option types per product is unknown (Q-013). A join table is
-correct for one type and for five; columns would have to be guessed and then
-migrated.
-
-Bilingual product text (REQ-007) is a per-locale row, not two columns — the
-same shape `content_page` and `news_article` use, so there is one translation
-mechanism in the schema rather than three.
+Option types per product are at most two, because the site mirrors Shopee's
+structure (D-094, Q-013). The join-table shape is unchanged.
 
 ### Stock
 
-**Stock lives on the variant, never on the product (D-011),** because the
-source gives each ModelSKU its own quantity.
+**Stock lives on the variant, never on the product (D-011),** because Shopee
+gives each model its own quantity.
 
-`variant.stock_quantity` is the current figure. Every change to it also writes
-a `stock_movement` row — quantity delta, reason, actor, timestamp, and the
-order or channel that caused it. The movements are append-only and are what
-make a discrepancy investigable; the column is what makes a read fast.
+`variant.stock_quantity` is the copy of Shopee's current figure. **The website
+never changes it** — website orders do not deduct stock (D-096), so no website
+order flow writes a `stock_movement` row. Whether the sync logs the changes it
+observes is left to the builder (spec section 9). Stock reaches the site by
+BigSeller → Shopee → the 10-minute pull.
 
 The public storefront never sees `stock_quantity`. It sees a derived
 `stock_status` of **in stock or out of stock only** (REQ-006, D-065), computed
-in the domain layer, and the raw number is not present in any public API
+in the service layer, and the raw number is not present in any public API
 response (D-024). Low stock is removed from scope (Q-019).
 
 ## Concurrency rules
 
-These are the rules that stop the shop overselling (REQ-020, invariant 1).
-They are not style; a write that skips them is a defect.
+> **Superseded for website orders (D-096).** The website no longer deducts
+> stock, so the order and payment flows take no stock lock and the no-overselling
+> guarantee is withdrawn. The rules below apply to any future write that does
+> change a stock number; today that is none. The `CHECK (stock_quantity >= 0)`
+> constraint stays on the mirrored copy.
+
+These are the rules that stopped the shop overselling (REQ-020, invariant 1)
+under the earlier design. They are not style; a write that skips them is a
+defect.
 
 1. **Every write that changes stock happens inside a transaction (D-012).** No exceptions, including admin edits, Excel import, and channel sync.
 2. **Take the lock before reading the number you are about to act on.** `SELECT … FOR UPDATE` on the variant rows. Reading the quantity, deciding, then writing is a race, and it is a race that loses exactly when the shop is busiest.
@@ -135,16 +135,10 @@ They are not style; a write that skips them is a defect.
 4. **A check constraint backs the rule up:** `stock_quantity >= 0`. Application logic is where the rule is expressed; the constraint is where it is guaranteed. If the constraint ever fires, that is a bug worth waking up for.
 5. **Hold the transaction for as short a time as possible.** Price the cart, render, call the payment provider — all outside. Only the read-check-write is inside.
 
-> **Resolved (Q-024, D-068).** Two distinct flows:
->
-> - **Normal order:** the rules above apply at the moment K-Payment confirms
->   payment (the webhook handler), not at order placement. No reservation is
->   held between placing an order and paying for it.
-> - **Pre-order:** no `stock_quantity` change at order time at all. A
->   `reservation_quota` is held against the release-date cap instead — a
->   simple counter, not a locked-transaction stock deduction — and the real
->   `stock_quantity` deduction (with the locking rules above) happens only
->   when staff mark the goods **received** from the supplier.
+> **Superseded (D-096).** The earlier normal-order and pre-order stock flows
+> (D-068, Q-024) are replaced: the website never changes stock. A pre-order
+> still holds a `reservation_quota` against the release-date cap (phase 5), and
+> its line joins the manual stock list when the goods are received.
 
 ## Invoice numbering
 
@@ -269,9 +263,9 @@ full record. What remains:
 | Missing | Blocked on | What stays undrawable |
 | :--- | :--- | :--- |
 | Order status values and transitions | Q-023 | The order state machine, and every email trigger that depends on it (REQ-041). A candidate is proposed but not adopted. |
-| Parent SKU / ModelSKU format | Q-007, Q-014, Q-044 | Identity rules, and the Shopee/BigSeller listing mapping — all wait on one BigSeller data-inspection session |
+| Parent SKU / ModelSKU format | Q-007, Q-014, Q-044 | A format rule of our own. SKUs are stored as Shopee holds them (D-103), so nothing in the schema waits on it |
 | Maximum option types enforced by validation | Q-013 | Nothing structurally — the join table already holds any number. The Shopee/Lazada research is done (both cap at two, which the client's answer rules out inheriting); the number to enforce now waits on the client |
 | Invoice number format | Q-027 | The rendering function over the sequence; also waits on an example invoice |
 | Accounting export columns | Q-050 | `05-database.md` has no row for this — the export query cannot be written |
-| Shopee / BigSeller mapping shape | Q-042, Q-045 | `channel_listing` beyond the fact that it exists — waits on a Shopee account and real export examples |
+| Shopee daily API call limit | Q-056 | Whether the full stock sweep fits the limit; the tables themselves are defined in the spec |
 | Weight vs. dimensions as the long-term shipping basis | Q-040 residual | Whether `shipping_size_tier` ever becomes computed rather than staff-assigned |
