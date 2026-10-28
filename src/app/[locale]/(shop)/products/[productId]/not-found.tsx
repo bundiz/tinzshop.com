@@ -1,29 +1,8 @@
-import { useLocale, useTranslations } from 'next-intl';
-import Link from 'next/link';
-import SiteFooter from '../../_components/SiteFooter';
-import SiteHeader from '../../_components/SiteHeader';
+import { useTranslations } from 'next-intl';
+import NotFoundPanel from '../../_components/NotFoundPanel';
 
 /** A malformed, unknown or hidden product id: said plainly, with a way back (07 Loading, empty and error). */
 export default function ProductNotFound() {
-  const t = useTranslations('shop.product');
-  const locale = useLocale();
-
-  return (
-    <>
-      <SiteHeader path="/" />
-      <main className="mx-auto max-w-[1280px] px-4 pt-4 pb-10 min-[900px]:px-6">
-        <section className="rounded-(--radius) bg-bg p-8 text-center">
-          <h1 className="text-[22px]">{t('notFound.title')}</h1>
-          <p className="mt-2 text-text-muted">{t('notFound.text')}</p>
-          <Link
-            href={`/${locale}`}
-            className="mt-5 inline-flex min-h-11 items-center rounded-(--radius-sm) bg-primary px-5 font-semibold text-white hover:bg-primary-dark"
-          >
-            {t('notFound.backHome')}
-          </Link>
-        </section>
-      </main>
-      <SiteFooter />
-    </>
-  );
+  const t = useTranslations('shop.product.notFound');
+  return <NotFoundPanel title={t('title')} text={t('text')} backHome={t('backHome')} />;
 }
