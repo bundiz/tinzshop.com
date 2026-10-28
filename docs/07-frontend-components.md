@@ -114,6 +114,23 @@ current choice in `useState`.
 - If the variant a value leads to is sold out, the value stays **selectable** and reads `{value} (สินค้าหมด)` (`shop.product.option.soldOut`). Disabling it as the design mockup does would hide the variant's price; selecting it shows the price and the out-of-stock `StockBadge`, so the status is said in text, not only by a greyed control.
 - The page opens on the cheapest in-stock active variant, else the cheapest active one, so its first price is one a customer can buy at when any exists.
 
+## Design fidelity and inert controls (D-124)
+
+**The storefront pages follow `design/index.html` and `design/product.html`
+block for block,** on the project owner's instruction of 2026-10-28, including
+controls whose feature does not exist yet. This replaces plan 011's earlier rule
+that a control which does nothing is not shown.
+
+- **An inert control looks exactly as designed and goes nowhere.** A link points to `#`, or to the real page when there is one (the logo and "home" go to `/{locale}`, a product card to its product page). A button is `type="button"`. The header search is a `role="search"` form with no `action` whose `onSubmit` prevents submission (`SearchForm`, the one Client Component the header needs), so pressing Enter does nothing.
+- **Never a made-up number.** The cart count is `0`, not the design's sample `3`. No rating stars, scores or review counts appear anywhere (spec O-6, only our own reviews); the product page's reviews tab is an empty state, `shop.product.reviews.empty`.
+- **Data still comes from the database.** Prices, stock, names, images and the variant picker are unchanged. A section with no products is still not rendered, so the bundle and pre-order sections appear only when the mirror has kits or pre-orders. Related products on the product page are the best sellers without the current product, until categories exist to relate by.
+- **The design's category line on a card (`card__cat`) is left out,** and the breadcrumb is home › name: the mirror holds no category names yet.
+- **Left out on purpose:** the news section ("ข่าวเกมล่าสุด") until there is news data, the design's mockup notice bar, and the footer's mockup disclaimer.
+- **Every string is a message key,** with the Thai text exactly as the design writes it. Category names shared by the nav, rail, tiles and footer live once under `shop.category`.
+- **Icons are the design's inline SVG set,** in the tier-1 primitive `Icon` (`src/components/ui/Icon.tsx`), always `aria-hidden`.
+- **Breakpoints are the design's:** `xs` 480px, `sm` 640px, `md` 900px and `lg` 1100px, defined in rem in `globals.css`. Use these names, never `min-[…px]:` arbitrary variants: mixed with Tailwind's rem breakpoints those sorted out of order, and the card grid stayed at 3 columns on desktop. The design's grids are 2 / 3 / 4 / 5 columns for product grids and 6 cards across for a rail at `lg`.
+- **Text sizes inherit the design's line height** (1.65): `globals.css` sets it for `text-xs`, `text-sm` and `text-base`, and headings are bold as in the design.
+
 ## Bilingual
 
 **Thai and English, on the storefront and in the admin, from the same
@@ -233,7 +250,6 @@ that backs it.
 | Order status labels and their colours | Q-023 — a candidate set is proposed, not adopted |
 | Which admin screens each of the six roles sees | Resolved in outline (D-062, D-063 — six fixed roles, owner edits permissions only); exact screen-to-permission mapping is phase 2 design work, not an open question |
 | Whether product text is translated by staff or by us, and what shows when a translation is missing | Q-018 residual |
-| Visual design, brand, typography | No design has been provided. This document is structure, not appearance |
 
 **Resolved since the last revision:** there is no low-stock badge — the
 storefront shows in stock / out of stock only (D-065, Q-019). `StockBadge`

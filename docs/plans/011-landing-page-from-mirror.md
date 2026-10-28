@@ -31,8 +31,8 @@
 - The default locale is `th`; `/` redirects to `/th`. The locale is never guessed from a browser header (07 *Bilingual*).
 - Product name on `/en`: the `en` translation, else the `th` one. This lives in one function, `pickProductName`, because the real rule is the open Q-018 residual (spec §5.3).
 - Images: `<img>` with the Shopee URL from `product_image` position 0 (spec O-5), `loading="lazy"`, product name as `alt`. No `next/image` remote config, because live image hosts are not known. A product without an image renders the design's placeholder block.
-- Ratings are not shown: only our own reviews may be shown (spec O-6), and none exist yet. Category menus, news, cart, sign-in and search are not rendered until their plans exist; no control is shown that does nothing.
-- On the product page this also leaves out: quantity, add to cart, buy now, wishlist, share, the reviews tab, related products and the payment-method chips. Payment methods are confirmed in plan 003, and K-Payment is the sole method (D-072). The variant picker, gallery and price/stock per choice are kept.
+- Ratings are not shown: only our own reviews may be shown (spec O-6), and none exist yet. ~~Category menus, news, cart, sign-in and search are not rendered until their plans exist; no control is shown that does nothing.~~ **Overridden 2026-10-28 (D-124):** the pages match the design block for block, with not-yet-working controls rendered inert; news, ratings and made-up numbers stay out. See *Design fidelity follow-up*.
+- ~~On the product page this also leaves out: quantity, add to cart, buy now, wishlist, share, the reviews tab, related products and the payment-method chips. Payment methods are confirmed in plan 003, and K-Payment is the sole method (D-072). The variant picker, gallery and price/stock per choice are kept.~~ **Overridden by D-124:** quantity, add to cart, buy now, wishlist, share, a reviews tab (empty state), related products and the payment chips are now rendered, inert where they act.
 - A product URL is `/{locale}/products/{productId}`, where `productId` is our `product.id` (uuid). A malformed id, an unknown id, or a product the visibility rule hides is `notFound()`, never an error page.
 - The page is rendered per request (`export const dynamic = 'force-dynamic'`), never statically cached, so a sync shows on the next reload.
 
@@ -279,3 +279,15 @@ The whole-branch review's findings, fixed in one pass:
 ## Outcome
 
 Built: the landing page `/{locale}` (best sellers, bundles and pre-orders from the catalogue mirror, with loading, empty and error states) and the product page `/{locale}/products/{productId}` (gallery, variant picker with price and stock per choice, service panel, description and spec tabs, a real 404 for a malformed, unknown or hidden product), both in Thai and English and rendered per request; the site's own 404 for any other URL under a locale; and the development-only endpoint `POST /api/jobs/catalogue-activate`. Decisions: D-117, D-118, D-120, D-121 (superseding D-119), D-122 and D-123. The manual test checklist has not been run.
+
+## Design fidelity follow-up
+
+On 2026-10-28 the project owner compared `/th` with `design/index.html` and asked for the pages to match the design exactly, including controls that do not work yet (D-124, which overrides the Global Constraints lines marked above).
+
+- **Landing page:** the full header (utility links, search with category scope, account, wishlist and cart with a count of 0), the category nav bar, the three-column hero zone (category rail, hero with two buttons and carousel dots, two promo tiles, welcome panel with quick links), section heads with "ดูทั้งหมด", the bundle section's warm wash, the category tiles (`CategoryShowcase`), the wishlist heart on every card, and the full footer (link columns, K-Payment and DBD badges).
+- **Product page:** the same header, nav and footer; quantity stepper, เพิ่มลงตะกร้า and ซื้อเลย, wishlist and share links (`BuyActions`); the rate link, contact line and K-Payment chips in the service panel; a รีวิว tab with an empty state; and related products (best sellers without the current product, in a rail).
+- **Fixed:** the card grid showed 3 columns on desktop because `sm:` (rem) sorted after the `min-[…px]:` variants. The design's breakpoints are now theme breakpoints (`xs`, `sm`, `md`, `lg`), so the grid is 2 / 3 / 4 / 5 columns and a rail 6 across. Headings are bold and small text keeps the design's 1.65 line height.
+- **Still left out:** the news section, ratings and review counts, the design's category line on cards and in the breadcrumb (no category names in the mirror yet), the mockup notice and disclaimer, and every sample number.
+- **Tests:** the header's cart count of 0 and inert search form, the card's wishlist heart, the inert buy actions, the payment chips, the reviews empty state, the section "view all" link and the footer columns.
+
+- [ ] Manual check: compare `/th` and a product page with the design at 1440px and 390px wide, in Thai and English.
