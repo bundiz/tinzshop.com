@@ -552,3 +552,5 @@ Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schem
 - Two syncs at once: one `succeeded`, the other `skipped`.
 - Price and stock: changed through the API Test Tool's equivalents (`v2.product.update_price`, `update_stock`) rather than Seller Center. SSD 1TB Blue (model 12998741) went 2,990 → 2,890 baht and stock 2 → 5; after a sync `variant` held 289000 satang and stock 5. The SSD's `update_time` did **not** change (still 2026-10-26), so a price or stock change alone is not picked up by the time window — only the stock sweep catches it (bears on spec §8 risk 1; the Test Order check is still open).
 - Unlist: `v2.product.unlist_item` on Mario Kart (803947687); after a sync `channel_item.external_status = 'UNLIST'`.
+- Test Order: **not performed.** The Open Platform has no API that creates an order, and no sandbox buyer flow was available, so whether an order changes `update_time` (spec §8 risk 1) is still unknown. The stock sweep stays regardless, because a direct stock change already leaves `update_time` unchanged.
+- Kit item: **not performed** (optional; spec §8 risk 5 stays open until it is).
