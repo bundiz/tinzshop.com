@@ -17,9 +17,11 @@ export type VariantPickerProps = {
 type Selection = Record<string, string>;
 
 /**
- * The buy box's price, stock status and option choices (REQ-003). A value whose
- * combination has no active variant is disabled; one whose variant is sold out
- * stays selectable and says so.
+ * The buy box's price, stock status and option choices (REQ-003, D-121). A value
+ * no active variant carries is disabled. Picking a value with no active variant
+ * under the other current choices moves those choices to the best active variant
+ * carrying it, so every active variant can be reached. A value whose variant is
+ * sold out stays selectable and says so.
  */
 export default function VariantPicker({ optionTypes, variants, defaultVariantId }: VariantPickerProps) {
   const t = useTranslations('shop.product');
@@ -54,7 +56,7 @@ export default function VariantPicker({ optionTypes, variants, defaultVariantId 
             </legend>
             <div className="flex flex-wrap gap-2">
               {type.values.map((value) => {
-                const variant = findVariant(variants, optionTypes, { ...selection, [type.id]: value.id });
+                const variant = variantForPick(variants, optionTypes, selection, type.id, value.id);
                 const inputId = `${idPrefix}-${value.id}`;
                 return (
                   <span key={value.id} className="contents">
@@ -65,7 +67,7 @@ export default function VariantPicker({ optionTypes, variants, defaultVariantId 
                       value={value.id}
                       checked={selection[type.id] === value.id}
                       disabled={variant === undefined}
-                      onChange={() => setSelection({ ...selection, [type.id]: value.id })}
+                      onChange={() => setSelection(selectValue(optionTypes, variants, selection, type.id, value.id))}
                       className="peer sr-only"
                     />
                     <label
@@ -92,6 +94,48 @@ function selectionOf(optionTypes: VariantPickerProps['optionTypes'], variant: Pr
     if (value !== undefined) selection[type.id] = value.id;
   }
   return selection;
+}
+
+/**
+ * The selection after the customer picks `valueId` for `typeId`: the other
+ * choices are kept when an active variant matches them, otherwise they move to
+ * that variant's values.
+ */
+export function selectValue(
+  optionTypes: VariantPickerProps['optionTypes'],
+  variants: ProductDetailVariant[],
+  selection: Selection,
+  typeId: string,
+  valueId: string,
+): Selection {
+  const target = variantForPick(variants, optionTypes, selection, typeId, valueId);
+  return target === undefined ? { ...selection, [typeId]: valueId } : selectionOf(optionTypes, target);
+}
+
+/**
+ * The variant picking `valueId` lands on: the one matching it with the other
+ * current choices, else the best active variant carrying it — in stock first,
+ * then cheapest, then first in Shopee's order. Undefined when no active variant
+ * carries the value, which is what disables it.
+ */
+function variantForPick(
+  variants: ProductDetailVariant[],
+  optionTypes: VariantPickerProps['optionTypes'],
+  selection: Selection,
+  typeId: string,
+  valueId: string,
+): ProductDetailVariant | undefined {
+  const exact = findVariant(variants, optionTypes, { ...selection, [typeId]: valueId });
+  if (exact !== undefined) return exact;
+  return variants
+    .filter((variant) => variant.optionValueIds.includes(valueId))
+    .reduce<ProductDetailVariant | undefined>((best, variant) => (best === undefined || isBetter(variant, best) ? variant : best), undefined);
+}
+
+function isBetter(a: ProductDetailVariant, b: ProductDetailVariant): boolean {
+  const aInStock = a.stockStatus === 'in_stock';
+  if (aInStock !== (b.stockStatus === 'in_stock')) return aInStock;
+  return a.priceSatang < b.priceSatang;
 }
 
 /** The active variant carrying exactly the selected value of every option type, if there is one. */
