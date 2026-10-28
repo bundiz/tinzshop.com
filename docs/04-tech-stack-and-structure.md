@@ -74,6 +74,7 @@ tinzshop.com/
 │   │       ├── (shop)/           ← storefront — customers and guests
 │   │       ├── (admin)/          ← back office — staff only
 │   │       └── (news)/           ← game news (REQ-047)
+│   ├── i18n/                     ← next-intl routing and request config, and the catalogue key-parity test (plan 011)
 │   ├── components/
 │   │   ├── ui/                   ← tier 1: primitives, no domain knowledge
 │   │   └── domain/               ← tier 2: shared domain components
