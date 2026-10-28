@@ -176,12 +176,12 @@
 - `ProductCard({ card })`.
 - `ProductSection({ titleKey, cards })` returns `null` when `cards` is empty.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - `PriceDisplay formats satang as baht`: `299000n` gives text containing `2,990`; a range shows the "from" message.
   - `omits a section with no products`: `ProductSection` with `[]` renders nothing.
   - Render with `react-dom/server`'s `renderToStaticMarkup` inside `NextIntlClientProvider` with the real `th.json`, so no new testing dependency is needed.
-- [ ] **Step 2:** Run them: FAIL.
-- [ ] **Step 3:** Build the page to match `design/index.html`'s structure and look, in Tailwind:
+- [x] **Step 2:** Run them: FAIL.
+- [x] **Step 3:** Build the page to match `design/index.html`'s structure and look, in Tailwind:
   - header with logo (`design/assets/logo-mark.png`, copied to `public/`) and the language switch
   - hero
   - trust strip
@@ -190,8 +190,8 @@
   - Leave out exactly what the Global Constraints exclude.
   - The page is `force-dynamic`, and reads `getLandingCatalogueReader()(locale)`.
   - When every section is empty, show one empty-state message from the catalogue: no products are on sale yet.
-- [ ] **Step 4:** Run `npm test`, `npm run typecheck` and `npm run build`. All pass.
-- [ ] **Step 5:** Commit: `feat: render the landing page from the catalogue mirror`.
+- [x] **Step 4:** Run `npm test`, `npm run typecheck` and `npm run build`. All pass.
+- [x] **Step 5:** Commit: `feat: render the landing page from the catalogue mirror`.
 
 ---
 

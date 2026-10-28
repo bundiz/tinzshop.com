@@ -97,6 +97,8 @@ Every component file, in this order:
 
 - **A price is only ever rendered by `PriceDisplay`.** It takes satang (D-010) and renders baht. No component formats money itself; that is how `฿1,995.00` and `1995 บาท` end up on the same page.
 - Dates render through one formatter that knows the locale. Thai dates may need the Buddhist era — the source document itself is dated 2569 BE — and that decision belongs in one place.
+- **How `PriceDisplay` formats (D-118).** `Intl.NumberFormat` for the page's locale with currency `THB` and the narrow symbol, so both languages show `฿`. A whole-baht price shows no decimals (`฿2,990`, as the design does); a price with satang shows two (`฿1,990.50`). A price range reads as one message with a placeholder, `shop.product.price.from` (`เริ่มต้น {price}`), never a prefix glued to the number.
+- **Dates and years use the locale's own calendar, in Bangkok time (D-118).** On `/th` that is the Buddhist era, on `/en` the Gregorian year — the design writes `วางจำหน่าย 20 พ.ย. 2569` and `© 2569`. Dates go through next-intl's formatter (`{date, date, medium}` in a message), which takes the calendar from the locale; the footer's copyright year is the `year` part of the same `Intl` format, computed from the request's current date, never written into a message.
 - Never render a raw stock quantity on the storefront. `StockBadge` takes a status, not a number (REQ-006, D-024).
 
 ## Bilingual
