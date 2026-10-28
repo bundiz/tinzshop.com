@@ -99,17 +99,19 @@ Every component file, in this order:
 - Dates render through one formatter that knows the locale. Thai dates may need the Buddhist era — the source document itself is dated 2569 BE — and that decision belongs in one place.
 - **How `PriceDisplay` formats (D-118).** `Intl.NumberFormat` for the page's locale with currency `THB` and the narrow symbol, so both languages show `฿`. A whole-baht price shows no decimals (`฿2,990`, as the design does); a price with satang shows two (`฿1,990.50`). A price range reads as one message with a placeholder, `shop.product.price.from` (`เริ่มต้น {price}`), never a prefix glued to the number.
 - **Dates and years use the locale's own calendar, in Bangkok time (D-118).** On `/th` that is the Buddhist era, on `/en` the Gregorian year — the design writes `วางจำหน่าย 20 พ.ย. 2569` and `© 2569`. Dates go through next-intl's formatter (`{date, date, medium}` in a message), which takes the calendar from the locale; the footer's copyright year is the `year` part of the same `Intl` format, computed from the request's current date, never written into a message.
+- **A struck-through original price shows only when it is above the price (D-123),** never when it is equal, lower or 0, and it carries visually hidden text from `shop.product.price.original` (`ราคาเดิม`), because a strikethrough is not announced by a screen reader.
 - Never render a raw stock quantity on the storefront. `StockBadge` takes a status, not a number (REQ-006, D-024).
 
-### The variant picker (D-119)
+### The variant picker (D-121)
 
 The product page is a Server Component; only `VariantPicker`, `Gallery` and
 `ProductTabs` are Client Components. The picker receives the product's option
 types and its **active** variants, already priced in satang, and keeps only the
 current choice in `useState`.
 
-- For every value it asks: with this value and the other current choices, is there an active variant? If not, the value is **disabled** — the customer cannot choose a combination Shopee does not sell.
-- If that variant exists but is sold out, the value stays **selectable** and reads `{value} (สินค้าหมด)` (`shop.product.option.soldOut`). Disabling it as the design mockup does would hide the variant's price; selecting it shows the price and the out-of-stock `StockBadge`, so the status is said in text, not only by a greyed control.
+- A value is **disabled** only when no active variant carries it at all — the customer cannot choose what Shopee does not sell.
+- Picking a value that has no active variant with the other current choices moves those choices to the best active variant carrying it: in stock first, then cheapest. Disabling such a value instead (D-119, superseded) could make a variant unreachable — with only 1TB-Black and 2TB-White active, starting on 1TB-Black would disable both 2TB and White. `selectValue` holds this rule.
+- If the variant a value leads to is sold out, the value stays **selectable** and reads `{value} (สินค้าหมด)` (`shop.product.option.soldOut`). Disabling it as the design mockup does would hide the variant's price; selecting it shows the price and the out-of-stock `StockBadge`, so the status is said in text, not only by a greyed control.
 - The page opens on the cheapest in-stock active variant, else the cheapest active one, so its first price is one a customer can buy at when any exists.
 
 ## Bilingual
@@ -166,6 +168,15 @@ page runs, so a later `notFound()` can only stream the not-found UI into a 200.
 The product page therefore has no skeleton, and an unknown or hidden product
 answers a real 404; the landing page's skeleton sits in the `(shop)/(home)/`
 route group so it covers `/{locale}` only.
+
+**An unmatched URL under a locale gets the site's own 404 (D-122).** Without
+it, `/th/nope` showed Next's built-in English "This page could not be found".
+The catch-all `src/app/[locale]/(shop)/[...rest]/page.tsx` calls `notFound()`,
+and its `not-found.tsx` (`PageNotFound`) renders `NotFoundPanel` — header,
+`shop.notFound.*` text in the locale, a link home, footer — with a not-found
+`<title>` from the segment's `layout.tsx`. The product page's `ProductNotFound`
+uses the same panel with `shop.product.notFound.*`. Every real route is more
+specific than the catch-all, and `/api/**` sits outside the locale segment.
 
 Empty and error states are written in the same pull request as the happy path.
 They are not follow-up work; they are the states a user hits when something is

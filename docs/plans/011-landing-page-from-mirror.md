@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Not started — written 2026-10-28, awaiting the project owner's review
+- **Status:** Implemented, awaiting manual tests — written 2026-10-28; Tasks 1–6 and the final review fixes are done, the manual test checklist below is not yet run
 - **Phase:** 3 (storefront), an early slice. The project owner asked on 2026-10-28 for the landing page showing mirrored products and stock to come first (D-117).
 - **Requirements touched:** REQ-003 (select a variant and see its price and availability, without adding to a cart), REQ-006 (stock shown as a status, never a number), REQ-007 (Thai and English), REQ-009 (mobile-first). REQ-001 and REQ-002 are **not** delivered: no category pages, no search.
 - **Blocked by:** nothing
@@ -44,7 +44,7 @@
 4. **An empty section.** No kit or pre-order products means that section is not rendered at all, never as an empty heading. Owner: Task 5, test `omits a section with no products`.
 5. **English without an `en` row.** `/en` shows the Thai name rather than an empty card. Owner: Task 3, test `falls back to the th name when en is missing`.
 6. **A product URL that should not open.** A malformed uuid, an unknown id, or a hidden product (inactive, `UNLIST`) gives 404 and never throws. Owner: Task 6, test `returns null for a hidden, unknown or malformed product id`.
-7. **A sold-out option combination.** In the picker, a combination whose variant is out of stock is still selectable but marked sold out, and a combination with no active variant is disabled. Owner: Task 6, test `marks sold-out and missing combinations`.
+7. **A sold-out option combination.** In the picker, a combination whose variant is out of stock is still selectable but marked sold out, and a value no active variant carries is disabled; every active variant stays reachable (D-121). Owner: Task 6, tests `marks sold-out and missing combinations` and the diagonal-set tests.
 
 ---
 
@@ -60,11 +60,12 @@
 | `src/server/repositories/catalogue/storefront-repository.ts` | One query for landing-page rows | 3 |
 | `src/server/services/catalogue/landing-catalogue-service.ts` (+ `.test.ts`) | Visibility rule, card derivation, sections | 3 |
 | `tests/integration/catalogue/storefront-repository.test.ts` | Query against real PostgreSQL | 3 |
-| `src/server/repositories/catalogue/activation-repository.ts`, `scripts/catalogue-activate.ts`, `package.json` | Development activation command | 4 |
+| `src/server/repositories/catalogue/activation-repository.ts`, `src/app/api/jobs/catalogue-activate/route.ts` and its controller (replaced `scripts/catalogue-activate.ts` and the `package.json` script under ruling R1) | Development activation endpoint | 4 |
 | `src/components/domain/{PriceDisplay,StockBadge,ProductCard}.tsx` | Shared domain components | 5 |
 | `src/app/[locale]/(shop)/(home)/page.tsx` (moved from `(shop)/page.tsx` in Task 6 review, D-120), beside-route components | The landing page | 5 |
 | `src/server/repositories/catalogue/storefront-repository.ts` (extend), `src/server/services/catalogue/product-detail-service.ts` (+ `.test.ts`) | One product's detail | 6 |
 | `src/app/[locale]/(shop)/products/[productId]/page.tsx`, beside-route components | The product page | 6 |
+| `src/app/[locale]/(shop)/[...rest]/{page,layout,not-found}.tsx`, `src/app/[locale]/(shop)/_components/NotFoundPanel.tsx` | The site's own 404 under a locale (D-122) | Final review |
 
 ---
 
@@ -72,15 +73,15 @@
 
 **Files:** Modify `docs/11-decisions.md`, `docs/02-scope-and-phases.md`, `docs/12-glossary.md`, `docs/04-tech-stack-and-structure.md`, `CLAUDE.md`.
 
-- [ ] **Step 1:** Add D-117 to `11-decisions.md`: the landing page showing mirrored products and stock is built before the rest of phase 3, on the owner's request of 2026-10-28, as plan 011; the visibility rule is unchanged, and a development-only command activates synced products until plan 002's admin screens exist. Owning doc: `02-scope-and-phases.md`, where a short note goes under Phase 3 naming plan 011 and what it does **not** deliver (REQ-001/002/003).
-- [ ] **Step 2:** Glossary rows (check each against existing rows first; extend rather than duplicate):
+- [x] **Step 1:** Add D-117 to `11-decisions.md`: the landing page showing mirrored products and stock is built before the rest of phase 3, on the owner's request of 2026-10-28, as plan 011; the visibility rule is unchanged, and a development-only command activates synced products until plan 002's admin screens exist. Owning doc: `02-scope-and-phases.md`, where a short note goes under Phase 3 naming plan 011 and what it does **not** deliver (REQ-001/002/003).
+- [x] **Step 2:** Glossary rows (check each against existing rows first; extend rather than duplicate):
   - landing catalogue: `getLandingCatalogue`, `LandingCatalogue`, `LandingProductCard`
   - storefront visibility rule: name the existing rule; identifier `isStorefrontVisible`
   - `pickProductName`
   - `PriceDisplay`, `StockBadge`, `ProductCard` (07 already names the first two; add identifiers)
-  - the activation command `catalogue:activate`
-- [ ] **Step 3:** In `CLAUDE.md` *Current state*, change the implementation sentence so that plan 011 is allowed alongside plan 010. In `04`, add `messages/` and `src/i18n/` as built.
-- [ ] **Step 4:** Commit: `docs: record the landing page as plan 011 (D-117)`.
+  - the activation command `catalogue:activate` (replaced under ruling R1 by the endpoint `POST /api/jobs/catalogue-activate`; the glossary names the endpoint)
+- [x] **Step 3:** In `CLAUDE.md` *Current state*, change the implementation sentence so that plan 011 is allowed alongside plan 010. In `04`, add `messages/` and `src/i18n/` as built.
+- [x] **Step 4:** Commit: `docs: record the landing page as plan 011 (D-117)`.
 
 ### Task 2: Tailwind, next-intl and the locale layout
 
@@ -148,7 +149,7 @@
 
 ### Task 4: Development activation command
 
-**Files:** Create `src/server/repositories/catalogue/activation-repository.ts`, `scripts/catalogue-activate.ts`. Modify `package.json`. Test: `tests/integration/catalogue/activation-repository.test.ts`.
+**Files:** Create `src/server/repositories/catalogue/activation-repository.ts`, ~~`scripts/catalogue-activate.ts`. Modify `package.json`.~~ (replaced by ruling R1, below). Test: `tests/integration/catalogue/activation-repository.test.ts`.
 
 **Ruling R1:** the npm script and `scripts/catalogue-activate.ts` are replaced by the development-only endpoint `POST /api/jobs/catalogue-activate` (controller, route, `docs/06-api.md`, `docs/openapi.yaml`).
 
@@ -159,8 +160,8 @@
   - `leaves UNLIST and NOT_FOUND products inactive`
   - `is idempotent: a second call returns 0`
 - [x] **Step 2:** Run it: FAIL.
-- [x] **Step 3:** Implement the repository function. The script refuses to run when `NODE_ENV=production`, prints only the count, and runs through the npm script `catalogue:activate`. That script uses Node's `--env-file=.env` and the same TypeScript execution approach as the integration tests; if none fits, use `vitest`'s runner via a dedicated config rather than adding a new dependency.
-- [x] **Step 4:** Run the tests: PASS. Commit: `feat: add a development command that activates synced products`.
+- [x] **Step 3:** Implement the repository function. *Replaced by ruling R1: no script or npm script was built; the endpoint `POST /api/jobs/catalogue-activate` answers 404 in production and returns `{ activated: n }`.* As first written: the script refuses to run when `NODE_ENV=production`, prints only the count, and runs through the npm script `catalogue:activate`. That script uses Node's `--env-file=.env` and the same TypeScript execution approach as the integration tests; if none fits, use `vitest`'s runner via a dedicated config rather than adding a new dependency.
+- [x] **Step 4:** Run the tests: PASS. Commit: `feat: add a development endpoint that activates synced products`. The final review added `leaves a NORMAL product whose variants are all inactive inactive` and `leaves an already-active product untouched`.
 
 ### Task 5: The landing page
 
@@ -220,7 +221,7 @@
   - `variants` holds active variants only.
   - `defaultVariantId` is the cheapest in-stock active variant, else the cheapest active one.
   - Name and description go through `pickProductName` and the same fallback for the description.
-- `VariantPicker` gets `optionTypes` and `variants`. For each value it computes whether the selection with that value has an active variant (disabled when not) and whether that variant is sold out (labelled with the sold-out message). It shows the chosen variant's `PriceDisplay` and `StockBadge`.
+- `VariantPicker` gets `optionTypes` and `variants`. *(As first built, D-119; the disabling rule is now D-121.)* For each value it computes whether the selection with that value has an active variant (disabled when not) and whether that variant is sold out (labelled with the sold-out message). It shows the chosen variant's `PriceDisplay` and `StockBadge`.
 
 - [x] **Step 1: Write the failing unit tests** in `product-detail-service.test.ts`:
   - `returns null for a hidden, unknown or malformed product id`: inactive gives `null`; `UNLIST` gives `null`; a repository `null` gives `null`.
@@ -249,7 +250,7 @@
 
 Run by a person against the sandbox data. Never tick a box for a check nobody performed.
 
-- [ ] Run `npm run catalogue:activate`, then open `/th`. The synced products show in สินค้าขายดี, each with its name, image, price and stock status. Mario Kart (unlisted) is absent.
+- [ ] Run `curl -X POST -H "Authorization: Bearer $JOB_SECRET" http://localhost:3002/api/jobs/catalogue-activate`, then open `/th`. The synced products show in สินค้าขายดี, each with its name, image, price and stock status. Mario Kart (unlisted) is absent.
 - [ ] Open `/en`. All page text is English, and the product names fall back to Thai.
 - [ ] Change a price and stock to 0 in the sandbox, sync, and reload. The card shows the new price and "สินค้าหมด".
 - [ ] At 360px wide, nothing scrolls sideways, and Thai text wraps without clipping.
@@ -258,11 +259,23 @@ Run by a person against the sandbox data. Never tick a box for a check nobody pe
 - [ ] Click the SSD card. The product page shows 4 images or the placeholder, Capacity and Colour pickers, and price and stock per choice. Choosing 2TB updates the price to 4,590.
 - [ ] Set one SSD variant's stock to 0 in the sandbox and sync. That choice shows "สินค้าหมด".
 - [ ] Open `/th/products/not-a-uuid` and Mario Kart's product URL (unlisted). Both show 404.
+- [ ] Open `/th/nope` and `/en/nope`. Each shows the site's own not-found page in its language, with the header and footer.
+- [ ] On a product whose options form a diagonal set (e.g. only 1TB-Black and 2TB-White active), every active variant can be reached by clicking.
 
 ## Not in this plan
 
 Category, search, cart and checkout pages; add to cart; sign-in; ratings and reviews; related products; news; banners managed by staff; the admin activation screen (plan 002).
 
+## Final review fixes
+
+The whole-branch review's findings, fixed in one pass:
+
+- The variant picker disables a value only when no active variant carries it, and picking a value with no match under the other choices moves them to the best active variant carrying it, in stock first then cheapest (D-121, superseding D-119). Test: the diagonal set in `VariantPicker.test.tsx`.
+- An unmatched URL under a locale shows the site's own not-found page in that locale, with a 404 (D-122).
+- The struck-through price shows only when the original is above the price, and has a screen-reader label `shop.product.price.original`; the gallery's main image loads eagerly (D-123).
+- Activation tests cover a NORMAL product with no active variant and an already-active product.
+- This plan's status, Task 1 boxes, file map, Task 4 wording and manual checklist were brought up to date.
+
 ## Outcome
 
-Not started.
+Built: the landing page `/{locale}` (best sellers, bundles and pre-orders from the catalogue mirror, with loading, empty and error states) and the product page `/{locale}/products/{productId}` (gallery, variant picker with price and stock per choice, service panel, description and spec tabs, a real 404 for a malformed, unknown or hidden product), both in Thai and English and rendered per request; the site's own 404 for any other URL under a locale; and the development-only endpoint `POST /api/jobs/catalogue-activate`. Decisions: D-117, D-118, D-120, D-121 (superseding D-119), D-122 and D-123. The manual test checklist has not been run.
