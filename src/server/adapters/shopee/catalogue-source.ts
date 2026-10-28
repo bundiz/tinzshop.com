@@ -3,8 +3,8 @@ import {
   type CatalogueItemSnapshot,
   type CatalogueSource,
   type ListedItem,
-} from "../../services/catalogue-snapshot";
-import { CatalogueSourceError } from "../../services/catalogue-sync-service";
+} from "../../services/catalogue/catalogue-snapshot";
+import { CatalogueSourceError } from "../../services/catalogue/catalogue-sync-service";
 import type { ShopeeClient } from "./client";
 import { ShopeeApiError } from "./errors";
 import { CatalogueMappingError, mapShopeeItem } from "./map-item";

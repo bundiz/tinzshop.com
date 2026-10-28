@@ -1,5 +1,5 @@
 import type { ShopeeClient } from '@/server/adapters/shopee/client';
-import type { TokenIssuer } from '@/server/services/channel-authorization-service';
+import type { TokenIssuer } from '@/server/services/channel/channel-authorization-service';
 
 export function createShopeeTokenIssuer(client: ShopeeClient): TokenIssuer {
   return {

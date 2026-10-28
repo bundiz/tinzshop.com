@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { decryptSecret, encryptSecret } from '@/lib/secret-box';
-import type { StoredChannelAuthorization } from '@/server/repositories/channel-authorization-repository';
+import type { StoredChannelAuthorization } from '@/server/repositories/channel/channel-authorization-repository';
 
 import {
   ChannelNotConnectedError,

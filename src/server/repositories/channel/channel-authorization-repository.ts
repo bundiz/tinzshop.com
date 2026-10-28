@@ -1,4 +1,4 @@
-import { getPrisma } from '@/server/repositories/prisma';
+import { getPrisma } from '@/server/repositories/shared/prisma';
 
 export type StoredChannelAuthorization = {
   channel: 'shopee';

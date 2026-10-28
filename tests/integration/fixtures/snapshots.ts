@@ -1,4 +1,4 @@
-import type { CatalogueItemSnapshot, CatalogueVariantSnapshot } from '@/server/services/catalogue-snapshot';
+import type { CatalogueItemSnapshot, CatalogueVariantSnapshot } from '@/server/services/catalogue/catalogue-snapshot';
 
 function model(
   externalModelId: bigint,

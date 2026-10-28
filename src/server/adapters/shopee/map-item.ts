@@ -1,8 +1,8 @@
-import { bahtToSatang } from "../../services/money";
+import { bahtToSatang } from "../../services/shared/money";
 import type {
   CatalogueItemSnapshot,
   CatalogueVariantSnapshot,
-} from "../../services/catalogue-snapshot";
+} from "../../services/catalogue/catalogue-snapshot";
 import type {
   ShopeeItemBaseInfo,
   ShopeeItemExtraInfo,

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CatalogueSourceError } from "../../services/catalogue-sync-service";
+import { CatalogueSourceError } from "../../services/catalogue/catalogue-sync-service";
 import { createShopeeCatalogueSource } from "./catalogue-source";
 import type { ShopeeClient } from "./client";
 import { ShopeeApiError } from "./errors";

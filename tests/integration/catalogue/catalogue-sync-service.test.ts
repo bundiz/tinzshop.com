@@ -4,24 +4,24 @@ import {
   listKnownItems,
   markItemsNotFound,
   upsertCatalogueItem,
-} from '@/server/repositories/catalogue-repository';
-import { CATALOGUE_SYNC_LOCK_KEY, tryWithAdvisoryLock } from '@/server/repositories/advisory-lock';
-import { getPrisma } from '@/server/repositories/prisma';
+} from '@/server/repositories/catalogue/catalogue-repository';
+import { CATALOGUE_SYNC_LOCK_KEY, tryWithAdvisoryLock } from '@/server/repositories/shared/advisory-lock';
+import { getPrisma } from '@/server/repositories/shared/prisma';
 import {
   findLastSucceededSyncRun,
   finishSyncRun,
   recordSkippedSyncRun,
   startSyncRun,
-} from '@/server/repositories/sync-run-repository';
-import { ChannelNotConnectedError } from '@/server/services/channel-authorization-service';
-import type { CatalogueItemSnapshot, CatalogueSource, ListedItem } from '@/server/services/catalogue-snapshot';
+} from '@/server/repositories/catalogue/sync-run-repository';
+import { ChannelNotConnectedError } from '@/server/services/channel/channel-authorization-service';
+import type { CatalogueItemSnapshot, CatalogueSource, ListedItem } from '@/server/services/catalogue/catalogue-snapshot';
 import {
   CatalogueSourceError,
   runCatalogueSync,
   type CatalogueSyncSummary,
-} from '@/server/services/catalogue-sync-service';
-import { resetDatabase } from './setup/database';
-import { noModelSnapshot, twoTierSnapshot } from './fixtures/snapshots';
+} from '@/server/services/catalogue/catalogue-sync-service';
+import { resetDatabase } from '../setup/database';
+import { noModelSnapshot, twoTierSnapshot } from '../fixtures/snapshots';
 
 const T1 = new Date('2026-10-26T01:00:00.000Z');
 const T2 = new Date('2026-10-26T02:00:00.000Z');

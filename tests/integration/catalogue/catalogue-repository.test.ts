@@ -4,16 +4,16 @@ import {
   listKnownItems,
   markItemsNotFound,
   upsertCatalogueItem,
-} from '@/server/repositories/catalogue-repository';
-import { getPrisma } from '@/server/repositories/prisma';
+} from '@/server/repositories/catalogue/catalogue-repository';
+import { getPrisma } from '@/server/repositories/shared/prisma';
 import {
   findLastSucceededSyncRun,
   finishSyncRun,
   recordSkippedSyncRun,
   startSyncRun,
-} from '@/server/repositories/sync-run-repository';
-import { resetDatabase } from './setup/database';
-import { noModelSnapshot, twoTierSnapshot } from './fixtures/snapshots';
+} from '@/server/repositories/catalogue/sync-run-repository';
+import { resetDatabase } from '../setup/database';
+import { noModelSnapshot, twoTierSnapshot } from '../fixtures/snapshots';
 
 const T1 = new Date('2026-10-26T01:00:00.000Z');
 const T2 = new Date('2026-10-26T02:00:00.000Z');

@@ -1,10 +1,10 @@
 import type { Prisma } from '@/generated/prisma/client';
-import { getPrisma } from '@/server/repositories/prisma';
+import { getPrisma } from '@/server/repositories/shared/prisma';
 import type {
   CatalogueItemSnapshot,
   CatalogueVariantSnapshot,
   ListedItem,
-} from '@/server/services/catalogue-snapshot';
+} from '@/server/services/catalogue/catalogue-snapshot';
 
 const CHANNEL = 'shopee';
 const NOT_FOUND = 'NOT_FOUND';

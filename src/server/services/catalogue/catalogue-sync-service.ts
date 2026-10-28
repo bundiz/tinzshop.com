@@ -2,13 +2,13 @@ import type {
   listKnownItems,
   markItemsNotFound,
   upsertCatalogueItem,
-} from '@/server/repositories/catalogue-repository';
+} from '@/server/repositories/catalogue/catalogue-repository';
 import type {
   findLastSucceededSyncRun,
   finishSyncRun,
   recordSkippedSyncRun,
   startSyncRun,
-} from '@/server/repositories/sync-run-repository';
+} from '@/server/repositories/catalogue/sync-run-repository';
 import {
   SALES_DATA_UNAVAILABLE,
   type CatalogueItemSnapshot,
@@ -18,7 +18,7 @@ import {
 import {
   ChannelNotConnectedError,
   ChannelTokenPersistenceError,
-} from './channel-authorization-service';
+} from '../channel/channel-authorization-service';
 
 /** A failure of the catalogue source (the vendor behind it is not named here). The code is safe to store. */
 export class CatalogueSourceError extends Error {

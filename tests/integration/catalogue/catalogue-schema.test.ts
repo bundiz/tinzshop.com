@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getDatabaseUrl } from '@/server/config';
-import { resetDatabase } from './setup/database';
+import { resetDatabase } from '../setup/database';
 
 let client: Client;
 

@@ -78,9 +78,17 @@ tinzshop.com/
 │   │   ├── ui/                   ← tier 1: primitives, no domain knowledge
 │   │   └── domain/               ← tier 2: shared domain components
 │   ├── server/                   ← layered controller → service → repository (D-101)
+│   │   │                           Each layer is split into the same module folders (D-116): catalogue/,
+│   │   │                           channel/, … and shared/ for helpers several modules use. A unit test
+│   │   │                           sits beside its file
 │   │   ├── controllers/          ← read the request, validate with Zod, call ONE service, shape the response
+│   │   │   ├── catalogue/        ← e.g. catalogue-sync-controller.ts + catalogue-sync-controller.test.ts
+│   │   │   ├── channel/          ← shop authorization callback
+│   │   │   └── api-docs/         ← development-only Swagger UI (D-115)
 │   │   ├── services/             ← business rules. Framework-free (D-002): no React, Next or Prisma
-│   │   │   ├── catalog/
+│   │   │   ├── catalogue/
+│   │   │   ├── channel/          ← channel authorization
+│   │   │   ├── shared/           ← money (bahtToSatang)
 │   │   │   ├── cart/
 │   │   │   ├── order/
 │   │   │   ├── payment/
@@ -88,6 +96,9 @@ tinzshop.com/
 │   │   │   ├── tax/
 │   │   │   └── access/           ← permission evaluation (REQ-035)
 │   │   ├── repositories/         ← Prisma queries. The only place Prisma is imported
+│   │   │   ├── catalogue/        ← catalogue and sync_run
+│   │   │   ├── channel/          ← channel_authorization
+│   │   │   └── shared/           ← Prisma client, advisory lock
 │   │   └── adapters/             ← one directory per external system
 │   │       ├── kpayment/         ← sole payment method (D-072); credentials in hand
 │   │       ├── shopee/           ← Shopee HTTP, signing, tokens; nothing else builds a Shopee URL
@@ -96,7 +107,7 @@ tinzshop.com/
 │   │                             ← no carrier/ — no direct carrier integration (D-075)
 │   └── lib/                      ← genuinely generic helpers. No domain knowledge
 ├── tests/
-│   ├── integration/              ← runs against a real PostgreSQL
+│   ├── integration/              ← runs against a real PostgreSQL; same module folders as src/server
 │   └── e2e/                      ← Playwright journeys
 ├── .env.example                  ← placeholders only. Never real values
 └── CLAUDE.md
@@ -114,10 +125,10 @@ tinzshop.com/
 
 | You are adding | It goes in |
 | :--- | :--- |
-| A business rule, calculation, or state transition | `src/server/services/<area>/` |
-| A database query | `src/server/repositories/` |
+| A business rule, calculation, or state transition | `src/server/services/<module>/` |
+| A database query | `src/server/repositories/<module>/` |
 | A call to K-Payment, Shopee, a carrier, or an email provider | `src/server/adapters/<system>/` |
-| A mutation the storefront or admin triggers | `src/server/controllers/` |
+| A mutation the storefront or admin triggers | `src/server/controllers/<module>/` |
 | An endpoint an outside system calls | `src/app/api/` (outside the locale segment), calling a controller |
 | A button, input, or other domain-free component | `src/components/ui/` |
 | A component that renders a product, order or variant | `src/components/domain/` |

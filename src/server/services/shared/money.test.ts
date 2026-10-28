@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bahtToSatang } from "@/server/services/money";
+import { bahtToSatang } from "@/server/services/shared/money";
 
 describe("bahtToSatang", () => {
   it.each([

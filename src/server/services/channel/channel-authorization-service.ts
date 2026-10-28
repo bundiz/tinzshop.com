@@ -3,7 +3,7 @@ import type {
   findChannelAuthorization,
   saveChannelAuthorization,
   StoredChannelAuthorization,
-} from '@/server/repositories/channel-authorization-repository';
+} from '@/server/repositories/channel/channel-authorization-repository';
 
 export type IssuedTokens = { accessToken: string; refreshToken: string; expiresInSeconds: number };
 

@@ -1,4 +1,4 @@
-import { createShopeeAuthorizationCallbackHandler } from '@/server/controllers/shopee-authorization-controller';
+import { createShopeeAuthorizationCallbackHandler } from '@/server/controllers/channel/shopee-authorization-controller';
 import { getServerConfig } from '@/server/config';
 import { getChannelAuthorizationService } from '@/server/composition-root';
 

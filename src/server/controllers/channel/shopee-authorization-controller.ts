@@ -2,7 +2,7 @@ import { ShopeeApiError } from '@/server/adapters/shopee/errors';
 import {
   acceptShopeeAuthorization,
   shopeeAuthorizationCallbackSchema,
-} from '@/server/services/shopee-authorization-service';
+} from '@/server/services/channel/shopee-authorization-service';
 
 // The callback carries a one-time credential; nothing may cache any response.
 const NO_STORE = { 'Cache-Control': 'no-store' };

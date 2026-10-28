@@ -6,8 +6,8 @@ import {
   findChannelAuthorization,
   saveChannelAuthorization,
   type StoredChannelAuthorization,
-} from '@/server/repositories/channel-authorization-repository';
-import { resetDatabase } from './setup/database';
+} from '@/server/repositories/channel/channel-authorization-repository';
+import { resetDatabase } from '../setup/database';
 
 let client: Client;
 

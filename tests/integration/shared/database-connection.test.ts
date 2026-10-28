@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 import { describe, expect, it } from 'vitest';
 import { getDatabaseUrl } from '@/server/config';
-import { resetDatabase } from './setup/database';
+import { resetDatabase } from '../setup/database';
 
 describe('test database', () => {
   it('connects to the test database', async () => {

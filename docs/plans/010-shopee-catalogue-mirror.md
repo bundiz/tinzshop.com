@@ -51,6 +51,18 @@ These five conditions are implied by the spec, but a careless implementation pas
 
 ## File map
 
+> **Paths moved on 2026-10-28 (D-116).** After the tasks were built, controllers, services, repositories and integration tests were split into module folders. The task text below keeps the original paths as planned. Where they are now:
+> - `controllers/catalogue/` holds `catalogue-sync-controller`.
+> - `controllers/channel/` holds `shopee-authorization-controller`.
+> - `controllers/api-docs/` holds `api-docs-controller`.
+> - `services/catalogue/` holds `catalogue-snapshot` and `catalogue-sync-service`.
+> - `services/channel/` holds `channel-authorization-service` and `shopee-authorization-service`.
+> - `services/shared/` holds `money`.
+> - `repositories/catalogue/` holds `catalogue-repository` and `sync-run-repository`.
+> - `repositories/channel/` holds `channel-authorization-repository`.
+> - `repositories/shared/` holds `prisma` and `advisory-lock`.
+> - `tests/integration/` has `catalogue/`, `channel/` and `shared/`.
+
 | File | Responsibility | Task |
 | :--- | :--- | :--- |
 | `docs/**`, `CLAUDE.md` | Decisions, glossary, scope and doc updates (rule 13) | 1 |

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CatalogueSyncSummary } from '@/server/services/catalogue-sync-service';
+import type { CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 
 import { createCatalogueSyncJobHandler } from './catalogue-sync-controller';
 

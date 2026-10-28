@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import { describe, expect, it } from 'vitest';
 
 import { getDatabaseUrl } from '@/server/config';
-import { CATALOGUE_SYNC_LOCK_KEY, tryWithAdvisoryLock } from '@/server/repositories/advisory-lock';
+import { CATALOGUE_SYNC_LOCK_KEY, tryWithAdvisoryLock } from '@/server/repositories/shared/advisory-lock';
 
 describe('tryWithAdvisoryLock', () => {
   it('second holder is refused while the first holds the lock', async () => {

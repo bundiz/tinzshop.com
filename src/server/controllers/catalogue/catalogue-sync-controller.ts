@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 
-import type { CatalogueSyncSummary } from '@/server/services/catalogue-sync-service';
+import type { CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 
 // A job response is never cacheable.
 const NO_STORE = { 'Cache-Control': 'no-store' };

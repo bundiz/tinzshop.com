@@ -5,25 +5,25 @@ import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { getServerConfig } from '@/server/config';
-import { createApiDocsHandlers } from '@/server/controllers/api-docs-controller';
-import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/advisory-lock';
+import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
+import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import {
   listKnownItems,
   markItemsNotFound,
   upsertCatalogueItem,
-} from '@/server/repositories/catalogue-repository';
+} from '@/server/repositories/catalogue/catalogue-repository';
 import {
   findChannelAuthorization,
   saveChannelAuthorization,
-} from '@/server/repositories/channel-authorization-repository';
+} from '@/server/repositories/channel/channel-authorization-repository';
 import {
   findLastSucceededSyncRun,
   finishSyncRun,
   recordSkippedSyncRun,
   startSyncRun,
-} from '@/server/repositories/sync-run-repository';
-import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue-sync-service';
-import { createChannelAuthorizationService } from '@/server/services/channel-authorization-service';
+} from '@/server/repositories/catalogue/sync-run-repository';
+import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
+import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
 
 // Built on first use, never at import, so `next build` needs no environment.
 let shopeeClient: ShopeeClient | undefined;
