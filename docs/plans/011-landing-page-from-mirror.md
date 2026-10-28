@@ -122,7 +122,7 @@
   - `LandingCatalogue = { bestSellers: LandingProductCard[]; bundles: LandingProductCard[]; preOrders: LandingProductCard[] }`
 - Section rules:
   - `bestSellers`: every visible product, by `sales_count` descending, with `null` last and ties by name, first 8.
-  - `bundles`: `isKit`, same order, first 4.
+  - `bundles`: `isKit`, same order, first 6 (the design's rail shows six; it was 4).
   - `preOrders`: `isPreOrder`, by `release_date` ascending with nulls last, first 4.
 
 - [x] **Step 1: Write the failing unit tests** in `landing-catalogue-service.test.ts`, with plain fixture candidates:

@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 41 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 10 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 11 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -526,6 +526,13 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** Acceptable as test data. The project owner (2026-10-28): "its the test account that we going to use first". They are the sandbox test account the project develops against, not a live shop (D-112).
 - **Effect:** The sandbox ids stay in fixtures, the spec and plan 010. Hard rule 2 still applies to live shop and partner ids. No secret is involved: the partner key and tokens never appear in the repository (`14-integrations.md#credential-required-1`). If the answer is "replace them", the fixtures, the spec's evidence line and plan 010's test values change; signature test vectors would need recomputing with the invented ids.
 - **Ask:** project owner
+
+### Q-058: How do we read a Shopee kit item's components, price and stock?
+- **Status:** UNRESOLVED — not yet researched
+- **Question:** How can the app read the component items and quantities of a Shopee kit item (a ชุดโปรโมชั่น set made with `v2.product.add_kit_item`)? And do `v2.product.get_item_base_info` and `v2.product.get_model_list` return a kit's price and stock the way they do for a normal item?
+- **Answer:** None yet. Checked in the sandbox on 2026-10-28: `v2.product.get_kit_item` does not exist (`error_not_found`), so no Shopee API to read a kit's components is known. `v2.product.add_kit_item` failed with `product.error_busi` "Unexpected description type OR description setting." for every description form tried (request id `e3e3e7f35ee4b1f520cdd1b6c5fea800`), so no real kit exists in the sandbox to inspect.
+- **Effect:** Until answered, a kit is stored and shown as a product with `channel_item.is_kit = true` and its own price and stock as the mirror reads them; its components are not stored. The ชุดโปรโมชั่น section and the product page badge depend only on the kit flag from `get_item_list` (`tag.kit`). If kit price or stock do not come through like a normal item's, the mirror's kit rows would be wrong and need another source (spec §8 risk 5).
+- **Ask:** developers, then Shopee support
 
 ---
 

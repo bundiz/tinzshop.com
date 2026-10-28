@@ -107,7 +107,7 @@ real responses captured with `scripts/shopee-sandbox/`):
 - **Shopee Open Platform developer-guide/20 and developer-guide/644**, read for the catalogue and authorization design.
 - **`v2.product.init_tier_variation`** — two option tiers at most; a third was tested in the sandbox and rejected (spec §2, consequences of O-1). Recorded in Q-013.
 - **`v2.product.add_item`** — read, with the sandbox, to see how a Shopee listing is created and what the item, price and stock fields look like when read back.
-- **`v2.product.add_kit_item`** — a set can be a *kit item*: a listing built from other items' models with quantities, marked `tag.kit` by `get_item_list`. The sync records it as `channel_item.is_kit`; components are not modelled (spec §2, consequences of O-10).
+- **`v2.product.add_kit_item`** — a set can be a *kit item*: a listing built from other items' models with quantities, marked `tag.kit` by `get_item_list`. The sync records it as `channel_item.is_kit`; components are not modelled (spec §2, consequences of O-10). On the storefront a kit is a product like any other: it has its own page and appears in ชุดโปรโมชั่น, and the product page shows the promotion-set badge when `is_kit` is true. Its components and quantities are not stored, pending Q-058: `v2.product.get_kit_item` returned `error_not_found` in the sandbox and `add_kit_item` failed there (request id `e3e3e7f35ee4b1f520cdd1b6c5fea800`).
 - **`v2.bundle_deal.add_bundle_deal`** — Shopee bundle deals are discount rules (fixed price, percent or baht off when buying at least N, with start and end times), not products. They are not mirrored.
 - **Sandbox findings** — the item statuses seen were NORMAL and UNLIST; Shopee's pre-order is only "ships in N days" (the sandbox allowed 3–4), which is why pre-order release dates are ours; `weight` arrives as a string; refresh tokens work once.
 
@@ -168,7 +168,7 @@ disappears from a returned item gets `channel_listing.external_status =
 
 - Shopee's daily API call limit for this app, and whether the full stock sweep stays under it at the real catalogue size. See Q-056.
 - Whether `update_time` changes when only stock changes. Until confirmed, the sync sweeps stock for every active product each run (spec §8 risk 1).
-- How kit items' price and stock appear, and how item statuses other than NORMAL and UNLIST appear (spec §8 risks 5 and 6).
+- How kit items' price and stock appear (see Q-058), and how item statuses other than NORMAL and UNLIST appear (spec §8 risks 5 and 6).
 - Shopee push notifications, which could replace the stock sweep later. Not researched.
 - The live app's go-live process and the shop owner's authorization (Q-042).
 
