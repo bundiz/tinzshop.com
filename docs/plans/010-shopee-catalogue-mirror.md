@@ -522,9 +522,9 @@ Each check is run by a person against the **sandbox**, with the result recorded 
 - [x] Connect the shop: with `npm run dev` and the ngrok tunnel up, authorize through Console → Authorize. The callback page shows `connected: true` and no code. `channel_authorization` has one row, and its token columns are unreadable ciphertext.
 - [x] First sync: `curl -X POST -H "Authorization: Bearer $JOB_SECRET" http://localhost:3000/api/jobs/shopee-sync` returns `succeeded`. The database then holds every sandbox item (9 on 2026-10-20). Each is inactive, and the SSD has 4 variants.
 - [x] Second sync returns `succeeded` with `itemsCreated 0`. The variant ids are unchanged.
-- [ ] Change a variant's price and stock in the sandbox Seller Center, sync, and see the new values in `variant`.
+- [x] Change a variant's price and stock in the sandbox Seller Center, sync, and see the new values in `variant`.
 - [ ] Create a Console → Test Order for a seeded item. Sync, and see its stock drop. **Record whether that item's `update_time` changed:** this is spec §8 risk 1, and it decides whether the stock sweep can be removed later.
-- [ ] Unlist an item in Seller Center, sync, and see `channel_item.external_status = 'UNLIST'`.
+- [x] Unlist an item in Seller Center, sync, and see `channel_item.external_status = 'UNLIST'`.
 - [ ] Create a kit item in the sandbox (`v2.product.add_kit_item` from two seeded items) and sync. `channel_item.is_kit` is true, and its variants carry a price and stock like any other item. This is spec §8 risk 5; if they don't, record it and stop before relying on kits.
 - [x] Start two syncs at once (two `curl &`). One returns `skipped`.
 - [x] A wrong bearer secret gets `401`.
@@ -550,3 +550,5 @@ Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schem
 - `rm -rf node_modules && npm ci` with npm 10.8.2 succeeded, with 0 vulnerabilities.
 - Second sync: the first windowed runs failed with `invalid_response` on `get_item_list` (an empty window); fixed by D-114. After the fix: `succeeded`, 0 created, 9 updated (stock sweep), 6 API calls, and all 15 `variant.id` values unchanged.
 - Two syncs at once: one `succeeded`, the other `skipped`.
+- Price and stock: changed through the API Test Tool's equivalents (`v2.product.update_price`, `update_stock`) rather than Seller Center. SSD 1TB Blue (model 12998741) went 2,990 → 2,890 baht and stock 2 → 5; after a sync `variant` held 289000 satang and stock 5. The SSD's `update_time` did **not** change (still 2026-10-26), so a price or stock change alone is not picked up by the time window — only the stock sweep catches it (bears on spec §8 risk 1; the Test Order check is still open).
+- Unlist: `v2.product.unlist_item` on Mario Kart (803947687); after a sync `channel_item.external_status = 'UNLIST'`.
