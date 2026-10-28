@@ -56,7 +56,7 @@ describe('buildLandingCatalogue', () => {
     expect(catalogue.bestSellers).toHaveLength(8);
     expect(catalogue.bestSellers[0]?.productId).toBe('p8');
     expect(catalogue.bestSellers.map((c) => c.productId)).not.toContain('p9');
-    expect(catalogue.bundles).toHaveLength(4);
+    expect(catalogue.bundles).toHaveLength(6);
   });
 
   it('puts null sales last and breaks ties by name', () => {

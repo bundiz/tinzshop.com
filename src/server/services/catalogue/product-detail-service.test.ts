@@ -30,6 +30,7 @@ function row(overrides: Partial<StorefrontProductRow> = {}): StorefrontProductRo
     descriptions: { th: 'รายละเอียด', en: 'Details' },
     brandName: 'NoBrand',
     shippingSizeTier: 'small',
+    isKit: false,
     isPreOrder: false,
     releaseDate: null,
     images: [{ url: 'https://cf.shopee.co.th/file/a', position: 0 }],
@@ -92,6 +93,11 @@ describe('getProductDetail', () => {
       }),
     );
     expect(allSoldOut?.defaultVariantId).toBe('b');
+  });
+
+  it('carries the kit flag through: true for a kit row, false for a normal one', async () => {
+    expect((await detail(row({ isKit: true })))?.isKit).toBe(true);
+    expect((await detail(row()))?.isKit).toBe(false);
   });
 
   it('falls back to the th name and description when en is missing', async () => {

@@ -21,6 +21,8 @@ export type StorefrontProductRow = {
   descriptions: { th?: string; en?: string };
   brandName: string | null;
   shippingSizeTier: ShippingSizeTier | null;
+  /** A Shopee kit item (a ชุดโปรโมชั่น set): `channel_item.is_kit`. */
+  isKit: boolean;
   isPreOrder: boolean;
   releaseDate: Date | null;
   images: { url: string; position: number }[];
@@ -53,6 +55,7 @@ export type ProductDetail = {
   variants: ProductDetailVariant[];
   /** The cheapest in-stock variant, else the cheapest one. */
   defaultVariantId: string;
+  isKit: boolean;
   isPreOrder: boolean;
   releaseDate: Date | null;
   shippingSizeTier: ShippingSizeTier | null;
@@ -92,6 +95,7 @@ export function toProductDetail(row: StorefrontProductRow, locale: Locale): Prod
       stockStatus: variant.stockQuantity > 0 ? 'in_stock' : 'out_of_stock',
     })),
     defaultVariantId: chosen.variantId,
+    isKit: row.isKit,
     isPreOrder: row.isPreOrder,
     releaseDate: row.releaseDate,
     shippingSizeTier: row.shippingSizeTier,

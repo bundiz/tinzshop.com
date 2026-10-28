@@ -41,7 +41,7 @@ export type LandingCatalogue = {
 };
 
 const BEST_SELLER_LIMIT = 8;
-const BUNDLE_LIMIT = 4;
+const BUNDLE_LIMIT = 6;
 const PRE_ORDER_LIMIT = 4;
 
 /** Spec §5.3: active product, Shopee status NORMAL, and at least one active variant. */

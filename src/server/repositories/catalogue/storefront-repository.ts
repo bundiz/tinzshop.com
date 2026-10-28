@@ -48,7 +48,7 @@ export async function findStorefrontProduct(productId: string): Promise<Storefro
       images: { orderBy: { position: 'asc' } },
       optionTypes: { orderBy: { position: 'asc' }, include: { values: { orderBy: { position: 'asc' } } } },
       variants: { orderBy: { position: 'asc' }, include: { optionValues: true } },
-      channelItem: { select: { externalStatus: true } },
+      channelItem: { select: { externalStatus: true, isKit: true } },
     },
   });
   if (row === null) return null;
@@ -60,6 +60,7 @@ export async function findStorefrontProduct(productId: string): Promise<Storefro
     descriptions: Object.fromEntries(row.translations.map((t) => [t.locale, t.description])),
     brandName: row.brandName,
     shippingSizeTier: row.shippingSizeTier,
+    isKit: row.channelItem?.isKit ?? false,
     isPreOrder: row.isPreOrder,
     releaseDate: row.releaseDate,
     images: row.images.map((image) => ({ url: image.url, position: image.position })),
