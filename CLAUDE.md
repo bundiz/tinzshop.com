@@ -22,8 +22,8 @@ code or name a host as chosen.
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
 CONFIRMED, not PROPOSED. 57 open questions are on record —
-see `docs/13-open-questions.md` for the full record: 40 RESOLVED, 6 PARTIALLY
-RESOLVED, 11 still genuinely UNRESOLVED (most waiting on a BigSeller
+see `docs/13-open-questions.md` for the full record: 41 RESOLVED, 6 PARTIALLY
+RESOLVED, 10 still genuinely UNRESOLVED (most waiting on a BigSeller
 data-inspection session, the Shopee live go-live, or Shopee's API call limit). Total budget is 100,000 THB and
 a proposed schedule exists — `docs/02-scope-and-phases.md#schedule-and-budget`
 — but it is a project-side proposal pending client confirmation, not itself a

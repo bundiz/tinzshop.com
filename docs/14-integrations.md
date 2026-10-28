@@ -178,8 +178,8 @@ Sandbox: a Test Partner and sandbox shop, held. Live: a Live partner key and the
 shop owner's authorization, **not yet supplied** (Q-042). No partner key or
 token appears in this repository; the partner key comes from the environment
 only, and tokens are encrypted at rest. The sandbox Test Partner id and sandbox
-shop id do appear, in test fixtures, the spec and plan 010; whether those count
-as account identifiers under hard rule 2 is open (Q-057). The callback accepts
+shop id do appear, in test fixtures, the spec and plan 010, as test data
+(Q-057, D-112); live ids never do. The callback accepts
 only the shop configured in `SHOPEE_SHOP_ID` (D-104).
 
 ### What it blocks

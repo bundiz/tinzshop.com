@@ -114,6 +114,7 @@ Our own engineering decisions made while building plan 010; they implement the o
 | D-109 | A run in which an item not known before the run fails ends `failed` with `item_failures`, keeping committed upserts, so the window does not advance and the item is listed again. A known item's failure stays a warning. Refines spec §6: every item is still processed, but `failed` now also covers this case. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
 | D-110 | Not-found items stay in the stock sweep and are restored when returned; a listed item that base info does not return is a failure (`not_returned`), never not-found; base-info elements are parsed one by one; `api_calls` counts one run's calls only. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
 | D-111 | Sync warnings are strings `item <id>: <code>` or `item <id> model <model id>: <code>`; empty and duplicate Parent SKUs and ModelSKUs among a run's upserted items are reported this way (REQ-004), never rejected. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-112 | The Shopee sandbox Test Partner id and sandbox shop id may appear in the repository as test data; live shop and partner ids may not (hard rule 2). | Accepted | [13](13-open-questions.md#q-057-do-the-shopee-sandbox-ids-count-as-account-identifiers) |
 
 ## Deployment
 
