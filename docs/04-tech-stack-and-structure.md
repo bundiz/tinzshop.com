@@ -75,6 +75,7 @@ tinzshop.com/
 │   │       ├── (admin)/          ← back office — staff only
 │   │       └── (news)/           ← game news (REQ-047)
 │   ├── i18n/                     ← next-intl routing and request config, and the catalogue key-parity test (plan 011)
+│   ├── proxy.ts                  ← next-intl locale routing (Next 16's name for middleware); skips /api, /_next and files
 │   ├── components/
 │   │   ├── ui/                   ← tier 1: primitives, no domain knowledge
 │   │   └── domain/               ← tier 2: shared domain components

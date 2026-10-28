@@ -88,15 +88,15 @@
 
 **Interfaces:** Produces `routing` (`locales: ['th', 'en']`, `defaultLocale: 'th'`, `localePrefix: 'always'`), and message namespaces `shop.header`, `shop.home`, `shop.product`, `shop.footer`.
 
-- [ ] **Step 1: Write the failing test** `src/i18n/messages.test.ts`:
+- [x] **Step 1: Write the failing test** `src/i18n/messages.test.ts`:
   - `every key in th.json exists in en.json and the reverse`: flatten both to dot paths and compare the sets.
   - `no message is an empty string`.
-- [ ] **Step 2:** Run `npx vitest run src/i18n/messages.test.ts`. Expect FAIL (no files).
-- [ ] **Step 3:** Install the pinned packages. Then wire next-intl per its App Router guide: routing, request config, `proxy.ts` (the matcher excludes `/api`, `/_next` and files with an extension), the plugin in `next.config.ts`, and `[locale]/layout.tsx`. The layout sets `<html lang={locale}>`, gives `notFound()` for an unknown locale, and wraps children in `NextIntlClientProvider`.
-- [ ] **Step 4:** `globals.css` holds `@import "tailwindcss";` and an `@theme` block with the design's tokens, copied from `design/css/style.css` `:root`: colours `primary`, `primary-dark`, `primary-deep`, `primary-soft`, `accent`, `accent-dark`, `accent-soft`, `danger`, `success`, `success-soft`, `text`, `text-muted`, `text-subtle`, `bg`, `bg-subtle` and `border`; the font stack; the radius values; and the card and hover shadows. The base `line-height` is suited to Thai.
-- [ ] **Step 5:** Write `th.json` / `en.json` with every string on the page. Thai text comes from `design/index.html` as written; English is the plain equivalent. The header, hero, trust blurbs, section titles, stock labels ("มีสินค้า" / "สินค้าหมด"), the "from" price prefix, badges ("ชุดโปรโมชั่น", "พรีออเดอร์"), the release-date label and the footer are all messages.
-- [ ] **Step 6:** Run the test: PASS. Run `npm run build`: it succeeds. `curl -sI http://localhost:3002/` shows a redirect to `/th`, and `/api/jobs/shopee-sync` is unaffected (still `401` without a secret).
-- [ ] **Step 7:** Commit: `feat: add Tailwind, next-intl and the locale layout`.
+- [x] **Step 2:** Run `npx vitest run src/i18n/messages.test.ts`. Expect FAIL (no files).
+- [x] **Step 3:** Install the pinned packages. Then wire next-intl per its App Router guide: routing, request config, `proxy.ts` (the matcher excludes `/api`, `/_next` and files with an extension), the plugin in `next.config.ts`, and `[locale]/layout.tsx`. The layout sets `<html lang={locale}>`, gives `notFound()` for an unknown locale, and wraps children in `NextIntlClientProvider`.
+- [x] **Step 4:** `globals.css` holds `@import "tailwindcss";` and an `@theme` block with the design's tokens, copied from `design/css/style.css` `:root`: colours `primary`, `primary-dark`, `primary-deep`, `primary-soft`, `accent`, `accent-dark`, `accent-soft`, `danger`, `success`, `success-soft`, `text`, `text-muted`, `text-subtle`, `bg`, `bg-subtle` and `border`; the font stack; the radius values; and the card and hover shadows. The base `line-height` is suited to Thai.
+- [x] **Step 5:** Write `th.json` / `en.json` with every string on the page. Thai text comes from `design/index.html` as written; English is the plain equivalent. The header, hero, trust blurbs, section titles, stock labels ("มีสินค้า" / "สินค้าหมด"), the "from" price prefix, badges ("ชุดโปรโมชั่น", "พรีออเดอร์"), the release-date label and the footer are all messages.
+- [x] **Step 6:** Run the test: PASS. Run `npm run build`: it succeeds. `curl -sI http://localhost:3002/` shows a redirect to `/th`, and `/api/jobs/shopee-sync` is unaffected (still `401` without a secret).
+- [x] **Step 7:** Commit: `feat: add Tailwind, next-intl and the locale layout`.
 
 ### Task 3: The landing catalogue read
 

@@ -1,0 +1,131 @@
+{
+  "shop": {
+    "header": {
+      "tagline": "A game and IT shop for over 20 years, from our Saphan Lek store to online · Delivery across Thailand",
+      "logo": {
+        "label": "Tinzshop home",
+        "wordLead": "Tinz",
+        "wordTail": "shop",
+        "sub": "Games · Consoles · IT Gadgets"
+      },
+      "language": {
+        "label": "Language",
+        "th": "TH",
+        "en": "EN",
+        "thName": "ภาษาไทย",
+        "enName": "English"
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "Tinzshop — Home",
+        "description": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop"
+      },
+      "hero": {
+        "label": "Featured",
+        "eyebrow": "New this month",
+        "title": "Play to the max<br></br>with <em>PlayStation 5</em>",
+        "text": "Consoles, games and accessories all in one place, with instalments through K-Payment",
+        "shopNow": "Shop now"
+      },
+      "trust": {
+        "label": "Our services",
+        "shipping": {
+          "title": "Delivery across Thailand",
+          "text": "Shipping priced by product size"
+        },
+        "payment": {
+          "title": "Pay with K-Payment",
+          "text": "Card · Instalments · PromptPay QR"
+        },
+        "store": {
+          "title": "A real store for over 20 years",
+          "text": "Our shop in Saphan Lek"
+        },
+        "taxInvoice": {
+          "title": "Automatic tax invoice",
+          "text": "Prices include VAT"
+        }
+      },
+      "bundles": {
+        "title": "Promotion sets",
+        "subtitle": "Consoles, games and accessories, bundled ready to play"
+      },
+      "bestSellers": {
+        "title": "Best sellers"
+      },
+      "preOrders": {
+        "title": "Pre-orders"
+      },
+      "empty": "No products are on sale yet"
+    },
+    "product": {
+      "stock": {
+        "in_stock": "In stock",
+        "out_of_stock": "Out of stock"
+      },
+      "price": {
+        "from": "From"
+      },
+      "badge": {
+        "bundle": "Promotion set",
+        "preOrder": "Pre-order"
+      },
+      "releaseDate": "Releases {date, date, medium}",
+      "imagePlaceholderAlt": "No product image yet",
+      "breadcrumb": {
+        "label": "Breadcrumb",
+        "home": "Home"
+      },
+      "gallery": {
+        "label": "Product images",
+        "image": "Product image {index} of {total}",
+        "thumbnail": "Image {index}"
+      },
+      "vatNote": "Price includes VAT · Instalments through K-Payment",
+      "option": {
+        "selected": "{name}: <strong>{value}</strong>",
+        "soldOut": "{value} (out of stock)"
+      },
+      "service": {
+        "label": "Services",
+        "title": "Services from Tinzshop",
+        "shipping": {
+          "title": "Delivery across Thailand",
+          "text": "Shipping is priced by product size"
+        },
+        "taxInvoice": {
+          "title": "Abbreviated tax invoice",
+          "text": "Issued automatically with every order. For a full tax invoice, give us your taxpayer details"
+        },
+        "store": {
+          "title": "The Tinzshop store",
+          "text": "Our shop in Saphan Lek, serving customers for over 20 years"
+        }
+      },
+      "tabs": {
+        "label": "Product information",
+        "description": "Description",
+        "spec": "Specifications"
+      },
+      "spec": {
+        "brand": "Brand",
+        "shippingSize": "Product size (for shipping)",
+        "shippingSizeTier": {
+          "small": "Small",
+          "medium": "Medium",
+          "large": "Large"
+        }
+      },
+      "notFound": {
+        "title": "Product not found",
+        "text": "This product does not exist or is no longer on sale",
+        "backHome": "Back to home"
+      }
+    },
+    "footer": {
+      "about": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop",
+      "copyright": "© {year} Tinzshop"
+    }
+  }
+}

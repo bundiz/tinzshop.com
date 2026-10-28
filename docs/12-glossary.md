@@ -209,6 +209,8 @@ their file names in `.claude/agents/`.
 | Product detail | รายละเอียดสินค้า | The read model for the product page: name, description, brand, images, option types, variants with price and stock status, and the default variant. `getProductDetail` returns `null` unless `isStorefrontVisible` holds; the repository query behind it is `findStorefrontProduct` (plan 011). | `getProductDetail`, `ProductDetail`, `findStorefrontProduct` |
 | Variant picker | ตัวเลือกรุ่นสินค้า | The domain component on the product page where a customer picks option values; it disables values with no active variant, labels sold-out ones, and shows the chosen variant's price and stock status (REQ-003). | `VariantPicker` |
 | Product page route | เส้นทางหน้าสินค้า | The storefront URL of one product, where `productId` is our `product.id` (uuid). A malformed, unknown or hidden product is `notFound()`. | `/{locale}/products/{productId}` |
+| Message catalogue | แคตตาล็อกข้อความ | The Thai and English text of every user-facing string, one JSON file per locale, both carrying every key (D-031, D-032). Keys are dot paths; the storefront's namespaces are `shop.header`, `shop.home`, `shop.product` and `shop.footer`. A key-parity test fails when one file has a key the other lacks, or a message is empty (plan 011). | `messages/th.json`, `messages/en.json` |
+| Locale routing | การกำหนดเส้นทางตามภาษา | The next-intl configuration that puts every page under `/th` or `/en`: `th` is the default, `/` redirects to `/th`, and the locale is never detected from a browser header or a cookie. The proxy runs on page routes only, never on `/api/**`, `/_next/**` or a path with a file extension (plan 011). | `routing`, `src/i18n/routing.ts`, `src/proxy.ts` |
 
 ## Terms deliberately NOT defined here
 

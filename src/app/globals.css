@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* Design tokens, copied from design/css/style.css :root. */
+@theme {
+  --color-primary: #1863dc;
+  --color-primary-dark: #0056a7;
+  --color-primary-deep: #0b2e6f;
+  --color-primary-soft: #e8f0fd;
+  --color-accent: #fea601;
+  --color-accent-dark: #e08f00;
+  --color-accent-soft: #fff4dc;
+  --color-danger: #dd3333;
+  --color-success: #178a4c;
+  --color-success-soft: #e6f5ec;
+
+  --color-text: #212121;
+  --color-text-muted: #4e4b66;
+  --color-text-subtle: #85839a;
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f4f4f4;
+  --color-border: #ebebeb;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai",
+    "Sarabun", "Leelawadee UI", Thonburi, Arial, sans-serif;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+
+  --shadow-card: 0 1px 2px rgba(33, 33, 33, 0.05);
+  --shadow-hover: 0 8px 24px rgba(24, 99, 220, 0.14);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    /* Thai stacks vowels and tone marks above and below the line: a tight
+       line-height clips them (07 Designing for Thai). */
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.45;
+  }
+}
