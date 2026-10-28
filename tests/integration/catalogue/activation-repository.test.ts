@@ -35,4 +35,25 @@ describe('activateSyncedProducts', () => {
     expect(await activateSyncedProducts()).toBe(1);
     expect(await activateSyncedProducts()).toBe(0);
   });
+
+  it('leaves a NORMAL product whose variants are all inactive inactive', async () => {
+    await upsertCatalogueItem(twoTierSnapshot(), T1);
+    await getPrisma().variant.updateMany({ data: { isActive: false } });
+
+    expect(await activateSyncedProducts()).toBe(0);
+    expect(await getPrisma().product.count({ where: { isActive: true } })).toBe(0);
+  });
+
+  it('leaves an already-active product untouched', async () => {
+    await upsertCatalogueItem(twoTierSnapshot(), T1);
+    const before = await getPrisma().product.update({
+      where: { id: (await getPrisma().product.findFirstOrThrow()).id },
+      data: { isActive: true },
+    });
+
+    expect(await activateSyncedProducts()).toBe(0);
+    const after = await getPrisma().product.findUniqueOrThrow({ where: { id: before.id } });
+    expect(after.isActive).toBe(true);
+    expect(after.updatedAt).toEqual(before.updatedAt);
+  });
 });
