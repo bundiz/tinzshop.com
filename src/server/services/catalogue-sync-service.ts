@@ -24,8 +24,9 @@ import {
 export class CatalogueSourceError extends Error {
   readonly code: string;
 
-  constructor(code: string) {
-    super(`Catalogue source failed: ${code}`);
+  /** `detail` must be as safe to store as the code: no token, key, signature or URL. */
+  constructor(code: string, detail?: string) {
+    super(`Catalogue source failed: ${code}${detail === undefined ? '' : ` — ${detail}`}`);
     this.name = 'CatalogueSourceError';
     this.code = code;
   }

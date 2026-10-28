@@ -72,7 +72,7 @@ export function createShopeeCatalogueSource(deps: {
           offset = page.next_offset;
         }
       } catch (error) {
-        if (error instanceof ShopeeApiError) throw new CatalogueSourceError(error.shopeeError);
+        if (error instanceof ShopeeApiError) throw new CatalogueSourceError(error.shopeeError, error.message);
         throw error;
       }
       return items;

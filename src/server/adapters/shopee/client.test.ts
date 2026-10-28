@@ -239,6 +239,25 @@ describe("shopee client", () => {
     expect(err.shopeeError).toBe("invalid_response");
   });
 
+  it("names the failing field of an invalid response without its value", async () => {
+    const { client } = build(() =>
+      json({ error: "", message: "", response: { item_id: "secret-looking-value", tier_variation: [] } }),
+    );
+    const err = await client.getModelList(credentials, 1n).catch((e: unknown) => e);
+    if (!(err instanceof ShopeeApiError)) throw new Error("unreachable");
+    expect(err.message).toContain("(model: invalid_type)");
+    expect(err.message).not.toContain("secret-looking-value");
+  });
+
+  it("reads a list page without an item array as an empty page", async () => {
+    const { client } = build(() =>
+      json({ error: "", message: "", response: { total_count: 0, has_next_page: false, next_offset: 0 } }),
+    );
+    const page = await client.getItemList(credentials, { offset: 0, pageSize: 100, itemStatuses: ["NORMAL"] });
+    expect(page.item).toEqual([]);
+    expect(page.has_next_page).toBe(false);
+  });
+
   it("counts calls", async () => {
     const { client } = build(() => new Response(fixture("model-list-803947690.json")));
     await client.getModelList(credentials, 1n);

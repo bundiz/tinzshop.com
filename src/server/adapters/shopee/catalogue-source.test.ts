@@ -234,6 +234,24 @@ describe("shopee catalogue source", () => {
     await expect(source.listItems(null)).rejects.toBeInstanceOf(CatalogueSourceError);
   });
 
+  it("keeps the failing field of an invalid listing response in the error message", async () => {
+    const { client } = fake({
+      getItemList: () =>
+        Promise.reject(
+          new ShopeeApiError({
+            path: "/api/v2/product/get_item_list",
+            shopeeError: "invalid_response",
+            httpStatus: 200,
+            detail: "total_count: invalid_type",
+          }),
+        ),
+    });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    const err = await source.listItems(null).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "invalid_response", name: "CatalogueSourceError" });
+    expect((err as Error).message).toContain("get_item_list: invalid_response (total_count: invalid_type)");
+  });
+
   it("asks for credentials lazily, never at construction", async () => {
     let calls = 0;
     const { client } = fake();

@@ -31,13 +31,14 @@ const stockInfoV2 = z.looseObject({
 const weight = z.union([z.string(), z.number()]);
 
 export const shopeeItemListPageSchema = z.looseObject({
+  // A page with nothing in it may come without `item` (suspected cause of the 2026-10-28 sandbox failures).
   item: z.array(
     z.looseObject({
       item_id: shopeeId,
       item_status: z.string(),
       update_time: z.number(),
     }),
-  ),
+  ).default([]),
   total_count: z.number(),
   has_next_page: z.boolean(),
   next_offset: z.number().optional(),

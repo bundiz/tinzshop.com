@@ -13,8 +13,10 @@ export class ShopeeApiError extends Error {
     shopeeError: string;
     requestId?: string | null;
     httpStatus: number;
+    /** Field paths and issue codes only, never a value. */
+    detail?: string;
   }) {
-    super(`${input.path}: ${input.shopeeError}`);
+    super(`${input.path}: ${input.shopeeError}${input.detail === undefined ? "" : ` (${input.detail})`}`);
     this.name = "ShopeeApiError";
     this.path = input.path;
     this.shopeeError = input.shopeeError;

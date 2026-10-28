@@ -128,7 +128,7 @@ next run asks for the same window again). `error_code` is one of:
 
 | `error_code` | Meaning |
 | :--- | :--- |
-| a Shopee error string, e.g. `error_auth`, `error_server`, `timeout`, `network_error`, `non_json_response`, `invalid_response` | `get_item_list` (or a call before it) failed. Nothing was written (D-106). |
+| a Shopee error string, e.g. `error_auth`, `error_server`, `timeout`, `network_error`, `non_json_response`, `invalid_response` | `get_item_list` (or a call before it) failed. Nothing was written (D-106). `error_detail` names the call, and for `invalid_response` up to five failing field paths with their issue codes, never a value (D-114). A list page without `item` is read as empty (D-114). |
 | `listing_stuck` | `has_next_page` was true but `next_offset` was missing or did not increase (D-108). |
 | `listing_incomplete` | A page was empty while `has_next_page` was true (D-108). |
 | `listing_too_long` | The listing passed 1000 pages of 50 (D-108). |

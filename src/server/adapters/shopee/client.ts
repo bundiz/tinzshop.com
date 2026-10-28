@@ -59,7 +59,9 @@ export interface ShopeeClient {
 interface Parser<T> {
   safeParse(
     data: unknown,
-  ): { success: true; data: T } | { success: false };
+  ):
+    | { success: true; data: T }
+    | { success: false; error: { issues: readonly { path: readonly PropertyKey[]; code: string }[] } };
 }
 
 type QueryValue = string | number | bigint | readonly (string | number | bigint)[];
@@ -170,7 +172,11 @@ export function createShopeeClient(options: ShopeeClientOptions): ShopeeClient {
   ): T {
     const result = schema.safeParse(data);
     if (!result.success) {
-      throw new ShopeeApiError({ path, shopeeError: "invalid_response", httpStatus: status });
+      const detail = result.error.issues
+        .slice(0, 5)
+        .map((issue) => `${issue.path.map(String).join(".") || "response"}: ${issue.code}`)
+        .join("; ");
+      throw new ShopeeApiError({ path, shopeeError: "invalid_response", httpStatus: status, detail });
     }
     return result.data;
   }
