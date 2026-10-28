@@ -22,6 +22,12 @@ import {
   recordSkippedSyncRun,
   startSyncRun,
 } from '@/server/repositories/catalogue/sync-run-repository';
+import { listStorefrontCandidates } from '@/server/repositories/catalogue/storefront-repository';
+import {
+  getLandingCatalogue,
+  type Locale,
+  type LandingCatalogue,
+} from '@/server/services/catalogue/landing-catalogue-service';
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
 
@@ -67,6 +73,11 @@ export function getCatalogueSyncRunner(): () => Promise<CatalogueSyncSummary> {
       lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
       now: () => new Date(),
     });
+}
+
+/** The landing page read: built per call, needs no configuration beyond the database. */
+export function getLandingCatalogueReader(): (locale: Locale) => Promise<LandingCatalogue> {
+  return (locale) => getLandingCatalogue({ listStorefrontCandidates }, locale);
 }
 
 /** Development-only API docs; needs no configuration, so it works before `.env` is complete. */

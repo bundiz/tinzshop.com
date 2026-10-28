@@ -124,7 +124,7 @@
   - `bundles`: `isKit`, same order, first 4.
   - `preOrders`: `isPreOrder`, by `release_date` ascending with nulls last, first 4.
 
-- [ ] **Step 1: Write the failing unit tests** in `landing-catalogue-service.test.ts`, with plain fixture candidates:
+- [x] **Step 1: Write the failing unit tests** in `landing-catalogue-service.test.ts`, with plain fixture candidates:
   - `hides products the visibility rule excludes`: inactive product, no active variant → absent from every section.
   - `derives the card price from the cheapest active variant`:
     - variants at 299000 and 459000 → `priceSatang 299000n`, `isPriceRange true`
@@ -138,13 +138,13 @@
   - `falls back to the th name when en is missing`: `en` gives the `th` name when there is no `en` row; `en` gives the `en` name when there is one.
   - `orders best sellers by sales and caps each section`: 10 candidates → 8, highest `salesCount` first, `null` last.
   - `puts kits in bundles and pre-orders in preOrders by release date`.
-- [ ] **Step 2:** Run `npx vitest run src/server/services/catalogue/landing-catalogue-service.test.ts`. Expect FAIL.
-- [ ] **Step 3:** Implement the service. Then implement the repository as one Prisma query, and wire `getLandingCatalogueReader()` in the composition root, returning `(locale) => getLandingCatalogue({ listStorefrontCandidates }, locale)`.
-- [ ] **Step 4: Write the integration test** `storefront-repository.test.ts`. Seed with the existing `tests/integration/fixtures/snapshots.ts` via `upsertCatalogueItem`, then flip `is_active` with Prisma in the test:
+- [x] **Step 2:** Run `npx vitest run src/server/services/catalogue/landing-catalogue-service.test.ts`. Expect FAIL.
+- [x] **Step 3:** Implement the service. Then implement the repository as one Prisma query, and wire `getLandingCatalogueReader()` in the composition root, returning `(locale) => getLandingCatalogue({ listStorefrontCandidates }, locale)`.
+- [x] **Step 4: Write the integration test** `storefront-repository.test.ts`. Seed with the existing `tests/integration/fixtures/snapshots.ts` via `upsertCatalogueItem`, then flip `is_active` with Prisma in the test:
   - `returns only active NORMAL products with their variants`: an inactive product is absent, an `UNLIST` one is absent, an active NORMAL one is present with every variant.
   - `returns the position-0 image and both translations`.
-- [ ] **Step 5:** Run `npm test` and `npm run test:integration`. All pass.
-- [ ] **Step 6:** Commit: `feat: add the landing catalogue read service`.
+- [x] **Step 5:** Run `npm test` and `npm run test:integration`. All pass.
+- [x] **Step 6:** Commit: `feat: add the landing catalogue read service`.
 
 ### Task 4: Development activation command
 
