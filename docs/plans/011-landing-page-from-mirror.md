@@ -1,15 +1,15 @@
-# 011 — Landing page from the catalogue mirror — Implementation Plan
+# 011 — Landing page and product page from the catalogue mirror — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - **Status:** Not started — written 2026-10-28, awaiting the project owner's review
 - **Phase:** 3 (storefront), an early slice. The project owner asked on 2026-10-28 for the landing page showing mirrored products and stock to come first (D-117).
-- **Requirements touched:** REQ-006 (stock shown as a status, never a number), REQ-007 (Thai and English), REQ-009 (mobile-first). REQ-001, REQ-002 and REQ-003 are **not** delivered: no category pages, no search, no product page.
+- **Requirements touched:** REQ-003 (select a variant and see its price and availability, without adding to a cart), REQ-006 (stock shown as a status, never a number), REQ-007 (Thai and English), REQ-009 (mobile-first). REQ-001 and REQ-002 are **not** delivered: no category pages, no search.
 - **Blocked by:** nothing
 - **Depends on plan:** 010 (merged as PR #29)
-- **Spec:** the catalogue mirror design `docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`, §5.3 (activation and the storefront visibility rule) and §7 (how the design pages read the tables). The page design is `design/index.html` with `design/css/style.css`.
+- **Spec:** the catalogue mirror design `docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`, §5.3 (activation and the storefront visibility rule) and §7 (how the design pages read the tables). The page designs are `design/index.html` and `design/product.html`, with `design/css/style.css`.
 
-**Goal:** `/th` and `/en` render the design's landing page, with its product sections filled from our PostgreSQL mirror on every request, so a sync followed by a page reload shows Shopee's current prices and stock status.
+**Goal:** `/th` and `/en` render the design's landing page, and `/th/products/<id>` the design's product page. Both are filled from our PostgreSQL mirror on every request, so a sync followed by a page reload shows Shopee's current prices and stock status.
 
 **Architecture:** A Server Component page calls one catalogue read service (`getLandingCatalogue`), which applies the visibility rule and card derivations to rows from one repository query. No route handler is added: our own pages call services directly (D-020). Styling is Tailwind with the design's tokens; text comes from next-intl message catalogues.
 
@@ -17,7 +17,7 @@
 
 ## Owner decisions (2026-10-28)
 
-1. Build the landing page first, following `design/`, with the products and stock that the sync mirrors from Shopee.
+1. Build the landing page and the product page first, following `design/`, with the products and stock that the sync mirrors from Shopee.
 2. **The visibility rule stays as agreed** (spec §5.3): a product shows only when `product.is_active`, its `channel_item.external_status = 'NORMAL'`, and at least one variant is active. Until the admin screens exist, a development command turns on synced products (Task 4).
 
 ## Global Constraints
@@ -32,6 +32,8 @@
 - Product name on `/en`: the `en` translation, else the `th` one. This lives in one function, `pickProductName`, because the real rule is the open Q-018 residual (spec §5.3).
 - Images: `<img>` with the Shopee URL from `product_image` position 0 (spec O-5), `loading="lazy"`, product name as `alt`. No `next/image` remote config, because live image hosts are not known. A product without an image renders the design's placeholder block.
 - Ratings are not shown: only our own reviews may be shown (spec O-6), and none exist yet. Category menus, news, cart, sign-in and search are not rendered until their plans exist; no control is shown that does nothing.
+- On the product page this also leaves out: quantity, add to cart, buy now, wishlist, share, the reviews tab, related products and the payment-method chips. Payment methods are confirmed in plan 003, and K-Payment is the sole method (D-072). The variant picker, gallery and price/stock per choice are kept.
+- A product URL is `/{locale}/products/{productId}`, where `productId` is our `product.id` (uuid). A malformed id, an unknown id, or a product the visibility rule hides is `notFound()`, never an error page.
 - The page is rendered per request (`export const dynamic = 'force-dynamic'`), never statically cached, so a sync shows on the next reload.
 
 ## Review Focus
@@ -41,6 +43,8 @@
 3. **Sold out.** All active variants at stock 0 give `out_of_stock`; any active variant above 0 gives `in_stock`. An inactive variant's stock never counts. Owner: Task 3, test `derives stock status from active variants only`.
 4. **An empty section.** No kit or pre-order products means that section is not rendered at all, never as an empty heading. Owner: Task 5, test `omits a section with no products`.
 5. **English without an `en` row.** `/en` shows the Thai name rather than an empty card. Owner: Task 3, test `falls back to the th name when en is missing`.
+6. **A product URL that should not open.** A malformed uuid, an unknown id, or a hidden product (inactive, `UNLIST`) gives 404 and never throws. Owner: Task 6, test `returns null for a hidden, unknown or malformed product id`.
+7. **A sold-out option combination.** In the picker, a combination whose variant is out of stock is still selectable but marked sold out, and a combination with no active variant is disabled. Owner: Task 6, test `marks sold-out and missing combinations`.
 
 ---
 
@@ -59,6 +63,8 @@
 | `src/server/repositories/catalogue/activation-repository.ts`, `scripts/catalogue-activate.ts`, `package.json` | Development activation command | 4 |
 | `src/components/domain/{PriceDisplay,StockBadge,ProductCard}.tsx` | Shared domain components | 5 |
 | `src/app/[locale]/(shop)/page.tsx`, beside-route components | The landing page | 5 |
+| `src/server/repositories/catalogue/storefront-repository.ts` (extend), `src/server/services/catalogue/product-detail-service.ts` (+ `.test.ts`) | One product's detail | 6 |
+| `src/app/[locale]/(shop)/products/[productId]/page.tsx`, beside-route components | The product page | 6 |
 
 ---
 
@@ -187,6 +193,55 @@
 
 ---
 
+### Task 6: The product page
+
+**Files:**
+- Modify `src/server/repositories/catalogue/storefront-repository.ts` (add `findStorefrontProduct`), `src/server/composition-root.ts` (add `getProductDetailReader()`), and `src/components/domain/ProductCard.tsx` (link to the product page).
+- Create `src/server/services/catalogue/product-detail-service.ts` and its `.test.ts`, `tests/integration/catalogue/product-detail.test.ts`, and `src/app/[locale]/(shop)/products/[productId]/page.tsx`.
+- Beside-route components in `products/[productId]/_components/`: `Breadcrumb`, `Gallery` (client, thumbnails switch the main image), `VariantPicker` (client), `ServicePanel`, `ProductTabs` (description and spec only).
+- Messages: `shop.product.*` in both catalogues.
+
+**Interfaces:**
+- Repository: `findStorefrontProduct(productId: string): Promise<StorefrontProductRow | null>`. It returns the product with:
+  - both translations
+  - all images by `position`
+  - option types and values by `position`
+  - every variant with its option value ids
+  - `brand_name` and `shipping_size_tier`
+  - `channel_item.external_status`
+  - `is_pre_order` and `release_date`
+  - It returns `null` for a malformed uuid without querying.
+- Service:
+  - `getProductDetail(deps: { findStorefrontProduct }, productId, locale): Promise<ProductDetail | null>` returns `null` unless `isStorefrontVisible` (Task 3) holds.
+  - `ProductDetail = { productId; name; description; brandName: string | null; imageUrls: string[]; optionTypes: { id; name; values: { id; value }[] }[]; variants: { variantId; optionValueIds: string[]; priceSatang: bigint; originalPriceSatang: bigint | null; stockStatus: 'in_stock' | 'out_of_stock' }[]; defaultVariantId: string; isPreOrder; releaseDate: Date | null; shippingSizeTier: 'small' | 'medium' | 'large' | null }`.
+  - `variants` holds active variants only.
+  - `defaultVariantId` is the cheapest in-stock active variant, else the cheapest active one.
+  - Name and description go through `pickProductName` and the same fallback for the description.
+- `VariantPicker` gets `optionTypes` and `variants`. For each value it computes whether the selection with that value has an active variant (disabled when not) and whether that variant is sold out (labelled with the sold-out message). It shows the chosen variant's `PriceDisplay` and `StockBadge`.
+
+- [ ] **Step 1: Write the failing unit tests** in `product-detail-service.test.ts`:
+  - `returns null for a hidden, unknown or malformed product id`: inactive gives `null`; `UNLIST` gives `null`; a repository `null` gives `null`.
+  - `keeps active variants only and picks the cheapest in-stock one as default`.
+  - `falls back to the th name and description when en is missing`.
+  - `orders images, option types and values by position`.
+- [ ] **Step 2: Write the failing picker test** `VariantPicker.test.tsx`, using the SSD shape (2 capacities × 2 colours). It renders with `renderToStaticMarkup`:
+  - `marks sold-out and missing combinations`: a sold-out variant's value carries the sold-out text; a value with no active variant for the current selection is `disabled`.
+- [ ] **Step 3:** Run them: FAIL.
+- [ ] **Step 4:** Implement the repository function, the service and the page, laid out as in `design/product.html`:
+  - breadcrumb: home › product name (no category until categories exist)
+  - gallery
+  - buy box: name, price, stock, VAT note, picker
+  - service panel: the shipping, tax invoice and store blurbs from the design
+  - description tab: plain text, line breaks kept (`whitespace-pre-line`), never rendered as HTML
+  - spec tab: brand, and shipping size when set
+  - The page is `force-dynamic` and calls `notFound()` when the service returns `null`.
+  - `ProductCard` links to `/{locale}/products/{productId}`.
+- [ ] **Step 5: Integration test** `product-detail.test.ts`:
+  - `finds an active product with its variants and option links`: the two-tier fixture gives 4 variants, each with 2 option value ids.
+  - `returns null for a malformed id without throwing`.
+- [ ] **Step 6:** Run `npm test`, `npm run test:integration`, `npm run typecheck` and `npm run build`. All pass.
+- [ ] **Step 7:** Commit: `feat: add the product page from the catalogue mirror`.
+
 ## Manual test checklist
 
 Run by a person against the sandbox data. Never tick a box for a check nobody performed.
@@ -197,10 +252,13 @@ Run by a person against the sandbox data. Never tick a box for a check nobody pe
 - [ ] At 360px wide, nothing scrolls sideways, and Thai text wraps without clipping.
 - [ ] `/` redirects to `/th`, and `/api/docs` and `/api/jobs/shopee-sync` still work.
 - [ ] Tab through the page. Every link has a visible focus ring.
+- [ ] Click the SSD card. The product page shows 4 images or the placeholder, Capacity and Colour pickers, and price and stock per choice. Choosing 2TB updates the price to 4,590.
+- [ ] Set one SSD variant's stock to 0 in the sandbox and sync. That choice shows "สินค้าหมด".
+- [ ] Open `/th/products/not-a-uuid` and Mario Kart's product URL (unlisted). Both show 404.
 
 ## Not in this plan
 
-Category, product, search, cart and checkout pages; sign-in; ratings and reviews; news; banners managed by staff; the admin activation screen (plan 002).
+Category, search, cart and checkout pages; add to cart; sign-in; ratings and reviews; related products; news; banners managed by staff; the admin activation screen (plan 002).
 
 ## Outcome
 
