@@ -115,6 +115,7 @@ Our own engineering decisions made while building plan 010; they implement the o
 | D-110 | Not-found items stay in the stock sweep and are restored when returned; a listed item that base info does not return is a failure (`not_returned`), never not-found; base-info elements are parsed one by one; `api_calls` counts one run's calls only. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
 | D-111 | Sync warnings are strings `item <id>: <code>` or `item <id> model <model id>: <code>`; empty and duplicate Parent SKUs and ModelSKUs among a run's upserted items are reported this way (REQ-004), never rejected. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
 | D-112 | The Shopee sandbox Test Partner id and sandbox shop id may appear in the repository as test data; live shop and partner ids may not (hard rule 2). | Accepted | [13](13-open-questions.md#q-057-do-the-shopee-sandbox-ids-count-as-account-identifiers) |
+| D-113 | Prisma packages pinned at 7.10.1 and Vitest at 4.1.12 (from 7.10.0 / 4.1.11) to clear npm audit advisories, installed 13 days after release on the project owner's instruction. | Accepted | [plan 010](plans/010-shopee-catalogue-mirror.md#global-constraints) |
 
 ## Deployment
 

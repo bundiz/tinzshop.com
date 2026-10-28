@@ -20,7 +20,7 @@
 ## Global Constraints
 
 - Node `^20.19 || ^22.12 || >=24.0` (Prisma 7.10.0 engines). The team's machines run 20.20.2.
-- Pin exactly: `prisma` 7.10.0, `@prisma/client` 7.10.0, `@prisma/adapter-pg` 7.10.0, `pg` 8.23.1, `@types/pg` 8.23.1. Install with `npx npm@11.21.0 install --save-exact …`; npm 10.8.2 crashes on this tree. Afterwards, `npm ci` with npm 10.8 must still work.
+- Pin exactly: `prisma` 7.10.1, `@prisma/client` 7.10.1, `@prisma/adapter-pg` 7.10.1 (bumped from 7.10.0 on 2026-10-28 with `vitest` 4.1.11 → 4.1.12, for npm audit advisories; released 2026-10-15, one day short of the spec's two-week rule, on the project owner's instruction — D-113), `pg` 8.23.1, `@types/pg` 8.23.1. Install with `npx npm@11.21.0 install --save-exact …`; npm 10.8.2 crashes on this tree. Afterwards, `npm ci` with npm 10.8 must still work.
 - PostgreSQL 17 locally. The minimum is 15, for `NULLS NOT DISTINCT`.
 - Database identifiers are `snake_case`, with singular table names, via `@@map` / `@map`. Every one must be in `docs/12-glossary.md` (D-014).
 - Money is stored as `BigInt` satang in columns ending `_satang`. `bahtToSatang` is the only place money is rounded (D-010).
