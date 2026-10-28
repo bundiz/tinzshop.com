@@ -1,4 +1,6 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import ImagePlaceholder from '@/components/domain/ImagePlaceholder';
 import PriceDisplay from '@/components/domain/PriceDisplay';
 import StockBadge from '@/components/domain/StockBadge';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
@@ -7,13 +9,15 @@ export type ProductCardProps = {
   card: LandingProductCard;
 };
 
-/** One product as a card: image, badges, name, price and stock status. */
+/** One product as a card: image, badges, name, price and stock status, linking to its product page. */
 export default function ProductCard({ card }: ProductCardProps) {
   const t = useTranslations('shop.product');
+  const locale = useLocale();
   const isOut = card.stockStatus === 'out_of_stock';
 
   return (
-    <article className="relative flex h-full flex-col overflow-hidden rounded-(--radius) border border-border bg-bg shadow-card">
+    // The name's link stretches over the whole card, and the card draws the link's focus ring (07 Accessibility).
+    <article className="relative flex h-full flex-col overflow-hidden rounded-(--radius) border border-border bg-bg shadow-card transition-shadow hover:shadow-hover has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-primary">
       {(card.isKit || card.isPreOrder) && (
         <div className="absolute top-2 left-2 z-[1] flex flex-wrap gap-1">
           {card.isKit && <Badge tone="bundle">{t('badge.bundle')}</Badge>}
@@ -35,7 +39,12 @@ export default function ProductCard({ card }: ProductCardProps) {
       </div>
       <div className="flex flex-1 flex-col gap-1 px-3 pt-2.5 pb-3">
         <h3 className="line-clamp-2 min-h-[calc(1.55em*2)] text-sm leading-[1.55] font-medium [overflow-wrap:anywhere]">
-          {card.name}
+          <Link
+            href={`/${locale}/products/${card.productId}`}
+            className="after:absolute after:inset-0 after:z-[2] after:content-[''] focus-visible:outline-none"
+          >
+            {card.name}
+          </Link>
         </h3>
         <div className="mt-auto pt-1">
           <PriceDisplay
@@ -65,30 +74,5 @@ function Badge({ tone, children }: { tone: 'bundle' | 'preOrder'; children: stri
     >
       {children}
     </span>
-  );
-}
-
-/** The design's `.ph` block: a soft gradient with a faint gamepad mark. */
-function ImagePlaceholder({ label }: { label: string }) {
-  return (
-    <div
-      role="img"
-      aria-label={label}
-      className="grid aspect-square place-items-center bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#f1f5fd_58%,#e6eefc_100%)]"
-    >
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        className="w-[42%] fill-none stroke-primary opacity-30"
-        strokeWidth={1.4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M8.5 6.5h7a5.5 5.5 0 0 1 5.4 6.6l-.7 3.4A2.6 2.6 0 0 1 16 17.6L14.7 16H9.3L8 17.6a2.6 2.6 0 0 1-4.2-1.1l-.7-3.4A5.5 5.5 0 0 1 8.5 6.5Z" />
-        <path d="M6.5 11h3.5M8.25 9.25v3.5" />
-        <circle cx="15.5" cy="10.4" r=".8" className="fill-primary" />
-        <circle cx="17.6" cy="12.6" r=".8" className="fill-primary" />
-      </svg>
-    </div>
   );
 }

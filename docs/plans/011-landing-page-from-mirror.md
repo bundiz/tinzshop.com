@@ -222,15 +222,15 @@
   - Name and description go through `pickProductName` and the same fallback for the description.
 - `VariantPicker` gets `optionTypes` and `variants`. For each value it computes whether the selection with that value has an active variant (disabled when not) and whether that variant is sold out (labelled with the sold-out message). It shows the chosen variant's `PriceDisplay` and `StockBadge`.
 
-- [ ] **Step 1: Write the failing unit tests** in `product-detail-service.test.ts`:
+- [x] **Step 1: Write the failing unit tests** in `product-detail-service.test.ts`:
   - `returns null for a hidden, unknown or malformed product id`: inactive gives `null`; `UNLIST` gives `null`; a repository `null` gives `null`.
   - `keeps active variants only and picks the cheapest in-stock one as default`.
   - `falls back to the th name and description when en is missing`.
   - `orders images, option types and values by position`.
-- [ ] **Step 2: Write the failing picker test** `VariantPicker.test.tsx`, using the SSD shape (2 capacities × 2 colours). It renders with `renderToStaticMarkup`:
+- [x] **Step 2: Write the failing picker test** `VariantPicker.test.tsx`, using the SSD shape (2 capacities × 2 colours). It renders with `renderToStaticMarkup`:
   - `marks sold-out and missing combinations`: a sold-out variant's value carries the sold-out text; a value with no active variant for the current selection is `disabled`.
-- [ ] **Step 3:** Run them: FAIL.
-- [ ] **Step 4:** Implement the repository function, the service and the page, laid out as in `design/product.html`:
+- [x] **Step 3:** Run them: FAIL.
+- [x] **Step 4:** Implement the repository function, the service and the page, laid out as in `design/product.html`:
   - breadcrumb: home › product name (no category until categories exist)
   - gallery
   - buy box: name, price, stock, VAT note, picker
@@ -239,11 +239,11 @@
   - spec tab: brand, and shipping size when set
   - The page is `force-dynamic` and calls `notFound()` when the service returns `null`.
   - `ProductCard` links to `/{locale}/products/{productId}`.
-- [ ] **Step 5: Integration test** `product-detail.test.ts`:
+- [x] **Step 5: Integration test** `product-detail.test.ts`:
   - `finds an active product with its variants and option links`: the two-tier fixture gives 4 variants, each with 2 option value ids.
   - `returns null for a malformed id without throwing`.
-- [ ] **Step 6:** Run `npm test`, `npm run test:integration`, `npm run typecheck` and `npm run build`. All pass.
-- [ ] **Step 7:** Commit: `feat: add the product page from the catalogue mirror`.
+- [x] **Step 6:** Run `npm test`, `npm run test:integration`, `npm run typecheck` and `npm run build`. All pass.
+- [x] **Step 7:** Commit: `feat: add the product page from the catalogue mirror`.
 
 ## Manual test checklist
 

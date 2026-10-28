@@ -45,7 +45,9 @@ const BUNDLE_LIMIT = 4;
 const PRE_ORDER_LIMIT = 4;
 
 /** Spec §5.3: active product, Shopee status NORMAL, and at least one active variant. */
-export function isStorefrontVisible(candidate: StorefrontCandidate): boolean {
+export function isStorefrontVisible(
+  candidate: Pick<StorefrontCandidate, 'isActive' | 'externalStatus'> & { variants: { isActive: boolean }[] },
+): boolean {
   return (
     candidate.isActive &&
     candidate.externalStatus === 'NORMAL' &&
@@ -53,8 +55,11 @@ export function isStorefrontVisible(candidate: StorefrontCandidate): boolean {
   );
 }
 
-/** The `en` name on `/en`, else the `th` one (Q-018 residual); the single place this is decided. */
-export function pickProductName(candidate: StorefrontCandidate, locale: Locale): string {
+/**
+ * The `en` name on `/en`, else the `th` one (Q-018 residual); the single place this is decided.
+ * The product page passes its descriptions through it too, so a description falls back the same way.
+ */
+export function pickProductName(candidate: Pick<StorefrontCandidate, 'names'>, locale: Locale): string {
   const { th, en } = candidate.names;
   if (locale === 'en' && en !== undefined && en !== '') return en;
   return th ?? en ?? '';

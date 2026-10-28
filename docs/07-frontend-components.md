@@ -101,6 +101,17 @@ Every component file, in this order:
 - **Dates and years use the locale's own calendar, in Bangkok time (D-118).** On `/th` that is the Buddhist era, on `/en` the Gregorian year — the design writes `วางจำหน่าย 20 พ.ย. 2569` and `© 2569`. Dates go through next-intl's formatter (`{date, date, medium}` in a message), which takes the calendar from the locale; the footer's copyright year is the `year` part of the same `Intl` format, computed from the request's current date, never written into a message.
 - Never render a raw stock quantity on the storefront. `StockBadge` takes a status, not a number (REQ-006, D-024).
 
+### The variant picker (D-119)
+
+The product page is a Server Component; only `VariantPicker`, `Gallery` and
+`ProductTabs` are Client Components. The picker receives the product's option
+types and its **active** variants, already priced in satang, and keeps only the
+current choice in `useState`.
+
+- For every value it asks: with this value and the other current choices, is there an active variant? If not, the value is **disabled** — the customer cannot choose a combination Shopee does not sell.
+- If that variant exists but is sold out, the value stays **selectable** and reads `{value} (สินค้าหมด)` (`shop.product.option.soldOut`). Disabling it as the design mockup does would hide the variant's price; selecting it shows the price and the out-of-stock `StockBadge`, so the status is said in text, not only by a greyed control.
+- The page opens on the cheapest in-stock active variant, else the cheapest active one, so its first price is one a customer can buy at when any exists.
+
 ## Bilingual
 
 **Thai and English, on the storefront and in the admin, from the same
