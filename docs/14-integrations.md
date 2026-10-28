@@ -134,7 +134,7 @@ next run asks for the same window again). `error_code` is one of:
 | `listing_too_long` | The listing passed 1000 pages of 50 (D-108). |
 | `channel_not_connected` | No shop is connected (`channel_authorization` has no row). |
 | `token_persistence_failed` | A refreshed token pair could not be saved. |
-| `item_failures` | The run finished, but at least one item **not known before this run** failed. Upserts that committed stay; the window does not advance, so the item is listed again next run (D-109). |
+| `item_failures` | The run finished, but at least one item **not known before this run** failed. Upserts that committed stay; the window does not advance, so the item is listed again next run (D-109). A new item that fails every run keeps every run `failed`, the window frozen and the job answering 502 until the item is fixed in Shopee; known items are still swept and newer items still found. |
 | `unexpected` | Anything else, including a failure to write the finished `sync_run` row. `error_detail` holds the error message only. |
 
 **Per-item warnings** (`sync_run.warnings`, a list of strings, never a reason
