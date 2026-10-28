@@ -9,7 +9,12 @@ import type {
   recordSkippedSyncRun,
   startSyncRun,
 } from '@/server/repositories/sync-run-repository';
-import type { CatalogueSource, ListedItem } from './catalogue-snapshot';
+import {
+  SALES_DATA_UNAVAILABLE,
+  type CatalogueItemSnapshot,
+  type CatalogueSource,
+  type ListedItem,
+} from './catalogue-snapshot';
 import {
   ChannelNotConnectedError,
   ChannelTokenPersistenceError,
@@ -78,6 +83,44 @@ function mergeItems(listed: readonly ListedItem[], known: readonly ListedItem[])
   return [...byId.values()];
 }
 
+function isEmptySku(sku: string | null): boolean {
+  return sku === null || sku.trim() === '';
+}
+
+/**
+ * REQ-004: SKUs are stored as Shopee holds them and are not unique (spec 5.8), so empty and duplicate
+ * SKUs among this run's upserted items are reported, never rejected. An item without models has no
+ * model SKU of its own, so only the parent SKU is checked for it.
+ */
+function skuWarnings(snapshots: readonly CatalogueItemSnapshot[]): string[] {
+  const parentCount = new Map<string, number>();
+  const modelCount = new Map<string, number>();
+  for (const snapshot of snapshots) {
+    if (snapshot.parentSku !== null && !isEmptySku(snapshot.parentSku)) {
+      parentCount.set(snapshot.parentSku, (parentCount.get(snapshot.parentSku) ?? 0) + 1);
+    }
+    for (const variant of snapshot.variants) {
+      if (variant.externalModelId === null || variant.modelSku === null || isEmptySku(variant.modelSku)) continue;
+      modelCount.set(variant.modelSku, (modelCount.get(variant.modelSku) ?? 0) + 1);
+    }
+  }
+
+  const parent: string[] = [];
+  const model: string[] = [];
+  for (const snapshot of snapshots) {
+    const item = `item ${snapshot.externalItemId}`;
+    if (isEmptySku(snapshot.parentSku)) parent.push(`${item}: empty_parent_sku`);
+    else if ((parentCount.get(snapshot.parentSku ?? '') ?? 0) > 1) parent.push(`${item}: duplicate_parent_sku`);
+    for (const variant of snapshot.variants) {
+      if (variant.externalModelId === null) continue;
+      const where = `${item} model ${variant.externalModelId}`;
+      if (isEmptySku(variant.modelSku)) model.push(`${where}: empty_model_sku`);
+      else if ((modelCount.get(variant.modelSku ?? '') ?? 0) > 1) model.push(`${where}: duplicate_model_sku`);
+    }
+  }
+  return [...parent, ...model];
+}
+
 async function execute(deps: CatalogueSyncDeps): Promise<Exclude<CatalogueSyncSummary, { outcome: 'skipped' }>> {
   const { source, catalogue, syncRuns } = deps;
   const windowTo = deps.now();
@@ -95,21 +138,59 @@ async function execute(deps: CatalogueSyncDeps): Promise<Exclude<CatalogueSyncSu
     const fetched = await source.fetchItems(items);
     counts.itemsSeen = items.length;
 
+    const knownIds = new Set(known.map((item) => item.externalItemId));
+    const listedIds = new Set(listed.map((item) => item.externalItemId));
+    // A failed item that was not known before would never be listed again once the window advances.
+    let newItemFailures = 0;
+    const countFailure = (externalItemId: bigint): void => {
+      if (!knownIds.has(externalItemId)) newItemFailures += 1;
+    };
+
     for (const failure of fetched.failures) {
       warnings.push(`item ${failure.externalItemId}: ${failure.reason}`);
+      if (failure.reason !== SALES_DATA_UNAVAILABLE) countFailure(failure.externalItemId);
     }
+    // Only an item that was not listed this run can be not-found; a listed one the source did not
+    // return is a failure for that item.
+    const notFound: bigint[] = [];
+    for (const externalItemId of fetched.notFound) {
+      if (listedIds.has(externalItemId)) {
+        warnings.push(`item ${externalItemId}: not_returned`);
+        countFailure(externalItemId);
+      } else {
+        notFound.push(externalItemId);
+      }
+    }
+    const upserted: CatalogueItemSnapshot[] = [];
     for (const snapshot of fetched.snapshots) {
       try {
         const result = await catalogue.upsertCatalogueItem(snapshot, windowTo);
         if (result === 'created') counts.itemsCreated += 1;
         else counts.itemsUpdated += 1;
+        upserted.push(snapshot);
       } catch (error) {
         warnings.push(`item ${snapshot.externalItemId}: ${messageOf(error)}`);
+        countFailure(snapshot.externalItemId);
       }
     }
-    counts.itemsDeactivated = await catalogue.markItemsNotFound(fetched.notFound, windowTo);
+    warnings.push(...skuWarnings(upserted));
+    counts.itemsDeactivated = await catalogue.markItemsNotFound(notFound, windowTo);
 
     const apiCalls = source.apiCallCount();
+    if (newItemFailures > 0) {
+      // Committed upserts stay; a failed outcome keeps the window where it was, so the items are retried.
+      const errorCode = 'item_failures';
+      await syncRuns.finishSyncRun(runId, {
+        outcome: 'failed',
+        finishedAt: deps.now(),
+        ...counts,
+        apiCalls,
+        warnings,
+        errorCode,
+        errorDetail: `${newItemFailures} new item(s) failed`,
+      });
+      return { outcome: 'failed', runId, ...counts, apiCalls, warnings, errorCode };
+    }
     await syncRuns.finishSyncRun(runId, {
       outcome: 'succeeded',
       finishedAt: deps.now(),

@@ -1,11 +1,13 @@
 import { ShopeeApiError } from "./errors";
 import {
-  shopeeItemBaseInfoResponseSchema,
+  shopeeItemBaseInfoEnvelopeSchema,
+  shopeeItemBaseInfoSchema,
   shopeeItemExtraInfoResponseSchema,
   shopeeItemListPageSchema,
   shopeeModelListSchema,
   shopeeTokenResponseSchema,
   type ShopeeItemBaseInfo,
+  type ShopeeItemBaseInfoBatch,
   type ShopeeItemExtraInfo,
   type ShopeeItemListPage,
   type ShopeeItemStatus,
@@ -45,7 +47,7 @@ export interface ShopeeClient {
   getItemBaseInfo(
     credentials: ShopeeShopCredentials,
     itemIds: readonly bigint[],
-  ): Promise<ShopeeItemBaseInfo[]>;
+  ): Promise<ShopeeItemBaseInfoBatch>;
   getModelList(credentials: ShopeeShopCredentials, itemId: bigint): Promise<ShopeeModelList>;
   getItemExtraInfo(
     credentials: ShopeeShopCredentials,
@@ -78,6 +80,13 @@ function assertIdCount(ids: readonly bigint[]): void {
   if (ids.length > MAX_IDS) {
     throw new RangeError(`At most ${MAX_IDS} ids per call`);
   }
+}
+
+/** The element's item_id when it is a safe integer, else null. */
+function readItemId(element: unknown): bigint | null {
+  if (typeof element !== "object" || element === null || !("item_id" in element)) return null;
+  const id = element.item_id;
+  return typeof id === "number" && Number.isSafeInteger(id) ? BigInt(id) : null;
 }
 
 function readString(value: unknown): string | null {
@@ -283,9 +292,16 @@ export function createShopeeClient(options: ShopeeClientOptions): ShopeeClient {
         credentials,
         "/api/v2/product/get_item_base_info",
         { item_id_list: itemIds.join(",") },
-        shopeeItemBaseInfoResponseSchema,
+        shopeeItemBaseInfoEnvelopeSchema,
       );
-      return raw.item_list;
+      const items: ShopeeItemBaseInfo[] = [];
+      const invalid: (bigint | null)[] = [];
+      for (const element of raw.item_list) {
+        const parsed = shopeeItemBaseInfoSchema.safeParse(element);
+        if (parsed.success) items.push(parsed.data);
+        else invalid.push(readItemId(element));
+      }
+      return { items, invalid };
     },
 
     getModelList(credentials, itemId) {

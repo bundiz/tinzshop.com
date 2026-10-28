@@ -131,8 +131,9 @@ describe("shopee client", () => {
 
   it("parses real sandbox base info", async () => {
     const { client, requests } = build(() => new Response(fixture("item-base-info.json")));
-    const items = await client.getItemBaseInfo(credentials, [803947687n, 803947690n]);
+    const { items, invalid } = await client.getItemBaseInfo(credentials, [803947687n, 803947690n]);
     expect(items).toHaveLength(2);
+    expect(invalid).toEqual([]);
     const ssd = items.find((i) => i.item_id === 803947690n);
     expect(ssd?.item_sku).toBe("SBX-IT-SSD");
     expect(ssd?.has_model).toBe(true);
@@ -149,13 +150,35 @@ describe("shopee client", () => {
     expect(extra[0]?.sale).toBe(5);
   });
 
-  it("rejects an item_id that is not a safe integer", async () => {
+  it("reports an element whose item_id is not a safe integer as unidentified, keeping the others", async () => {
     const text = fixture("item-base-info.json").replace(
       /"item_id": 803947690/,
       '"item_id": 9007199254740993',
     );
     const { client } = build(() => new Response(text));
-    await expect(client.getItemBaseInfo(credentials, [1n])).rejects.toThrow(ShopeeApiError);
+    const { items, invalid } = await client.getItemBaseInfo(credentials, [803947687n, 803947690n]);
+    expect(items.map((i) => i.item_id)).toEqual([803947687n]);
+    expect(invalid).toEqual([null]);
+  });
+
+  it("parses base-info elements one by one: a malformed element is reported by id", async () => {
+    const parsed = JSON.parse(fixture("item-base-info.json")) as {
+      response: { item_list: Record<string, unknown>[] };
+    };
+    const broken = parsed.response.item_list.find((i) => i["item_id"] === 803947690);
+    if (broken === undefined) throw new Error("fixture changed");
+    broken["item_name"] = 42;
+    const { client } = build(() => json(parsed));
+    const { items, invalid } = await client.getItemBaseInfo(credentials, [803947687n, 803947690n]);
+    expect(items.map((i) => i.item_id)).toEqual([803947687n]);
+    expect(invalid).toEqual([803947690n]);
+  });
+
+  it("still fails the whole call when the base-info envelope is malformed", async () => {
+    const { client } = build(() => json({ error: "", message: "", response: { item_list: "nope" } }));
+    const err = await client.getItemBaseInfo(credentials, [1n]).catch((e: unknown) => e);
+    if (!(err instanceof ShopeeApiError)) throw new Error("unreachable");
+    expect(err.shopeeError).toBe("invalid_response");
   });
 
   it("refuses more than 50 ids", async () => {

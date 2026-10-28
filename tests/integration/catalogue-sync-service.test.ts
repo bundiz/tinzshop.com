@@ -133,7 +133,22 @@ describe('runCatalogueSync', () => {
     expect(seen).toEqual([{ externalItemId: 803947690n, externalStatus: 'UNLIST', isKit: true }]);
   });
 
-  it('records an item failure as a warning and keeps the rest', async () => {
+  it('records a known item failure as a warning and keeps the run succeeded', async () => {
+    const snapshots = [twoTierSnapshot()];
+    await run(fakeSource({ listed: () => snapshots.map(listedOf), snapshots }), T1);
+    const source = fakeSource({
+      listed: () => snapshots.map(listedOf),
+      failures: [{ externalItemId: 803947690n, reason: 'error_server' }],
+    });
+    const summary = await run(source, T2);
+    expect(summary).toMatchObject({ outcome: 'succeeded', itemsSeen: 1 });
+    if (summary.outcome === 'skipped') throw new Error('unexpected');
+    expect(summary.warnings).toEqual(['item 803947690: error_server']);
+    const latest = await getPrisma().syncRun.findFirstOrThrow({ orderBy: { startedAt: 'desc' } });
+    expect(latest.warnings).toEqual(['item 803947690: error_server']);
+  });
+
+  it('fails the run with item_failures when a new item fails, keeping the committed upserts', async () => {
     const snapshots = [twoTierSnapshot()];
     const source = fakeSource({
       listed: () => [...snapshots.map(listedOf), { externalItemId: 5n, externalStatus: 'NORMAL', isKit: false }],
@@ -141,15 +156,38 @@ describe('runCatalogueSync', () => {
       failures: [{ externalItemId: 5n, reason: 'error_server' }],
     });
     const summary = await run(source, T1);
-    expect(summary).toMatchObject({ outcome: 'succeeded', itemsCreated: 1, itemsSeen: 2 });
+    expect(summary).toMatchObject({ outcome: 'failed', errorCode: 'item_failures', itemsCreated: 1, itemsSeen: 2 });
     if (summary.outcome === 'skipped') throw new Error('unexpected');
     expect(summary.warnings).toEqual(['item 5: error_server']);
-    expect((await getPrisma().syncRun.findFirstOrThrow()).warnings).toEqual(['item 5: error_server']);
+    const row = await getPrisma().syncRun.findFirstOrThrow();
+    expect(row.outcome).toBe('failed');
+    expect(row.errorCode).toBe('item_failures');
+    expect(row.warnings).toEqual(['item 5: error_server']);
+    expect(await getPrisma().product.count()).toBe(1);
+
+    // The window does not advance: the next run asks for everything again.
+    const next = fakeSource({ listed: () => [] });
+    await run(next, T2);
+    expect(next.listWindows).toEqual([null]);
   });
 
-  it('turns an upsert error into a warning and keeps the other items', async () => {
+  it('does not fail the run when a new item only lacks sales data', async () => {
+    const snapshots = [noModelSnapshot({ salesCount: null, ratingStar: null, ratingCount: null })];
+    const source = fakeSource({
+      listed: () => snapshots.map(listedOf),
+      snapshots,
+      failures: [{ externalItemId: 803947687n, reason: 'extra_info_unavailable' }],
+    });
+    const summary = await run(source, T1);
+    expect(summary).toMatchObject({ outcome: 'succeeded', itemsCreated: 1 });
+    if (summary.outcome === 'skipped') throw new Error('unexpected');
+    expect(summary.warnings).toEqual(['item 803947687: extra_info_unavailable']);
+  });
+
+  it('turns an upsert error on a known item into a warning and keeps the other items', async () => {
     const bad = twoTierSnapshot();
     const good = noModelSnapshot();
+    await run(fakeSource({ listed: () => [bad].map(listedOf), snapshots: [bad] }), T1);
     const source = fakeSource({ listed: () => [bad, good].map(listedOf), snapshots: [bad, good] });
     const summary = await runCatalogueSync({
       source,
@@ -163,7 +201,7 @@ describe('runCatalogueSync', () => {
       },
       syncRuns: { startSyncRun, finishSyncRun, recordSkippedSyncRun, findLastSucceededSyncRun },
       lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
-      now: () => T1,
+      now: () => T2,
     });
     if (summary.outcome === 'skipped') throw new Error('unexpected');
     expect(summary.outcome).toBe('succeeded');
@@ -171,12 +209,97 @@ describe('runCatalogueSync', () => {
     expect(summary.warnings).toEqual(['item 803947690: boom']);
   });
 
+  it('fails the run with item_failures when a new item cannot be upserted', async () => {
+    const bad = twoTierSnapshot();
+    const good = noModelSnapshot();
+    const summary = await runCatalogueSync({
+      source: fakeSource({ listed: () => [bad, good].map(listedOf), snapshots: [bad, good] }),
+      catalogue: {
+        upsertCatalogueItem: async (snapshot, at) => {
+          if (snapshot.externalItemId === bad.externalItemId) throw new Error('boom');
+          return upsertCatalogueItem(snapshot, at);
+        },
+        listKnownItems,
+        markItemsNotFound,
+      },
+      syncRuns: { startSyncRun, finishSyncRun, recordSkippedSyncRun, findLastSucceededSyncRun },
+      lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
+      now: () => T1,
+    });
+    expect(summary).toMatchObject({ outcome: 'failed', errorCode: 'item_failures', itemsCreated: 1 });
+    if (summary.outcome === 'skipped') throw new Error('unexpected');
+    expect(summary.warnings).toEqual(['item 803947690: boom']);
+    expect(await getPrisma().product.count()).toBe(1);
+  });
+
   it('marks not-found items and counts them as deactivated', async () => {
     const snapshots = [twoTierSnapshot()];
     await run(fakeSource({ listed: () => snapshots.map(listedOf), snapshots }), T1);
     const summary = await run(fakeSource({ listed: () => [], notFound: [803947690n] }), T2);
     expect(summary).toMatchObject({ outcome: 'succeeded', itemsDeactivated: 1 });
-    expect(await listKnownItems()).toEqual([]);
+    expect(await listKnownItems()).toEqual([{ externalItemId: 803947690n, externalStatus: 'NOT_FOUND', isKit: false }]);
+  });
+
+  it('keeps sweeping a not-found item and restores it when the source returns it again', async () => {
+    const snapshots = [twoTierSnapshot()];
+    await run(fakeSource({ listed: () => snapshots.map(listedOf), snapshots }), T1);
+    await run(fakeSource({ listed: () => [], notFound: [803947690n] }), T2);
+    const T3 = new Date('2026-10-26T03:00:00.000Z');
+    const third = fakeSource({ listed: () => [], snapshots });
+    const summary = await run(third, T3);
+    expect(third.fetched).toEqual([[803947690n]]);
+    expect(summary).toMatchObject({ outcome: 'succeeded', itemsUpdated: 1, itemsDeactivated: 0 });
+    expect((await getPrisma().channelItem.findFirstOrThrow()).externalStatus).toBe('NORMAL');
+  });
+
+  it('never marks a listed item not-found: a listed id the source did not return is a failure', async () => {
+    const snapshots = [twoTierSnapshot()];
+    await run(fakeSource({ listed: () => snapshots.map(listedOf), snapshots }), T1);
+    const known = await run(fakeSource({ listed: () => snapshots.map(listedOf), notFound: [803947690n] }), T2);
+    expect(known).toMatchObject({ outcome: 'succeeded', itemsDeactivated: 0 });
+    if (known.outcome === 'skipped') throw new Error('unexpected');
+    expect(known.warnings).toEqual(['item 803947690: not_returned']);
+    expect((await getPrisma().channelItem.findFirstOrThrow()).externalStatus).toBe('NORMAL');
+
+    const T3 = new Date('2026-10-26T03:00:00.000Z');
+    const fresh = await run(
+      fakeSource({ listed: () => [{ externalItemId: 6n, externalStatus: 'NORMAL', isKit: false }], notFound: [6n] }),
+      T3,
+    );
+    expect(fresh).toMatchObject({ outcome: 'failed', errorCode: 'item_failures', itemsDeactivated: 0 });
+  });
+
+  it('reports empty and duplicate parent and model SKUs as warnings, never rejecting the items', async () => {
+    const first = twoTierSnapshot({
+      parentSku: null,
+      variants: twoTierSnapshot().variants.map((variant, index) =>
+        index === 0 ? { ...variant, modelSku: null } : index === 1 ? { ...variant, modelSku: 'DUP-MODEL' } : variant,
+      ),
+    });
+    const second = noModelSnapshot({ externalItemId: 7n, parentSku: 'SAME' });
+    const third = noModelSnapshot({ externalItemId: 8n, parentSku: 'SAME' });
+    const fourth = twoTierSnapshot({
+      externalItemId: 9n,
+      parentSku: 'OTHER',
+      variants: twoTierSnapshot().variants.map((variant, index) => ({
+        ...variant,
+        externalModelId: 900n + BigInt(index),
+        modelSku: index === 0 ? 'DUP-MODEL' : `UNIQUE-${index}`,
+      })),
+    });
+    const snapshots = [first, second, third, fourth];
+    const summary = await run(fakeSource({ listed: () => snapshots.map(listedOf), snapshots }), T1);
+    expect(summary).toMatchObject({ outcome: 'succeeded', itemsCreated: 4 });
+    if (summary.outcome === 'skipped') throw new Error('unexpected');
+    expect(summary.warnings).toEqual([
+      'item 803947690: empty_parent_sku',
+      'item 7: duplicate_parent_sku',
+      'item 8: duplicate_parent_sku',
+      'item 803947690 model 12998738: empty_model_sku',
+      'item 803947690 model 12998741: duplicate_model_sku',
+      'item 9 model 900: duplicate_model_sku',
+    ]);
+    expect((await getPrisma().syncRun.findFirstOrThrow()).warnings).toEqual(summary.warnings);
   });
 
   it('a failed listing leaves existing products untouched', async () => {

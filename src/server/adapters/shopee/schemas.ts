@@ -66,6 +66,11 @@ export const shopeeItemBaseInfoResponseSchema = z.looseObject({
   item_list: z.array(shopeeItemBaseInfoSchema),
 });
 
+/** The envelope only: elements are parsed one by one, so one bad element never fails its batch. */
+export const shopeeItemBaseInfoEnvelopeSchema = z.looseObject({
+  item_list: z.array(z.unknown()),
+});
+
 export const shopeeModelSchema = z.looseObject({
   model_id: shopeeId,
   model_name: z.string().optional(),
@@ -110,6 +115,12 @@ export type ShopeeItemListPage = z.infer<typeof shopeeItemListPageSchema>;
 export type ShopeeItemBaseInfo = z.infer<typeof shopeeItemBaseInfoSchema>;
 export type ShopeeModelList = z.infer<typeof shopeeModelListSchema>;
 export type ShopeeItemExtraInfo = z.infer<typeof shopeeItemExtraInfoSchema>;
+
+/** One get_item_base_info call: the elements that parsed, and the ids of those that did not (null = no readable id). */
+export interface ShopeeItemBaseInfoBatch {
+  items: ShopeeItemBaseInfo[];
+  invalid: (bigint | null)[];
+}
 
 export interface ShopeeTokenSet {
   accessToken: string;

@@ -58,7 +58,7 @@ function fake(overrides: Partial<ShopeeClient> = {}): Fake {
     },
     getItemBaseInfo: (_c, ids) => {
       baseCalls.push([...ids]);
-      return Promise.resolve(baseInfos.filter((info) => ids.includes(info.item_id)));
+      return Promise.resolve({ items: baseInfos.filter((info) => ids.includes(info.item_id)), invalid: [] });
     },
     getModelList: () => Promise.resolve(modelList),
     getItemExtraInfo: (_c, ids) =>
@@ -93,7 +93,7 @@ describe("shopee catalogue source", () => {
   });
 
   it("treats an empty batch response as failures, not as not-found", async () => {
-    const { client } = fake({ getItemBaseInfo: () => Promise.resolve([]) });
+    const { client } = fake({ getItemBaseInfo: () => Promise.resolve({ items: [], invalid: [] }) });
     const source = createShopeeCatalogueSource({ client, credentials });
     const result = await source.fetchItems([listed(TWO_TIER), listed(NO_MODEL)]);
     expect(result.notFound).toEqual([]);
@@ -127,7 +127,7 @@ describe("shopee catalogue source", () => {
             new ShopeeApiError({ path: "/p", shopeeError: "error_server", httpStatus: 500 }),
           );
         }
-        return Promise.resolve(baseInfos.filter((info) => ids.includes(info.item_id)));
+        return Promise.resolve({ items: baseInfos.filter((info) => ids.includes(info.item_id)), invalid: [] });
       },
     });
     const source = createShopeeCatalogueSource({ client, credentials });
@@ -247,5 +247,57 @@ describe("shopee catalogue source", () => {
     expect(calls).toBe(0);
     await source.listItems(null);
     expect(calls).toBeGreaterThan(0);
+  });
+
+  it("reports only the calls made since the source was created, per source", async () => {
+    let calls = 0;
+    const { client } = fake({
+      getItemList: () => {
+        calls += 1;
+        return Promise.resolve(listPage);
+      },
+      callCount: () => calls,
+    });
+    calls = 40; // an earlier run on the same client
+    const first = createShopeeCatalogueSource({ client, credentials });
+    await first.listItems(null);
+    const second = createShopeeCatalogueSource({ client, credentials });
+    await second.listItems(null);
+    await second.listItems(null);
+    expect(first.apiCallCount()).toBe(3);
+    expect(second.apiCallCount()).toBe(2);
+  });
+
+  it("fails only the malformed base-info element and maps the rest of its batch", async () => {
+    const { client } = fake({
+      getItemBaseInfo: () =>
+        Promise.resolve({ items: baseInfos.filter((info) => info.item_id === NO_MODEL), invalid: [TWO_TIER] }),
+    });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    const result = await source.fetchItems([listed(TWO_TIER), listed(NO_MODEL)]);
+    expect(result.snapshots.map((s) => s.externalItemId)).toEqual([NO_MODEL]);
+    expect(result.failures).toEqual([{ externalItemId: TWO_TIER, reason: "invalid_response" }]);
+    expect(result.notFound).toEqual([]);
+  });
+
+  it("never reports not-found for a batch holding an element without a readable id", async () => {
+    const { client } = fake({
+      getItemBaseInfo: () =>
+        Promise.resolve({ items: baseInfos.filter((info) => info.item_id === NO_MODEL), invalid: [null] }),
+    });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    const result = await source.fetchItems([listed(TWO_TIER), listed(NO_MODEL), listed(999n)]);
+    expect(result.snapshots.map((s) => s.externalItemId)).toEqual([NO_MODEL]);
+    expect(result.notFound).toEqual([]);
+    expect(result.failures).toEqual([
+      { externalItemId: TWO_TIER, reason: "invalid_response" },
+      { externalItemId: 999n, reason: "invalid_response" },
+    ]);
+  });
+
+  it("rethrows an error that is neither a Shopee API error nor a mapping error", async () => {
+    const { client } = fake({ getModelList: () => Promise.reject(new Error("credentials unavailable")) });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    await expect(source.fetchItems([listed(TWO_TIER)])).rejects.toThrow("credentials unavailable");
   });
 });

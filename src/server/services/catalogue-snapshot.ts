@@ -37,12 +37,20 @@ export type ListedItem = {
   isKit: boolean;
 };
 
+/**
+ * Failure reason for an item that was mapped without its sales and rating data. It is a warning only:
+ * the item's snapshot is still returned and upserted.
+ */
+export const SALES_DATA_UNAVAILABLE = 'extra_info_unavailable';
+
 export type CatalogueSource = {
   listItems(window: { from: Date; to: Date } | null): Promise<ListedItem[]>;
   fetchItems(items: readonly ListedItem[]): Promise<{
     snapshots: CatalogueItemSnapshot[];
+    /** Ids absent from a source response that was otherwise valid. */
     notFound: bigint[];
     failures: { externalItemId: bigint; reason: string }[];
   }>;
+  /** Calls made by this source since it was created. */
   apiCallCount(): number;
 };

@@ -265,7 +265,8 @@ describe('upsertCatalogueItem update branches', () => {
   it('restores a not-found item when it is upserted again', async () => {
     await upsertCatalogueItem(noModelSnapshot(), T1);
     expect(await markItemsNotFound([803947687n], T2)).toBe(1);
-    expect(await listKnownItems()).toEqual([]);
+    // A not-found item stays known, so the stock sweep re-checks it every run.
+    expect(await listKnownItems()).toEqual([{ externalItemId: 803947687n, externalStatus: 'NOT_FOUND', isKit: false }]);
 
     expect(await upsertCatalogueItem(noModelSnapshot({ externalStatus: 'UNLIST' }), new Date('2026-10-26T03:00:00.000Z'))).toBe('updated');
     const item = await getPrisma().channelItem.findFirstOrThrow();
@@ -276,14 +277,17 @@ describe('upsertCatalogueItem update branches', () => {
 });
 
 describe('known items', () => {
-  it('lists known items and marks not-found ones', async () => {
+  it('lists every known item, not-found ones included, and counts only new not-found marks', async () => {
     await upsertCatalogueItem(twoTierSnapshot(), T1);
     await upsertCatalogueItem(noModelSnapshot(), T1);
 
     expect(await markItemsNotFound([803947687n], T2)).toBe(1);
+    expect(await markItemsNotFound([803947687n], T2)).toBe(0);
     const known = await listKnownItems();
-    expect(known.map((i) => i.externalItemId)).toEqual([803947690n]);
-    expect(known[0]).toEqual({ externalItemId: 803947690n, externalStatus: 'NORMAL', isKit: false });
+    expect(known).toEqual([
+      { externalItemId: 803947687n, externalStatus: 'NOT_FOUND', isKit: false },
+      { externalItemId: 803947690n, externalStatus: 'NORMAL', isKit: false },
+    ]);
   });
 });
 

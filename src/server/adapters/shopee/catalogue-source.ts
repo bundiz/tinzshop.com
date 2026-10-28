@@ -1,9 +1,14 @@
-import type { CatalogueItemSnapshot, CatalogueSource, ListedItem } from "../../services/catalogue-snapshot";
+import {
+  SALES_DATA_UNAVAILABLE,
+  type CatalogueItemSnapshot,
+  type CatalogueSource,
+  type ListedItem,
+} from "../../services/catalogue-snapshot";
 import { CatalogueSourceError } from "../../services/catalogue-sync-service";
 import type { ShopeeClient } from "./client";
 import { ShopeeApiError } from "./errors";
-import { mapShopeeItem } from "./map-item";
-import type { ShopeeItemBaseInfo, ShopeeItemExtraInfo, ShopeeShopCredentials } from "./schemas";
+import { CatalogueMappingError, mapShopeeItem } from "./map-item";
+import type { ShopeeItemBaseInfoBatch, ShopeeItemExtraInfo, ShopeeShopCredentials } from "./schemas";
 
 const PAGE_SIZE = 50;
 const BATCH_SIZE = 50;
@@ -17,8 +22,11 @@ function isKitFlagged(item: object): boolean {
   return typeof tag === "object" && tag !== null && "kit" in tag && tag.kit === true;
 }
 
+/** Per-item failure reason; anything else (credentials, programming errors) is not an item failure. */
 function reasonOf(error: unknown): string {
-  return error instanceof ShopeeApiError ? error.shopeeError : "mapping_failed";
+  if (error instanceof ShopeeApiError) return error.shopeeError;
+  if (error instanceof CatalogueMappingError) return "mapping_failed";
+  throw error;
 }
 
 export function createShopeeCatalogueSource(deps: {
@@ -26,6 +34,8 @@ export function createShopeeCatalogueSource(deps: {
   credentials: Credentials;
 }): CatalogueSource {
   const { client } = deps;
+  // The client is shared across runs, so this source reports only the calls made since it was created.
+  const callBaseline = client.callCount();
 
   // Asked before every request so a token refreshed mid-run is picked up.
   async function fresh(): Promise<ShopeeShopCredentials> {
@@ -78,18 +88,22 @@ export function createShopeeCatalogueSource(deps: {
         const batch = unique.slice(start, start + BATCH_SIZE);
         const ids = batch.map((item) => item.externalItemId);
 
-        let baseInfos: ShopeeItemBaseInfo[];
+        let batchInfo: ShopeeItemBaseInfoBatch;
         try {
-          baseInfos = await client.getItemBaseInfo(await fresh(), ids);
+          batchInfo = await client.getItemBaseInfo(await fresh(), ids);
         } catch (error) {
           if (!(error instanceof ShopeeApiError)) throw error;
           for (const id of ids) failures.push({ externalItemId: id, reason: error.shopeeError });
           continue;
         }
-        if (baseInfos.length === 0) {
+        const baseInfos = batchInfo.items;
+        if (baseInfos.length === 0 && batchInfo.invalid.length === 0) {
           for (const id of ids) failures.push({ externalItemId: id, reason: "empty_batch_response" });
           continue;
         }
+        const invalidIds = new Set(batchInfo.invalid.filter((id): id is bigint => id !== null));
+        // An element without a readable id could be any missing id, so none of them is not-found.
+        const missingIsUnknown = batchInfo.invalid.some((id) => id === null);
 
         let extraInfos: ShopeeItemExtraInfo[] | null = null;
         try {
@@ -104,7 +118,11 @@ export function createShopeeCatalogueSource(deps: {
         for (const item of batch) {
           const baseInfo = baseById.get(item.externalItemId);
           if (baseInfo === undefined) {
-            notFound.push(item.externalItemId);
+            if (invalidIds.has(item.externalItemId) || missingIsUnknown) {
+              failures.push({ externalItemId: item.externalItemId, reason: "invalid_response" });
+            } else {
+              notFound.push(item.externalItemId);
+            }
             continue;
           }
           try {
@@ -115,7 +133,7 @@ export function createShopeeCatalogueSource(deps: {
             snapshots.push(mapShopeeItem({ baseInfo, modelList, extraInfo, isKit: item.isKit }));
             if (extraInfo === null) {
               // Mapped, but without sales data: surfaced as a run warning.
-              failures.push({ externalItemId: item.externalItemId, reason: "extra_info_unavailable" });
+              failures.push({ externalItemId: item.externalItemId, reason: SALES_DATA_UNAVAILABLE });
             }
           } catch (error) {
             failures.push({ externalItemId: item.externalItemId, reason: reasonOf(error) });
@@ -126,7 +144,7 @@ export function createShopeeCatalogueSource(deps: {
     },
 
     apiCallCount() {
-      return client.callCount();
+      return client.callCount() - callBaseline;
     },
   };
 }

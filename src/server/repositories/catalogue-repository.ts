@@ -255,9 +255,10 @@ export async function upsertCatalogueItem(
   );
 }
 
+/** Every known item, not-found ones included, so the stock sweep can restore one Shopee returns again. */
 export async function listKnownItems(): Promise<ListedItem[]> {
   const rows = await getPrisma().channelItem.findMany({
-    where: { channel: CHANNEL, externalStatus: { not: NOT_FOUND } },
+    where: { channel: CHANNEL },
     orderBy: { externalItemId: 'asc' },
     select: { externalItemId: true, externalStatus: true, isKit: true },
   });
