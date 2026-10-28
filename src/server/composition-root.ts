@@ -5,6 +5,7 @@ import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { getServerConfig } from '@/server/config';
+import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
 import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import {
@@ -22,6 +23,7 @@ import {
   recordSkippedSyncRun,
   startSyncRun,
 } from '@/server/repositories/catalogue/sync-run-repository';
+import { activateSyncedProducts } from '@/server/repositories/catalogue/activation-repository';
 import { listStorefrontCandidates } from '@/server/repositories/catalogue/storefront-repository';
 import {
   getLandingCatalogue,
@@ -87,5 +89,14 @@ export function getApiDocsHandlers(): ReturnType<typeof createApiDocsHandlers> {
     readFile: (path) => readFile(path, 'utf8'),
     specPath: join(process.cwd(), 'docs', 'openapi.yaml'),
     assetDir: join(process.cwd(), 'node_modules', 'swagger-ui-dist'),
+  });
+}
+
+/** Development-only activation job (D-117); the secret is read per request and never in production. */
+export function getCatalogueActivationHandler(): ReturnType<typeof createCatalogueActivationJobHandler> {
+  return createCatalogueActivationJobHandler({
+    isProduction: process.env.NODE_ENV === 'production',
+    jobSecret: () => getServerConfig().jobSecret,
+    activate: activateSyncedProducts,
   });
 }

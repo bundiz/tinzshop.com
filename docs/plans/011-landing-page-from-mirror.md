@@ -150,15 +150,17 @@
 
 **Files:** Create `src/server/repositories/catalogue/activation-repository.ts`, `scripts/catalogue-activate.ts`. Modify `package.json`. Test: `tests/integration/catalogue/activation-repository.test.ts`.
 
+**Ruling R1:** the npm script and `scripts/catalogue-activate.ts` are replaced by the development-only endpoint `POST /api/jobs/catalogue-activate` (controller, route, `docs/06-api.md`, `docs/openapi.yaml`).
+
 **Interfaces:** `activateSyncedProducts(): Promise<number>`. It sets `is_active = true` on every product whose `channel_item.external_status = 'NORMAL'` and that has at least one active variant, and returns the count changed. It never deactivates anything.
 
-- [ ] **Step 1: Write the failing integration tests:**
+- [x] **Step 1: Write the failing integration tests:**
   - `activates NORMAL products with an active variant and returns the count`
   - `leaves UNLIST and NOT_FOUND products inactive`
   - `is idempotent: a second call returns 0`
-- [ ] **Step 2:** Run it: FAIL.
-- [ ] **Step 3:** Implement the repository function. The script refuses to run when `NODE_ENV=production`, prints only the count, and runs through the npm script `catalogue:activate`. That script uses Node's `--env-file=.env` and the same TypeScript execution approach as the integration tests; if none fits, use `vitest`'s runner via a dedicated config rather than adding a new dependency.
-- [ ] **Step 4:** Run the tests: PASS. Commit: `feat: add a development command that activates synced products`.
+- [x] **Step 2:** Run it: FAIL.
+- [x] **Step 3:** Implement the repository function. The script refuses to run when `NODE_ENV=production`, prints only the count, and runs through the npm script `catalogue:activate`. That script uses Node's `--env-file=.env` and the same TypeScript execution approach as the integration tests; if none fits, use `vitest`'s runner via a dedicated config rather than adding a new dependency.
+- [x] **Step 4:** Run the tests: PASS. Commit: `feat: add a development command that activates synced products`.
 
 ### Task 5: The landing page
 
