@@ -100,6 +100,21 @@ Approved by the project owner on 2026-10-26; the owner's authority is recorded i
 | D-102 | Every website product comes from Shopee; there are no website-only products (O-10). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#2-owner-decisions-this-design-rests-on) |
 | D-103 | Parent SKU and ModelSKU are stored as Shopee holds them, with no uniqueness constraint. Identity is Shopee's item and model id (spec §5.8). | Accepted | [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#58-deliberate-departures-from-earlier-documents) |
 
+### Built in plan 010 (engineering, 2026-10-26 to 2026-10-28)
+
+Our own engineering decisions made while building plan 010; they implement the owner decisions above and do not change them.
+
+| ID | Decision | Status | Detail |
+| :--- | :--- | :--- | :--- |
+| D-104 | The Shopee callback accepts only the shop configured in the required `SHOPEE_SHOP_ID`; any other `shop_id` gets `403 shopee.authorization.unexpected_shop` and no token exchange. | Accepted | [06](06-api.md#get-apicallbacksshopee) |
+| D-105 | `channel_listing.external_status` is null for models Shopee still returns and `'NOT_FOUND'` for vanished ones; a returned model's active state is `variant.is_active`. Only `channel_item` is marked not-found for a vanished item. | Accepted | [05](05-database.md#catalogue) |
+| D-106 | The sync service stays vendor-free: the Shopee source turns every Shopee API error into `CatalogueSourceError` carrying the Shopee code, and the service maps errors to `sync_run.error_code` (`channel_not_connected`, `token_persistence_failed`, `unexpected` for the rest). | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-107 | When extra info is unavailable, an item's sales and rating are unknown, not 0: stored values are kept and the run records `extra_info_unavailable`. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-108 | A listing that does not advance, is empty while claiming more, or passes 1000 pages fails the run (`listing_stuck`, `listing_incomplete`, `listing_too_long`); a partial listing is never read as complete. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-109 | A run in which an item not known before the run fails ends `failed` with `item_failures`, keeping committed upserts, so the window does not advance and the item is listed again. A known item's failure stays a warning. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-110 | Not-found items stay in the stock sweep and are restored when returned; a listed item that base info does not return is a failure (`not_returned`), never not-found; base-info elements are parsed one by one; `api_calls` counts one run's calls only. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-111 | Sync warnings are strings `item <id>: <code>` or `item <id> model <model id>: <code>`; empty and duplicate Parent SKUs and ModelSKUs among a run's upserted items are reported this way (REQ-004), never rejected. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+
 ## Deployment
 
 | ID | Decision | Status | Detail |

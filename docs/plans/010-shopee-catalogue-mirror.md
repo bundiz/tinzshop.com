@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Not started — 2026-10-26
+- **Status:** In progress — Tasks 1–10 built and the final-review fixes applied (2026-10-28); the Manual test checklist has not been performed
 - **Phase:** 2 (catalogue foundation), as re-scoped by the owner on 2026-10-26
 - **Requirements delivered:** REQ-004 (as D-103), REQ-005 (within Shopee's two tiers), REQ-006, REQ-021 (catalogue direction, as D-095)
 - **Blocked by:** nothing. The design's §2 *Authority* lifts the Q-013/Q-014 block for this work.
@@ -145,7 +145,7 @@ These five conditions are implied by the spec, but a careless implementation pas
 - Produces:
   - `getDatabaseUrl(): string` — validates `DATABASE_URL` only.
   - `parseServerConfig(env: Readonly<Record<string, string | undefined>>): ServerConfig` and `getServerConfig(): ServerConfig` (cached).
-  - `type ServerConfig = { readonly shopee: { readonly apiBaseUrl: string; readonly partnerId: number; readonly partnerKey: string }; readonly jobSecret: string; readonly channelTokenEncryptionKey: Buffer }`
+  - `type ServerConfig = { readonly shopee: { readonly apiBaseUrl: string; readonly partnerId: number; readonly partnerKey: string; readonly shopId: bigint }; readonly jobSecret: string; readonly channelTokenEncryptionKey: Buffer }` — `shopId` (required `SHOPEE_SHOP_ID`, a positive safe integer) was added in Task 7 for the callback allow-list (D-104).
   - `resetDatabase(): Promise<void>` (integration tests only).
 
 - [x] **Step 1: Install the dependencies.**
@@ -154,13 +154,12 @@ These five conditions are implied by the spec, but a careless implementation pas
   Then run `rm -rf node_modules && npm ci`. Expected: success.
 - [x] **Step 2: Add the local database.**
   - `compose.yaml`: one service `postgres`, image `postgres:17` pinned to the exact 17.x tag current at implementation.
-    - `POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD}`, `POSTGRES_DB: tinzshop`
-    - port `5432:5432`, a named volume, and `./docker/postgres/init` mounted at `/docker-entrypoint-initdb.d`
+    - `POSTGRES_HOST_AUTH_METHOD: trust`, `POSTGRES_DB: tinzshop` — no password anywhere; trust auth is acceptable because the port is bound to loopback only
+    - port `127.0.0.1:5434:5432`, a named volume, and `./docker/postgres/init` mounted at `/docker-entrypoint-initdb.d`
   - The init SQL is `CREATE DATABASE tinzshop_test;`.
   - `.env.example` gains these placeholders, each with a comment:
-    - `LOCAL_POSTGRES_PASSWORD`
-    - `DATABASE_URL=postgresql://postgres:<password>@localhost:5432/tinzshop`
-    - `TEST_DATABASE_URL=postgresql://postgres:<password>@localhost:5432/tinzshop_test`
+    - `DATABASE_URL=postgresql://postgres@127.0.0.1:5434/tinzshop`
+    - `TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5434/tinzshop_test`
     - `SHOPEE_API_BASE_URL`, `JOB_SECRET`, `CHANNEL_TOKEN_ENCRYPTION_KEY`
   - Remove the stale "NOT RESEARCHED / stack not chosen" header notes, and keep the existing `SHOPEE_*` lines.
 - [x] **Step 3: Set up Prisma.**
@@ -380,7 +379,7 @@ These five conditions are implied by the spec, but a careless implementation pas
     - `connectShop(input: { code: string; externalShopId: bigint }): Promise<void>`
     - `getShopCredentials(): Promise<{ accessToken: string; externalShopId: bigint }>`
     It refreshes when under 5 minutes remain. `refreshTokenExpiresAt` is `now` + 30 days. It throws `ChannelNotConnectedError` (exported from the service) when no row exists. `authorizationExpiresAt` stays `null` in this plan, which the spec allows; filling it from `v2.shop.get_shop_info` → `expire_time` belongs to follow-on plan 1.
-  - `createShopeeAuthorizationCallbackHandler(deps: { connectShop: (input: { code: string; externalShopId: bigint }) => Promise<void> }): (request: Request) => Promise<Response>`
+  - `createShopeeAuthorizationCallbackHandler(deps: { connectShop: (input: { code: string; externalShopId: bigint }) => Promise<void>; expectedShopId: bigint }): (request: Request) => Promise<Response>` — the route passes `getServerConfig().shopee.shopId` as `expectedShopId` (D-104).
   - `composition-root.ts`: `getChannelAuthorizationService()` and `getShopeeClient()`, built lazily from `getServerConfig()`.
 
 - [x] **Step 1: Write the failing unit tests** for the service. They use fakes for the issuer and the repository, and `now = 2026-10-26T00:00:00Z`.
@@ -394,6 +393,7 @@ These five conditions are implied by the spec, but a careless implementation pas
 - [x] **Step 2: Update the callback tests** (`shopee-authorization-controller.test.ts`) so the handler is built with a fake `connectShop`:
   - shop success → `connectShop` is called with `{ code: '5a54…4653', externalShopId: 602226924n }`, status `200`, body `{ data: { accountType: 'shop', shopId: 602226924, connected: true } }` (with **no `code`**), and `Cache-Control: no-store`
   - main account → `422` with error code `shopee.authorization.main_account_unsupported`
+  - a `shop_id` other than `expectedShopId` → `403` with error code `shopee.authorization.unexpected_shop`, and `connectShop` is not called (D-104)
   - `connectShop` rejects with a `ShopeeApiError` → `502` with error code `shopee.authorization.token_exchange_failed`, and the body doesn't contain the code
   - every existing invalid-input test still returns `400`
 - [x] **Step 3: Write the failing integration test** `channel-authorization-repository.test.ts`: `saves and reads back one authorization per shop` — saving twice for shop `227679200n` leaves one row, and the second save's values win.
@@ -416,7 +416,7 @@ These five conditions are implied by the spec, but a careless implementation pas
     - **Create:** `product` (`is_active: false`), the `th` translation, images, options, variants, links and listings.
     - **Update:** replaces the `th` translation and the images, rebuilds the options and links, matches variants by `channel_listing.external_model_id` (null to null), creates variants for new models, and sets variants for missing models to `is_active = false` with listing status `'NOT_FOUND'`.
     - It never touches `is_active`, the categories, `shipping_size_tier`, `is_pre_order`, `release_date` or the `en` translation, and never deletes a product or variant.
-  - `listKnownItems(): Promise<ListedItem[]>` — every `channel_item` whose `external_status` isn't `'NOT_FOUND'`.
+  - `listKnownItems(): Promise<ListedItem[]>` — every `channel_item`. *Amended 2026-10-28 (D-110):* `'NOT_FOUND'` items are included, so the stock sweep restores one Shopee returns again.
   - `markItemsNotFound(externalItemIds: readonly bigint[], syncedAt: Date): Promise<number>`
   - `startSyncRun(input: { windowFrom: Date | null; windowTo: Date; startedAt: Date }): Promise<string>`
   - `finishSyncRun(id: string, result: { outcome: 'succeeded' | 'failed'; finishedAt: Date; itemsSeen: number; itemsCreated: number; itemsUpdated: number; itemsDeactivated: number; apiCalls: number; warnings: readonly string[]; errorCode?: string; errorDetail?: string }): Promise<void>`
@@ -453,7 +453,7 @@ These five conditions are implied by the spec, but a careless implementation pas
   - `createShopeeCatalogueSource(deps: { client: ShopeeClient; credentials: () => Promise<{ accessToken: string; externalShopId: bigint }> }): CatalogueSource`
     - `listItems` pages `get_item_list` 50 at a time for `['NORMAL', 'UNLIST']`, passing the window when it's given.
     - `fetchItems` calls base info and extra info in batches of 50, then `get_model_list` for each `has_model` item.
-    - An id missing from a batch that returned at least one item → `notFound`.
+    - An id missing from a batch that returned at least one item → `notFound`. *Amended 2026-10-28 (D-110):* base-info elements are parsed one by one; an element that fails the schema is a failure (`'invalid_response'`) for its id only, and a batch holding an element without a readable id reports none of its missing ids as `notFound`.
     - A batch that returned zero items → every id in it goes to `failures` with reason `'empty_batch_response'`.
     - A mapping or model-list error → a failure for that item only.
   - `runCatalogueSync(deps: { source: CatalogueSource; catalogue: { upsertCatalogueItem; listKnownItems; markItemsNotFound }; syncRuns: { startSyncRun; finishSyncRun; recordSkippedSyncRun; findLastSucceededSyncRun }; lock: <T>(task: () => Promise<T>) => Promise<{ acquired: true; value: T } | { acquired: false }>; now: () => Date }): Promise<CatalogueSyncSummary>`
@@ -463,7 +463,8 @@ These five conditions are implied by the spec, but a careless implementation pas
     - Items to fetch = the union of `listItems(window)` and `listKnownItems()` (the stock sweep, spec §8 risk 1), de-duplicated by id. A listed item's status and kit flag win.
     - Each snapshot is upserted on its own; an upsert error becomes a warning `item <id>: <message>`.
     - `notFound` → `markItemsNotFound`, and the count goes to `itemsDeactivated`.
-    - A thrown error from `listItems` or the credentials finishes the run `failed`: `errorCode` is `ShopeeApiError.shopeeError`, or `'unexpected'`; `errorDetail` is the error message only. No other write happens.
+    - A thrown error from `listItems` or the credentials finishes the run `failed`: `errorCode` is `ShopeeApiError.shopeeError`, or `'unexpected'`; `errorDetail` is the error message only. No other write happens. *Amended (D-106):* the service never sees `ShopeeApiError`; the source converts it to `CatalogueSourceError`, and the full code list is in `14-integrations.md#how-the-sync-behaves-plan-010`.
+    - *Amended 2026-10-28:* a `notFound` id that was listed this run is a warning `item <id>: not_returned`, never marked not-found (D-110); a failure of an item not known before the run (other than `extra_info_unavailable`) finishes the run `failed` with `errorCode 'item_failures'`, keeping committed upserts (D-109); empty and duplicate SKUs among the upserted items become warnings (D-111); `apiCalls` counts only this source's calls (D-110).
     - Lock not acquired → `recordSkippedSyncRun`, and it returns `{ outcome: 'skipped' }`.
 
 - [x] **Step 1: Write the failing source tests** in `catalogue-source.test.ts`, with a fake `ShopeeClient` serving the Task 5 fixtures:
@@ -540,4 +541,4 @@ Each check is run by a person against the **sandbox**, with the result recorded 
 
 ## Outcome
 
-Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schema and migration, money and token-encryption helpers, the Shopee client and catalogue mapper, shop authorization, the catalogue and sync-run repositories, the catalogue sync service (time window and stock sweep) and the secret-protected `POST /api/jobs/shopee-sync` endpoint; design rulings R1-R26 are recorded in the controller's ledger. The Manual test checklist has not been performed, so no sandbox result, `api_calls` figure or spec §8 risk outcome is recorded yet.
+Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schema and migration, money and token-encryption helpers, the Shopee client and catalogue mapper, shop authorization, the catalogue and sync-run repositories, the catalogue sync service (time window and stock sweep) and the secret-protected `POST /api/jobs/shopee-sync` endpoint. The design rulings that change a documented contract are recorded as D-104 to D-111 in `docs/11-decisions.md`. The final whole-branch review's fixes (per-run `api_calls`, `item_failures`, not-found self-correction, per-element base-info parsing, SKU warnings) were applied on 2026-10-28. The Manual test checklist has not been performed, so no sandbox result, `api_calls` figure or spec §8 risk outcome is recorded yet.

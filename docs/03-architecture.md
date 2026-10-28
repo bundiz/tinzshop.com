@@ -91,7 +91,7 @@ functions:
 | :--- | :--- | :--- |
 | **Server Component** | Reading data to render a page. | Session resolved in the layout |
 | **Server Action** | Every mutation initiated by our own front end — add to cart, place order, edit a product, import a spreadsheet. | Session, then a permission check in the domain |
-| **Route handler** | Callers we do not control: payment webhooks, carrier callbacks, scheduled stock imports, file downloads. | Signature verification, never a session |
+| **Route handler** | Callers we do not control: payment webhooks, carrier callbacks, the Shopee authorization callback, the scheduled catalogue sync (plan 010), file downloads. | Signature verification, a shared job secret (scheduled jobs), or the configured-shop check (the Shopee callback, D-104); never a session |
 
 There is no fourth. If a new need seems to require one, it is a sign the
 domain function it wants does not exist yet.
@@ -204,9 +204,10 @@ Scheduled job  →  export today's stock/order changes to a file          REQ-02
                     COMMIT
 ```
 
-The site's stock table is authoritative for what the site sells; an incoming
-change from the file import is applied through the same locked transaction the
-payment-confirmation flow uses. **Shopee is authoritative when Shopee and site
+Under that superseded flow, an incoming change from the file import would have
+been applied through the same locked transaction the payment-confirmation flow
+used. Today `variant.stock_quantity` is a read-only copy of Shopee's stock that
+only the sync writes (D-094, D-096). **Shopee is authoritative when Shopee and site
 stock disagree** (D-082, Q-046) — the reconciliation *rule* is decided; the
 detection *mechanism* still waits on seeing real BigSeller/Shopee export
 formats (Q-045, and the BigSeller data-inspection dependency behind Q-007,
@@ -236,7 +237,7 @@ than adding it on top.
 ## What this architecture deliberately does not have
 
 - **No microservices.** Two developers, one database, one deploy. Service boundaries would be cost with no benefit at this size.
-- **No event bus.** The one place asynchrony is genuinely needed — email, and later the stock import — is a job queue, not a bus.
+- **No event bus.** Where asynchrony is genuinely needed — email as a job queue, and the 10-minute catalogue sync as a scheduled job endpoint — neither is a bus.
 - **No caching layer.** Nothing in the source describes traffic. Adding a cache before there is a measured problem adds a second source of truth for stock, which is the one thing this system must never have.
 - **No GraphQL, no public REST.** See *Entry surfaces*.
 - **No CMS.** REQ-043 and REQ-047 need staff-editable pages and news, which is a table and an editor, not a second system.

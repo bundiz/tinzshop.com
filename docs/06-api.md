@@ -38,6 +38,7 @@ For the handful of endpoints that do exist.
 
 ```
 /api/webhooks/<system>            inbound, from an external system
+/api/callbacks/<system>           a browser redirected back by an external system
 /api/exports/<resource>           file download, staff, authenticated
 /api/jobs/<name>                  scheduled work, secret-authenticated
 ```
@@ -167,6 +168,42 @@ inherits it. Reaching a page is never evidence of the right to act.
 > RESEARCHED** (`14-integrations.md`). K-Payment's signing scheme, event
 > identity and retry behaviour are unknown (Q-033). The rules above are what
 > any such integration requires; none of them is a claim about K-Payment.
+
+## Callbacks
+
+A callback is a `GET` the seller's **browser** makes when an external system
+redirects it back to us, so it carries no signature we can verify and no
+session. It carries a one-time credential in the query string, so every
+response is `Cache-Control: no-store` and no response body ever repeats it.
+
+### `GET /api/callbacks/shopee`
+
+Shopee redirects here after the shop owner authorizes our partner app
+(plan 010, Task 7). The handler exchanges the code for tokens and stores them
+encrypted.
+
+**Query parameters**
+
+| Parameter | Rule |
+| :--- | :--- |
+| `code` | Required, non-empty. The one-time authorization code. |
+| `shop_id` | A positive decimal integer within the safe integer range. Exactly one of `shop_id` and `main_account_id` is present. |
+| `main_account_id` | As `shop_id`. |
+| `state` | Optional, read as a string. |
+
+**Responses** (all `Cache-Control: no-store`)
+
+| Status | Body | When |
+| :--- | :--- | :--- |
+| `200` | `{ "data": { "accountType": "shop", "shopId": <number>, "connected": true } }` | The shop was connected. The code is never in the body. |
+| `400` | `{ "error": { "code": "shopee.authorization.invalid_callback", "messageKey": "error.shopee.authorization.invalidCallback", "details": [{ "path", "message" }] } }` | The query failed validation. |
+| `403` | `{ "error": { "code": "shopee.authorization.unexpected_shop", "messageKey": "error.shopee.authorization.unexpectedShop" } }` | `shop_id` is not the shop configured in `SHOPEE_SHOP_ID`. No token exchange is attempted (D-104). |
+| `422` | `{ "error": { "code": "shopee.authorization.main_account_unsupported", "messageKey": "error.shopee.authorization.mainAccountUnsupported" } }` | A main account authorized instead of a shop. |
+| `502` | `{ "error": { "code": "shopee.authorization.token_exchange_failed", "messageKey": "error.shopee.authorization.tokenExchangeFailed" } }` | Shopee refused or failed the code exchange. |
+
+Any other exception is `500`. The shop allow-list exists because any shop
+that authorizes our partner app can produce a valid code; without it, that
+shop could replace ours and the sync would mirror its catalogue (D-104).
 
 ## Scheduled jobs
 

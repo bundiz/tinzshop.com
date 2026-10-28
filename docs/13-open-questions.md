@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 40 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 10 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 11 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -519,6 +519,13 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** None yet.
 - **Effect:** The stock sweep runs every 10 minutes and costs about catalogue ÷ 50 base-info calls plus one `get_model_list` per item with models ([spec §8](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md#8-risks-and-what-to-verify-in-the-sandbox-before-building)). The category design shows roughly 700 products. Measure with `sync_run.api_calls` in the sandbox; confirm the limit before go-live.
 - **Ask:** developers, then Shopee support
+
+### Q-057: Do the Shopee sandbox ids count as account identifiers?
+- **Status:** UNRESOLVED — raised in the plan 010 final review, 2026-10-28
+- **Question:** The sandbox Test Partner id and sandbox shop id appear in test fixtures, the catalogue mirror spec and plan 010. Hard rule 2 forbids committing "a real account identifier". Are sandbox ids such identifiers, to be replaced by invented values, or acceptable as test data?
+- **Answer:** None yet.
+- **Effect:** No secret is involved: the partner key and tokens never appear in the repository (`14-integrations.md#credential-required-1`). If the answer is "replace them", the fixtures, the spec's evidence line and plan 010's test values change; signature test vectors would need recomputing with the invented ids.
+- **Ask:** project owner
 
 ---
 

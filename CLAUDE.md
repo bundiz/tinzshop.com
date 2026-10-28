@@ -7,7 +7,8 @@ source for what it must do is `docs/reference/client-summary-th.md`.
 
 ## Current state
 
-**Phase 1 — planning documentation. No application code exists yet.**
+**Phase 1 — planning documentation, plus plan 010's code (the Shopee
+catalogue mirror). No other application code exists yet.**
 
 **The stack is decided.** Next.js (App Router), TypeScript, PostgreSQL and
 Prisma, as one route-grouped application, with the commerce domain written
@@ -20,9 +21,9 @@ code or name a host as chosen.
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 56 open questions are on record —
+CONFIRMED, not PROPOSED. 57 open questions are on record —
 see `docs/13-open-questions.md` for the full record: 40 RESOLVED, 6 PARTIALLY
-RESOLVED, 10 still genuinely UNRESOLVED (most waiting on a BigSeller
+RESOLVED, 11 still genuinely UNRESOLVED (most waiting on a BigSeller
 data-inspection session, the Shopee live go-live, or Shopee's API call limit). Total budget is 100,000 THB and
 a proposed schedule exists — `docs/02-scope-and-phases.md#schedule-and-budget`
 — but it is a project-side proposal pending client confirmation, not itself a

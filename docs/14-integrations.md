@@ -111,6 +111,59 @@ real responses captured with `scripts/shopee-sandbox/`):
 - **`v2.bundle_deal.add_bundle_deal`** — Shopee bundle deals are discount rules (fixed price, percent or baht off when buying at least N, with start and end times), not products. They are not mirrored.
 - **Sandbox findings** — the item statuses seen were NORMAL and UNLIST; Shopee's pre-order is only "ships in N days" (the sandbox allowed 3–4), which is why pre-order release dates are ours; `weight` arrives as a string; refresh tokens work once.
 
+### How the sync behaves (plan 010)
+
+Built in plan 010; the design is the spec's section 6. This is the run
+semantics the code holds, with the codes stored in `sync_run`.
+
+**The run.** Each run lists the items whose `update_time` falls in the window
+(from the last *succeeded* run's `window_to` minus 10 minutes, or everything on
+the first run), adds every known `channel_item` — `NOT_FOUND` ones included —
+as the stock sweep, and fetches base info, model lists and extra info for the
+union. Each item is upserted in its own transaction. `sync_run.api_calls` is
+the number of Shopee calls made by that run only (D-110).
+
+**When a run fails** (`outcome = failed`, the window does not advance, so the
+next run asks for the same window again). `error_code` is one of:
+
+| `error_code` | Meaning |
+| :--- | :--- |
+| a Shopee error string, e.g. `error_auth`, `error_server`, `timeout`, `network_error`, `non_json_response`, `invalid_response` | `get_item_list` (or a call before it) failed. Nothing was written (D-106). |
+| `listing_stuck` | `has_next_page` was true but `next_offset` was missing or did not increase (D-108). |
+| `listing_incomplete` | A page was empty while `has_next_page` was true (D-108). |
+| `listing_too_long` | The listing passed 1000 pages of 50 (D-108). |
+| `channel_not_connected` | No shop is connected (`channel_authorization` has no row). |
+| `token_persistence_failed` | A refreshed token pair could not be saved. |
+| `item_failures` | The run finished, but at least one item **not known before this run** failed. Upserts that committed stay; the window does not advance, so the item is listed again next run (D-109). |
+| `unexpected` | Anything else, including a failure to write the finished `sync_run` row. `error_detail` holds the error message only. |
+
+**Per-item warnings** (`sync_run.warnings`, a list of strings, never a reason
+to stop the run). Each is `item <id>: <code>` or, for a model,
+`item <id> model <model id>: <code>` (D-111):
+
+| Code | Meaning |
+| :--- | :--- |
+| a Shopee error string | That item's `get_model_list` call failed, or its whole base-info batch of 50 failed. |
+| `invalid_response` | That item's base-info element did not parse, or its batch held an element with no readable id; the rest of the batch is mapped normally (D-110). |
+| `empty_batch_response` | Its base-info batch came back with no items at all. Never read as "deleted". |
+| `mapping_failed` | The item could not be mapped (for example no price). |
+| `not_returned` | The item was listed this run but base info did not return it. A failure for that item, never `NOT_FOUND` (D-110). |
+| `extra_info_unavailable` | Sales and rating could not be read. The item is still upserted and its stored sales and rating are kept (D-107). The only warning that never counts as an item failure. |
+| an upsert error message | The item's database transaction failed. |
+| `empty_parent_sku`, `duplicate_parent_sku` | REQ-004: the item's Parent SKU is empty, or another item in this run has the same one (D-103, D-111). |
+| `empty_model_sku`, `duplicate_model_sku` | REQ-004: the model's ModelSKU is empty, or another model in this run has the same one. Items without models are checked on the Parent SKU only. |
+
+An item failure that is not `extra_info_unavailable` and not a SKU warning
+fails the run with `item_failures` only when the item was not known before
+the run; a known item keeps its stored values and the run still succeeds.
+
+**Not found.** A known item that was not listed this run and that base info
+does not return is marked `channel_item.external_status = 'NOT_FOUND'` and
+counted in `items_deactivated`. It stays in the stock sweep, so if Shopee
+returns it again it is restored with its real status (D-110). A model that
+disappears from a returned item gets `channel_listing.external_status =
+'NOT_FOUND'` and `variant.is_active = false` (D-105). Nothing is deleted.
+
 ### What we do NOT know
 
 - Shopee's daily API call limit for this app, and whether the full stock sweep stays under it at the real catalogue size. See Q-056.
@@ -122,9 +175,12 @@ real responses captured with `scripts/shopee-sandbox/`):
 ### Credential required
 
 Sandbox: a Test Partner and sandbox shop, held. Live: a Live partner key and the
-shop owner's authorization, **not yet supplied** (Q-042). Neither appears in this
-repository; the partner key comes from the environment only, and tokens are
-encrypted at rest.
+shop owner's authorization, **not yet supplied** (Q-042). No partner key or
+token appears in this repository; the partner key comes from the environment
+only, and tokens are encrypted at rest. The sandbox Test Partner id and sandbox
+shop id do appear, in test fixtures, the spec and plan 010; whether those count
+as account identifiers under hard rule 2 is open (Q-057). The callback accepts
+only the shop configured in `SHOPEE_SHOP_ID` (D-104).
 
 ### What it blocks
 

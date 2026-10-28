@@ -119,7 +119,7 @@ This documentation is the deliverable. No requirement is delivered by it.
 
 - **Dates:** 2026-09-16 → 2026-10-13
 - **Deliverables (from the source, as revised):** the product system, product options and stock — now delivered as a mirror of the Shopee catalogue (plan 010, D-094, D-095). The source's Excel file import is removed (REQ-038, D-094).
-- **Blocked by:** not blocked (plan 010). Per the project owner's approval of 2026-10-26 (spec §2 *Authority*), the catalogue's shape comes from Shopee, so Q-013 and Q-014 do not block it and the Excel format (Q-012) no longer applies. Still open and outside plan 010: Q-056 (Shopee's API call limit, before go-live) and Q-042 (live go-live and owner authorization).
+- **Blocked by:** plan 010 (the catalogue mirror) is not blocked; the rest of the phase is unchanged and still waits on its own plans and questions. Per the project owner's approval of 2026-10-26 (spec §2 *Authority*), the catalogue's shape comes from Shopee, so Q-013 and Q-014 do not block it and the Excel format (Q-012) no longer applies. Still open and outside plan 010: Q-056 (Shopee's API call limit, before go-live) and Q-042 (live go-live and owner authorization).
 
 > **Catalogue mirror (owner, 2026-10-26).** Plan 010
 > (`plans/010-shopee-catalogue-mirror.md`) changes how this phase's catalogue

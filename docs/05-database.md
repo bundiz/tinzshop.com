@@ -33,17 +33,19 @@ developers end up with `variant` and `model` in one schema.
 ## Entity map
 
 ```
-category ──< product ──< variant >──┬── option_value >── option_type
-                          │         │
-                          │         └── (composite: one row per option per variant)
-                          │
-                          ├──< stock_movement          append-only
-                          ├──< order_line >── order ──┬──< payment
-                          │                           ├──< shipment
-                          │                           └──1 tax_invoice
-                          ├──< product_review          customer-written (REQ-054)
-                          ├──1 sale_page                per-product (REQ-055)
-                          └──< channel_listing          Shopee model link (spec section 5.4)
+category ──< product_category >── product ──< variant >──┬── option_value >── option_type
+                                               │         │
+                                               │         └── (composite: one row per option per variant)
+                                               │
+                                               ├──< stock_movement          append-only
+                                               ├──< order_line >── order ──┬──< payment
+                                               │                           ├──< shipment
+                                               │                           └──1 tax_invoice
+                                               ├──< product_review          customer-written (REQ-054)
+                                               ├──1 sale_page                per-product (REQ-055)
+                                               └──< channel_listing          Shopee model link (spec section 5.4)
+
+product ──1 channel_item ──< channel_listing    Shopee item link (spec section 5.4)
 
 customer ──< order
 customer ──< product_review
@@ -92,7 +94,8 @@ table obeys; the spec carries the columns. Summary of spec section 5:
 - **Site-only data, edited in our admin (5.3).** `category`, `category_translation`, `product_category` (D-099), `shipping_size_tier_rate`, and on `product`: `primary_category_id`, `shipping_size_tier`, `is_pre_order`, `release_date`, and `is_active`. A product first seen by the sync is created **inactive** until admin assigns a category and a shipping size tier.
 - **Shopee link and sync tables (5.4).** `channel_item` (`external_item_id`, status, sales count, rating stored for sorting only, D-098), `channel_listing` (`external_model_id`, null for an item without models; unique with `NULLS NOT DISTINCT`), `channel_authorization` (tokens, encrypted at rest), `sync_run` (one row per attempt, with `api_calls` and `warnings`).
 - **Orders and the manual stock list (5.5).** `order_line` gains `stock_adjustment_outcome`, `stock_adjustment_at` and `stock_adjustment_by_staff_id`, and snapshots `product_name`, `option_summary` and `model_sku`. The admin list is paid, unadjusted, non-pre-order lines (D-096).
-- **Identity (5.8, D-103).** `parent_sku` and `model_sku` are indexed but **not unique**; identity is Shopee's item and model id. Empty or duplicate SKUs are reported in `sync_run.warnings`.
+- **Identity (5.8, D-103).** `parent_sku` and `model_sku` are indexed but **not unique**; identity is Shopee's item and model id. Empty or duplicate SKUs are reported in `sync_run.warnings` (codes in `14-integrations.md#how-the-sync-behaves-plan-010`, D-111).
+- **External status (D-105).** `channel_item.external_status` holds Shopee's `item_status`, or `'NOT_FOUND'` once a known item is no longer returned; a not-found item stays in the stock sweep and is restored when Shopee returns it again (D-110). `channel_listing.external_status` is null for every model Shopee still returns and `'NOT_FOUND'` for a model that vanished from its item; whether a returned model is active lives in `variant.is_active` (from Shopee's `MODEL_NORMAL`), because the snapshot carries that flag and not the raw model status. The raw model status is therefore not queryable; `raw_payload` holds base info only. `markItemsNotFound` marks `channel_item` only — the storefront visibility rule already hides any item whose status is not `NORMAL`.
 - **Unchanged (5.9).** Staff, customer, addresses, roles and permissions, cart, tax invoice, product review, sale page, content pages and news.
 
 Option types per product are at most two, because the site mirrors Shopee's
