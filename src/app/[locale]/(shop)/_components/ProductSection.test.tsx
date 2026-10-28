@@ -29,12 +29,13 @@ const card: LandingProductCard = {
 
 describe('ProductSection', () => {
   it('omits a section with no products', () => {
-    expect(render(<ProductSection titleKey="bestSellers.title" cards={[]} />)).toBe('');
+    expect(render(<ProductSection id="bestSellers" titleKey="bestSellers.title" cards={[]} />)).toBe('');
   });
 
   it('renders the title and each card with price, stock and the image placeholder', () => {
-    const html = render(<ProductSection titleKey="bestSellers.title" cards={[card]} />);
+    const html = render(<ProductSection id="bestSellers" titleKey="bestSellers.title" cards={[card]} />);
     expect(html).toContain(th.shop.home.bestSellers.title);
+    expect(html).toContain('id="bestSellers"');
     expect(html).toContain(card.name);
     expect(html).toContain('2,290');
     expect(html).toContain(th.shop.product.stock.out_of_stock);
@@ -44,6 +45,7 @@ describe('ProductSection', () => {
   it('shows the product image with the name as alt text', () => {
     const html = render(
       <ProductSection
+        id="preOrders"
         titleKey="preOrders.title"
         cards={[{ ...card, imageUrl: 'https://example.test/a.jpg', isPreOrder: true }]}
       />,

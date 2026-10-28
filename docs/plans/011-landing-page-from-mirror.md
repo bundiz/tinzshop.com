@@ -190,6 +190,7 @@
   - Leave out exactly what the Global Constraints exclude.
   - The page is `force-dynamic`, and reads `getLandingCatalogueReader()(locale)`.
   - When every section is empty, show one empty-state message from the catalogue: no products are on sale yet.
+  - Loading and error states (07 *Loading, empty and error*), added in review: `(shop)/loading.tsx` is a skeleton of the card grid, and `(shop)/error.tsx` shows `shop.error.*` with a retry button calling Next 16's `retry()`. Tests: `error.test.tsx` and `loading.test.tsx`.
 - [x] **Step 4:** Run `npm test`, `npm run typecheck` and `npm run build`. All pass.
 - [x] **Step 5:** Commit: `feat: render the landing page from the catalogue mirror`.
 

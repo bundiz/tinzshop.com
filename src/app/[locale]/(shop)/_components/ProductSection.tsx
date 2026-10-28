@@ -4,8 +4,12 @@ import type { LandingProductCard } from '@/server/services/catalogue/landing-cat
 
 export type ProductSectionTitleKey = 'bundles.title' | 'bestSellers.title' | 'preOrders.title';
 
+export type ProductSectionId = 'bundles' | 'bestSellers' | 'preOrders';
+
 export type ProductSectionProps = {
-  /** A key under `shop.home`; its first segment is also the section's `id`. */
+  /** The section's element `id`, the target of in-page links such as the hero's "shop now". */
+  id: ProductSectionId;
+  /** A key under `shop.home`. */
   titleKey: ProductSectionTitleKey;
   cards: LandingProductCard[];
   subtitleKey?: 'bundles.subtitle';
@@ -19,11 +23,10 @@ const LIST_CLASS: Record<NonNullable<ProductSectionProps['layout']>, string> = {
 };
 
 /** One titled list of product cards; a section with no products is not rendered at all. */
-export default function ProductSection({ titleKey, cards, subtitleKey, layout = 'grid' }: ProductSectionProps) {
+export default function ProductSection({ id, titleKey, cards, subtitleKey, layout = 'grid' }: ProductSectionProps) {
   const t = useTranslations('shop.home');
   if (cards.length === 0) return null;
 
-  const id = titleKey.slice(0, titleKey.indexOf('.'));
   const titleId = `${id}-title`;
   const tint =
     layout === 'rail' ? 'bg-[linear-gradient(180deg,var(--color-accent-soft)_0%,var(--color-bg)_140px)]' : 'bg-bg';

@@ -126,6 +126,14 @@
     "footer": {
       "about": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop",
       "copyright": "© {year} Tinzshop"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "text": "This page could not be loaded. Please try again.",
+      "retry": "Try again"
+    },
+    "loading": {
+      "label": "Loading…"
     }
   }
 }
