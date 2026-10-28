@@ -35,8 +35,8 @@ Components live in exactly three places (D-033).
 | Tier | Where | Knows about | Example |
 | :--- | :--- | :--- | :--- |
 | **1 — Primitive** | `src/components/ui/` | Nothing. No product, no order, no baht | `Button`, `Input`, `Dialog`, `Table` |
-| **2 — Domain** | `src/components/domain/` | The domain, used by more than one route | `PriceDisplay`, `StockBadge`, `VariantPicker` |
-| **3 — Route-owned** | Beside the route that uses it | Everything about that one screen | `CheckoutSummary` |
+| **2 — Domain** | `src/components/domain/` | The domain, used by more than one route | `PriceDisplay`, `StockBadge`, `ProductCard` |
+| **3 — Route-owned** | Beside the route that uses it | Everything about that one screen | `VariantPicker` (product page), `CheckoutSummary` |
 
 **Rule of second use.** A component is born in tier 3. It moves to tier 2 the
 first time a *second* route genuinely needs it — not when someone anticipates
@@ -159,6 +159,13 @@ is the state least likely to be wrong.
 | **Empty** | Say what is missing and what to do about it. "No orders yet" plus a next step, never a blank panel |
 | **Error** | The `messageKey` from the `Result` (`06-api.md`), plus a way to retry. Never a raw error, never a stack |
 | **Loaded** | The content |
+
+**A page that can be `notFound()` has no loading skeleton above it (D-120).**
+In Next 16 a `loading.tsx` boundary starts streaming with status 200 before the
+page runs, so a later `notFound()` can only stream the not-found UI into a 200.
+The product page therefore has no skeleton, and an unknown or hidden product
+answers a real 404; the landing page's skeleton sits in the `(shop)/(home)/`
+route group so it covers `/{locale}` only.
 
 Empty and error states are written in the same pull request as the happy path.
 They are not follow-up work; they are the states a user hits when something is

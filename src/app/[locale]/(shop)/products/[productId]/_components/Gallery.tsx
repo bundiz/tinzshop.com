@@ -34,7 +34,7 @@ export default function Gallery({ imageUrls, name }: GalleryProps) {
           </p>
           <ul className="mt-2.5 grid grid-cols-5 gap-2">
             {imageUrls.map((url, position) => (
-              <li key={url} className="min-w-0">
+              <li key={`${position}-${url}`} className="min-w-0">
                 <button
                   type="button"
                   aria-label={t('gallery.thumbnail', { index: position + 1 })}

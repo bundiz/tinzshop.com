@@ -2,7 +2,11 @@ import { useTranslations } from 'next-intl';
 
 const CARD_COUNT = 10;
 
-/** The storefront's loading state: a skeleton of the hero and a card grid, so content arrives without a jump. */
+/**
+ * The landing page's loading state: a skeleton of the hero and a card grid, so content arrives without a jump.
+ * It sits in the `(home)` group so it covers only `/{locale}`: a boundary above the product page would start
+ * streaming before `notFound()` and turn its 404 into a 200 (D-120).
+ */
 export default function ShopLoading() {
   const t = useTranslations('shop.loading');
 

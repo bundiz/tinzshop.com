@@ -2,7 +2,6 @@ import { hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
-import { getProductDetailReader } from '@/server/composition-root';
 import SiteFooter from '../../_components/SiteFooter';
 import SiteHeader from '../../_components/SiteHeader';
 import Breadcrumb from './_components/Breadcrumb';
@@ -10,6 +9,7 @@ import Gallery from './_components/Gallery';
 import ProductTabs from './_components/ProductTabs';
 import ServicePanel from './_components/ServicePanel';
 import VariantPicker from './_components/VariantPicker';
+import { readProduct } from './read-product';
 
 // Prices and stock come from the mirror on every request; the page is never statically cached.
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export default async function ProductPage({ params }: Props) {
   setRequestLocale(locale);
 
   const [product, t] = await Promise.all([
-    getProductDetailReader()(productId, locale),
+    readProduct(productId, locale),
     getTranslations({ locale, namespace: 'shop.product' }),
   ]);
   if (product === null) notFound();

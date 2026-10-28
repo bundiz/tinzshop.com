@@ -62,7 +62,7 @@
 | `tests/integration/catalogue/storefront-repository.test.ts` | Query against real PostgreSQL | 3 |
 | `src/server/repositories/catalogue/activation-repository.ts`, `scripts/catalogue-activate.ts`, `package.json` | Development activation command | 4 |
 | `src/components/domain/{PriceDisplay,StockBadge,ProductCard}.tsx` | Shared domain components | 5 |
-| `src/app/[locale]/(shop)/page.tsx`, beside-route components | The landing page | 5 |
+| `src/app/[locale]/(shop)/(home)/page.tsx` (moved from `(shop)/page.tsx` in Task 6 review, D-120), beside-route components | The landing page | 5 |
 | `src/server/repositories/catalogue/storefront-repository.ts` (extend), `src/server/services/catalogue/product-detail-service.ts` (+ `.test.ts`) | One product's detail | 6 |
 | `src/app/[locale]/(shop)/products/[productId]/page.tsx`, beside-route components | The product page | 6 |
 
@@ -190,7 +190,7 @@
   - Leave out exactly what the Global Constraints exclude.
   - The page is `force-dynamic`, and reads `getLandingCatalogueReader()(locale)`.
   - When every section is empty, show one empty-state message from the catalogue: no products are on sale yet.
-  - Loading and error states (07 *Loading, empty and error*), added in review: `(shop)/loading.tsx` is a skeleton of the card grid, and `(shop)/error.tsx` shows `shop.error.*` with a retry button calling Next 16's `retry()`. Tests: `error.test.tsx` and `loading.test.tsx`.
+  - Loading and error states (07 *Loading, empty and error*), added in review: `(shop)/loading.tsx` is a skeleton of the card grid, and `(shop)/error.tsx` shows `shop.error.*` with a retry button calling Next 16's `retry()`. Tests: `error.test.tsx` and `loading.test.tsx`. In Task 6 review the landing page and its `loading.tsx` moved to `(shop)/(home)/` so the skeleton no longer sits above the product page (D-120).
 - [x] **Step 4:** Run `npm test`, `npm run typecheck` and `npm run build`. All pass.
 - [x] **Step 5:** Commit: `feat: render the landing page from the catalogue mirror`.
 

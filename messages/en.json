@@ -121,6 +121,9 @@
         "title": "Product not found",
         "text": "This product does not exist or is no longer on sale",
         "backHome": "Back to home"
+      },
+      "meta": {
+        "title": "{name} | Tinzshop"
       }
     },
     "footer": {

@@ -3,11 +3,11 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { getLandingCatalogueReader } from '@/server/composition-root';
-import Hero from './_components/Hero';
-import ProductSection, { type ProductSectionId } from './_components/ProductSection';
-import SiteFooter from './_components/SiteFooter';
-import SiteHeader from './_components/SiteHeader';
-import TrustStrip from './_components/TrustStrip';
+import Hero from '../_components/Hero';
+import ProductSection, { type ProductSectionId } from '../_components/ProductSection';
+import SiteFooter from '../_components/SiteFooter';
+import SiteHeader from '../_components/SiteHeader';
+import TrustStrip from '../_components/TrustStrip';
 
 // Prices and stock come from the mirror on every request; the page is never statically cached.
 export const dynamic = 'force-dynamic';
