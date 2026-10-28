@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** In progress — Tasks 1–10 built and the final-review fixes applied (2026-10-28); the Manual test checklist has not been performed
+- **Status:** In progress — Tasks 1–10 built and the final-review fixes applied (2026-10-28); the Manual test checklist is partly performed (see Outcome)
 - **Phase:** 2 (catalogue foundation), as re-scoped by the owner on 2026-10-26
 - **Requirements delivered:** REQ-004 (as D-103), REQ-005 (within Shopee's two tiers), REQ-006, REQ-021 (catalogue direction, as D-095)
 - **Blocked by:** nothing. The design's §2 *Authority* lifts the Q-013/Q-014 block for this work.
@@ -519,18 +519,18 @@ These five conditions are implied by the spec, but a careless implementation pas
 
 Each check is run by a person against the **sandbox**, with the result recorded in *Outcome*. Never tick a box for a check nobody performed.
 
-- [ ] Connect the shop: with `npm run dev` and the ngrok tunnel up, authorize through Console → Authorize. The callback page shows `connected: true` and no code. `channel_authorization` has one row, and its token columns are unreadable ciphertext.
-- [ ] First sync: `curl -X POST -H "Authorization: Bearer $JOB_SECRET" http://localhost:3000/api/jobs/shopee-sync` returns `succeeded`. The database then holds every sandbox item (9 on 2026-10-20). Each is inactive, and the SSD has 4 variants.
+- [x] Connect the shop: with `npm run dev` and the ngrok tunnel up, authorize through Console → Authorize. The callback page shows `connected: true` and no code. `channel_authorization` has one row, and its token columns are unreadable ciphertext.
+- [x] First sync: `curl -X POST -H "Authorization: Bearer $JOB_SECRET" http://localhost:3000/api/jobs/shopee-sync` returns `succeeded`. The database then holds every sandbox item (9 on 2026-10-20). Each is inactive, and the SSD has 4 variants.
 - [ ] Second sync returns `succeeded` with `itemsCreated 0`. The variant ids are unchanged.
 - [ ] Change a variant's price and stock in the sandbox Seller Center, sync, and see the new values in `variant`.
 - [ ] Create a Console → Test Order for a seeded item. Sync, and see its stock drop. **Record whether that item's `update_time` changed:** this is spec §8 risk 1, and it decides whether the stock sweep can be removed later.
 - [ ] Unlist an item in Seller Center, sync, and see `channel_item.external_status = 'UNLIST'`.
 - [ ] Create a kit item in the sandbox (`v2.product.add_kit_item` from two seeded items) and sync. `channel_item.is_kit` is true, and its variants carry a price and stock like any other item. This is spec §8 risk 5; if they don't, record it and stop before relying on kits.
 - [ ] Start two syncs at once (two `curl &`). One returns `skipped`.
-- [ ] A wrong bearer secret gets `401`.
-- [ ] Search the dev-server output and every `sync_run.error_detail` for the access token, the partner key and `sign=`: no matches.
-- [ ] Record the `api_calls` of a full run against the sandbox in *Outcome*, as input to Q-056.
-- [ ] `rm -rf node_modules && npm ci` works with the system npm 10.8.
+- [x] A wrong bearer secret gets `401`.
+- [x] Search the dev-server output and every `sync_run.error_detail` for the access token, the partner key and `sign=`: no matches.
+- [x] Record the `api_calls` of a full run against the sandbox in *Outcome*, as input to Q-056.
+- [x] `rm -rf node_modules && npm ci` works with the system npm 10.8.
 
 ## Follow-on plans (not this plan)
 
@@ -541,4 +541,10 @@ Each check is run by a person against the **sandbox**, with the result recorded 
 
 ## Outcome
 
-Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schema and migration, money and token-encryption helpers, the Shopee client and catalogue mapper, shop authorization, the catalogue and sync-run repositories, the catalogue sync service (time window and stock sweep) and the secret-protected `POST /api/jobs/shopee-sync` endpoint. The design rulings that change a documented contract are recorded as D-104 to D-111 in `docs/11-decisions.md`. The final whole-branch review's fixes (per-run `api_calls`, `item_failures`, not-found self-correction, per-element base-info parsing, SKU warnings) were applied on 2026-10-28. The Manual test checklist has not been performed, so no sandbox result, `api_calls` figure or spec §8 risk outcome is recorded yet.
+Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schema and migration, money and token-encryption helpers, the Shopee client and catalogue mapper, shop authorization, the catalogue and sync-run repositories, the catalogue sync service (time window and stock sweep) and the secret-protected `POST /api/jobs/shopee-sync` endpoint. The design rulings that change a documented contract are recorded as D-104 to D-111 in `docs/11-decisions.md`. The final whole-branch review's fixes (per-run `api_calls`, `item_failures`, not-found self-correction, per-element base-info parsing, SKU warnings) were applied on 2026-10-28. Manual checks run against the sandbox on 2026-10-28 (the others are still open):
+
+- Connect: the callback showed `connected: true` for shop 227679200 with no code in the body; `channel_authorization` holds one row whose token columns are `v1.` ciphertext.
+- First sync: `succeeded`, 9 items seen and created, 6 API calls (input to Q-056). Every product is inactive, and the SSD (803947690) has 4 variants with the expected prices and stock. Two warnings, `duplicate_parent_sku` for 803946629 and 803946630, which share Parent SKU `TEST-PARENT-001`.
+- A wrong bearer secret got `401 auth.unauthorized`.
+- Leak search: no access token, refresh token, partner key or `sign=` in the dev-server output or in `sync_run.error_detail`. The Next dev request log does print the callback URL with its one-time `code`; the code is single-use and already exchanged.
+- `rm -rf node_modules && npm ci` with npm 10.8.2 succeeded, with 0 vulnerabilities.
