@@ -196,6 +196,7 @@ their file names in `.claude/agents/`.
 | Planner agent | เอเจนต์วางแผน | Subagent that writes plans and keeps the board's issues in step (D-093). | `planner` |
 | Developer agent | เอเจนต์นักพัฒนา | Subagent that builds features and fixes from a plan (D-093). | `developer` |
 | Tester and security reviewer agent | เอเจนต์ทดสอบและตรวจความปลอดภัย | Subagent that tests and security-reviews a change before merge (D-093). | `tester-security-reviewer` |
+| API docs | เอกสาร API | The OpenAPI 3.1 description of the endpoints outside systems call, in `docs/openapi.yaml`, rendered by Swagger UI at `/api/docs` in development only (D-115). `06-api.md` stays the authority. | `docs/openapi.yaml`, `/api/docs`, `createApiDocsHandlers` |
 | DevOps agent | เอเจนต์ DevOps | Subagent for CI, environments, configuration, release and backup procedures (D-093). | `devops` |
 
 ## Terms deliberately NOT defined here

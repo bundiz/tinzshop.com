@@ -5,6 +5,10 @@ How data gets in and out of Tinzshop.
 Follows from [ADR-0001](adr/ADR-0001-backend-approach.md) and the entry
 surfaces in `03-architecture.md`.
 
+## API docs (OpenAPI)
+
+`docs/openapi.yaml` describes every route handler in this document in OpenAPI 3.1. This document is the authority; the YAML restates it and changes in the same pull request as any endpoint, status or body (D-115). In development, `GET /api/docs` renders it with Swagger UI, served from the pinned `swagger-ui-dist` package (never a CDN), together with `/api/docs/openapi` (the YAML) and `/api/docs/assets/<file>` (two allow-listed files). All three answer `404` when `NODE_ENV` is `production`. Never type the real `JOB_SECRET` into a shared or hosted Swagger tool.
+
 ## Server Actions versus route handlers
 
 **Server Actions for our own front end. Route handlers only for callers we do

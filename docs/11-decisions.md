@@ -117,6 +117,7 @@ Our own engineering decisions made while building plan 010; they implement the o
 | D-112 | The Shopee sandbox Test Partner id and sandbox shop id may appear in the repository as test data; live shop and partner ids may not (hard rule 2). | Accepted | [13](13-open-questions.md#q-057-do-the-shopee-sandbox-ids-count-as-account-identifiers) |
 | D-113 | Prisma packages pinned at 7.10.1 and Vitest at 4.1.12 (from 7.10.0 / 4.1.11) to clear npm audit advisories, installed 13 days after release on the project owner's instruction. | Accepted | [plan 010](plans/010-shopee-catalogue-mirror.md#global-constraints) |
 | D-114 | A `get_item_list` page without `item` is an empty page, not an invalid response; an `invalid_response` error records the failing field paths and issue codes (never values) in `sync_run.error_detail`. Prompted by two sandbox runs failing on 2026-10-28. | Accepted | [14](14-integrations.md#how-the-sync-behaves-plan-010) |
+| D-115 | API docs are a hand-written OpenAPI 3.1 file, `docs/openapi.yaml`, kept in step with `06-api.md` in the same pull request; `/api/docs` renders it with the pinned `swagger-ui-dist` (dev dependency, served locally) and answers 404 in production. | Accepted | [06](06-api.md#api-docs-openapi) |
 
 ## Deployment
 

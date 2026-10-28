@@ -554,3 +554,5 @@ Tasks 1-10 built the documentation updates, Postgres and Prisma setup, the schem
 - Unlist: `v2.product.unlist_item` on Mario Kart (803947687); after a sync `channel_item.external_status = 'UNLIST'`.
 - Test Order: **not performed.** The Open Platform has no API that creates an order, and no sandbox buyer flow was available, so whether an order changes `update_time` (spec §8 risk 1) is still unknown. The stock sweep stays regardless, because a direct stock change already leaves `update_time` unchanged.
 - Kit item: **not performed** (optional; spec §8 risk 5 stays open until it is).
+
+Added on the project owner's request after the plan's tasks (2026-10-28): API docs for this plan's two endpoints — `docs/openapi.yaml` and a development-only Swagger UI at `/api/docs` (D-115).

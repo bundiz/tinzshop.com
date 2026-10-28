@@ -1,0 +1,210 @@
+openapi: 3.1.0
+info:
+  title: Tinzshop API
+  version: 0.1.0
+  description: |
+    Endpoints that outside systems call (`src/app/api/`). `docs/06-api.md` is the
+    authority for behaviour; this file describes the same contracts in OpenAPI form
+    and must change in the same pull request as them (D-115).
+
+    Every response is `Cache-Control: no-store`. Error bodies use
+    `{ error: { code, messageKey?, ... } }` (06-api.md).
+servers:
+  - url: /
+    description: The server this page is served from
+tags:
+  - name: Shopee
+    description: Shop authorization callback (D-104)
+  - name: Jobs
+    description: Scheduled jobs, called by a scheduler every 10 minutes
+paths:
+  /api/callbacks/shopee:
+    get:
+      tags: [Shopee]
+      summary: Shopee shop authorization callback
+      description: |
+        Shopee redirects the seller's browser here after shop authorization. The
+        one-time `code` is exchanged for tokens, which are stored encrypted. Only the
+        shop configured in `SHOPEE_SHOP_ID` is accepted. The code is never echoed.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: One-time authorization code, valid 10 minutes.
+          schema: { type: string, minLength: 1 }
+        - name: shop_id
+          in: query
+          description: Exactly one of `shop_id` or `main_account_id` is required.
+          schema: { $ref: '#/components/schemas/ShopeeId' }
+        - name: main_account_id
+          in: query
+          description: A main account is refused with 422.
+          schema: { $ref: '#/components/schemas/ShopeeId' }
+        - name: state
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Shop connected.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [accountType, shopId, connected]
+                    properties:
+                      accountType: { type: string, const: shop }
+                      shopId: { type: integer }
+                      connected: { type: boolean, const: true }
+              example: { data: { accountType: shop, shopId: 227679200, connected: true } }
+        '400':
+          description: Invalid callback query.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationError' }
+              example:
+                error:
+                  code: shopee.authorization.invalid_callback
+                  messageKey: error.shopee.authorization.invalidCallback
+                  details: [{ path: code, message: '<Zod issue message>' }]
+        '403':
+          description: The shop is not the configured `SHOPEE_SHOP_ID`; the code is not exchanged.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                error:
+                  code: shopee.authorization.unexpected_shop
+                  messageKey: error.shopee.authorization.unexpectedShop
+        '422':
+          description: A main account authorized; only a shop is supported.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                error:
+                  code: shopee.authorization.main_account_unsupported
+                  messageKey: error.shopee.authorization.mainAccountUnsupported
+        '502':
+          description: Shopee refused the token exchange.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                error:
+                  code: shopee.authorization.token_exchange_failed
+                  messageKey: error.shopee.authorization.tokenExchangeFailed
+  /api/jobs/shopee-sync:
+    post:
+      tags: [Jobs]
+      summary: Run one Shopee catalogue sync
+      description: |
+        Mirrors the Shopee catalogue into PostgreSQL: a time window plus a full stock
+        sweep, under an advisory lock. A run already in progress makes this one
+        `skipped`. A failed run's cause is in its `sync_run` row; a failed run may
+        still have committed some item upserts (D-109). Run semantics and
+        `error_code` values: `14-integrations.md#how-the-sync-behaves-plan-010`.
+      security:
+        - jobSecret: []
+      responses:
+        '200':
+          description: The run succeeded, or was skipped because another run held the lock.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SyncSummary'
+                  - type: object
+                    required: [outcome]
+                    properties:
+                      outcome: { type: string, const: skipped }
+              examples:
+                succeeded:
+                  value:
+                    outcome: succeeded
+                    runId: 9a99f64e-c794-4417-b217-393095f126f1
+                    itemsSeen: 9
+                    itemsCreated: 0
+                    itemsUpdated: 9
+                    itemsDeactivated: 0
+                    apiCalls: 6
+                    warnings: ['item 803946629: duplicate_parent_sku']
+                skipped:
+                  value: { outcome: skipped }
+        '401':
+          description: Missing or wrong bearer secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: auth.unauthorized, messageKey: error.auth.unauthorized } }
+        '502':
+          description: The run failed. Read the `sync_run` row for the cause.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: object
+                    required: [code, runId]
+                    properties:
+                      code: { type: string, const: catalogue_sync.failed }
+                      runId: { type: string, format: uuid }
+        '500':
+          description: An unexpected exception.
+components:
+  securitySchemes:
+    jobSecret:
+      type: http
+      scheme: bearer
+      description: '`Authorization: Bearer <JOB_SECRET>`. Never paste the real secret into a shared tool.'
+  schemas:
+    ShopeeId:
+      type: string
+      pattern: '^[1-9][0-9]*$'
+      description: Positive decimal integer within the safe integer range.
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code]
+          properties:
+            code: { type: string }
+            messageKey: { type: string }
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                details:
+                  type: array
+                  items:
+                    type: object
+                    required: [path, message]
+                    properties:
+                      path: { type: string }
+                      message: { type: string }
+    SyncSummary:
+      type: object
+      required: [outcome, runId, itemsSeen, itemsCreated, itemsUpdated, itemsDeactivated, apiCalls, warnings]
+      properties:
+        outcome: { type: string, const: succeeded }
+        runId: { type: string, format: uuid }
+        itemsSeen: { type: integer }
+        itemsCreated: { type: integer }
+        itemsUpdated: { type: integer }
+        itemsDeactivated: { type: integer }
+        apiCalls: { type: integer, description: Shopee calls made by this run only. }
+        warnings:
+          type: array
+          items: { type: string }
+          description: '`item <id>: <code>` or `item <id> model <model id>: <code>` (D-111).'

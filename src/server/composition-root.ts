@@ -1,7 +1,11 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-source';
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { getServerConfig } from '@/server/config';
+import { createApiDocsHandlers } from '@/server/controllers/api-docs-controller';
 import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/advisory-lock';
 import {
   listKnownItems,
@@ -63,4 +67,14 @@ export function getCatalogueSyncRunner(): () => Promise<CatalogueSyncSummary> {
       lock: (task) => tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, task),
       now: () => new Date(),
     });
+}
+
+/** Development-only API docs; needs no configuration, so it works before `.env` is complete. */
+export function getApiDocsHandlers(): ReturnType<typeof createApiDocsHandlers> {
+  return createApiDocsHandlers({
+    isProduction: process.env.NODE_ENV === 'production',
+    readFile: (path) => readFile(path, 'utf8'),
+    specPath: join(process.cwd(), 'docs', 'openapi.yaml'),
+    assetDir: join(process.cwd(), 'node_modules', 'swagger-ui-dist'),
+  });
 }
