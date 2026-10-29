@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 /**
  * Adds `loading="lazy"` to every `<img>` and `<iframe>` start tag of the stored body, at render time; the
  * stored value is never changed. The body is sanitised HTML, in which a literal `<` in text or an attribute
@@ -5,6 +7,18 @@
  */
 export function lazyEmbeds(html: string): string {
   return html.replace(/<(img|iframe)(?=[\s/>])/gi, '<$1 loading="lazy"');
+}
+
+const ATTRIBUTE_ESCAPES: Record<string, string> = { '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' };
+
+/**
+ * Gives every `<iframe>` of the stored body a `title` (the accessible name of the embedded video), at render
+ * time, on the same grounds as `lazyEmbeds`: the sanitiser keeps no `title` on an iframe (D-135), so none is
+ * duplicated, and in sanitised HTML `<iframe` only ever starts a real tag. The title is escaped for an attribute.
+ */
+export function titleIframes(html: string, title: string): string {
+  const escaped = title.replace(/[&"<>]/g, (character) => ATTRIBUTE_ESCAPES[character] ?? character);
+  return html.replace(/<(iframe)(?=[\s/>])/gi, `<$1 title="${escaped}"`);
 }
 
 // Reading styles for the body's allow-listed elements (D-135); Tailwind's preflight resets them all.
@@ -29,8 +43,10 @@ const PROSE = [
 
 /**
  * The article body: the stored `body_html`, already sanitised to the allow-list at import (D-133, D-135). This is
- * the only place the site renders HTML from data; every other field is escaped text.
+ * the only place the site renders HTML from data; every other field is escaped text. Its iframes are titled
+ * with `shop.news.videoTitle`, and its images and iframes lazy-loaded, at render time.
  */
 export default function ArticleBody({ html }: { html: string }) {
-  return <div className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(html) }} />;
+  const t = useTranslations('shop.news');
+  return <div className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(html, t('videoTitle'))) }} />;
 }

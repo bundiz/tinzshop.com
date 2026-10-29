@@ -11,6 +11,7 @@ import ProductSection, { type ProductSectionId } from '../_components/ProductSec
 import SiteFooter from '../_components/SiteFooter';
 import SiteHeader from '../_components/SiteHeader';
 import TrustStrip from '../_components/TrustStrip';
+import { readLatestNewsOrNone } from './read-latest-news';
 
 // Prices and stock come from the mirror on every request; the page is never statically cached.
 export const dynamic = 'force-dynamic';
@@ -36,7 +37,8 @@ export default async function HomePage({ params }: Props) {
 
   const [catalogue, latestNews, t, tNews] = await Promise.all([
     getLandingCatalogueReader()(locale),
-    getLatestNewsReader()({ locale, limit: LATEST_NEWS_COUNT }),
+    // A failing news read hides the news section; it never takes the landing page down.
+    readLatestNewsOrNone(() => getLatestNewsReader()({ locale, limit: LATEST_NEWS_COUNT })),
     getTranslations({ locale, namespace: 'shop.home' }),
     getTranslations({ locale, namespace: 'shop.news.landing' }),
   ]);

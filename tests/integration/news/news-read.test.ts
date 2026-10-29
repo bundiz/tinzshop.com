@@ -169,11 +169,25 @@ describe('getNewsArticle against the database', () => {
 
     const detail = await getNewsArticle({ locale: 'th', slug: self });
 
-    // Newest first, sharing a category, live, not itself.
-    expect(detail?.related.map((card) => card.slug)).toEqual([reviewsOnly, newer, others[1]]);
+    // Both are leaves: News (position 1) first, newest first, live, not itself; Reviews is not needed.
+    expect(detail?.related.map((card) => card.slug)).toEqual([newer, others[1], others[0]]);
+    expect(detail?.related.map((card) => card.slug)).not.toContain(reviewsOnly);
     expect(detail?.related).toHaveLength(3);
     expect(detail?.related.map((card) => card.slug)).not.toContain(self);
     expect(detail?.related.map((card) => card.slug)).not.toContain(older);
+  });
+  it('relates by the most specific category first, then fills up from the parent', async () => {
+    const news = await category('news', 'News', 1);
+    const nintendo = await category('nintendo', 'NINTENDO', 2, news);
+    const leafOlder = await article([news, nintendo]);
+    const self = await article([news, nintendo]);
+    const leafNewer = await article([news, nintendo]);
+    const parentOnly = [await article([news]), await article([news]), await article([news])];
+
+    const detail = await getNewsArticle({ locale: 'th', slug: self });
+
+    // NINTENDO's two others first, although News has three newer ones; then News's newest.
+    expect(detail?.related.map((card) => card.slug)).toEqual([leafNewer, leafOlder, parentOnly[2]]);
   });
 });
 

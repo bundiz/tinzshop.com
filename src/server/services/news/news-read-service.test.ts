@@ -225,6 +225,51 @@ describe('getNewsArticle', () => {
     expect(detail?.related[0]?.categoryName).toBe('News');
   });
 
+  it('relates an article in News + NINTENDO by NINTENDO first', async () => {
+    const article = detailRow(5, { categoryIds: ['c-news', 'c-nintendo'] });
+    const nintendo = [row(9, { categoryIds: ['c-news', 'c-nintendo'] }), row(5), row(8), row(7)];
+    const { deps, list } = setupArticle({ article });
+    list.mockImplementation(async (filter: NewsListFilter) =>
+      filter.categoryIds?.includes('c-nintendo') ? nintendo : [row(20), row(19), row(18), row(17)],
+    );
+
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(list.mock.calls[0]?.[0].categoryIds).toEqual(['c-nintendo']);
+    expect(detail?.related.map((card) => card.slug)).toEqual(['post-9', 'post-8', 'post-7']);
+  });
+
+  it('fills up from the parent category when the leaf has fewer than 3', async () => {
+    const article = detailRow(5, { categoryIds: ['c-news', 'c-nintendo'] });
+    const { deps, list } = setupArticle({ article });
+    list.mockImplementation(async (filter: NewsListFilter) =>
+      filter.categoryIds?.includes('c-nintendo')
+        ? [row(9), row(5)]
+        : [row(20), row(9), row(5), row(19), row(18)],
+    );
+
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
+
+    expect(list.mock.calls.map(([filter]) => filter.categoryIds)).toEqual([['c-nintendo'], ['c-news']]);
+    // Leaf articles first, then the parent's newest; never the article itself, never twice.
+    expect(detail?.related.map((card) => card.slug)).toEqual(['post-9', 'post-20', 'post-19']);
+  });
+
+  it('takes one leaf at a time, the card tag first, so a broad leaf does not crowd it out', async () => {
+    // NINTENDO (position 3) and Reviews (position 4) are both leaves of this article.
+    const article = detailRow(5, { categoryIds: ['c-news', 'c-nintendo', 'c-reviews'] });
+    const { deps, list } = setupArticle({ article });
+    list.mockImplementation(async (filter: NewsListFilter) =>
+      filter.categoryIds?.[0] === 'c-nintendo' ? [row(3), row(5)] : [row(30), row(29), row(3)],
+    );
+
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
+
+    expect(list.mock.calls.map(([filter]) => filter.categoryIds)).toEqual([['c-nintendo'], ['c-reviews']]);
+    expect(detail?.related.map((card) => card.slug)).toEqual(['post-3', 'post-30', 'post-29']);
+  });
+
   it('has no related articles when the article has no category', async () => {
     const { deps, list } = setupArticle({ article: detailRow(1, { categoryIds: [] }) });
     const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-1' });

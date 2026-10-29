@@ -99,17 +99,30 @@ function subtrees(categories: readonly NewsCategoryRow[]): Map<string, Set<strin
   return result;
 }
 
-/** Of an article's categories, the one that is no other's ancestor; by `position` when several are. */
+/**
+ * The article's most specific categories (D-137, D-138): those that are no ancestor of another of its
+ * categories, in `position` order; all of them when none qualifies. The one place this rule lives, used for
+ * a card's tag and for related articles.
+ */
+function leafCategories(
+  categoryIds: readonly string[],
+  byId: ReadonlyMap<string, NewsCategoryRow>,
+  tree: ReadonlyMap<string, Set<string>>,
+): NewsCategoryRow[] {
+  const own = categoryIds.map((id) => byId.get(id)).filter((c): c is NewsCategoryRow => c !== undefined);
+  const leaves = own.filter(
+    (candidate) => !own.some((other) => other.id !== candidate.id && tree.get(candidate.id)?.has(other.id)),
+  );
+  return [...(leaves.length > 0 ? leaves : own)].sort((a, b) => a.position - b.position);
+}
+
+/** Of an article's categories, the most specific one; by `position` when several are. */
 function mostSpecific(
   categoryIds: readonly string[],
   byId: ReadonlyMap<string, NewsCategoryRow>,
   tree: ReadonlyMap<string, Set<string>>,
 ): NewsCategoryRow | null {
-  const own = categoryIds.map((id) => byId.get(id)).filter((c): c is NewsCategoryRow => c !== undefined);
-  const leaves = own.filter(
-    (candidate) => !own.some((other) => other.id !== candidate.id && tree.get(candidate.id)?.has(other.id)),
-  );
-  return [...(leaves.length > 0 ? leaves : own)].sort((a, b) => a.position - b.position)[0] ?? null;
+  return leafCategories(categoryIds, byId, tree)[0] ?? null;
 }
 
 /** One article row as a card, tagged with its most specific category. */
@@ -234,6 +247,44 @@ export type NewsArticleDetail = {
 export type GetNewsArticleInput = { locale: NewsLocale; slug: string };
 
 /**
+ * Up to `RELATED_NEWS_LIMIT` other live articles (D-138): newest first from each of the article's most
+ * specific categories in turn, in `position` order (so the card's tag first), then, only when that gives too
+ * few, from its other (parent) categories. Almost
+ * every post also carries the top-level category, so relating by all of them would show the same newest
+ * articles everywhere. Never the article itself, never one twice.
+ */
+async function relatedArticles(
+  deps: NewsArticleReadDeps,
+  row: NewsArticleDetailRow,
+  byId: ReadonlyMap<string, NewsCategoryRow>,
+  tree: ReadonlyMap<string, Set<string>>,
+  now: Date,
+): Promise<NewsArticleRow[]> {
+  const leafIds = leafCategories(row.categoryIds, byId, tree).map((category) => category.id);
+  const parentIds = row.categoryIds.filter((id) => byId.has(id) && !leafIds.includes(id));
+  const picked: NewsArticleRow[] = [];
+  const seen = new Set([row.id]);
+  // One leaf at a time, the card's tag first: a broad leaf such as an "articles" category, carried by most
+  // posts, would otherwise crowd out the specific one in a single query.
+  for (const categoryIds of [...leafIds.map((id) => [id]), parentIds]) {
+    if (picked.length >= RELATED_NEWS_LIMIT || categoryIds.length === 0) continue;
+    // Enough to cover the article itself and every one already picked, and still fill the list.
+    const candidates = await deps.news.listLiveNewsArticles({
+      categoryIds,
+      now,
+      skip: 0,
+      take: RELATED_NEWS_LIMIT + 1,
+    });
+    for (const candidate of candidates) {
+      if (picked.length >= RELATED_NEWS_LIMIT || seen.has(candidate.id)) continue;
+      seen.add(candidate.id);
+      picked.push(candidate);
+    }
+  }
+  return picked;
+}
+
+/**
  * One live article by its decoded slug (spec 2026-10-29 §6), or `null` for an unknown, draft, scheduled or
  * deleted one. Title and body come from the same translation: the `en` one on `/en` when it has a title,
  * else `th` (Q-018 residual).
@@ -252,17 +303,7 @@ export async function getNewsArticle(
   const useEn = input.locale === 'en' && row.titles.en !== undefined && row.titles.en !== '';
   const fromTranslation = (text: LocalisedText): string => (useEn ? (text.en ?? '') : (text.th ?? text.en ?? ''));
 
-  // One more than needed, so the article itself can be dropped and still leave a full list.
-  const candidates =
-    row.categoryIds.length === 0
-      ? []
-      : await deps.news.listLiveNewsArticles({
-          categoryIds: row.categoryIds,
-          now,
-          skip: 0,
-          take: RELATED_NEWS_LIMIT + 1,
-        });
-
+  const related = await relatedArticles(deps, row, byId, tree, now);
   return {
     slug: row.slug,
     title: fromTranslation(row.titles),
@@ -276,10 +317,7 @@ export async function getNewsArticle(
       .filter((category): category is NewsCategoryRow => category !== undefined)
       .sort((a, b) => a.position - b.position)
       .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) })),
-    related: candidates
-      .filter((candidate) => candidate.id !== row.id)
-      .slice(0, RELATED_NEWS_LIMIT)
-      .map((candidate) => toCard(candidate, byId, tree, input.locale)),
+    related: related.map((candidate) => toCard(candidate, byId, tree, input.locale)),
   };
 }
 

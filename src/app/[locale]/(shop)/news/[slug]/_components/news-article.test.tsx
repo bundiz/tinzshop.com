@@ -7,7 +7,7 @@ import en from '../../../../../../../messages/en.json';
 import th from '../../../../../../../messages/th.json';
 import NewsCardSection from '../../_components/NewsCardSection';
 import SiteHeader from '../../../_components/SiteHeader';
-import { lazyEmbeds } from './ArticleBody';
+import { lazyEmbeds, titleIframes } from './ArticleBody';
 import NewsArticleView from './NewsArticleView';
 
 function render(node: ReactNode, locale: 'th' | 'en' = 'th'): string {
@@ -71,7 +71,7 @@ describe('NewsArticleView', () => {
   it('loads the featured image eagerly and lazy-loads embeds in the body', () => {
     const html = render(<NewsArticleView article={detail()} />);
     expect(html).toMatch(/<img[^>]*src="https:\/\/old.example\/hero.jpg"[^>]*loading="eager"|<img[^>]*loading="eager"[^>]*src="https:\/\/old.example\/hero.jpg"/);
-    expect(html).toContain('<iframe loading="lazy" src="https://www.youtube.com/embed/abc"');
+    expect(html).toMatch(/<iframe loading="lazy"[^>]*src="https:\/\/www.youtube.com\/embed\/abc"/);
     expect(render(<NewsArticleView article={detail({ featuredImageUrl: null })} />)).not.toContain('loading="eager"');
   });
 
@@ -102,6 +102,21 @@ describe('lazyEmbeds', () => {
       '<p>a &lt;img b</p><img loading="lazy" src="x" alt="y"><IMG loading="lazy" src="z"><iframe loading="lazy" src="v"></iframe><imgx>',
     );
     expect(lazyEmbeds('')).toBe('');
+  });
+});
+
+describe('titleIframes', () => {
+  it('gives every iframe the title, escaped, and touches nothing else', () => {
+    expect(titleIframes('<p>&lt;iframe</p><iframe src="v"></iframe><IFRAME src="w"></IFRAME><img src="x">', 'A "b" & <c>')).toBe(
+      '<p>&lt;iframe</p><iframe title="A &quot;b&quot; &amp; &lt;c&gt;" src="v"></iframe><IFRAME title="A &quot;b&quot; &amp; &lt;c&gt;" src="w"></IFRAME><img src="x">',
+    );
+  });
+
+  it('titles the body\'s YouTube iframes from the message on the article page', () => {
+    expect(render(<NewsArticleView article={detail()} />)).toMatch(
+      new RegExp(`<iframe[^>]*title="${th.shop.news.videoTitle}"[^>]*src="https://www.youtube.com/embed/abc"`),
+    );
+    expect(render(<NewsArticleView article={detail()} />, 'en')).toContain(`title="${en.shop.news.videoTitle}"`);
   });
 });
 
