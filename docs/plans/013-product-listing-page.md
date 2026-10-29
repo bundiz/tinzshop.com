@@ -133,18 +133,18 @@ A product gets its type category as `primary_category_id` and a `product_categor
 
 ### Task 3: Listing query in SQL
 
-- [ ] **Failing integration tests:**
+- [x] **Failing integration tests:**
   - `combines filters with AND and counts facets without double counting` (Review Focus 1)
   - `filters and sorts by the cheapest active variant` (Review Focus 2)
   - `pages 24 at a time without overlap`
   - `hides products the visibility rule excludes`
   - `recommended = best-selling with in-stock first`
-- [ ] **Implement:**
+- [x] **Implement:**
   - `listStorefrontProducts(filter)` returns one page of rows plus the total, with the filters and sort in SQL. Use Prisma where it can express the query; otherwise a tagged-template `$queryRaw` (never string-concatenated). The cheapest active variant comes from a subquery or a lateral join.
   - `countStorefrontFacets(filter)` returns the category, type, kit and pre-order counts under the other filters.
   - The service `getStorefrontListing(deps, params, locale)` maps rows to `LandingProductCard` and the facets to the sidebar and tabs.
-- [ ] **Landing.** Rewrite the landing page's `listStorefrontCandidates` so sort and limit run in SQL (best sellers 8, bundles 6, pre-orders 4), with the same output and tests.
-- [ ] **Commit:** `feat: list storefront products with SQL filters, sort and paging`.
+- [x] **Landing.** Rewrite the landing page's `listStorefrontCandidates` so sort and limit run in SQL (best sellers 8, bundles 6, pre-orders 4), with the same output and tests.
+- [x] **Commit:** `feat: list storefront products with SQL filters, sort and paging`.
 
 ### Task 4: `/product` page
 

@@ -45,8 +45,11 @@ import {
 import { categoriseProducts } from '@/server/repositories/catalogue/categorise-repository';
 import { activateSyncedProducts } from '@/server/repositories/catalogue/activation-repository';
 import {
+  countStorefrontFacets,
   findStorefrontProduct,
   listStorefrontCandidates,
+  listStorefrontCategories,
+  listStorefrontProducts,
 } from '@/server/repositories/catalogue/storefront-repository';
 import {
   getLandingCatalogue,
@@ -54,6 +57,11 @@ import {
   type LandingCatalogue,
 } from '@/server/services/catalogue/landing-catalogue-service';
 import { getProductDetail, type ProductDetail } from '@/server/services/catalogue/product-detail-service';
+import {
+  getStorefrontListing,
+  type StorefrontListing,
+  type StorefrontListingSearchParams,
+} from '@/server/services/catalogue/storefront-listing-service';
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
 import { runNewsImport } from '@/server/services/news/news-import-service';
@@ -117,6 +125,19 @@ export function getCatalogueSyncRunner(): () => Promise<CatalogueSyncSummary> {
 /** The landing page read: built per call, needs no configuration beyond the database. */
 export function getLandingCatalogueReader(): (locale: Locale) => Promise<LandingCatalogue> {
   return (locale) => getLandingCatalogue({ listStorefrontCandidates }, locale);
+}
+
+/** The product listing page read (plan 013); `null` means a 404 (R2). Needs only the database. */
+export function getStorefrontListingReader(): (
+  searchParams: StorefrontListingSearchParams,
+  locale: Locale,
+) => Promise<StorefrontListing | null> {
+  return (searchParams, locale) =>
+    getStorefrontListing(
+      { listStorefrontCategories, listStorefrontProducts, countStorefrontFacets },
+      searchParams,
+      locale,
+    );
 }
 
 /** The product page read: built per call, needs no configuration beyond the database. */
