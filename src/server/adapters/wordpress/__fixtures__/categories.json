@@ -1,0 +1,145 @@
+[
+  {
+    "id": 239,
+    "count": 20,
+    "description": "",
+    "link": "https://www.tinzshop.com/gulikit/",
+    "name": "gulikit",
+    "slug": "gulikit",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 5,
+    "count": 488,
+    "description": "",
+    "link": "https://www.tinzshop.com/news/",
+    "name": "News",
+    "slug": "news",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 14,
+    "count": 106,
+    "description": "",
+    "link": "https://www.tinzshop.com/news/nintendo/",
+    "name": "NINTENDO",
+    "slug": "nintendo",
+    "taxonomy": "category",
+    "parent": 5,
+    "meta": []
+  },
+  {
+    "id": 15,
+    "count": 22,
+    "description": "",
+    "link": "https://www.tinzshop.com/reviews/nintendo-reviews/",
+    "name": "Nintendo",
+    "slug": "nintendo-reviews",
+    "taxonomy": "category",
+    "parent": 7,
+    "meta": []
+  },
+  {
+    "id": 150,
+    "count": 415,
+    "description": "",
+    "link": "https://www.tinzshop.com/nintendo-switch-2/",
+    "name": "Nintendo Switch 2",
+    "slug": "nintendo-switch-2",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 8,
+    "count": 9,
+    "description": "",
+    "link": "https://www.tinzshop.com/products/",
+    "name": "Products",
+    "slug": "products",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 17,
+    "count": 12,
+    "description": "",
+    "link": "https://www.tinzshop.com/reviews/ps5/",
+    "name": "PS5",
+    "slug": "ps5",
+    "taxonomy": "category",
+    "parent": 7,
+    "meta": []
+  },
+  {
+    "id": 13,
+    "count": 21,
+    "description": "",
+    "link": "https://www.tinzshop.com/products/ps5-game/",
+    "name": "PS5 GAME",
+    "slug": "ps5-game",
+    "taxonomy": "category",
+    "parent": 8,
+    "meta": []
+  },
+  {
+    "id": 7,
+    "count": 37,
+    "description": "",
+    "link": "https://www.tinzshop.com/reviews/",
+    "name": "Reviews",
+    "slug": "reviews",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 9,
+    "count": 30,
+    "description": "",
+    "link": "https://www.tinzshop.com/news/sony-playstation/",
+    "name": "SONY Playstation",
+    "slug": "sony-playstation",
+    "taxonomy": "category",
+    "parent": 5,
+    "meta": []
+  },
+  {
+    "id": 1,
+    "count": 5,
+    "description": "",
+    "link": "https://www.tinzshop.com/uncategorized/",
+    "name": "Uncategorized",
+    "slug": "uncategorized",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 45,
+    "count": 64,
+    "description": "",
+    "link": "https://www.tinzshop.com/news/%e0%b8%9a%e0%b8%97%e0%b8%84%e0%b8%a7%e0%b8%b2%e0%b8%a1/",
+    "name": "บทความ",
+    "slug": "%e0%b8%9a%e0%b8%97%e0%b8%84%e0%b8%a7%e0%b8%b2%e0%b8%a1",
+    "taxonomy": "category",
+    "parent": 5,
+    "meta": []
+  },
+  {
+    "id": 22,
+    "count": 1,
+    "description": "",
+    "link": "https://www.tinzshop.com/%e0%b9%80%e0%b8%81%e0%b8%b5%e0%b9%88%e0%b8%a2%e0%b8%a7%e0%b8%81%e0%b8%b1%e0%b8%9a-tinzshop/",
+    "name": "เกี่ยวกับ Tinzshop",
+    "slug": "%e0%b9%80%e0%b8%81%e0%b8%b5%e0%b9%88%e0%b8%a2%e0%b8%a7%e0%b8%81%e0%b8%b1%e0%b8%9a-tinzshop",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": []
+  }
+]

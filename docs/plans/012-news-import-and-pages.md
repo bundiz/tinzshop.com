@@ -111,7 +111,7 @@
 - `mapWordPressCategory(c): NewsCategorySnapshot`
 - The snapshot types are declared in `src/server/services/news/news-snapshot.ts` (Task 4 uses them; create the file here, types only).
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - `sanitises the body to the allow-list` (Review Focus 1)
   - `keeps YouTube iframes and images`
   - `turns the excerpt into plain text`
@@ -119,9 +119,9 @@
   - `maps a real fixture post` (title, date as UTC `Date`, category source ids, source_url, modified)
   - `zod rejects a post without id`
   - `client pages until totalPages and sends the User-Agent`
-- [ ] **Step 2:** Run the tests. They fail.
-- [ ] **Step 3:** Implement. Validate responses with Zod (loose objects). `X-WP-TotalPages` comes from the response headers. HTML entities in `title.rendered` are decoded.
-- [ ] **Step 4:** Tests pass. Commit: `feat: add the WordPress news adapter`.
+- [x] **Step 2:** Run the tests. They fail.
+- [x] **Step 3:** Implement. Validate responses with Zod (loose objects). `X-WP-TotalPages` comes from the response headers. HTML entities in `title.rendered` are decoded.
+- [x] **Step 4:** Tests pass. Commit: `feat: add the WordPress news adapter`.
 
 ### Task 4: Import service, repository and job
 

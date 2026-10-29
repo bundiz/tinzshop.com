@@ -62,4 +62,19 @@ describe('parseServerConfig', () => {
       parseServerConfig({ ...VALID, SHOPEE_API_BASE_URL: 'http://example.com' }),
     ).toThrow();
   });
+
+  it('leaves the news import source unset when it is missing or empty', () => {
+    expect(parseServerConfig(VALID).newsImportSourceUrl).toBeNull();
+    expect(parseServerConfig({ ...VALID, NEWS_IMPORT_SOURCE_URL: '' }).newsImportSourceUrl).toBeNull();
+  });
+
+  it.each(['https://old-site.test', 'http://localhost:8080'])('accepts news import source %j', (value) => {
+    expect(parseServerConfig({ ...VALID, NEWS_IMPORT_SOURCE_URL: value }).newsImportSourceUrl).toBe(value);
+  });
+
+  it.each(['ftp://old-site.test', 'not a url'])('rejects news import source %j', (value) => {
+    expect(() => parseServerConfig({ ...VALID, NEWS_IMPORT_SOURCE_URL: value })).toThrow(
+      'NEWS_IMPORT_SOURCE_URL',
+    );
+  });
 });
