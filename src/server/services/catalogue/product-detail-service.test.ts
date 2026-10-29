@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { StorefrontCategory } from './storefront-listing-service';
 import {
   getProductDetail,
   type StorefrontProductRow,
@@ -36,6 +37,8 @@ function row(overrides: Partial<StorefrontProductRow> = {}): StorefrontProductRo
     images: [{ url: 'https://cf.shopee.co.th/file/a', position: 0 }],
     optionTypes: [],
     variants: [variant()],
+    primaryCategoryId: null,
+    categories: [],
     ...overrides,
   };
 }
@@ -140,5 +143,49 @@ describe('getProductDetail', () => {
       { id: 'black', value: 'Black' },
       { id: 'blue', value: 'Blue' },
     ]);
+  });
+
+  it('takes the breadcrumb platform and type from the product categories', async () => {
+    const ps: StorefrontCategory = {
+      id: 'ps',
+      slug: 'playstation-5',
+      parentId: null,
+      position: 2,
+      names: { th: 'PlayStation 5' },
+    };
+    const game: StorefrontCategory = {
+      id: 'ps-game',
+      slug: 'playstation-5-game',
+      parentId: 'ps',
+      position: 2,
+      names: { th: 'แผ่นเกม', en: 'Games' },
+    };
+    const controller: StorefrontCategory = {
+      id: 'ps-controller',
+      slug: 'playstation-5-controller',
+      parentId: 'ps',
+      position: 3,
+      names: { th: 'จอย' },
+    };
+
+    // The primary category is the type; its parent is the platform; names fall back en → th.
+    const both = await detail(row({ primaryCategoryId: 'ps-game', categories: [controller, game, ps] }), 'en');
+    expect(both?.platformCategory).toEqual({ slug: 'playstation-5', name: 'PlayStation 5' });
+    expect(both?.productType).toEqual({ slug: 'playstation-5-game', name: 'Games' });
+
+    // No primary: the first type by position.
+    const noPrimary = await detail(row({ categories: [ps, controller, game] }));
+    expect(noPrimary?.productType?.slug).toBe('playstation-5-game');
+
+    // A platform alone gives no type; a type whose platform is unknown is not shown.
+    const platformOnly = await detail(row({ primaryCategoryId: 'ps', categories: [ps] }));
+    expect(platformOnly?.platformCategory?.slug).toBe('playstation-5');
+    expect(platformOnly?.productType).toBeNull();
+    const orphanType = await detail(row({ primaryCategoryId: 'ps-game', categories: [game] }));
+    expect([orphanType?.platformCategory, orphanType?.productType]).toEqual([null, null]);
+
+    // An uncategorised product has neither.
+    const none = await detail(row());
+    expect([none?.platformCategory, none?.productType]).toEqual([null, null]);
   });
 });

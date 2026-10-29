@@ -171,7 +171,8 @@
       "imagePlaceholderAlt": "No product image yet",
       "breadcrumb": {
         "label": "Breadcrumb",
-        "home": "Home"
+        "home": "Home",
+        "allProducts": "All products"
       },
       "gallery": {
         "label": "Product images",

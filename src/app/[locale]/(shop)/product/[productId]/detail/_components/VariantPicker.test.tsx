@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { ProductDetail } from '@/server/services/catalogue/product-detail-service';
-import th from '../../../../../../../messages/th.json';
+import th from '../../../../../../../../messages/th.json';
 import VariantPicker, { selectValue } from './VariantPicker';
 
 function render(node: ReactNode): string {

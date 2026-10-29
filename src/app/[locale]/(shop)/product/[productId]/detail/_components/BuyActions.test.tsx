@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import th from '../../../../../../../messages/th.json';
+import th from '../../../../../../../../messages/th.json';
 import BuyActions from './BuyActions';
 import ServicePanel from './ServicePanel';
 

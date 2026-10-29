@@ -156,9 +156,9 @@ Three layers, each answering a question the others cannot (D-043).
 | :--- | :--- | :--- | :--- |
 | **Domain unit** | Vitest | Nothing. Pure functions | Is the business rule right? |
 | **Integration** | Vitest | A real PostgreSQL | Do the rule, the schema and the constraints agree? |
+| **Manual checklist** | A person | The running application | Does it actually work for the person using it? |
 
 Component tests render with `react-dom/server` under Node. A test that needs a real DOM (focus, element identity across a re-render, effects) opts in per file with `// @vitest-environment jsdom` (dev dependency `jsdom`, D-150) and is named `*.dom.test.tsx`; there is no global DOM environment, so every other test stays on Node.
-| **Manual checklist** | A person | The running application | Does it actually work for the person using it? |
 
 **Why a real PostgreSQL and not an in-memory substitute.** The rules that
 matter most here are database behaviours: row locking under concurrency,

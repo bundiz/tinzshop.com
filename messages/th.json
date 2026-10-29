@@ -171,7 +171,8 @@
       "imagePlaceholderAlt": "ยังไม่มีรูปสินค้า",
       "breadcrumb": {
         "label": "เส้นทาง",
-        "home": "หน้าแรก"
+        "home": "หน้าแรก",
+        "allProducts": "สินค้าทั้งหมด"
       },
       "gallery": {
         "label": "รูปสินค้า",

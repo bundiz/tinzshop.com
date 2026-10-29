@@ -25,7 +25,7 @@ describe('ProductCard', () => {
         <ProductCard card={card} />
       </NextIntlClientProvider>,
     );
-    expect(html).toMatch(/<a[^>]*href="\/en\/products\/0b8e2f0e-1d7c-4f55-9a43-5d1a6a0c2f11"[^>]*>Sandbox SSD<\/a>/);
+    expect(html).toMatch(/<a[^>]*href="\/en\/product\/0b8e2f0e-1d7c-4f55-9a43-5d1a6a0c2f11\/detail"[^>]*>Sandbox SSD<\/a>/);
     expect(html).toContain(en.shop.product.imagePlaceholderAlt);
   });
 

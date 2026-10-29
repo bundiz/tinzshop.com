@@ -106,13 +106,19 @@ export async function listStorefrontCandidates(locale: Locale = 'th'): Promise<S
 /** Every category (platforms and product types) with its names, for validating and labelling the listing. */
 export async function listStorefrontCategories(): Promise<StorefrontCategory[]> {
   const rows = await getPrisma().category.findMany({ include: { translations: true } });
-  return rows.map((row) => ({
+  return rows.map(toStorefrontCategory);
+}
+
+function toStorefrontCategory(
+  row: Prisma.CategoryGetPayload<{ include: { translations: true } }>,
+): StorefrontCategory {
+  return {
     id: row.id,
     slug: row.slug,
     parentId: row.parentId,
     position: row.position,
     names: Object.fromEntries(row.translations.map((t) => [t.locale, t.name])),
-  }));
+  };
 }
 
 const TRUE = Prisma.sql`TRUE`;
@@ -242,9 +248,19 @@ export async function findStorefrontProduct(productId: string): Promise<Storefro
       optionTypes: { orderBy: { position: 'asc' }, include: { values: { orderBy: { position: 'asc' } } } },
       variants: { orderBy: { position: 'asc' }, include: { optionValues: true } },
       channelItem: { select: { externalStatus: true, isKit: true } },
+      categories: {
+        include: { category: { include: { translations: true, parent: { include: { translations: true } } } } },
+      },
     },
   });
   if (row === null) return null;
+  // The linked categories and each one's parent, once each: the service picks the breadcrumb from them.
+  const categories = new Map<string, StorefrontCategory>();
+  for (const { category } of row.categories) {
+    for (const entry of [category, category.parent]) {
+      if (entry !== null && !categories.has(entry.id)) categories.set(entry.id, toStorefrontCategory(entry));
+    }
+  }
   return {
     productId: row.id,
     isActive: row.isActive,
@@ -272,5 +288,7 @@ export async function findStorefrontProduct(productId: string): Promise<Storefro
       isActive: v.isActive,
       optionValueIds: v.optionValues.map((link) => link.optionValueId),
     })),
+    primaryCategoryId: row.primaryCategoryId,
+    categories: [...categories.values()],
   };
 }

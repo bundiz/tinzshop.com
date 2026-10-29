@@ -62,7 +62,7 @@ export default function ProductCard({ card, layout = 'grid' }: ProductCardProps)
           className={`line-clamp-2 ${isList ? 'pr-8 sm:text-[15px]' : 'min-h-[calc(1.55em*2)]'} text-sm leading-[1.55] font-medium [overflow-wrap:anywhere] group-hover:text-primary`}
         >
           <Link
-            href={`/${locale}/products/${card.productId}`}
+            href={`/${locale}/product/${card.productId}/detail`}
             className="after:absolute after:inset-0 after:z-[2] after:content-[''] focus-visible:outline-none"
           >
             {card.name}

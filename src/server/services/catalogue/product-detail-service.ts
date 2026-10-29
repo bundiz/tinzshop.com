@@ -1,4 +1,5 @@
 import { isStorefrontVisible, pickProductName, type Locale } from './landing-catalogue-service';
+import type { StorefrontCategory } from './storefront-listing-service';
 
 export type ShippingSizeTier = 'small' | 'medium' | 'large';
 
@@ -33,7 +34,14 @@ export type StorefrontProductRow = {
     values: { id: string; value: string; position: number }[];
   }[];
   variants: StorefrontProductVariantRow[];
+  /** `product.primary_category_id`, the breadcrumb category (spec 5.2). */
+  primaryCategoryId: string | null;
+  /** The product's `product_category` rows, plus the parent of each, with their names. */
+  categories: StorefrontCategory[];
 };
+
+/** A category as the breadcrumb links to it: its slug for the listing URL and its name in the locale. */
+export type ProductDetailCategory = { slug: string; name: string };
 
 export type ProductDetailVariant = {
   variantId: string;
@@ -59,6 +67,10 @@ export type ProductDetail = {
   isPreOrder: boolean;
   releaseDate: Date | null;
   shippingSizeTier: ShippingSizeTier | null;
+  /** The breadcrumb's platform (a top-level category), or `null` for an uncategorised product. */
+  platformCategory: ProductDetailCategory | null;
+  /** The breadcrumb's product type (a child of `platformCategory`), or `null`. */
+  productType: ProductDetailCategory | null;
 };
 
 const byPosition = (a: { position: number }, b: { position: number }): number => a.position - b.position;
@@ -68,6 +80,30 @@ function cheapest(variants: StorefrontProductVariantRow[]): StorefrontProductVar
     (best, variant) => (best === undefined || variant.priceSatang < best.priceSatang ? variant : best),
     undefined,
   );
+}
+
+/**
+ * The breadcrumb's platform and type (plan 013 Task 5). The type is the primary category when that is a
+ * product type, else the product's first type by position; the platform is the type's parent, or, with no
+ * type, the primary category or the first platform. A type whose platform is not known is left out.
+ */
+function breadcrumbCategories(
+  row: Pick<StorefrontProductRow, 'primaryCategoryId' | 'categories'>,
+  locale: Locale,
+): Pick<ProductDetail, 'platformCategory' | 'productType'> {
+  const byId = new Map(row.categories.map((category) => [category.id, category]));
+  const primary = row.primaryCategoryId === null ? undefined : byId.get(row.primaryCategoryId);
+  const sorted = [...row.categories].sort((a, b) => byPosition(a, b) || a.slug.localeCompare(b.slug));
+  const parentOf = (category: StorefrontCategory) =>
+    category.parentId === null ? undefined : byId.get(category.parentId);
+  const isPlatform = (category: StorefrontCategory | undefined) =>
+    category !== undefined && category.parentId === null;
+
+  const type = [primary, ...sorted].find((category) => category !== undefined && isPlatform(parentOf(category)));
+  const platform = type === undefined ? [primary, ...sorted].find(isPlatform) : parentOf(type);
+  const named = (category: StorefrontCategory | undefined): ProductDetailCategory | null =>
+    category === undefined ? null : { slug: category.slug, name: pickProductName(category, locale) };
+  return { platformCategory: named(platform), productType: named(type) };
 }
 
 export function toProductDetail(row: StorefrontProductRow, locale: Locale): ProductDetail | null {
@@ -99,6 +135,7 @@ export function toProductDetail(row: StorefrontProductRow, locale: Locale): Prod
     isPreOrder: row.isPreOrder,
     releaseDate: row.releaseDate,
     shippingSizeTier: row.shippingSizeTier,
+    ...breadcrumbCategories(row, locale),
   };
 }
 

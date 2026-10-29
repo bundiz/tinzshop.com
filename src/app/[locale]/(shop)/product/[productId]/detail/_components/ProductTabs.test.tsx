@@ -2,7 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import th from '../../../../../../../messages/th.json';
+import th from '../../../../../../../../messages/th.json';
 import ProductTabs from './ProductTabs';
 
 function render(node: ReactNode): string {

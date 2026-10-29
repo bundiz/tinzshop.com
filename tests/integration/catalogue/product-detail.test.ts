@@ -39,6 +39,42 @@ describe('findStorefrontProduct', () => {
     }
   });
 
+  it('returns the product categories with their parents and names, for the breadcrumb', async () => {
+    await upsertCatalogueItem(twoTierSnapshot(), T1);
+    const prisma = getPrisma();
+    const product = await prisma.product.findFirstOrThrow();
+    const platform = await prisma.category.create({
+      data: { slug: 'playstation-5', position: 1, translations: { create: [{ locale: 'th', name: 'PlayStation 5' }] } },
+    });
+    const type = await prisma.category.create({
+      data: {
+        slug: 'playstation-5-game',
+        position: 1,
+        parentId: platform.id,
+        translations: { create: [{ locale: 'th', name: 'แผ่นเกม' }, { locale: 'en', name: 'Games' }] },
+      },
+    });
+    // Only the type is linked, as an admin might leave it: the platform still comes back as its parent.
+    await prisma.productCategory.create({ data: { productId: product.id, categoryId: type.id } });
+    await prisma.product.update({ where: { id: product.id }, data: { primaryCategoryId: type.id } });
+
+    const row = await findStorefrontProduct(product.id);
+    expect(row?.primaryCategoryId).toBe(type.id);
+    expect(row?.categories.map((category) => category.slug).sort()).toEqual(['playstation-5', 'playstation-5-game']);
+    expect(row?.categories.find((category) => category.id === type.id)).toEqual({
+      id: type.id,
+      slug: 'playstation-5-game',
+      parentId: platform.id,
+      position: 1,
+      names: { th: 'แผ่นเกม', en: 'Games' },
+    });
+
+    const uncategorised = await prisma.product.update({ where: { id: product.id }, data: { primaryCategoryId: null } });
+    await prisma.productCategory.deleteMany({ where: { productId: uncategorised.id } });
+    const bare = await findStorefrontProduct(product.id);
+    expect([bare?.primaryCategoryId, bare?.categories]).toEqual([null, []]);
+  });
+
   it('returns null for a malformed id without throwing', async () => {
     await expect(findStorefrontProduct('not-a-uuid')).resolves.toBeNull();
     await expect(findStorefrontProduct('00000000-0000-4000-8000-000000000000')).resolves.toBeNull();

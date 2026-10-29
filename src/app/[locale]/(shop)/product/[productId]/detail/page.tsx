@@ -3,10 +3,10 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { getLandingCatalogueReader } from '@/server/composition-root';
-import ProductSection from '../../_components/ProductSection';
-import SiteFooter from '../../_components/SiteFooter';
-import SiteHeader from '../../_components/SiteHeader';
-import { readArticlesMenu } from '../../_components/read-articles-menu';
+import ProductSection from '../../../_components/ProductSection';
+import SiteFooter from '../../../_components/SiteFooter';
+import SiteHeader from '../../../_components/SiteHeader';
+import { readArticlesMenu } from '../../../_components/read-articles-menu';
 import Breadcrumb from './_components/Breadcrumb';
 import BuyActions from './_components/BuyActions';
 import Gallery from './_components/Gallery';
@@ -26,8 +26,8 @@ type Props = {
 };
 
 /**
- * One product, built from the Shopee catalogue mirror (plan 011) and laid out as `design/product.html` (D-124).
- * Unknown, malformed or hidden ids are 404.
+ * One product at `/{locale}/product/{productId}/detail` (D-142), built from the Shopee catalogue mirror (plan 011)
+ * and laid out as `design/product.html` (D-124). Unknown, malformed or hidden ids are a real 404 (D-120).
  */
 export default async function ProductPage({ params }: Props) {
   const { locale, productId } = await params;
@@ -46,10 +46,14 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <SiteHeader path={`/products/${product.productId}`} articlesMenu={articlesMenu} />
+      <SiteHeader path={`/product/${product.productId}/detail`} articlesMenu={articlesMenu} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
-          <Breadcrumb productName={product.name} />
+          <Breadcrumb
+            productName={product.name}
+            platformCategory={product.platformCategory}
+            productType={product.productType}
+          />
           <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_280px]">
             <Gallery imageUrls={product.imageUrls} name={product.name} />
             <section aria-labelledby="product-title" className="min-w-0 rounded-(--radius) bg-bg p-4">

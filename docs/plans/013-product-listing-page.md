@@ -171,11 +171,11 @@ A product gets its type category as `primary_category_id` and a `product_categor
 
 ### Task 5: Move the product page to `/product/{id}/detail`
 
-- [ ] **Failing test:** `no link targets the old /products route` (Review Focus 5). It renders the landing, a related section and the breadcrumb, and asserts every href.
-- [ ] **Move** `src/app/[locale]/(shop)/products/[productId]/` to `src/app/[locale]/(shop)/product/[productId]/detail/`, keeping D-120: no loading boundary, real 404s, and metadata in the layout.
-- [ ] **Breadcrumb.** It is now หน้าแรก › {platform} › {type} › name, using the product's categories, with links to `/product?category=…`.
-- [ ] **Update** the `ProductCard` link, related products, docs (07, glossary) and openapi, if it names routes.
-- [ ] **Commit:** `feat: move the product page to /product/{id}/detail`.
+- [x] **Failing test:** `no link targets the old /products route` (Review Focus 5). It renders the landing, a related section and the breadcrumb, and asserts every href.
+- [x] **Move** `src/app/[locale]/(shop)/products/[productId]/` to `src/app/[locale]/(shop)/product/[productId]/detail/`, keeping D-120: no loading boundary, real 404s, and metadata in the layout.
+- [x] **Breadcrumb.** It is now หน้าแรก › {platform} › {type} › name, using the product's categories, with links to `/product?category=…`.
+- [x] **Update** the `ProductCard` link, related products, docs (07, glossary) and openapi, if it names routes.
+- [x] **Commit:** `feat: move the product page to /product/{id}/detail`.
 
 ---
 
