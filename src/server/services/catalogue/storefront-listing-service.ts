@@ -55,6 +55,12 @@ export type StorefrontListingParams = {
 export type StorefrontListingFilter = {
   categoryId: string | null;
   typeIds: string[];
+  /**
+   * The type dimension as the platform facet applies it (R1 refined, D-148): every platform's type of each
+   * chosen kind, so a platform's count matches what its link shows once `withCategory` carries the kind over.
+   * Empty when no type is chosen.
+   */
+  categoryFacetTypeIds: string[];
   /** Inclusive lower bound. */
   minSatang: bigint | null;
   /** Inclusive upper bound: `max` baht means below `max + 1` baht, so `max=999` covers ฿999.99 (D-148). */
@@ -196,6 +202,25 @@ export function parseStorefrontListingParams(
   };
 }
 
+/** A type's kind, the rest of its slug `{platform}-{kind}` (D-143); `null` for a slug outside that pattern. */
+function kindOf(type: StorefrontCategory, slugById: ReadonlyMap<string, string>): string | null {
+  const parentSlug = type.parentId === null ? undefined : slugById.get(type.parentId);
+  if (parentSlug === undefined || !type.slug.startsWith(`${parentSlug}-`)) return null;
+  return type.slug.slice(parentSlug.length + 1);
+}
+
+/** The chosen types widened to every platform's type of the same kind, in tree order. */
+function sameKindTypeIds(selected: readonly string[], categories: readonly StorefrontCategory[]): string[] {
+  if (selected.length === 0) return [];
+  const slugById = new Map(categories.map((c) => [c.id, c.slug]));
+  const chosen = categories.filter((c) => c.parentId !== null && selected.includes(c.slug));
+  const kinds = new Set(chosen.map((c) => kindOf(c, slugById)).filter((kind) => kind !== null));
+  return categories
+    .filter((c) => c.parentId !== null)
+    .filter((c) => selected.includes(c.slug) || kinds.has(kindOf(c, slugById) ?? ''))
+    .map((c) => c.id);
+}
+
 /** The repository filter for validated params; every slug in them is known to `categories`. */
 export function toStorefrontListingFilter(
   params: StorefrontListingParams,
@@ -206,6 +231,7 @@ export function toStorefrontListingFilter(
   return {
     categoryId: params.category === null ? null : idOf(params.category),
     typeIds: params.types.map(idOf),
+    categoryFacetTypeIds: sameKindTypeIds(params.types, categories),
     minSatang: params.minBaht === null ? null : BigInt(params.minBaht) * 100n,
     maxSatang: params.maxBaht === null ? null : (BigInt(params.maxBaht) + 1n) * 100n - 1n,
     inStock: params.inStock,

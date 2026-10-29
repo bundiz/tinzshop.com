@@ -77,6 +77,24 @@ describe('ListingPriceRange', () => {
     expect(push).toHaveBeenCalledOnce();
   });
 
+  it('applies the same price again after the listing moved away and back', () => {
+    render(null);
+    const input = minInput();
+    type(input, '500');
+    pressEnter(input);
+    expect(push).toHaveBeenLastCalledWith('/th/product?min=500', { scroll: false });
+
+    // The new URL arrives, then a chip or ล้างทั้งหมด (a server link) removes the bound again.
+    render(500);
+    render(null);
+    expect(input.value).toBe('');
+
+    type(input, '500');
+    pressEnter(input);
+    expect(push).toHaveBeenCalledTimes(2);
+    expect(push).toHaveBeenLastCalledWith('/th/product?min=500', { scroll: false });
+  });
+
   it('puts an invalid entry back to the URL value without navigating', () => {
     render(1000);
     const input = minInput();

@@ -161,6 +161,7 @@ describe('toStorefrontListingFilter', () => {
     expect(toStorefrontListingFilter(params!, TREE)).toEqual({
       categoryId: 'ps',
       typeIds: ['ps-game'],
+      categoryFacetTypeIds: ['ps-game', 'sw-game'],
       minSatang: 1000n,
       maxSatang: 2099n,
       inStock: false,
@@ -170,6 +171,29 @@ describe('toStorefrontListingFilter', () => {
       page: 2,
       pageSize: 24,
     });
+  });
+});
+
+describe('toStorefrontListingFilter categoryFacetTypeIds', () => {
+  it('matches the platform facet by kind: every platform\'s type of each chosen kind (R1 refinement, D-148)', () => {
+    const consoles = toStorefrontListingFilter(parse({ type: 'playstation-5-console' })!, TREE);
+    expect(consoles.typeIds).toEqual(['ps-console']);
+    expect(consoles.categoryFacetTypeIds).toEqual(['ps-console']);
+    const both = toStorefrontListingFilter(parse({ type: ['playstation-5-game', 'nintendo-switch-game'] })!, TREE);
+    expect(both.categoryFacetTypeIds).toEqual(['ps-game', 'sw-game']);
+  });
+
+  it('is empty without a type', () => {
+    expect(toStorefrontListingFilter(parse({ category: 'playstation-5' })!, TREE).categoryFacetTypeIds).toEqual([]);
+  });
+
+  it('keeps a type whose slug is outside the {platform}-{kind} pattern as itself', () => {
+    const tree: StorefrontCategory[] = [
+      ...TREE,
+      { id: 'ps-odd', slug: 'ps-odd', parentId: 'ps', position: 9, names: { th: 'อื่นๆ' } },
+    ];
+    const filter = toStorefrontListingFilter(parseStorefrontListingParams({ type: 'ps-odd' }, tree)!, tree);
+    expect(filter.categoryFacetTypeIds).toEqual(['ps-odd']);
   });
 });
 

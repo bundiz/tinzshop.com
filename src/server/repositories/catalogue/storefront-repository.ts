@@ -140,6 +140,8 @@ function dimensions(filter: StorefrontListingFilter) {
     category: filter.categoryId === null ? TRUE : inCategories([filter.categoryId]),
     // Several types match any of them; every dimension ANDs with the others.
     type: filter.typeIds.length === 0 ? TRUE : inCategories(filter.typeIds),
+    // The platform facet's type dimension: the chosen kinds on every platform (D-148).
+    typeByKind: filter.categoryFacetTypeIds.length === 0 ? TRUE : inCategories(filter.categoryFacetTypeIds),
     price: bounds.length === 0 ? TRUE : Prisma.join(bounds, ' AND '),
     inStock: filter.inStock ? Prisma.sql`b.in_stock` : TRUE,
     kit: filter.kit ? Prisma.sql`b.is_kit` : TRUE,
@@ -178,7 +180,9 @@ export async function listStorefrontProducts(filter: StorefrontListingFilter): P
 }
 
 /**
- * The facet counts in one query (R1): each applies every active filter except its own dimension. A product
+ * The facet counts in one query (R1): each applies every active filter except its own dimension. The
+ * platform facet matches the type dimension by kind (`categoryFacetTypeIds`, D-148), since choosing a
+ * platform carries the chosen kinds over to its types; every other facet applies the types as chosen. A product
  * counts once per category, since `product_category` holds one row per (product, category), so linking a
  * product to its platform and its type never counts it twice in either.
  */
@@ -187,7 +191,8 @@ export async function countStorefrontFacets(filter: StorefrontListingFilter): Pr
   const rows = await getPrisma().$queryRaw<{ facet: string; key: string | null; count: number }[]>`
     WITH flagged AS (
       SELECT b.id, b.in_stock, b.is_kit, b.is_pre_order,
-             (${d.category}) AS m_category, (${d.type}) AS m_type, (${d.price}) AS m_price,
+             (${d.category}) AS m_category, (${d.type}) AS m_type, (${d.typeByKind}) AS m_type_kind,
+             (${d.price}) AS m_price,
              (${d.inStock}) AS m_in_stock, (${d.kit}) AS m_kit, (${d.preOrder}) AS m_pre_order
       FROM (${VISIBLE_PRODUCTS}) b
     )
@@ -195,7 +200,7 @@ export async function countStorefrontFacets(filter: StorefrontListingFilter): Pr
     FROM flagged f
     JOIN product_category pc ON pc.product_id = f.id
     JOIN category c ON c.id = pc.category_id AND c.parent_id IS NULL
-    WHERE f.m_type AND f.m_price AND f.m_in_stock AND f.m_kit AND f.m_pre_order
+    WHERE f.m_type_kind AND f.m_price AND f.m_in_stock AND f.m_kit AND f.m_pre_order
     GROUP BY c.id
     UNION ALL
     SELECT 'type', c.id::text, COUNT(*)::int

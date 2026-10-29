@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
   createContext,
   useContext,
+  useEffect,
   useOptimistic,
   useRef,
   useState,
@@ -143,11 +144,16 @@ export function ListingPriceRange({
 }) {
   const [, go] = useListingNavigation();
   // Enter then blur would apply the same change twice before the new URL arrives; keyed by the URL it
-  // started from, so the same change made again from another state still applies.
+  // started from, and forgotten once the listing changes (the new URL, a chip, back/forward), so the same
+  // change made again later still applies.
+  const current = listingHref(locale, active);
   const pending = useRef<string | null>(null);
+  useEffect(() => {
+    pending.current = null;
+  }, [current]);
   const apply = (key: 'minBaht' | 'maxBaht') => (next: number | null) => {
     const href = listingHref(locale, nextListing(active, { [key]: next }));
-    const change = `${listingHref(locale, active)} -> ${href}`;
+    const change = `${current} -> ${href}`;
     if (pending.current === change) return;
     pending.current = change;
     go(href);

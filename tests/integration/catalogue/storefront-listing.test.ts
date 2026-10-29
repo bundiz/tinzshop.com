@@ -118,9 +118,13 @@ describe('listStorefrontProducts and countStorefrontFacets', () => {
     });
     expect(names(filtered.cards)).toEqual(['PS5 Game Spider']);
     expect(filtered.total).toBe(1);
-    // Categories ignore `category`: PS5 games in range and in stock (Spider); no Switch product is a PS5 game.
+    // Categories ignore `category` and match `type` by kind (D-148): games in range and in stock on each
+    // platform, as the platform link carries the kind over (Spider on PS5, Kart on Switch).
     expect(count(filtered.facets.categories, 'playstation-5')).toBe(1);
-    expect(count(filtered.facets.categories, 'nintendo-switch')).toBe(0);
+    expect(count(filtered.facets.categories, 'nintendo-switch')).toBe(1);
+    expect(count(filtered.facets.categories, 'it-gadgets')).toBe(0);
+    const switchGames = await listing({ category: 'nintendo-switch', type: 'nintendo-switch-game', min: '1000', max: '2000', in_stock: '1' });
+    expect(switchGames.total).toBe(count(filtered.facets.categories, 'nintendo-switch'));
     // Types ignore `type`: PS5 products in range and in stock (Spider, DualSense), the console is out of range.
     expect(count(filtered.facets.types, 'playstation-5-game')).toBe(1);
     expect(count(filtered.facets.types, 'playstation-5-controller')).toBe(1);
