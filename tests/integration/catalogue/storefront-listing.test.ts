@@ -256,18 +256,22 @@ describe('listStorefrontCandidates (landing, sort and limit in SQL)', () => {
     expect(names(catalogue.preOrders)).toEqual(['Pre 5', 'Pre 4', 'Pre 3', 'Pre 2']);
   });
 
-  it('keeps ties at the cutoff so the name tie-break matches the old in-memory sort', async () => {
-    for (let i = 0; i < 7; i++) await seed({ name: `Top ${i}`, variants: [[100, 1]], sales: 100 + i });
-    // The 8th and 9th (and 10th) best sellers tie on sales; seeded out of name order, so ids decide nothing.
-    for (const name of ['Tie C', 'Tie A', 'Tie B']) await seed({ name, variants: [[100, 1]], sales: 5 });
-    await seed({ name: 'Below', variants: [[100, 1]], sales: 1 });
-
-    const candidates = await listStorefrontCandidates();
-    const candidateNames = candidates.map((c) => c.names.th);
-    expect(candidateNames.filter((n) => n?.startsWith('Tie')).sort()).toEqual(['Tie A', 'Tie B', 'Tie C']);
-    expect(candidateNames).not.toContain('Below');
-    const catalogue = buildLandingCatalogue(candidates, 'th');
+  it('returns exactly the section limits when every product has equal sales, in a deterministic order', async () => {
+    for (let i = 0; i < 15; i++) {
+      await seed({ name: `Same ${i}`, variants: [[100, 1]], sales: 0, kit: i % 2 === 0, preOrder: i % 3 === 0 });
+    }
+    const first = await listStorefrontCandidates();
+    const catalogue = buildLandingCatalogue(first, 'th');
     expect(catalogue.bestSellers).toHaveLength(8);
-    expect(catalogue.bestSellers[7]?.name).toBe('Tie A');
+    expect(catalogue.bundles).toHaveLength(6);
+    expect(catalogue.preOrders).toHaveLength(4);
+    expect(first.length).toBeLessThanOrEqual(8 + 6 + 4);
+
+    const ids = (candidates: { productId: string }[]) => candidates.map((c) => c.productId).sort();
+    for (let run = 0; run < 3; run++) {
+      const again = await listStorefrontCandidates();
+      expect(ids(again)).toEqual(ids(first));
+      expect(buildLandingCatalogue(again, 'th')).toEqual(catalogue);
+    }
   });
 });

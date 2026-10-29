@@ -1,6 +1,6 @@
 import { Prisma } from '@/generated/prisma/client';
 import { getPrisma } from '@/server/repositories/shared/prisma';
-import type { StorefrontCandidate } from '@/server/services/catalogue/landing-catalogue-service';
+import type { Locale, StorefrontCandidate } from '@/server/services/catalogue/landing-catalogue-service';
 import type { StorefrontProductRow } from '@/server/services/catalogue/product-detail-service';
 import type {
   StorefrontCategory,
@@ -77,19 +77,29 @@ async function loadCandidates(ids: string[]): Promise<StorefrontCandidate[]> {
 
 /**
  * The landing page's products (plan 013): the 8 best sellers, the 6 best-selling kits and the 4 soonest
- * pre-orders, each sorted and limited in SQL, as one de-duplicated list. The limit is `WITH TIES` on the
- * sales or date key only, so every product tied with the last one comes too, and the service's sort
- * (which breaks such ties by the locale's name) picks within them exactly as it did over every product.
+ * pre-orders, each sorted and limited in SQL, as one de-duplicated list of at most 18. Ties break by the
+ * locale's name (as `pickProductName` picks it) under the database collation, then id, so the read stays
+ * bounded and deterministic; at a cutoff tie this may pick a different product than JS `localeCompare`
+ * would (ruling R4, D-147). The service builds the sections from these rows with its own sort.
  */
-export async function listStorefrontCandidates(): Promise<StorefrontCandidate[]> {
+export async function listStorefrontCandidates(locale: Locale = 'th'): Promise<StorefrontCandidate[]> {
+  const name =
+    locale === 'en'
+      ? Prisma.sql`COALESCE(NULLIF(en.name, ''), th.name, en.name, '')`
+      : Prisma.sql`COALESCE(th.name, en.name, '')`;
   const rows = await getPrisma().$queryRaw<{ id: string }[]>`
-    WITH visible AS (${VISIBLE_PRODUCTS})
-    (SELECT id FROM visible ORDER BY sales_count DESC NULLS LAST FETCH FIRST 8 ROWS WITH TIES)
+    WITH named AS (
+      SELECT b.*, ${name} AS name
+      FROM (${VISIBLE_PRODUCTS}) b
+      LEFT JOIN product_translation th ON th.product_id = b.id AND th.locale = 'th'
+      LEFT JOIN product_translation en ON en.product_id = b.id AND en.locale = 'en'
+    )
+    (SELECT id FROM named ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 8)
     UNION
-    (SELECT id FROM visible WHERE is_kit ORDER BY sales_count DESC NULLS LAST FETCH FIRST 6 ROWS WITH TIES)
+    (SELECT id FROM named WHERE is_kit ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 6)
     UNION
-    (SELECT id FROM visible WHERE is_pre_order
-     ORDER BY release_date ASC NULLS LAST, sales_count DESC NULLS LAST FETCH FIRST 4 ROWS WITH TIES)`;
+    (SELECT id FROM named WHERE is_pre_order
+     ORDER BY release_date ASC NULLS LAST, sales_count DESC NULLS LAST, name, id LIMIT 4)`;
   return loadCandidates(rows.map((row) => row.id));
 }
 
