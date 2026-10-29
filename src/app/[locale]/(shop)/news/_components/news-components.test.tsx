@@ -9,6 +9,7 @@ import NewsCard from './NewsCard';
 import NewsFeature from './NewsFeature';
 import NewsSidebar from './NewsSidebar';
 import NewsTabs from './NewsTabs';
+import { scrollEdges } from './scroll-edges';
 import Pagination, { pageItems } from './Pagination';
 
 function render(node: ReactNode, locale: 'th' | 'en' = 'th'): string {
@@ -68,6 +69,38 @@ describe('NewsTabs', () => {
     const html = render(<NewsTabs categories={[{ slug: 'x', name: '<b>A&B</b>', count: 1 }]} activeCategorySlug={null} />);
     expect(html).toContain('&lt;b&gt;A&amp;B&lt;/b&gt;');
     expect(html).not.toContain('<b>');
+  });
+});
+
+describe('NewsTabs scroll arrows', () => {
+  it('renders the strip with no arrow buttons before the browser measures it', () => {
+    const html = render(<NewsTabs categories={CATEGORIES} activeCategorySlug={null} />);
+    expect(html).toContain('overflow-x-auto');
+    expect(html).not.toContain('<button');
+  });
+
+  it('has Thai and English arrow labels', () => {
+    expect(th.shop.news.tabs.scrollPrev).toBeTruthy();
+    expect(th.shop.news.tabs.scrollNext).toBeTruthy();
+    expect(en.shop.news.tabs.scrollPrev).toBe('Scroll categories left');
+    expect(en.shop.news.tabs.scrollNext).toBe('Scroll categories right');
+  });
+});
+
+describe('scrollEdges', () => {
+  it('scrolls neither way when everything fits', () => {
+    expect(scrollEdges(0, 500, 500)).toEqual({ canScrollLeft: false, canScrollRight: false });
+  });
+  it('scrolls right only at the start', () => {
+    expect(scrollEdges(0, 500, 900)).toEqual({ canScrollLeft: false, canScrollRight: true });
+  });
+  it('scrolls both ways in the middle', () => {
+    expect(scrollEdges(200, 500, 900)).toEqual({ canScrollLeft: true, canScrollRight: true });
+  });
+  it('scrolls left only at the end, within 1px', () => {
+    expect(scrollEdges(400, 500, 900)).toEqual({ canScrollLeft: true, canScrollRight: false });
+    expect(scrollEdges(399.5, 500, 900)).toEqual({ canScrollLeft: true, canScrollRight: false });
+    expect(scrollEdges(1, 500, 900).canScrollLeft).toBe(false);
   });
 });
 
