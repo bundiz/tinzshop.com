@@ -1,8 +1,8 @@
-# Tinzshop
+# Local setup
 
-Online shop for games, consoles and IT equipment: storefront, staff back office and game news, in Thai and English. This file is how to **run it on your own machine**.
+How to install and run Tinzshop on your own machine: Docker PostgreSQL, `.env`, migrations, the dev server, and the scripts that load the data.
 
-For what the project is and the rules for working on it, read [`CLAUDE.md`](CLAUDE.md) and [`docs/README.md`](docs/README.md).
+For what the project is and the rules for working on it, read [`CLAUDE.md`](../CLAUDE.md) and [`README.md`](README.md).
 
 ---
 
@@ -153,7 +153,7 @@ The integration tests empty `tinzshop_test` between tests. They refuse to run ag
 
 ## 9. Where to read next
 
-- [`docs/09-coding-guidelines.md`](docs/09-coding-guidelines.md): branches, pull requests, file ownership. Every change reaches `main` through a pull request.
-- [`docs/04-tech-stack-and-structure.md`](docs/04-tech-stack-and-structure.md): where every file goes.
-- [`docs/06-api.md`](docs/06-api.md) and [`docs/openapi.yaml`](docs/openapi.yaml): every endpoint, including the jobs above.
-- [`docs/14-integrations.md`](docs/14-integrations.md): Shopee and the old WordPress site in detail.
+- [`09-coding-guidelines.md`](09-coding-guidelines.md): branches, pull requests, file ownership. Every change reaches `main` through a pull request.
+- [`04-tech-stack-and-structure.md`](04-tech-stack-and-structure.md): where every file goes.
+- [`06-api.md`](06-api.md) and [`openapi.yaml`](openapi.yaml): every endpoint, including the jobs above.
+- [`14-integrations.md`](14-integrations.md): Shopee and the old WordPress site in detail.

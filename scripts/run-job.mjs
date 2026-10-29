@@ -26,7 +26,7 @@ if (flag !== undefined && !(flag === '--full' && job === 'news-import')) {
 
 const secret = process.env.JOB_SECRET;
 if (!secret) {
-  console.error('JOB_SECRET is not set. Add it to .env (see README.md, step 3).');
+  console.error('JOB_SECRET is not set. Add it to .env (see docs/16-local-setup.md, step 3).');
   process.exit(2);
 }
 

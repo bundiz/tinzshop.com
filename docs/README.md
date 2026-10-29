@@ -1,6 +1,6 @@
 # Tinzshop Documentation
 
-To **install and run the app locally** (Docker PostgreSQL, `.env`, loading the data), see the root [`README.md`](../README.md).
+To **install and run the app locally** (Docker PostgreSQL, `.env`, loading the data), see [`16-local-setup.md`](16-local-setup.md).
 
 Start here. Everything in this folder derives from one source:
 `reference/client-summary-th.md`.
@@ -32,6 +32,7 @@ not ([ADR-0002](adr/ADR-0002-hosting-and-deployment.md)).
 | | [13-open-questions.md](13-open-questions.md) | 55 questions (Q-001…Q-055) — 37 resolved, 5 partially resolved, 13 still open. See its residual-items table for what's left to chase |
 | | [14-integrations.md](14-integrations.md) | Every external system — K-Payment, BigSeller, Shopee, mail relay, Cloudflare |
 | | [15-acceptance-criteria.md](15-acceptance-criteria.md) | What must pass before each phase is considered complete, and who signs off |
+| | [16-local-setup.md](16-local-setup.md) | Install and run the app locally: Docker PostgreSQL, `.env`, migrations, the dev server, and the job scripts that load the data |
 
 ## Folders
 

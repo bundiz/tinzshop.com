@@ -190,7 +190,7 @@ module, so a missing variable fails immediately and loudly rather than as
 | `db:up`, `db:deploy`, `db:generate` | Start the local Docker PostgreSQL, apply every migration non-interactively, generate the Prisma client | — |
 | `job:*`, `data:load` | Call the job endpoints on a running dev server through `scripts/run-job.mjs` (`JOB_SECRET` and `APP_URL` from `.env`); `data:load` runs sync, activate, categorise and news import in order | — |
 
-How to set up and run the app locally, step by step, is in the repository's root [`README.md`](../README.md).
+How to set up and run the app locally, step by step, is in [`16-local-setup.md`](16-local-setup.md).
 
 The import-boundary rule is not advisory. It fails the build when
 `src/server/services/` imports React, Next, or Prisma, and when `src/app/`
