@@ -113,6 +113,7 @@ model OptionType {
   product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   values    OptionValue[]
 
+  @@index([productId])
   @@map("option_type")
 }
 
@@ -142,6 +143,7 @@ model Variant {
   optionValues        VariantOptionValue[]
   channelListing      ChannelListing?
 
+  @@index([productId])
   @@index([modelSku])
   @@map("variant")
 }

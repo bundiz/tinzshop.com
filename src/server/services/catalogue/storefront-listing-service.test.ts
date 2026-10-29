@@ -117,8 +117,28 @@ describe('parseStorefrontListingParams', () => {
         names: {},
       })),
     ];
-    const params = Array.from({ length: 30 }, (_, i) => `t${i}`).concat('unknown');
-    expect(parseStorefrontListingParams({ type: params }, tree)?.types).toHaveLength(20);
+    const params = Array.from({ length: 30 }, (_, i) => `t${i}`);
+    expect(parseStorefrontListingParams({ type: params }, tree)?.types).toEqual(params.slice(0, 20));
+    // An unknown slug is a 404 even after the 20th distinct one.
+    expect(parseStorefrontListingParams({ type: [...params, 'unknown'] }, tree)).toBeNull();
+  });
+
+  it('treats an empty value as absent', () => {
+    expect(
+      parse({ category: '', sort: '', view: '', page: '', min: '', max: '', type: '', in_stock: '' }),
+    ).toEqual(parse({}));
+    expect(parse({ category: ['', ''], sort: ['', 'newest'], page: ['', '2'], type: ['', 'playstation-5-game', ''] })).toMatchObject({
+      category: null,
+      sort: 'newest',
+      page: 2,
+      types: ['playstation-5-game'],
+    });
+    expect(parse({ min: ['', '100'], max: ['', ''] })).toMatchObject({ minBaht: 100, maxBaht: null });
+  });
+
+  it('still answers 404 for a repeated non-empty value', () => {
+    expect(parse({ sort: ['newest', 'newest'] })).toBeNull();
+    expect(parse({ category: ['', 'playstation-5', 'playstation-5'] })).toBeNull();
   });
 });
 

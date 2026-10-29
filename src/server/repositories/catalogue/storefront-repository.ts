@@ -1,6 +1,6 @@
 import { Prisma } from '@/generated/prisma/client';
 import { getPrisma } from '@/server/repositories/shared/prisma';
-import type { Locale, StorefrontCandidate } from '@/server/services/catalogue/landing-catalogue-service';
+import type { StorefrontCandidate } from '@/server/services/catalogue/landing-catalogue-service';
 import type { StorefrontProductRow } from '@/server/services/catalogue/product-detail-service';
 import type {
   StorefrontCategory,
@@ -17,9 +17,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * NORMAL, and at least one active variant. Each row carries what the listing filters and sorts on, the
  * price and stock taken from the active variants only: `min_price` is the cheapest active variant (sold
  * out or not) and `in_stock` is whether any active variant has stock; the inner join on the grouped active
- * variants is the "at least one active variant" rule. A grouped subquery, not a lateral join: `variant`
- * has no index on `product_id`, so a lateral join scanned it once per product (EXPLAIN, plan 013 Task 3).
- * Used as `FROM (...) b`.
+ * variants is the "at least one active variant" rule. A grouped subquery, not a lateral join, because
+ * every listing, facet and landing query aggregates the whole visible set: one pass over `variant` beats
+ * a lookup per product (EXPLAIN, plan 013 Task 3, D-147). Used as `FROM (...) b`.
  */
 const VISIBLE_PRODUCTS = Prisma.sql`
   SELECT p.id, p.is_pre_order, p.release_date, ci.is_kit, ci.sales_count, ci.external_created_at,
@@ -77,28 +77,19 @@ async function loadCandidates(ids: string[]): Promise<StorefrontCandidate[]> {
 
 /**
  * The landing page's products (plan 013): the 8 best sellers, the 6 best-selling kits and the 4 soonest
- * pre-orders, each sorted and limited in SQL, as one de-duplicated list. Ties break by the locale's name
- * (as `pickProductName` picks it), then id. The service builds the sections from this list exactly as it
- * would from every visible product, since each section's rows are all here.
+ * pre-orders, each sorted and limited in SQL, as one de-duplicated list. The limit is `WITH TIES` on the
+ * sales or date key only, so every product tied with the last one comes too, and the service's sort
+ * (which breaks such ties by the locale's name) picks within them exactly as it did over every product.
  */
-export async function listStorefrontCandidates(locale: Locale = 'th'): Promise<StorefrontCandidate[]> {
-  const name =
-    locale === 'en'
-      ? Prisma.sql`COALESCE(NULLIF(en.name, ''), th.name, en.name, '')`
-      : Prisma.sql`COALESCE(th.name, en.name, '')`;
+export async function listStorefrontCandidates(): Promise<StorefrontCandidate[]> {
   const rows = await getPrisma().$queryRaw<{ id: string }[]>`
-    WITH named AS (
-      SELECT b.*, ${name} AS name
-      FROM (${VISIBLE_PRODUCTS}) b
-      LEFT JOIN product_translation th ON th.product_id = b.id AND th.locale = 'th'
-      LEFT JOIN product_translation en ON en.product_id = b.id AND en.locale = 'en'
-    )
-    (SELECT id FROM named ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 8)
+    WITH visible AS (${VISIBLE_PRODUCTS})
+    (SELECT id FROM visible ORDER BY sales_count DESC NULLS LAST FETCH FIRST 8 ROWS WITH TIES)
     UNION
-    (SELECT id FROM named WHERE is_kit ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 6)
+    (SELECT id FROM visible WHERE is_kit ORDER BY sales_count DESC NULLS LAST FETCH FIRST 6 ROWS WITH TIES)
     UNION
-    (SELECT id FROM named WHERE is_pre_order
-     ORDER BY release_date ASC NULLS LAST, sales_count DESC NULLS LAST, name, id LIMIT 4)`;
+    (SELECT id FROM visible WHERE is_pre_order
+     ORDER BY release_date ASC NULLS LAST, sales_count DESC NULLS LAST FETCH FIRST 4 ROWS WITH TIES)`;
   return loadCandidates(rows.map((row) => row.id));
 }
 

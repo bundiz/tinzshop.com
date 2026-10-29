@@ -15,7 +15,7 @@ import {
 export const STOREFRONT_LISTING_PAGE_SIZE = 24;
 /** The highest `page` accepted; anything above is a 404 without a query. */
 export const STOREFRONT_LISTING_MAX_PAGE = 10_000;
-/** At most this many distinct `type` values are read; any further ones are ignored. */
+/** At most this many distinct `type` values are used; further known ones are ignored (unknown ones are a 404). */
 export const STOREFRONT_LISTING_MAX_TYPES = 20;
 /** A `min`/`max` longer than this many digits is ignored, so the satang value always fits a bigint. */
 const MAX_BAHT_DIGITS = 12;
@@ -103,10 +103,16 @@ export type StorefrontListingDeps = {
 const PAGE = /^[1-9][0-9]*$/;
 const BAHT = /^[0-9]+$/;
 
-/** A single-valued param: absent is `undefined`; repeated is `null` (invalid). */
+/** A param's non-empty values: an empty value (`category=`) counts as absent, as an empty form field sends it. */
+function values(value: string | string[] | undefined): string[] {
+  return (value === undefined ? [] : [value].flat()).filter((text) => text !== '');
+}
+
+/** A single-valued param: absent or empty is `undefined`; two non-empty values are `null` (invalid). */
 function single(value: string | string[] | undefined): string | undefined | null {
-  if (Array.isArray(value)) return value.length === 1 ? value[0] : null;
-  return value;
+  const present = values(value);
+  if (present.length > 1) return null;
+  return present[0];
 }
 
 function baht(value: string | string[] | undefined): number | null {
@@ -120,10 +126,11 @@ function oneOf<T extends string>(allowed: readonly T[], value: string): value is
 }
 
 /**
- * Validates the listing's search params (R2). `null` means a 404: a `page` that is not a plain positive
- * integer up to 10,000, or an unknown `category`, `type`, `sort` or `view`, or one of those given twice
- * (`type` excepted, which repeats). A bad `min` or `max` is dropped, and `min > max` is swapped. A flag is
- * on only for the value `1`. Category slugs are checked against the stored tree: `category` must be a
+ * Validates the listing's search params (R2). An empty value counts as absent. `null` means a 404: a
+ * `page` that is not a plain positive integer up to 10,000, or an unknown `category`, `type`, `sort` or
+ * `view`, or one of those given twice with non-empty values (`type` excepted, which repeats; at most 20
+ * distinct types are used, after every one is checked). A bad `min` or `max` is dropped, and `min > max`
+ * is swapped. A flag is on only for the value `1`. Category slugs are checked against the stored tree: `category` must be a
  * platform (no parent) and each `type` a product type (has a parent). Never throws.
  */
 export function parseStorefrontListingParams(
@@ -157,14 +164,10 @@ export function parseStorefrontListingParams(
   const category = categoryText ?? null;
   if (category !== null && !platforms.has(category)) return null;
 
-  const rawTypes = searchParams.type === undefined ? [] : [searchParams.type].flat();
-  const types: string[] = [];
-  for (const slug of rawTypes) {
-    if (types.includes(slug)) continue;
-    if (types.length === STOREFRONT_LISTING_MAX_TYPES) break;
-    if (!typeSlugs.has(slug)) return null;
-    types.push(slug);
-  }
+  // Every distinct slug is checked before the cap, so an unknown one is always a 404 wherever it comes.
+  const distinctTypes = [...new Set(values(searchParams.type))];
+  if (distinctTypes.some((slug) => !typeSlugs.has(slug))) return null;
+  const types = distinctTypes.slice(0, STOREFRONT_LISTING_MAX_TYPES);
 
   let minBaht = baht(searchParams.min);
   let maxBaht = baht(searchParams.max);

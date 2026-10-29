@@ -130,12 +130,13 @@ export function buildLandingCatalogue(candidates: StorefrontCandidate[], locale:
 }
 
 /**
- * The repository sorts and limits each section in SQL (plan 013) and passes only those rows; the sections
- * are built here with the same rules, so the output is what the full visible list would give.
+ * The repository sorts and limits each section in SQL (plan 013), keeping ties at each cutoff, and passes
+ * only those rows; the sections are built here with the same rules, so the output is what the full
+ * visible list would give.
  */
 export async function getLandingCatalogue(
-  deps: { listStorefrontCandidates: (locale: Locale) => Promise<StorefrontCandidate[]> },
+  deps: { listStorefrontCandidates: () => Promise<StorefrontCandidate[]> },
   locale: Locale,
 ): Promise<LandingCatalogue> {
-  return buildLandingCatalogue(await deps.listStorefrontCandidates(locale), locale);
+  return buildLandingCatalogue(await deps.listStorefrontCandidates(), locale);
 }
