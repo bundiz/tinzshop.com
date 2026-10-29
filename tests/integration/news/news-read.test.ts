@@ -130,7 +130,7 @@ describe('unlisted categories against the database', () => {
   it('gives them no tab, no card tag, no breadcrumb and a 404 route, and keeps their articles under ทั้งหมด', async () => {
     const news = await category('news', 'News', 2);
     const uncategorized = await category('uncategorized', 'Uncategorized', 1, null, false);
-    const reviews = await category('reviews', 'Reviews', 3, null, false);
+    await category('reviews', 'Reviews', 3, null, false);
     const onlyUnlisted = await article([uncategorized]);
     const both = await article([uncategorized, news]);
 
@@ -141,10 +141,24 @@ describe('unlisted categories against the database', () => {
     expect(all?.items.map((item) => item.categoryName)).toEqual(['News', null]);
     expect(await listNews({ locale: 'th', categorySlug: 'uncategorized', page: 1 })).toBeNull();
     expect(await listNews({ locale: 'th', categorySlug: 'reviews', page: 1 })).toBeNull();
-    expect(reviews).toBeTruthy();
 
     const detail = await getNewsArticle({ locale: 'th', slug: both });
     expect(detail?.categories).toEqual([{ slug: 'news', name: 'News' }]);
+  });
+});
+
+describe('a listed parent with an unlisted child', () => {
+  it("leaves the unlisted child's articles out of the parent's page and tab count", async () => {
+    const news = await category('news', 'News', 1);
+    const hiddenChild = await category('hidden-child', 'Hidden', 2, news, false);
+    const direct = await article([news]);
+    await article([hiddenChild]);
+
+    const page = await listNews({ locale: 'th', categorySlug: 'news', page: 1 });
+
+    expect(page?.items.map((item) => item.slug)).toEqual([direct]);
+    expect(page?.total).toBe(1);
+    expect(page?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
   });
 });
 

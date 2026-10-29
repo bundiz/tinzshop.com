@@ -404,6 +404,53 @@ describe('news import: excluded and unlisted categories (Q-048, 2026-10-29)', ()
     expect(await linkedSourceIds(401n)).toEqual([]);
   });
 
+  it('is a no-op when the source has no excluded category', async () => {
+    const noExcluded = SITE_CATEGORIES.filter((c) => c.id !== 7 && c.parent !== 7);
+    await seedFirstImport([]);
+    const news = await prisma().newsCategory.findUniqueOrThrow({ where: { sourceId: 5n } });
+    const reviews = await prisma().newsCategory.findUniqueOrThrow({ where: { sourceId: 7n } });
+    const otherwiseDeleted = new Date('2026-03-01T00:00:00Z');
+    for (const [id, categoryId] of [
+      [501n, news.id],
+      [502n, reviews.id],
+    ] as const) {
+      await prisma().newsArticle.create({
+        data: {
+          slug: `post-${id}`,
+          sourceId: id,
+          sourceModifiedAt: new Date(`${MODIFIED}Z`),
+          status: 'published',
+          publishedAt: new Date('2026-01-01T00:00:00Z'),
+          deletedAt: otherwiseDeleted,
+          translations: { create: { locale: 'th', title: `ข่าว ${id}` } },
+          categories: { create: [{ categoryId }] },
+        },
+      });
+    }
+    const links = await prisma().newsArticleCategory.count();
+
+    await run(
+      fakeClient({ posts: [post(501, { modified_gmt: MODIFIED }), post(502, { categories: [7], modified_gmt: MODIFIED })], categories: noExcluded }),
+    );
+
+    expect(await prisma().newsArticleCategory.count()).toBe(links);
+    for (const id of [501n, 502n]) {
+      expect((await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: id } })).deletedAt).toEqual(otherwiseDeleted);
+    }
+  });
+
+  it('never un-deletes an imported article soft-deleted for another reason', async () => {
+    await seedFirstImport([{ id: 601, categories: [5, 7] }]);
+    const otherwiseDeleted = new Date('2026-03-01T00:00:00Z');
+    await prisma().newsArticle.update({ where: { sourceId: 601n }, data: { deletedAt: otherwiseDeleted } });
+
+    await run(fakeClient({ posts: [post(601, { categories: [5, 7], modified_gmt: MODIFIED })], categories: SITE_CATEGORIES }));
+
+    const row = await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 601n } });
+    expect(row.deletedAt).toEqual(otherwiseDeleted);
+    expect(await linkedSourceIds(601n)).toEqual([5n]);
+  });
+
   it('never touches deleted_at of an article that was not imported', async () => {
     await seedFirstImport([]);
     const reviews = await prisma().newsCategory.findUniqueOrThrow({ where: { sourceId: 7n } });

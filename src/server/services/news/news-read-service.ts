@@ -163,6 +163,9 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
   const categories = await deps.news.listNewsCategories();
   const byId = new Map(categories.map((category) => [category.id, category]));
   const tree = subtrees(categories);
+  // A page and its tab count cover only the listed categories of the subtree (D-139).
+  const listedSubtree = (id: string): string[] =>
+    [...(tree.get(id) ?? [id])].filter((member) => byId.get(member)?.isListed === true);
 
   let active: NewsCategoryRow | null = null;
   if (input.categorySlug !== undefined) {
@@ -170,7 +173,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     active = categories.find((category) => category.isListed && category.slug === input.categorySlug) ?? null;
     if (active === null) return null;
   }
-  const categoryIds = active === null ? null : [...(tree.get(active.id) ?? [active.id])];
+  const categoryIds = active === null ? null : listedSubtree(active.id);
 
   const total = await deps.news.countLiveNewsArticles({ categoryIds, now });
   const totalPages = Math.max(1, Math.ceil(total / NEWS_PAGE_SIZE));
@@ -196,7 +199,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     .filter((category) => category.isListed)
     .map((category) => {
       const articles = new Set<string>();
-      for (const id of tree.get(category.id) ?? []) {
+      for (const id of listedSubtree(category.id)) {
         for (const articleId of articlesByCategory.get(id) ?? []) articles.add(articleId);
       }
       return { category, count: articles.size };

@@ -168,6 +168,24 @@ describe('listNews', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
+  it("filters a listed parent's subtree to listed categories", async () => {
+    const withHiddenChild: NewsCategoryRow[] = [
+      ...CATEGORIES,
+      { id: 'c-hidden', slug: 'hidden', parentId: 'c-news', position: 6, names: { th: 'Hidden' }, isListed: false },
+    ];
+    const links = [
+      { articleId: 'a1', categoryId: 'c-hidden' },
+      { articleId: 'a2', categoryId: 'c-news' },
+    ];
+    const { deps, list } = setup({ total: 1, rows: [row(2)], links });
+    deps.news.listNewsCategories = async () => withHiddenChild;
+
+    const result = await listNews(deps, { locale: 'th', categorySlug: 'news', page: 1 });
+
+    expect(list.mock.calls[0]?.[0].categoryIds).not.toContain('c-hidden');
+    expect(result?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+  });
+
   it('never tags a card with an unlisted category', async () => {
     const { deps } = setup({
       total: 2,

@@ -212,9 +212,10 @@ export async function upsertNewsArticle(
 /**
  * The excluded-category rule (D-139) over what is stored, in one transaction, so a re-run corrects
  * articles it skips as unchanged: an imported article whose every category link is to an excluded
- * category gets `deleted_at` (an already-set one is kept); an imported, deleted article with a link to
- * any other category has it cleared; then every link to an excluded category is removed. Only imported
- * rows (`source_id` set) have `deleted_at` touched. No category or article row is deleted. A second run
+ * category gets `deleted_at` (an already-set one is kept); then every link to an excluded category is
+ * removed. It never clears `deleted_at`: restoring is `upsertNewsArticle`'s, when a changed source version
+ * gives the post another category. Only imported rows (`source_id` set) have `deleted_at` set, and with
+ * no excluded category the pass is a no-op. No category or article row is deleted. A second run
  * changes nothing.
  */
 export async function applyExcludedNewsCategories(excludedSourceIds: readonly bigint[]): Promise<void> {
@@ -223,6 +224,8 @@ export async function applyExcludedNewsCategories(excludedSourceIds: readonly bi
       const excludedIds = (
         await tx.newsCategory.findMany({ where: { sourceId: { in: [...excludedSourceIds] } }, select: { id: true } })
       ).map((category) => category.id);
+      // No excluded category (none given, or none stored): nothing to hide or unlink.
+      if (excludedIds.length === 0) return;
       await tx.newsArticle.updateMany({
         where: {
           sourceId: { not: null },
@@ -230,14 +233,6 @@ export async function applyExcludedNewsCategories(excludedSourceIds: readonly bi
           categories: { some: { categoryId: { in: excludedIds } }, none: { categoryId: { notIn: excludedIds } } },
         },
         data: { deletedAt: new Date() },
-      });
-      await tx.newsArticle.updateMany({
-        where: {
-          sourceId: { not: null },
-          deletedAt: { not: null },
-          categories: { some: { categoryId: { notIn: excludedIds } } },
-        },
-        data: { deletedAt: null },
       });
       await tx.newsArticleCategory.deleteMany({ where: { categoryId: { in: excludedIds } } });
     },
