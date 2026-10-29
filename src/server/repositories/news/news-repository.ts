@@ -1,6 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 import type {
+  NewsArticleDetailRow,
   NewsArticleRow,
   NewsCategoryRow,
   NewsListFilter,
@@ -277,4 +278,35 @@ export async function listLiveNewsArticles(filter: NewsListFilter): Promise<News
     excerpts: byLocale(row.translations, (t) => t.excerpt),
     categoryIds: row.categories.map((link) => link.categoryId),
   }));
+}
+
+// ---- Read for the article page (plan 012 Task 6) ----
+
+/** The live article with this decoded slug, with its bodies, or null when there is none or it is not live (D-130). */
+export async function findLiveNewsArticle(slug: string, now: Date): Promise<NewsArticleDetailRow | null> {
+  const row = await getPrisma().newsArticle.findFirst({
+    where: { ...liveArticle(now), slug },
+    select: {
+      id: true,
+      slug: true,
+      publishedAt: true,
+      bylineName: true,
+      featuredImageUrl: true,
+      translations: { select: { locale: true, title: true, excerpt: true, bodyHtml: true } },
+      categories: { select: { categoryId: true } },
+    },
+  });
+  if (row === null) return null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    // A live article always has one: the filter requires `published_at <= now`.
+    publishedAt: row.publishedAt as Date,
+    bylineName: row.bylineName,
+    featuredImageUrl: row.featuredImageUrl,
+    titles: byLocale(row.translations, (t) => t.title),
+    excerpts: byLocale(row.translations, (t) => t.excerpt),
+    bodies: byLocale(row.translations, (t) => t.bodyHtml),
+    categoryIds: row.categories.map((link) => link.categoryId),
+  };
 }

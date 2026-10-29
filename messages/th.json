@@ -308,7 +308,8 @@
     "news": {
       "meta": {
         "title": "ข่าวเกม | Tinzshop",
-        "categoryTitle": "{name} — ข่าวเกม | Tinzshop"
+        "categoryTitle": "{name} — ข่าวเกม | Tinzshop",
+        "articleTitle": "{title} — ข่าวเกม | Tinzshop"
       },
       "breadcrumb": {
         "label": "เส้นทาง",
@@ -343,6 +344,16 @@
         "preOrderTitle": "พรีออเดอร์เกมใหม่",
         "preOrderText": "จองเกมและเครื่องใหม่ก่อนวางจำหน่าย",
         "preOrderAction": "ดูสินค้าพรีออเดอร์"
+      },
+      "article": {
+        "categoriesLabel": "หมวดของข่าวนี้"
+      },
+      "related": {
+        "title": "ข่าวที่เกี่ยวข้อง"
+      },
+      "landing": {
+        "title": "ข่าวเกมล่าสุด",
+        "more": "อ่านทั้งหมด"
       }
     }
   }

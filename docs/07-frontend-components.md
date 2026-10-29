@@ -121,11 +121,11 @@ block for block,** on the project owner's instruction of 2026-10-28, including
 controls whose feature does not exist yet. This replaces plan 011's earlier rule
 that a control which does nothing is not shown.
 
-- **An inert control looks exactly as designed and goes nowhere.** A link points to `#`, or to the real page when there is one (the logo and "home" go to `/{locale}`, a product card to its product page). A button is `type="button"`. The header search is a `role="search"` form with no `action` whose `onSubmit` prevents submission (`SearchForm`, the one Client Component the header needs), so pressing Enter does nothing.
+- **An inert control looks exactly as designed and goes nowhere.** A link points to `#`, or to the real page when there is one (the logo and "home" go to `/{locale}`, a product card to its product page, "ข่าวเกม" in the nav, utility bar and footer to `/{locale}/news`, D-138). A button is `type="button"`. The header search is a `role="search"` form with no `action` whose `onSubmit` prevents submission (`SearchForm`, the one Client Component the header needs), so pressing Enter does nothing.
 - **Never a made-up number.** The cart count is `0`, not the design's sample `3`. No rating stars, scores or review counts appear anywhere (spec O-6, only our own reviews); the product page's reviews tab is an empty state, `shop.product.reviews.empty`.
 - **Data still comes from the database.** Prices, stock, names, images and the variant picker are unchanged. A section with no products is still not rendered, so the bundle and pre-order sections appear only when the mirror has kits or pre-orders. Related products on the product page are the best sellers without the current product, until categories exist to relate by.
 - **The design's category line on a card (`card__cat`) is left out,** and the breadcrumb is home › name: the mirror holds no category names yet.
-- **Left out on purpose:** the news section ("ข่าวเกมล่าสุด") until there is news data, the design's mockup notice bar, and the footer's mockup disclaimer.
+- **Left out on purpose:** the design's mockup notice bar and the footer's mockup disclaimer. The news section ("ข่าวเกมล่าสุด") is back since plan 012 (D-138).
 - **Every string is a message key,** with the Thai text exactly as the design writes it. Category names shared by the nav, rail, tiles and footer live once under `shop.category`.
 - **Icons are the design's inline SVG set,** in the tier-1 primitive `Icon` (`src/components/ui/Icon.tsx`), always `aria-hidden`.
 - **Breakpoints are the design's:** `xs` 480px, `sm` 640px, `md` 900px and `lg` 1100px, defined in rem in `globals.css`. Use these names, never `min-[…px]:` arbitrary variants: mixed with Tailwind's rem breakpoints those sorted out of order, and the card grid stayed at 3 columns on desktop. The design's grids are 2 / 3 / 4 / 5 columns for product grids and 6 cards across for a rail at `lg`.
@@ -144,6 +144,19 @@ that a control which does nothing is not shown.
 - **Not found:** `?page` must be a plain positive integer ("2", not "02" or "2abc"); anything else, a page past the end or an unknown category calls `notFound()`, rendered by `news/not-found.tsx` with `shop.notFound.*`. There is no `loading.tsx` above these routes (D-120). The category slug arrives percent-encoded and is decoded once (`decodeSlugParam`); links encode it once (`newsCategoryPath`). A malformed escape such as `%zz` is refused by Next with 400 before the page runs.
 - **Titles:** `news/layout.tsx` sets `shop.news.meta.title`; the category layout sets the category's name, or the not-found title for an unknown one. A list page past the end keeps the list's title, since a layout does not see `?page`.
 - **Empty:** an empty list or category still answers page 1, with `shop.news.empty` or `shop.news.categoryEmpty` in the grid; pagination is hidden for a single page.
+
+### News article page and landing news (D-138)
+
+`/{locale}/news/{slug}` (plan 012 Task 6) is built by `NewsArticleView` from `getNewsArticle`. There is no design file for it; it uses the site's breadcrumb, white panel and type.
+
+- **Blocks:** breadcrumb (home › ข่าวเกม › title), then in one panel with a 760px reading column: the article's category labels (links to their category pages, in `position` order), the title (`h1`), the byline and date, the featured image and the body; below the panel, "ข่าวที่เกี่ยวข้อง". No sidebar.
+- **Byline:** `shop.news.byline` ("โดย {name}") with the stored `byline_name`, or with `shop.news.bylineFallback` ("ทีม Tinzshop") when it is null (D-132).
+- **The body is the only HTML rendered from data** (`ArticleBody`, `dangerouslySetInnerHTML` on the stored, already-sanitised `body_html`, D-133, D-135). Titles, excerpts, category names and the byline stay escaped text. At render time `lazyEmbeds` adds `loading="lazy"` to each `<img>` and `<iframe>` start tag; the stored value is never changed. Sanitised HTML always escapes a literal `<`, so those strings only start real tags. Styling is a class list of descendant variants (`[&_p]:…`), since Tailwind's preflight resets every element: iframes are full width at 16:9, images never exceed the column, and a wide table scrolls inside itself with its words kept whole.
+- **Images:** the featured image is `loading="eager"` (D-123); body images and iframes are lazy.
+- **Related:** up to 3 (`RELATED_NEWS_LIMIT`) other live articles sharing one of the article's own categories, newest first, as cards without excerpts (`NewsCardSection`); the section is left out when there are none.
+- **Not found:** the slug arrives percent-encoded and is decoded once (`decodeSlugParam`); an unknown, draft, scheduled or deleted slug calls `notFound()`, rendered by `news/not-found.tsx`. `news/[slug]/layout.tsx` sets the title (`shop.news.meta.articleTitle`) and the excerpt as description, or the not-found title, through the per-request `readNewsArticle`. A slug `category` would be shadowed by the category route; none exists today.
+- **Landing:** "ข่าวเกมล่าสุด" (`shop.news.landing.*`) is `NewsCardSection` with the 3 newest live articles (`listLatestNews`) and the design's "อ่านทั้งหมด" link to `/{locale}/news`, after the product sections; it shows even when there are no products, and is not rendered when there are no articles.
+- **Nav:** "ข่าวเกม" links to `/{locale}/news` and is drawn current (`activeNav="news"`) on the list, category and article pages.
 
 ## Bilingual
 

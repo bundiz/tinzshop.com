@@ -8,13 +8,15 @@ export type NewsCardProps = {
   card: NewsCardData;
   /** The design varies the placeholder tint from card to card. */
   tone?: 'default' | 'warm' | 'cool' | 'deep';
+  /** The list pages show two lines of excerpt; the landing page and related articles do not (`design/index.html`). */
+  showExcerpt?: boolean;
 };
 
 /**
  * The design's `.news-card`: image (or the placeholder), category tag, title, two lines of excerpt and the
  * date. Image beside the text on narrow screens, above it from `md`. Title and excerpt are plain text.
  */
-export default function NewsCard({ card, tone = 'default' }: NewsCardProps) {
+export default function NewsCard({ card, tone = 'default', showExcerpt = true }: NewsCardProps) {
   const t = useTranslations('shop.news');
   const locale = useLocale();
 
@@ -37,7 +39,7 @@ export default function NewsCard({ card, tone = 'default' }: NewsCardProps) {
       <div className="min-w-0">
         {card.categoryName !== null && <p className="text-xs font-bold text-primary">{card.categoryName}</p>}
         <h3 className="text-[15px] leading-[1.55] [overflow-wrap:anywhere] group-hover:text-primary">{card.title}</h3>
-        {card.excerpt !== '' && (
+        {showExcerpt && card.excerpt !== '' && (
           <p className="mt-1 line-clamp-2 text-[13px] leading-[1.6] text-text-muted">{card.excerpt}</p>
         )}
         <time dateTime={card.publishedAt.toISOString()} className="text-xs text-text-subtle">

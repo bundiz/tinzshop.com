@@ -112,6 +112,25 @@ function mostSpecific(
   return [...(leaves.length > 0 ? leaves : own)].sort((a, b) => a.position - b.position)[0] ?? null;
 }
 
+/** One article row as a card, tagged with its most specific category. */
+function toCard(
+  row: NewsArticleRow,
+  byId: ReadonlyMap<string, NewsCategoryRow>,
+  tree: ReadonlyMap<string, Set<string>>,
+  locale: NewsLocale,
+): NewsCardData {
+  const tag = mostSpecific(row.categoryIds, byId, tree);
+  return {
+    slug: row.slug,
+    title: pick(row.titles, locale),
+    excerpt: pick(row.excerpts, locale),
+    bylineName: row.bylineName,
+    publishedAt: row.publishedAt,
+    featuredImageUrl: row.featuredImageUrl,
+    categoryName: tag === null ? null : pick(tag.names, locale),
+  };
+}
+
 /**
  * One page of the news list (spec 2026-10-29 §6): live articles only, newest first, `NEWS_PAGE_SIZE`
  * a page, optionally filtered to a category and its descendants. Returns `null` for an unknown
@@ -165,18 +184,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     .map(({ category, count }) => ({ slug: category.slug, name: pick(category.names, input.locale), count }));
 
   return {
-    items: rows.map((row) => {
-      const tag = mostSpecific(row.categoryIds, byId, tree);
-      return {
-        slug: row.slug,
-        title: pick(row.titles, input.locale),
-        excerpt: pick(row.excerpts, input.locale),
-        bylineName: row.bylineName,
-        publishedAt: row.publishedAt,
-        featuredImageUrl: row.featuredImageUrl,
-        categoryName: tag === null ? null : pick(tag.names, input.locale),
-      };
-    }),
+    items: rows.map((row) => toCard(row, byId, tree, input.locale)),
     page: input.page,
     totalPages,
     total,
@@ -184,4 +192,113 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     activeCategorySlug: active?.slug ?? null,
     activeCategoryName: active === null ? null : pick(active.names, input.locale),
   };
+}
+
+// ---- One article, and the landing page's newest (plan 012 Task 6) ----
+
+/** At most this many related articles under an article ("ข่าวที่เกี่ยวข้อง", spec 2026-10-29 §6). */
+export const RELATED_NEWS_LIMIT = 3;
+
+/** One live article with its body, as the article read returns it. */
+export type NewsArticleDetailRow = NewsArticleRow & {
+  /** The stored, already-sanitised `body_html` per locale. */
+  bodies: LocalisedText;
+};
+
+export type NewsArticleReadDeps = {
+  news: Pick<NewsReadRepository, 'listNewsCategories' | 'listLiveNewsArticles'> & {
+    /** The live article with this (decoded) slug, or null. */
+    findLiveNewsArticle: (slug: string, now: Date) => Promise<NewsArticleDetailRow | null>;
+  };
+  now: () => Date;
+};
+
+export type NewsArticleDetail = {
+  slug: string;
+  /** Plain text: render escaped, never as HTML. */
+  title: string;
+  /** Plain text, for the page's meta description. */
+  excerpt: string;
+  /** Null when the article has none; the page shows `shop.news.bylineFallback`. */
+  bylineName: string | null;
+  publishedAt: Date;
+  featuredImageUrl: string | null;
+  /** The stored, already-sanitised body: the only HTML from data the site renders. */
+  bodyHtml: string;
+  /** The article's own categories, in `position` order. */
+  categories: { slug: string; name: string }[];
+  /** Up to `RELATED_NEWS_LIMIT` other live articles sharing a category, newest first. */
+  related: NewsCardData[];
+};
+
+export type GetNewsArticleInput = { locale: NewsLocale; slug: string };
+
+/**
+ * One live article by its decoded slug (spec 2026-10-29 §6), or `null` for an unknown, draft, scheduled or
+ * deleted one. Title and body come from the same translation: the `en` one on `/en` when it has a title,
+ * else `th` (Q-018 residual).
+ */
+export async function getNewsArticle(
+  deps: NewsArticleReadDeps,
+  input: GetNewsArticleInput,
+): Promise<NewsArticleDetail | null> {
+  const now = deps.now();
+  const row = await deps.news.findLiveNewsArticle(input.slug, now);
+  if (row === null) return null;
+
+  const categories = await deps.news.listNewsCategories();
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const tree = subtrees(categories);
+  const useEn = input.locale === 'en' && row.titles.en !== undefined && row.titles.en !== '';
+  const fromTranslation = (text: LocalisedText): string => (useEn ? (text.en ?? '') : (text.th ?? text.en ?? ''));
+
+  // One more than needed, so the article itself can be dropped and still leave a full list.
+  const candidates =
+    row.categoryIds.length === 0
+      ? []
+      : await deps.news.listLiveNewsArticles({
+          categoryIds: row.categoryIds,
+          now,
+          skip: 0,
+          take: RELATED_NEWS_LIMIT + 1,
+        });
+
+  return {
+    slug: row.slug,
+    title: fromTranslation(row.titles),
+    excerpt: fromTranslation(row.excerpts),
+    bylineName: row.bylineName,
+    publishedAt: row.publishedAt,
+    featuredImageUrl: row.featuredImageUrl,
+    bodyHtml: fromTranslation(row.bodies),
+    categories: row.categoryIds
+      .map((id) => byId.get(id))
+      .filter((category): category is NewsCategoryRow => category !== undefined)
+      .sort((a, b) => a.position - b.position)
+      .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) })),
+    related: candidates
+      .filter((candidate) => candidate.id !== row.id)
+      .slice(0, RELATED_NEWS_LIMIT)
+      .map((candidate) => toCard(candidate, byId, tree, input.locale)),
+  };
+}
+
+export type LatestNewsDeps = {
+  news: Pick<NewsReadRepository, 'listNewsCategories' | 'listLiveNewsArticles'>;
+  now: () => Date;
+};
+
+/** The newest live articles as cards, at most `limit`: the landing page's "ข่าวเกมล่าสุด" (D-124). */
+export async function listLatestNews(
+  deps: LatestNewsDeps,
+  input: { locale: NewsLocale; limit: number },
+): Promise<NewsCardData[]> {
+  const now = deps.now();
+  const [categories, rows] = await Promise.all([
+    deps.news.listNewsCategories(),
+    deps.news.listLiveNewsArticles({ categoryIds: null, now, skip: 0, take: input.limit }),
+  ]);
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const tree = subtrees(categories);
+  return rows.map((row) => toCard(row, byId, tree, input.locale));
 }

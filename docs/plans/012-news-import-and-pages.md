@@ -165,14 +165,14 @@
 - `getNewsArticle({ locale, slug }): Promise<NewsArticleDetail | null>`
 - `NewsArticleDetail = { slug; title; bylineName: string | null; publishedAt; featuredImageUrl; bodyHtml; categories: { slug; name }[]; related: NewsCardData[] }`. The page shows "โดย {bylineName}", or the message `shop.news.bylineFallback` ("ทีม Tinzshop") when it is null.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - `opens an article by a Thai slug` (Review Focus 4)
   - `returns null for an unknown slug`
   - `related excludes the article itself, max 3`
   - landing renders the news section with 3 cards and hides it when there are none
-- [ ] **Step 2:** Run the tests. They fail.
-- [ ] **Step 3:** Implement. The body renders the stored sanitised `body_html` inside a prose-styled container, and this is the only place HTML is rendered. The "Not found" page uses `NotFoundPanel`.
-- [ ] **Step 4:** Tests, typecheck, integration tests and build pass. `/th/news/<unknown>` gives 404. Commit: `feat: add the news article page and landing news section`.
+- [x] **Step 2:** Run the tests. They fail.
+- [x] **Step 3:** Implement. The body renders the stored sanitised `body_html` inside a prose-styled container, and this is the only place HTML is rendered. The "Not found" page uses `NotFoundPanel`.
+- [x] **Step 4:** Tests, typecheck, integration tests and build pass. `/th/news/<unknown>` gives 404. Commit: `feat: add the news article page and landing news section`.
 
 ---
 

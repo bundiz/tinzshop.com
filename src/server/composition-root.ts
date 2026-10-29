@@ -17,6 +17,7 @@ import {
 } from '@/server/repositories/shared/advisory-lock';
 import {
   countLiveNewsArticles,
+  findLiveNewsArticle,
   findArticleSourceStates,
   listLiveNewsArticles,
   listLiveNewsCategoryLinks,
@@ -53,7 +54,16 @@ import { getProductDetail, type ProductDetail } from '@/server/services/catalogu
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
 import { runNewsImport } from '@/server/services/news/news-import-service';
-import { listNews, type ListNewsInput, type NewsListPage } from '@/server/services/news/news-read-service';
+import {
+  getNewsArticle,
+  listLatestNews,
+  listNews,
+  type GetNewsArticleInput,
+  type ListNewsInput,
+  type NewsArticleDetail,
+  type NewsCardData,
+  type NewsListPage,
+} from '@/server/services/news/news-read-service';
 
 // Built on first use, never at import, so `next build` needs no environment.
 let shopeeClient: ShopeeClient | undefined;
@@ -119,6 +129,20 @@ export function getNewsReader(): (input: ListNewsInput) => Promise<NewsListPage 
       },
       input,
     );
+}
+
+/** The news article page's read (plan 012 Task 6): built per call, needs no configuration beyond the database. */
+export function getNewsArticleReader(): (input: GetNewsArticleInput) => Promise<NewsArticleDetail | null> {
+  return (input) =>
+    getNewsArticle(
+      { news: { listNewsCategories, listLiveNewsArticles, findLiveNewsArticle }, now: () => new Date() },
+      input,
+    );
+}
+
+/** The landing page's newest news (plan 012 Task 6): built per call, needs no configuration beyond the database. */
+export function getLatestNewsReader(): (input: { locale: Locale; limit: number }) => Promise<NewsCardData[]> {
+  return (input) => listLatestNews({ news: { listNewsCategories, listLiveNewsArticles }, now: () => new Date() }, input);
 }
 
 /** Development-only API docs; needs no configuration, so it works before `.env` is complete. */

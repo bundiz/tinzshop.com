@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { getNewsReader } from '@/server/composition-root';
+import { getLatestNewsReader, getNewsArticleReader, getNewsReader } from '@/server/composition-root';
+import { decodeSlugParam, newsArticlePath } from '@/app/[locale]/(shop)/news/news-routes';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 import { resetDatabase } from '../setup/database';
 
@@ -10,6 +11,8 @@ beforeEach(async () => {
 
 const prisma = () => getPrisma();
 const listNews = getNewsReader();
+const getNewsArticle = getNewsArticleReader();
+const listLatestNews = getLatestNewsReader();
 
 async function category(slug: string, name: string, position: number, parentId: string | null = null) {
   const row = await prisma().newsCategory.create({
@@ -23,18 +26,26 @@ let sequence = 0;
 
 async function article(
   categoryIds: string[],
-  overrides: { status?: 'draft' | 'published'; publishedAt?: Date | null; deletedAt?: Date | null; en?: string } = {},
+  overrides: {
+    status?: 'draft' | 'published';
+    publishedAt?: Date | null;
+    deletedAt?: Date | null;
+    en?: string;
+    slug?: string;
+    bodyHtml?: string;
+  } = {},
 ) {
   sequence += 1;
+  const slug = overrides.slug ?? `post-${sequence}`;
   const publishedAt =
     overrides.publishedAt === undefined ? new Date(Date.UTC(2026, 0, 1, 0, sequence)) : overrides.publishedAt;
-  const translations: { locale: 'th' | 'en'; title: string; excerpt: string }[] = [
-    { locale: 'th', title: `ข่าว ${sequence}`, excerpt: `สรุป ${sequence}` },
+  const translations: { locale: 'th' | 'en'; title: string; excerpt: string; bodyHtml?: string }[] = [
+    { locale: 'th', title: `ข่าว ${sequence}`, excerpt: `สรุป ${sequence}`, bodyHtml: overrides.bodyHtml },
   ];
   if (overrides.en !== undefined) translations.push({ locale: 'en', title: overrides.en, excerpt: 'en' });
   await prisma().newsArticle.create({
     data: {
-      slug: `post-${sequence}`,
+      slug,
       status: overrides.status ?? 'published',
       publishedAt,
       deletedAt: overrides.deletedAt ?? null,
@@ -43,7 +54,7 @@ async function article(
       categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
     },
   });
-  return `post-${sequence}`;
+  return slug;
 }
 
 describe('listNews against the database', () => {
@@ -112,5 +123,69 @@ describe('listNews against the database', () => {
 
     expect(page?.items.find((item) => item.slug === thaiOnly)?.title).toMatch(/^ข่าว /);
     expect(page?.items.find((item) => item.slug === both)?.title).toBe('English title');
+  });
+});
+
+describe('getNewsArticle against the database', () => {
+  it('opens an article by a Thai slug', async () => {
+    const news = await category('news', 'News', 1);
+    const slug = await article([news], { slug: 'รีวิว-เกม-ใหม่', bodyHtml: '<p>เนื้อหา <strong>จริง</strong></p>' });
+
+    // The link encodes the slug once; the route decodes it once; the read finds the stored, decoded slug.
+    const segment = newsArticlePath('th', slug).split('/').pop() as string;
+    expect(segment).toBe(encodeURIComponent('รีวิว-เกม-ใหม่'));
+    const detail = await getNewsArticle({ locale: 'th', slug: decodeSlugParam(segment) as string });
+
+    expect(detail).toMatchObject({
+      slug: 'รีวิว-เกม-ใหม่',
+      bylineName: 'Invented Writer',
+      bodyHtml: '<p>เนื้อหา <strong>จริง</strong></p>',
+      categories: [{ slug: 'news', name: 'News' }],
+    });
+  });
+
+  it('returns null for an unknown slug, and for a draft, scheduled or deleted one', async () => {
+    const news = await category('news', 'News', 1);
+    const draft = await article([news], { status: 'draft', publishedAt: null });
+    const scheduled = await article([news], { publishedAt: new Date(Date.now() + 86_400_000) });
+    const deleted = await article([news], { deletedAt: new Date('2026-02-01T00:00:00Z') });
+
+    for (const slug of ['does-not-exist', draft, scheduled, deleted]) {
+      expect(await getNewsArticle({ locale: 'th', slug })).toBeNull();
+    }
+  });
+
+  it('related excludes the article itself, max 3', async () => {
+    const news = await category('news', 'News', 1);
+    const reviews = await category('reviews', 'Reviews', 2);
+    const older = await article([news]);
+    const others = [await article([news]), await article([news])];
+    const self = await article([news, reviews]);
+    const newer = await article([news]);
+    const reviewsOnly = await article([reviews]);
+    await article([news], { status: 'draft', publishedAt: null });
+    const unrelated = await category('other', 'Other', 3);
+    await article([unrelated]);
+
+    const detail = await getNewsArticle({ locale: 'th', slug: self });
+
+    // Newest first, sharing a category, live, not itself.
+    expect(detail?.related.map((card) => card.slug)).toEqual([reviewsOnly, newer, others[1]]);
+    expect(detail?.related).toHaveLength(3);
+    expect(detail?.related.map((card) => card.slug)).not.toContain(self);
+    expect(detail?.related.map((card) => card.slug)).not.toContain(older);
+  });
+});
+
+describe('listLatestNews against the database', () => {
+  it('lists the 3 newest live articles', async () => {
+    const news = await category('news', 'News', 1);
+    await article([news]);
+    const expected = [await article([news]), await article([news]), await article([news])].reverse();
+    await article([news], { publishedAt: new Date(Date.now() + 86_400_000) });
+
+    const cards = await listLatestNews({ locale: 'th', limit: 3 });
+
+    expect(cards.map((card) => card.slug)).toEqual(expected);
   });
 });

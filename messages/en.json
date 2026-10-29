@@ -308,7 +308,8 @@
     "news": {
       "meta": {
         "title": "Game news | Tinzshop",
-        "categoryTitle": "{name} — Game news | Tinzshop"
+        "categoryTitle": "{name} — Game news | Tinzshop",
+        "articleTitle": "{title} — Game news | Tinzshop"
       },
       "breadcrumb": {
         "label": "Breadcrumb",
@@ -343,6 +344,16 @@
         "preOrderTitle": "New game pre-orders",
         "preOrderText": "Reserve new games and consoles before release",
         "preOrderAction": "Shop pre-orders"
+      },
+      "article": {
+        "categoriesLabel": "Categories of this article"
+      },
+      "related": {
+        "title": "Related news"
+      },
+      "landing": {
+        "title": "Latest game news",
+        "more": "Read all"
       }
     }
   }

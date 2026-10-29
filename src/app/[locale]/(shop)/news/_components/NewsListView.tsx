@@ -35,7 +35,7 @@ export default function NewsListView({ list }: NewsListViewProps) {
 
   return (
     <>
-      <SiteHeader path={pathWithoutLocale} />
+      <SiteHeader path={pathWithoutLocale} activeNav="news" />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">

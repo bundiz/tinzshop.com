@@ -8,8 +8,8 @@ import SearchForm from './SearchForm';
 export type SiteHeaderProps = {
   /** The current page's path without the locale, e.g. `/`; the language switch links to it in the other locale. */
   path: string;
-  /** The category-nav entry drawn as current; only the home page has one today. */
-  activeNav?: 'home';
+  /** The category-nav entry drawn as current: `home` on the landing page, `news` on every news route. */
+  activeNav?: 'home' | 'news';
 };
 
 type AppLocale = (typeof routing.locales)[number];
@@ -26,14 +26,16 @@ const CART_COUNT = 0;
 
 /**
  * The storefront header from the design: utility bar (tagline, help links, TH/EN switch), the logo,
- * search, account, wishlist and cart, and the category nav bar. Only the logo, "home" and the
- * language switch go anywhere yet; the rest render as designed and are inert (D-124).
+ * search, account, wishlist and cart, and the category nav bar. Only the logo, "home", "ข่าวเกม" (both
+ * in the nav and the utility bar) and the language switch go anywhere yet; the rest render as designed and
+ * are inert (D-124).
  */
 export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
   const t = useTranslations('shop.header');
   const tCategory = useTranslations('shop.category');
   const locale = useLocale();
   const home = `/${locale}`;
+  const news = `/${locale}/news`;
 
   return (
     <>
@@ -54,9 +56,9 @@ export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <Link href={news} className="hover:text-white">
                     {t('links.news')}
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </nav>
@@ -134,11 +136,18 @@ export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
           <NavLink href={home} isActive={activeNav === 'home'}>
             {t('nav.home')}
           </NavLink>
-          {NAV_CATEGORIES.map((key) => (
-            <NavLink key={key} href="#" isActive={false}>
-              {tCategory(key)}
-            </NavLink>
-          ))}
+          {NAV_CATEGORIES.map((key) =>
+            // Only "ข่าวเกม" has a page yet; the product categories stay inert (D-124).
+            key === 'news' ? (
+              <NavLink key={key} href={news} isActive={activeNav === 'news'}>
+                {tCategory(key)}
+              </NavLink>
+            ) : (
+              <NavLink key={key} href="#" isActive={false}>
+                {tCategory(key)}
+              </NavLink>
+            ),
+          )}
         </div>
       </nav>
     </>

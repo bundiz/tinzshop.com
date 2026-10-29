@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   NEWS_PAGE_SIZE,
+  RELATED_NEWS_LIMIT,
+  getNewsArticle,
+  listLatestNews,
   listNews,
+  type NewsArticleDetailRow,
   type NewsArticleRow,
   type NewsCategoryRow,
   type NewsListFilter,
@@ -160,5 +164,99 @@ describe('listNews', () => {
     deps.news.listNewsCategories = async () => cyclic;
     await listNews(deps, { locale: 'th', categorySlug: 'x', page: 1 });
     expect(new Set(list.mock.calls[0]?.[0].categoryIds)).toEqual(new Set(['x', 'y']));
+  });
+});
+
+function detailRow(n: number, overrides: Partial<NewsArticleDetailRow> = {}): NewsArticleDetailRow {
+  return { ...row(n), bodies: { th: `<p>เนื้อหา ${n}</p>` }, ...overrides };
+}
+
+function setupArticle(options: { article?: NewsArticleDetailRow | null; related?: NewsArticleRow[] }) {
+  const find = vi.fn(async (_slug: string, _now: Date) => options.article ?? null);
+  const list = vi.fn(async (_filter: NewsListFilter) => options.related ?? []);
+  const deps = {
+    news: { listNewsCategories: async () => CATEGORIES, findLiveNewsArticle: find, listLiveNewsArticles: list },
+    now: () => NOW,
+  };
+  return { deps, find, list };
+}
+
+describe('getNewsArticle', () => {
+  it('opens an article by a Thai slug', async () => {
+    const article = detailRow(7, { slug: 'รีวิว-เกม', categoryIds: ['c-nintendo', 'c-news'] });
+    const { deps, find } = setupArticle({ article });
+
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'รีวิว-เกม' });
+
+    // The repository gets the decoded slug as given, and the live-article clock.
+    expect(find).toHaveBeenCalledWith('รีวิว-เกม', NOW);
+    expect(detail).toMatchObject({
+      slug: 'รีวิว-เกม',
+      title: 'ข่าว 7',
+      excerpt: 'สรุป 7',
+      bylineName: 'Invented Writer',
+      publishedAt: article.publishedAt,
+      featuredImageUrl: null,
+      bodyHtml: '<p>เนื้อหา 7</p>',
+    });
+    // Categories in `position` order.
+    expect(detail?.categories).toEqual([
+      { slug: 'news', name: 'News' },
+      { slug: 'nintendo', name: 'NINTENDO' },
+    ]);
+  });
+
+  it('returns null for an unknown slug', async () => {
+    const { deps, list } = setupArticle({ article: null });
+    expect(await getNewsArticle(deps, { locale: 'th', slug: 'nope' })).toBeNull();
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it('related excludes the article itself, max 3', async () => {
+    const article = detailRow(5, { categoryIds: ['c-reviews'] });
+    const related = [row(9), row(5), row(8), row(7), row(6)];
+    const { deps, list } = setupArticle({ article, related: related.slice(0, RELATED_NEWS_LIMIT + 1) });
+
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
+
+    expect(RELATED_NEWS_LIMIT).toBe(3);
+    expect(list).toHaveBeenCalledWith({ categoryIds: ['c-reviews'], now: NOW, skip: 0, take: RELATED_NEWS_LIMIT + 1 });
+    expect(detail?.related.map((card) => card.slug)).toEqual(['post-9', 'post-8', 'post-7']);
+    expect(detail?.related[0]?.categoryName).toBe('News');
+  });
+
+  it('has no related articles when the article has no category', async () => {
+    const { deps, list } = setupArticle({ article: detailRow(1, { categoryIds: [] }) });
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-1' });
+    expect(detail?.related).toEqual([]);
+    expect(detail?.categories).toEqual([]);
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the th title and body on en, and keeps a null byline', async () => {
+    const thaiOnly = detailRow(2, { bylineName: null });
+    const { deps } = setupArticle({ article: thaiOnly });
+    const detail = await getNewsArticle(deps, { locale: 'en', slug: 'post-2' });
+    expect(detail).toMatchObject({ title: 'ข่าว 2', bodyHtml: '<p>เนื้อหา 2</p>', bylineName: null });
+
+    const both = detailRow(3, {
+      titles: { th: 'ไทย', en: 'English' },
+      bodies: { th: '<p>ไทย</p>', en: '<p>English</p>' },
+    });
+    const english = await getNewsArticle(setupArticle({ article: both }).deps, { locale: 'en', slug: 'post-3' });
+    expect(english).toMatchObject({ title: 'English', bodyHtml: '<p>English</p>' });
+  });
+});
+
+describe('listLatestNews', () => {
+  it('returns the newest live articles as cards, at most the limit', async () => {
+    const list = vi.fn(async (_filter: NewsListFilter) => [row(3), row(2), row(1)]);
+    const deps = { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticles: list }, now: () => NOW };
+
+    const cards = await listLatestNews(deps, { locale: 'th', limit: 3 });
+
+    expect(list).toHaveBeenCalledWith({ categoryIds: null, now: NOW, skip: 0, take: 3 });
+    expect(cards.map((card) => card.slug)).toEqual(['post-3', 'post-2', 'post-1']);
+    expect(cards[0]).toMatchObject({ title: 'ข่าว 3', categoryName: 'News' });
   });
 });
