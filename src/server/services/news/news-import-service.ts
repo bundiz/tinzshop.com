@@ -1,4 +1,5 @@
 import type {
+  applyExcludedNewsCategories,
   findArticleSourceStates,
   upsertNewsArticle,
   upsertNewsCategories,
@@ -44,6 +45,7 @@ export type NewsImportDeps = {
     upsertNewsCategories: typeof upsertNewsCategories;
     upsertNewsArticle: typeof upsertNewsArticle;
     findArticleSourceStates: typeof findArticleSourceStates;
+    applyExcludedNewsCategories: typeof applyExcludedNewsCategories;
   };
   lock: <T>(task: () => Promise<T>) => Promise<{ acquired: true; value: T } | { acquired: false }>;
   /** Server log; given an error's name and message only, never a URL, query or response body. */
@@ -86,6 +88,10 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
     // Categories first, so every parent and every linked category exists before the posts.
     const categories = await source.listCategories();
     counts.categories = await news.upsertNewsCategories(categories);
+    // The excluded-category rule (D-139) for what is already stored, unchanged posts included, so a
+    // re-run corrects them without reading them again. New and changed posts get it below.
+    const excluded = new Set(categories.filter((category) => category.isExcluded).map((c) => c.sourceId));
+    await news.applyExcludedNewsCategories([...excluded]);
 
     const known = await news.findArticleSourceStates();
     const isUnchanged = (sourceId: bigint, modifiedAt: Date): boolean =>
@@ -105,8 +111,11 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
           counts.unchanged += 1;
           continue;
         }
+        // Never linked to an excluded category; in excluded categories only, it is not news and is hidden.
+        const kept = article.categorySourceIds.filter((sourceId) => !excluded.has(sourceId));
+        const hidden = article.categorySourceIds.length > 0 && kept.length === 0;
         try {
-          const result = await news.upsertNewsArticle(article);
+          const result = await news.upsertNewsArticle({ ...article, categorySourceIds: kept }, { hidden });
           counts[result] += 1;
           if (result !== 'unchanged') counts.removedEmbeds += article.removedEmbeds;
         } catch (error) {
@@ -119,13 +128,16 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
 
     return { outcome: 'succeeded', ...counts };
   } catch (error) {
-    // Posts saved before the failure stay; a re-run picks up the rest. Nothing is ever deleted.
+    // Posts saved before the failure stay; a re-run picks up the rest. No row is ever deleted.
     deps.logError(`news import failed: ${describe(error)}`);
     return { outcome: 'failed', ...counts, errorCode: errorCodeOf(error) };
   }
 }
 
-/** One news import run (spec 2026-10-29 §5): categories, then every page of posts, under a lock. */
+/**
+ * One news import run (spec 2026-10-29 §5): categories, the excluded-category rule over stored articles
+ * (D-139), then every page of posts, under a lock.
+ */
 export async function runNewsImport(deps: NewsImportDeps): Promise<NewsImportSummary> {
   const result = await deps.lock(() => execute(deps));
   return result.acquired ? result.value : { outcome: 'skipped' };

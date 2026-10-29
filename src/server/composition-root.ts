@@ -16,6 +16,7 @@ import {
   NEWS_IMPORT_LOCK_KEY,
 } from '@/server/repositories/shared/advisory-lock';
 import {
+  applyExcludedNewsCategories,
   countLiveNewsArticles,
   findLiveNewsArticle,
   findArticleSourceStates,
@@ -176,7 +177,7 @@ export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHan
     runImport: (baseUrl) =>
       runNewsImport({
         source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
-        news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates },
+        news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates, applyExcludedNewsCategories },
         lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
         logError: (message) => console.error(message),
       }),

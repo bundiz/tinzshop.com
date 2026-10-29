@@ -205,7 +205,7 @@ Facts in the dev database after the first import:
 4. **Read side.** Tabs, card tags, breadcrumb categories and "related" use only listed categories. A category route for an unlisted slug is a real 404.
 5. **Where the rules live.** The slugs live in one constant in the WordPress adapter, as `{ excluded: ['reviews'], unlisted: ['uncategorized'] }`, and are mapped into the neutral snapshot fields `isListed` and `isExcluded`. No WordPress slug appears in services or pages.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - **adapter:** the `reviews` subtree is marked excluded and `uncategorized` is marked unlisted
   - **service/integration:**
     - re-running the import over the current DB removes the review links
@@ -216,9 +216,10 @@ Facts in the dev database after the first import:
     - tabs exclude unlisted
     - `/news/category/reviews` and `/news/category/uncategorized` give 404
     - a card's tag is never an unlisted category
-- [ ] **Step 2:** Run the tests. They fail.
-- [ ] **Step 3:** Implement. Add the migration (non-destructive) and apply it to the dev and test databases.
-- [ ] **Step 4:** Tests, typecheck, integration tests and build pass. The owner re-runs the import. Commit: `feat: drop review categories from news and hide the Uncategorized tab`.
+- [x] **Step 2:** Run the tests. They fail.
+- [x] **Step 3:** Implement. Add the migration (non-destructive) and apply it to the dev and test databases.
+- [x] **Step 4:** Tests, typecheck, integration tests and build pass. Commit: `feat: drop review categories from news and hide the Uncategorized tab`.
+- [ ] **Step 4 (owner):** The owner re-runs the import over the dev database. Restart the dev server first: it caches the Prisma client from before `is_listed` existed, so until then the news pages and the import answer 500. Expected afterwards: 0 created and 0 updated, 43 articles lose their review links, the 3 review-only ones are soft-deleted, and `/th/news/category/reviews` and `/th/news/category/uncategorized` give 404.
 
 ---
 

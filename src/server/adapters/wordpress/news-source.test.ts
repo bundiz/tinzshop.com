@@ -40,7 +40,7 @@ describe("createWordPressNewsSource", () => {
     const source = createWordPressNewsSource(fakeClient());
 
     expect(await source.listCategories()).toEqual([
-      { sourceId: 5n, parentSourceId: null, slug: "news", translation: { locale: "th", name: "News & more" } },
+      { sourceId: 5n, parentSourceId: null, slug: "news", translation: { locale: "th", name: "News & more" }, isListed: true, isExcluded: false },
     ]);
   });
 

@@ -221,7 +221,7 @@ shop could replace ours and the sync would mirror its catalogue (D-104).
 
 `shopee-sync` is called every 10 minutes (plan 010). Overlapping calls are safe: the second returns `skipped`.
 
-`news-import` is not scheduled: it is run by hand, and once at go-live. It is safe to re-run: a post whose `source_modified_at` has not moved is counted `unchanged` and not written, and nothing is ever deleted. Its lock key differs from the catalogue sync's, so the two never block each other.
+`news-import` is not scheduled: it is run by hand, and once at go-live. It is safe to re-run: a post whose `source_modified_at` has not moved is counted `unchanged` and not written, and no row is ever deleted. Every run applies the excluded-category rule (D-139) to stored articles, unchanged ones included: links to an excluded category are removed and an imported article left only in excluded categories gets `deleted_at`. The response is unchanged. Its lock key differs from the catalogue sync's, so the two never block each other.
 
 ## Pagination, filtering, sorting
 

@@ -165,7 +165,8 @@ paths:
         (`NEWS_IMPORT_SOURCE_URL`) into the news tables, categories first, under its own
         advisory lock (D-136). Works in every environment and is run by hand, and once at
         go-live. A post whose `source_modified_at` has not moved is `unchanged` and not
-        written; nothing is ever deleted. A post that fails to map or save is counted in
+        written; no row is ever deleted (an imported article in excluded categories
+        only is soft-deleted, D-139). A post that fails to map or save is counted in
         `failed` and the run continues. Behaviour: `14-integrations.md#how-the-import-behaves-plan-012`.
       security:
         - jobSecret: []

@@ -13,6 +13,8 @@ export type NewsCategoryRow = {
   parentId: string | null;
   position: number;
   names: LocalisedText;
+  /** false: no tab, never a tag or breadcrumb, and its category route is a 404 (D-139). */
+  isListed: boolean;
 };
 
 /** One live article as the list read returns it. */
@@ -63,7 +65,7 @@ export type NewsListPage = {
   page: number;
   totalPages: number;
   total: number;
-  /** Categories with at least one live article (their descendants' included), most articles first. */
+  /** Listed categories with at least one live article (their descendants' included), most articles first. */
   categories: NewsTab[];
   activeCategorySlug: string | null;
   /** The active category's name, even when it has no live article (the page heading and title). */
@@ -99,17 +101,22 @@ function subtrees(categories: readonly NewsCategoryRow[]): Map<string, Set<strin
   return result;
 }
 
+/** The article's listed categories (D-139): an unlisted one is never a tag, a breadcrumb or a related key. */
+function listedCategories(categoryIds: readonly string[], byId: ReadonlyMap<string, NewsCategoryRow>): NewsCategoryRow[] {
+  return categoryIds.map((id) => byId.get(id)).filter((c): c is NewsCategoryRow => c !== undefined && c.isListed);
+}
+
 /**
- * The article's most specific categories (D-137, D-138): those that are no ancestor of another of its
- * categories, in `position` order; all of them when none qualifies. The one place this rule lives, used for
- * a card's tag and for related articles.
+ * The article's most specific listed categories (D-137, D-138, D-139): those that are no ancestor of another
+ * of its listed categories, in `position` order; all of them when none qualifies. The one place this rule
+ * lives, used for a card's tag and for related articles.
  */
 function leafCategories(
   categoryIds: readonly string[],
   byId: ReadonlyMap<string, NewsCategoryRow>,
   tree: ReadonlyMap<string, Set<string>>,
 ): NewsCategoryRow[] {
-  const own = categoryIds.map((id) => byId.get(id)).filter((c): c is NewsCategoryRow => c !== undefined);
+  const own = listedCategories(categoryIds, byId);
   const leaves = own.filter(
     (candidate) => !own.some((other) => other.id !== candidate.id && tree.get(candidate.id)?.has(other.id)),
   );
@@ -159,7 +166,8 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
 
   let active: NewsCategoryRow | null = null;
   if (input.categorySlug !== undefined) {
-    active = categories.find((category) => category.slug === input.categorySlug) ?? null;
+    // An unlisted category has no page: the same 404 as an unknown one.
+    active = categories.find((category) => category.isListed && category.slug === input.categorySlug) ?? null;
     if (active === null) return null;
   }
   const categoryIds = active === null ? null : [...(tree.get(active.id) ?? [active.id])];
@@ -185,6 +193,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     articlesByCategory.set(link.categoryId, set);
   }
   const tabs = categories
+    .filter((category) => category.isListed)
     .map((category) => {
       const articles = new Set<string>();
       for (const id of tree.get(category.id) ?? []) {
@@ -238,7 +247,7 @@ export type NewsArticleDetail = {
   featuredImageUrl: string | null;
   /** The stored, already-sanitised body: the only HTML from data the site renders. */
   bodyHtml: string;
-  /** The article's own categories, in `position` order. */
+  /** The article's own listed categories, in `position` order. */
   categories: { slug: string; name: string }[];
   /** Up to `RELATED_NEWS_LIMIT` other live articles sharing a category, newest first. */
   related: NewsCardData[];
@@ -261,7 +270,9 @@ async function relatedArticles(
   now: Date,
 ): Promise<NewsArticleRow[]> {
   const leafIds = leafCategories(row.categoryIds, byId, tree).map((category) => category.id);
-  const parentIds = row.categoryIds.filter((id) => byId.has(id) && !leafIds.includes(id));
+  const parentIds = listedCategories(row.categoryIds, byId)
+    .map((category) => category.id)
+    .filter((id) => !leafIds.includes(id));
   const picked: NewsArticleRow[] = [];
   const seen = new Set([row.id]);
   // One leaf at a time, the card's tag first: a broad leaf such as an "articles" category, carried by most
@@ -312,9 +323,7 @@ export async function getNewsArticle(
     publishedAt: row.publishedAt,
     featuredImageUrl: row.featuredImageUrl,
     bodyHtml: fromTranslation(row.bodies),
-    categories: row.categoryIds
-      .map((id) => byId.get(id))
-      .filter((category): category is NewsCategoryRow => category !== undefined)
+    categories: listedCategories(row.categoryIds, byId)
       .sort((a, b) => a.position - b.position)
       .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) })),
     related: related.map((candidate) => toCard(candidate, byId, tree, input.locale)),

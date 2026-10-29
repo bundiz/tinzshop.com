@@ -445,6 +445,7 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** "There is no 'product review' blog/news feature. The system should have: Blog/News content written by staff. A separate product review feature where customers can review products. Keep these as separate concepts."
 - **Effect:** Two distinct, both-confirmed features. REQ-047 (game news, staff-written, with categories) drops "product reviews" as a news category. A new requirement is added for customer-submitted product reviews, consistent with Q-002 confirming this was in scope all along — see `02-scope-and-phases.md`'s new REQ-054.
 - **Recorded in:** `11-decisions.md` D-084.
+- **Update — 2026-10-29:** the old site's news has a "Reviews" category (slug `reviews`, with children "Nintendo" and "PS5"), which plan 012 first imported as a news category (D-125, owner O-1). Asked again, the project owner answered: "เขียน blog/news ไม่มี review มีแค่ product ที่ให้ลูกค้า review" (blog/news has no review; only products have reviews, written by customers). On "Uncategorized": "just leave it, just show it when on the news page that does not query the category". **Effect:** news has no review category; the review tree is excluded from the import and an article only in it is soft-deleted, and Uncategorized is kept but has no tab or tag — recorded in `11-decisions.md` D-139, which supersedes D-125; plan 012 Task 7.
 
 ### Q-049: Relationship between a product's sale page and news articles
 - **Status:** RESOLVED — 2026-09-13

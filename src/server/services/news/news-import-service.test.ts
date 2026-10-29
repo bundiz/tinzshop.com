@@ -24,6 +24,26 @@ const CATEGORY: NewsCategorySnapshot = {
   parentSourceId: null,
   slug: 'news',
   translation: { locale: 'th', name: 'News' },
+  isListed: true,
+  isExcluded: false,
+};
+
+const EXCLUDED: NewsCategorySnapshot = {
+  sourceId: 7n,
+  parentSourceId: null,
+  slug: 'excluded',
+  translation: { locale: 'th', name: 'Excluded' },
+  isListed: false,
+  isExcluded: true,
+};
+
+const UNLISTED: NewsCategorySnapshot = {
+  sourceId: 1n,
+  parentSourceId: null,
+  slug: 'unlisted',
+  translation: { locale: 'th', name: 'Unlisted' },
+  isListed: false,
+  isExcluded: false,
 };
 
 function setup(options: {
@@ -46,6 +66,7 @@ function setup(options: {
     upsertNewsCategories: vi.fn(async (snapshots: readonly NewsCategorySnapshot[]) => snapshots.length),
     upsertNewsArticle: vi.fn(options.upsert ?? (async () => 'created' as const)),
     findArticleSourceStates: vi.fn(async () => options.states ?? new Map<bigint, Date | null>()),
+    applyExcludedNewsCategories: vi.fn(async (_excluded: readonly bigint[]) => {}),
   };
   const deps: NewsImportDeps = {
     source,
@@ -83,6 +104,54 @@ describe('runNewsImport', () => {
     expect(vi.mocked(news.upsertNewsCategories).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(source.listArticlesPage).mock.invocationCallOrder[0] ?? 0,
     );
+  });
+
+  it('applies the excluded categories to stored articles before reading posts', async () => {
+    const { deps, news, source } = setup({
+      categories: async () => [CATEGORY, EXCLUDED, UNLISTED],
+      pages: [{ articles: [], failures: [], skipped: 0, totalPages: 1 }],
+    });
+
+    await runNewsImport(deps);
+
+    expect(news.applyExcludedNewsCategories).toHaveBeenCalledWith([7n]);
+    const order = (fn: unknown) => vi.mocked(fn as () => unknown).mock.invocationCallOrder[0] ?? 0;
+    expect(order(news.upsertNewsCategories)).toBeLessThan(order(news.applyExcludedNewsCategories));
+    expect(order(news.applyExcludedNewsCategories)).toBeLessThan(order(source.listArticlesPage));
+  });
+
+  it('never links an excluded category, and hides an article whose categories are all excluded', async () => {
+    const withCategories = (id: bigint, categorySourceIds: bigint[]) => ({ ...article(id), categorySourceIds });
+    const { deps, news } = setup({
+      categories: async () => [CATEGORY, EXCLUDED, UNLISTED],
+      pages: [
+        {
+          articles: [
+            withCategories(1n, [5n, 7n]),
+            withCategories(2n, [7n]),
+            withCategories(3n, [1n]),
+            withCategories(4n, []),
+          ],
+          failures: [],
+          skipped: 0,
+          totalPages: 1,
+        },
+      ],
+    });
+
+    await runNewsImport(deps);
+
+    const calls = vi.mocked(news.upsertNewsArticle).mock.calls.map(([snapshot, options]) => [
+      snapshot.sourceId,
+      snapshot.categorySourceIds,
+      options,
+    ]);
+    expect(calls).toEqual([
+      [1n, [5n], { hidden: false }],
+      [2n, [], { hidden: true }],
+      [3n, [1n], { hidden: false }],
+      [4n, [], { hidden: false }],
+    ]);
   });
 
   it('counts a failed post and continues', async () => {

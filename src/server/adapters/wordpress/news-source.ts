@@ -2,7 +2,7 @@ import { NewsSourceError } from "@/server/services/news/news-import-service";
 import type { NewsArticleFailure, NewsArticleSnapshot, NewsSource } from "@/server/services/news/news-snapshot";
 import type { WordPressClient } from "./client";
 import { WordPressApiError } from "./errors";
-import { mapWordPressCategory, mapWordPressPost, wordPressModifiedAt } from "./map-post";
+import { mapWordPressCategories, mapWordPressPost, wordPressModifiedAt } from "./map-post";
 import type { WpPost } from "./schemas";
 
 /** A failed list is the source failing as a whole; the reason is a fixed code and the path holds no query. */
@@ -44,7 +44,7 @@ export function createWordPressNewsSource(client: WordPressClient): NewsSource {
 
   return {
     listCategories() {
-      return asSourceError(async () => (await client.listCategories()).map(mapWordPressCategory));
+      return asSourceError(async () => mapWordPressCategories(await client.listCategories()));
     },
 
     async listArticlesPage(page, isUnchanged) {

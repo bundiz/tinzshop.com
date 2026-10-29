@@ -46,6 +46,13 @@ export type NewsCategorySnapshot = {
   /** Decoded, never percent-encoded. */
   slug: string;
   translation: { locale: NewsLocale; name: string };
+  /** false: stored with no tab, never a card's tag (`is_listed`); true for an ordinary category. */
+  isListed: boolean;
+  /**
+   * Not a news category at all (D-139): never linked to an article, and a post in excluded categories
+   * only is not news. An excluded category is never listed.
+   */
+  isExcluded: boolean;
 };
 
 /** One post the source could not turn into a snapshot; `reason` is a fixed code, never a body or URL. */

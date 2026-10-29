@@ -14,9 +14,9 @@ const listNews = getNewsReader();
 const getNewsArticle = getNewsArticleReader();
 const listLatestNews = getLatestNewsReader();
 
-async function category(slug: string, name: string, position: number, parentId: string | null = null) {
+async function category(slug: string, name: string, position: number, parentId: string | null = null, isListed = true) {
   const row = await prisma().newsCategory.create({
-    data: { slug, position, parentId, translations: { create: { locale: 'th', name } } },
+    data: { slug, position, parentId, isListed, translations: { create: { locale: 'th', name } } },
     select: { id: true },
   });
   return row.id;
@@ -123,6 +123,28 @@ describe('listNews against the database', () => {
 
     expect(page?.items.find((item) => item.slug === thaiOnly)?.title).toMatch(/^ข่าว /);
     expect(page?.items.find((item) => item.slug === both)?.title).toBe('English title');
+  });
+});
+
+describe('unlisted categories against the database', () => {
+  it('gives them no tab, no card tag, no breadcrumb and a 404 route, and keeps their articles under ทั้งหมด', async () => {
+    const news = await category('news', 'News', 2);
+    const uncategorized = await category('uncategorized', 'Uncategorized', 1, null, false);
+    const reviews = await category('reviews', 'Reviews', 3, null, false);
+    const onlyUnlisted = await article([uncategorized]);
+    const both = await article([uncategorized, news]);
+
+    const all = await listNews({ locale: 'th', page: 1 });
+
+    expect(all?.items.map((item) => item.slug)).toEqual([both, onlyUnlisted]);
+    expect(all?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+    expect(all?.items.map((item) => item.categoryName)).toEqual(['News', null]);
+    expect(await listNews({ locale: 'th', categorySlug: 'uncategorized', page: 1 })).toBeNull();
+    expect(await listNews({ locale: 'th', categorySlug: 'reviews', page: 1 })).toBeNull();
+    expect(reviews).toBeTruthy();
+
+    const detail = await getNewsArticle({ locale: 'th', slug: both });
+    expect(detail?.categories).toEqual([{ slug: 'news', name: 'News' }]);
   });
 });
 

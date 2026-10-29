@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { mapWordPressCategory, mapWordPressPost } from "./map-post";
+import { NEWS_CATEGORY_SLUG_RULES, mapWordPressCategories, mapWordPressPost } from "./map-post";
 import { wpCategoryListSchema, wpPostListSchema } from "./schemas";
 
 function fixture(name: string): unknown {
@@ -66,26 +66,65 @@ describe("mapWordPressPost", () => {
   });
 });
 
-describe("mapWordPressCategory", () => {
+describe("mapWordPressCategories", () => {
+  const mapped = mapWordPressCategories(categories);
+  const bySourceId = (id: bigint) => {
+    const found = mapped.find((c) => c.sourceId === id);
+    if (found === undefined) throw new Error(`category ${id} missing`);
+    return found;
+  };
+
   it("maps a child category with a decoded Thai slug", () => {
-    const category = categories.find((c) => c.id === 45);
-    if (category === undefined) throw new Error("fixture category 45 missing");
-    expect(mapWordPressCategory(category)).toEqual({
+    expect(bySourceId(45n)).toEqual({
       sourceId: 45n,
       parentSourceId: 5n,
       slug: "บทความ",
       translation: { locale: "th", name: "บทความ" },
+      isListed: true,
+      isExcluded: false,
     });
   });
 
   it("maps a top-level category with no parent", () => {
-    const category = categories.find((c) => c.id === 5);
-    if (category === undefined) throw new Error("fixture category 5 missing");
-    expect(mapWordPressCategory(category)).toEqual({
+    expect(bySourceId(5n)).toEqual({
       sourceId: 5n,
       parentSourceId: null,
       slug: "news",
       translation: { locale: "th", name: "News" },
+      isListed: true,
+      isExcluded: false,
     });
+  });
+
+  it("marks the reviews subtree excluded and unlisted", () => {
+    for (const id of [7n, 15n, 17n]) {
+      expect(bySourceId(id)).toMatchObject({ isExcluded: true, isListed: false });
+    }
+    expect(mapped.filter((c) => c.isExcluded).map((c) => c.sourceId).sort()).toEqual([15n, 17n, 7n].sort());
+  });
+
+  it("marks uncategorized unlisted but not excluded", () => {
+    expect(bySourceId(1n)).toMatchObject({ slug: "uncategorized", isListed: false, isExcluded: false });
+  });
+
+  it("excludes a grandchild of reviews, whatever the list order, and survives a parent cycle", () => {
+    const list = [
+      { id: 90, parent: 15, count: 0, slug: "deep", name: "Deep" },
+      { id: 15, parent: 7, count: 0, slug: "nintendo-reviews", name: "Nintendo" },
+      { id: 7, parent: 0, count: 0, slug: "reviews", name: "Reviews" },
+      { id: 61, parent: 62, count: 0, slug: "cycle-a", name: "A" },
+      { id: 62, parent: 61, count: 0, slug: "cycle-b", name: "B" },
+    ];
+    expect(mapWordPressCategories(list).map((c) => [c.sourceId, c.isExcluded])).toEqual([
+      [90n, true],
+      [15n, true],
+      [7n, true],
+      [61n, false],
+      [62n, false],
+    ]);
+  });
+
+  it("keeps the slug rules in one constant", () => {
+    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: ["reviews"], unlisted: ["uncategorized"] });
   });
 });

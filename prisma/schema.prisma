@@ -248,6 +248,8 @@ model NewsCategory {
   parentId     String?                   @map("parent_id") @db.Uuid
   position     Int
   sourceId     BigInt?                   @unique @map("source_id")
+  // false: no tab, never a card's tag or breadcrumb, its route is a 404 (D-139). Its articles stay listed.
+  isListed     Boolean                   @default(true) @map("is_listed")
   createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   parent       NewsCategory?             @relation("NewsCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)

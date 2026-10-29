@@ -43,12 +43,46 @@ export function mapWordPressPost(
   };
 }
 
-/** One WordPress category as a neutral snapshot; parent 0 means top level. */
-export function mapWordPressCategory(category: WpCategory): NewsCategorySnapshot {
-  return {
-    sourceId: BigInt(category.id),
-    parentSourceId: category.parent === 0 ? null : BigInt(category.parent),
-    slug: decodeSlug(category.slug),
-    translation: { locale: "th", name: decodeHtmlEntities(category.name).trim() },
+/**
+ * Which old-site categories are not news categories (owner, 2026-10-29, Q-048; D-139). The one place a
+ * WordPress category slug is named. `excluded`: the category and all its descendants are never linked
+ * to an article, and a post in excluded categories only is not news. `unlisted`: the category is kept
+ * and linked, but has no tab and is never shown as a tag.
+ */
+export const NEWS_CATEGORY_SLUG_RULES = {
+  excluded: ["reviews"],
+  unlisted: ["uncategorized"],
+} as const satisfies { excluded: readonly string[]; unlisted: readonly string[] };
+
+const EXCLUDED_SLUGS: ReadonlySet<string> = new Set(NEWS_CATEGORY_SLUG_RULES.excluded);
+const UNLISTED_SLUGS: ReadonlySet<string> = new Set(NEWS_CATEGORY_SLUG_RULES.unlisted);
+
+/**
+ * Every WordPress category as a neutral snapshot, in the order given; parent 0 means top level. A
+ * category is excluded when it or any ancestor has an excluded slug (a parent cycle is cut); an
+ * excluded or unlisted category has `isListed` false.
+ */
+export function mapWordPressCategories(categories: readonly WpCategory[]): NewsCategorySnapshot[] {
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const slugOf = (category: WpCategory): string => decodeSlug(category.slug);
+  const isExcluded = (category: WpCategory): boolean => {
+    const seen = new Set<number>();
+    for (let at: WpCategory | undefined = category; at !== undefined && !seen.has(at.id); at = byId.get(at.parent)) {
+      if (EXCLUDED_SLUGS.has(slugOf(at))) return true;
+      seen.add(at.id);
+    }
+    return false;
   };
+  return categories.map((category) => {
+    const slug = slugOf(category);
+    const excluded = isExcluded(category);
+    return {
+      sourceId: BigInt(category.id),
+      parentSourceId: category.parent === 0 ? null : BigInt(category.parent),
+      slug,
+      translation: { locale: "th", name: decodeHtmlEntities(category.name).trim() },
+      isListed: !excluded && !UNLISTED_SLUGS.has(slug),
+      isExcluded: excluded,
+    };
+  });
 }

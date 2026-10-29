@@ -4,6 +4,7 @@ import type { WordPressClient } from '@/server/adapters/wordpress/client';
 import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-source';
 import type { WpCategory, WpPost } from '@/server/adapters/wordpress/schemas';
 import {
+  applyExcludedNewsCategories,
   findArticleSourceStates,
   upsertNewsArticle,
   upsertNewsCategories,
@@ -15,6 +16,7 @@ import {
 } from '@/server/repositories/shared/advisory-lock';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 import { runNewsImport, type NewsImportSummary } from '@/server/services/news/news-import-service';
+import { getNewsReader } from '@/server/composition-root';
 import { resetDatabase } from '../setup/database';
 
 beforeEach(async () => {
@@ -77,7 +79,7 @@ function fakeClient(state: {
 function run(client: WordPressClient): Promise<NewsImportSummary> {
   return runNewsImport({
     source: createWordPressNewsSource(client),
-    news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates },
+    news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates, applyExcludedNewsCategories },
     lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
     logError: () => {},
   });
@@ -247,5 +249,190 @@ describe('news import', () => {
 
     const alongside = await tryWithAdvisoryLock(CATALOGUE_SYNC_LOCK_KEY, () => run(client));
     expect(alongside).toMatchObject({ acquired: true, value: { outcome: 'succeeded', created: 1 } });
+  });
+});
+
+// The old site's review tree and Uncategorized, as the dev database held them after the first import.
+const SITE_CATEGORIES: WpCategory[] = [
+  { id: 1, parent: 0, count: 1, slug: 'uncategorized', name: 'Uncategorized' },
+  { id: 5, parent: 0, count: 2, slug: 'news', name: 'News' },
+  { id: 7, parent: 0, count: 3, slug: 'reviews', name: 'Reviews' },
+  { id: 15, parent: 7, count: 1, slug: 'nintendo-reviews', name: 'Nintendo' },
+  { id: 17, parent: 7, count: 1, slug: 'ps5', name: 'PS5' },
+];
+
+const MODIFIED = '2025-10-24T01:00:00';
+
+/** The "before" state: every category listed and every source category linked, nothing deleted. */
+async function seedFirstImport(posts: { id: number; categories: number[] }[]): Promise<void> {
+  const ids = new Map<number, string>();
+  for (const [index, c] of SITE_CATEGORIES.entries()) {
+    const row = await prisma().newsCategory.create({
+      data: {
+        slug: c.slug,
+        position: index + 1,
+        sourceId: BigInt(c.id),
+        parentId: c.parent === 0 ? null : (ids.get(c.parent) ?? null),
+        translations: { create: { locale: 'th', name: c.name } },
+      },
+      select: { id: true },
+    });
+    ids.set(c.id, row.id);
+  }
+  for (const p of posts) {
+    await prisma().newsArticle.create({
+      data: {
+        slug: `post-${p.id}`,
+        sourceId: BigInt(p.id),
+        sourceUrl: `https://old-site.test/post-${p.id}/`,
+        sourceModifiedAt: new Date(`${MODIFIED}Z`),
+        status: 'published',
+        publishedAt: new Date(Date.UTC(2025, 9, 1, 0, p.id - 300)),
+        translations: { create: { locale: 'th', title: `ข่าว ${p.id}` } },
+        categories: { create: p.categories.map((id) => ({ categoryId: ids.get(id) as string })) },
+      },
+    });
+  }
+}
+
+async function linkedSourceIds(sourceId: bigint): Promise<bigint[]> {
+  const row = await prisma().newsArticle.findUniqueOrThrow({
+    where: { sourceId },
+    include: { categories: { include: { category: true } } },
+  });
+  return row.categories.map((link) => link.category.sourceId as bigint).sort(bySourceId);
+}
+
+describe('news import: excluded and unlisted categories (Q-048, 2026-10-29)', () => {
+  const SITE_POSTS = [
+    { id: 301, categories: [5, 7] },
+    { id: 302, categories: [7] },
+    { id: 303, categories: [15, 7] },
+    { id: 304, categories: [17] },
+    { id: 305, categories: [1] },
+    { id: 306, categories: [5] },
+  ];
+  const sitePosts = () => SITE_POSTS.map((p) => post(p.id, { categories: p.categories, modified_gmt: MODIFIED }));
+
+  it('fixes a database imported before the rule, without re-reading unchanged posts', async () => {
+    await seedFirstImport(SITE_POSTS);
+    const state = { posts: sitePosts(), categories: SITE_CATEGORIES, mediaReads: [] as number[] };
+
+    const summary = await run(fakeClient(state));
+
+    expect(summary).toMatchObject({ outcome: 'succeeded', categories: 5, created: 0, updated: 0, unchanged: 6, failed: 0 });
+
+    // No category row is deleted; the review tree and Uncategorized are unlisted.
+    const categories = await prisma().newsCategory.findMany({ orderBy: { sourceId: 'asc' } });
+    expect(categories.map((c) => [c.sourceId, c.isListed])).toEqual([
+      [1n, false],
+      [5n, true],
+      [7n, false],
+      [15n, false],
+      [17n, false],
+    ]);
+
+    // Every link to the review tree is gone; Uncategorized's link is kept.
+    expect(await linkedSourceIds(301n)).toEqual([5n]);
+    expect(await linkedSourceIds(302n)).toEqual([]);
+    expect(await linkedSourceIds(303n)).toEqual([]);
+    expect(await linkedSourceIds(304n)).toEqual([]);
+    expect(await linkedSourceIds(305n)).toEqual([1n]);
+
+    // The review-only articles are soft-deleted, the rest stay live; no article row is deleted.
+    const articles = await prisma().newsArticle.findMany({ orderBy: { sourceId: 'asc' } });
+    expect(articles.map((a) => [a.sourceId, a.deletedAt !== null])).toEqual([
+      [301n, false],
+      [302n, true],
+      [303n, true],
+      [304n, true],
+      [305n, false],
+      [306n, false],
+    ]);
+
+    // ทั้งหมด lists the News and the Uncategorized articles; there is no tab for Uncategorized or Reviews.
+    const all = await getNewsReader()({ locale: 'th', page: 1 });
+    expect(all?.items.map((item) => item.slug).sort()).toEqual(['post-301', 'post-305', 'post-306']);
+    expect(all?.categories).toEqual([{ slug: 'news', name: 'News', count: 2 }]);
+    expect(all?.items.find((item) => item.slug === 'post-305')?.categoryName).toBeNull();
+    for (const slug of ['reviews', 'nintendo-reviews', 'ps5', 'uncategorized']) {
+      expect(await getNewsReader()({ locale: 'th', categorySlug: slug, page: 1 })).toBeNull();
+    }
+
+    // A second run changes nothing.
+    const before = await prisma().newsArticle.findMany({ orderBy: { sourceId: 'asc' } });
+    expect(await run(fakeClient(state))).toMatchObject({ outcome: 'succeeded', created: 0, updated: 0, unchanged: 6 });
+    const after = await prisma().newsArticle.findMany({ orderBy: { sourceId: 'asc' } });
+    expect(after.map((a) => [a.id, a.updatedAt.getTime(), a.deletedAt?.getTime()])).toEqual(
+      before.map((a) => [a.id, a.updatedAt.getTime(), a.deletedAt?.getTime()]),
+    );
+    expect(state.mediaReads).toEqual([]);
+  });
+
+  it('applies the rule to new and changed posts, and restores one that gains a news category', async () => {
+    const state = {
+      categories: SITE_CATEGORIES,
+      posts: [post(401, { categories: [5, 15] }), post(402, { categories: [17] }), post(403, { categories: [1] })],
+    };
+
+    await run(fakeClient(state));
+
+    expect(await linkedSourceIds(401n)).toEqual([5n]);
+    expect(await linkedSourceIds(402n)).toEqual([]);
+    expect(await linkedSourceIds(403n)).toEqual([1n]);
+    const deleted = async (id: bigint) =>
+      (await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: id } })).deletedAt;
+    expect(await deleted(401n)).toBeNull();
+    const hiddenAt = await deleted(402n);
+    expect(hiddenAt).not.toBeNull();
+    expect(await deleted(403n)).toBeNull();
+
+    // 402 changes but is still review-only: its deleted_at is kept as it was.
+    state.posts = [post(402, { categories: [7, 17], modified_gmt: '2026-01-01T00:00:00' })];
+    expect(await run(fakeClient(state))).toMatchObject({ updated: 1 });
+    expect(await deleted(402n)).toEqual(hiddenAt);
+
+    // 402 gains News on the source: it is news again. 401 loses News: it is hidden.
+    state.posts = [
+      post(401, { categories: [15], modified_gmt: '2026-02-01T00:00:00' }),
+      post(402, { categories: [7, 5], modified_gmt: '2026-02-01T00:00:00' }),
+    ];
+    expect(await run(fakeClient(state))).toMatchObject({ updated: 2 });
+    expect(await deleted(402n)).toBeNull();
+    expect(await linkedSourceIds(402n)).toEqual([5n]);
+    expect(await deleted(401n)).not.toBeNull();
+    expect(await linkedSourceIds(401n)).toEqual([]);
+  });
+
+  it('never touches deleted_at of an article that was not imported', async () => {
+    await seedFirstImport([]);
+    const reviews = await prisma().newsCategory.findUniqueOrThrow({ where: { sourceId: 7n } });
+    const staffDeleted = new Date('2026-03-01T00:00:00Z');
+    await prisma().newsArticle.create({
+      data: {
+        slug: 'staff-written',
+        status: 'published',
+        publishedAt: new Date('2026-01-01T00:00:00Z'),
+        translations: { create: { locale: 'th', title: 'ข่าวของร้าน' } },
+        categories: { create: [{ categoryId: reviews.id }] },
+      },
+    });
+    await prisma().newsArticle.create({
+      data: {
+        slug: 'staff-deleted',
+        status: 'published',
+        publishedAt: new Date('2026-01-01T00:00:00Z'),
+        deletedAt: staffDeleted,
+        translations: { create: { locale: 'th', title: 'ข่าวที่ลบ' } },
+        categories: { create: [{ categoryId: (await prisma().newsCategory.findUniqueOrThrow({ where: { sourceId: 5n } })).id }] },
+      },
+    });
+
+    await run(fakeClient({ posts: [], categories: SITE_CATEGORIES }));
+
+    expect((await prisma().newsArticle.findUniqueOrThrow({ where: { slug: 'staff-written' } })).deletedAt).toBeNull();
+    expect((await prisma().newsArticle.findUniqueOrThrow({ where: { slug: 'staff-deleted' } })).deletedAt).toEqual(
+      staffDeleted,
+    );
   });
 });

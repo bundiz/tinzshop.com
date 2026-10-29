@@ -15,13 +15,14 @@ import {
 
 const NOW = new Date('2026-10-29T05:00:00Z');
 
-// A tree like the old site's: News > NINTENDO, News > บทความ; Reviews on its own.
+// A tree like the old site's: News > NINTENDO, News > บทความ; SONY and an unlisted category on their own.
 const CATEGORIES: NewsCategoryRow[] = [
-  { id: 'c-news', slug: 'news', parentId: null, position: 2, names: { th: 'News' } },
-  { id: 'c-nintendo', slug: 'nintendo', parentId: 'c-news', position: 3, names: { th: 'NINTENDO' } },
-  { id: 'c-article', slug: 'บทความ', parentId: 'c-news', position: 1, names: { th: 'บทความ' } },
-  { id: 'c-reviews', slug: 'reviews', parentId: null, position: 4, names: { th: 'Reviews', en: 'Reviews EN' } },
-  { id: 'c-empty', slug: 'empty', parentId: null, position: 5, names: { th: 'ว่าง' } },
+  { id: 'c-news', slug: 'news', parentId: null, position: 2, names: { th: 'News' }, isListed: true },
+  { id: 'c-nintendo', slug: 'nintendo', parentId: 'c-news', position: 3, names: { th: 'NINTENDO' }, isListed: true },
+  { id: 'c-article', slug: 'บทความ', parentId: 'c-news', position: 1, names: { th: 'บทความ' }, isListed: true },
+  { id: 'c-sony', slug: 'sony', parentId: null, position: 4, names: { th: 'SONY', en: 'SONY EN' }, isListed: true },
+  { id: 'c-empty', slug: 'empty', parentId: null, position: 5, names: { th: 'ว่าง' }, isListed: true },
+  { id: 'c-uncat', slug: 'uncategorized', parentId: null, position: 0, names: { th: 'Uncategorized' }, isListed: false },
 ];
 
 function row(n: number, overrides: Partial<NewsArticleRow> = {}): NewsArticleRow {
@@ -64,7 +65,7 @@ describe('listNews', () => {
       { articleId: 'a1', categoryId: 'c-news' },
       { articleId: 'a1', categoryId: 'c-nintendo' },
       { articleId: 'a2', categoryId: 'c-article' },
-      { articleId: 'a3', categoryId: 'c-reviews' },
+      { articleId: 'a3', categoryId: 'c-sony' },
     ];
     const { deps, count, list } = setup({ total: 2, rows: [row(2), row(1)], links });
 
@@ -78,7 +79,7 @@ describe('listNews', () => {
       { slug: 'news', name: 'News', count: 2 },
       { slug: 'บทความ', name: 'บทความ', count: 1 },
       { slug: 'nintendo', name: 'NINTENDO', count: 1 },
-      { slug: 'reviews', name: 'Reviews', count: 1 },
+      { slug: 'sony', name: 'SONY', count: 1 },
     ]);
     expect(result?.activeCategorySlug).toBe('news');
     expect(result?.activeCategoryName).toBe('News');
@@ -125,15 +126,15 @@ describe('listNews', () => {
     const { deps } = setup({
       total: 2,
       rows: [
-        row(1, { titles: { th: 'หัวข้อไทย' }, excerpts: { th: 'สรุปไทย' }, categoryIds: ['c-reviews'] }),
+        row(1, { titles: { th: 'หัวข้อไทย' }, excerpts: { th: 'สรุปไทย' }, categoryIds: ['c-sony'] }),
         row(2, { titles: { th: 'ไทย', en: 'English' }, excerpts: { th: 'ไทย', en: 'English excerpt' } }),
       ],
-      links: [{ articleId: 'a1', categoryId: 'c-reviews' }],
+      links: [{ articleId: 'a1', categoryId: 'c-sony' }],
     });
     const result = await listNews(deps, { locale: 'en', page: 1 });
-    expect(result?.items[0]).toMatchObject({ title: 'หัวข้อไทย', excerpt: 'สรุปไทย', categoryName: 'Reviews EN' });
+    expect(result?.items[0]).toMatchObject({ title: 'หัวข้อไทย', excerpt: 'สรุปไทย', categoryName: 'SONY EN' });
     expect(result?.items[1]).toMatchObject({ title: 'English', excerpt: 'English excerpt' });
-    expect(result?.categories).toEqual([{ slug: 'reviews', name: 'Reviews EN', count: 1 }]);
+    expect(result?.categories).toEqual([{ slug: 'sony', name: 'SONY EN', count: 1 }]);
   });
 
   it("tags a card with the article's most specific category", async () => {
@@ -141,12 +142,39 @@ describe('listNews', () => {
       total: 3,
       rows: [
         row(1, { categoryIds: ['c-news', 'c-nintendo'] }),
-        row(2, { categoryIds: ['c-reviews', 'c-article'] }),
+        row(2, { categoryIds: ['c-sony', 'c-article'] }),
         row(3, { categoryIds: [] }),
       ],
     });
     const result = await listNews(deps, { locale: 'th', page: 1 });
     expect(result?.items.map((item) => item.categoryName)).toEqual(['NINTENDO', 'บทความ', null]);
+  });
+
+  it('gives no tab to an unlisted category, and returns null for its slug', async () => {
+    const links = [
+      { articleId: 'a1', categoryId: 'c-uncat' },
+      { articleId: 'a2', categoryId: 'c-uncat' },
+      { articleId: 'a2', categoryId: 'c-news' },
+    ];
+    const { deps, list } = setup({ total: 2, rows: [row(2), row(1, { categoryIds: ['c-uncat'] })], links });
+
+    const all = await listNews(deps, { locale: 'th', page: 1 });
+
+    // Its articles are still under ทั้งหมด.
+    expect(all?.items.map((item) => item.slug)).toEqual(['post-2', 'post-1']);
+    expect(all?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+    list.mockClear();
+    expect(await listNews(deps, { locale: 'th', categorySlug: 'uncategorized', page: 1 })).toBeNull();
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it('never tags a card with an unlisted category', async () => {
+    const { deps } = setup({
+      total: 2,
+      rows: [row(1, { categoryIds: ['c-uncat'] }), row(2, { categoryIds: ['c-uncat', 'c-news'] })],
+    });
+    const result = await listNews(deps, { locale: 'th', page: 1 });
+    expect(result?.items.map((item) => item.categoryName)).toEqual([null, 'News']);
   });
 
   it('keeps plain-text titles as given, markup characters and all', async () => {
@@ -157,8 +185,8 @@ describe('listNews', () => {
 
   it('survives a category cycle in the stored tree', async () => {
     const cyclic: NewsCategoryRow[] = [
-      { id: 'x', slug: 'x', parentId: 'y', position: 1, names: { th: 'X' } },
-      { id: 'y', slug: 'y', parentId: 'x', position: 2, names: { th: 'Y' } },
+      { id: 'x', slug: 'x', parentId: 'y', position: 1, names: { th: 'X' }, isListed: true },
+      { id: 'y', slug: 'y', parentId: 'x', position: 2, names: { th: 'Y' }, isListed: true },
     ];
     const { deps, list } = setup({ total: 0 });
     deps.news.listNewsCategories = async () => cyclic;
@@ -206,6 +234,21 @@ describe('getNewsArticle', () => {
     ]);
   });
 
+  it('shows and relates by listed categories only', async () => {
+    const article = detailRow(5, { categoryIds: ['c-uncat', 'c-news'] });
+    const { deps, list } = setupArticle({ article, related: [row(9)] });
+
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
+
+    expect(detail?.categories).toEqual([{ slug: 'news', name: 'News' }]);
+    expect(list.mock.calls.map(([filter]) => filter.categoryIds)).toEqual([['c-news']]);
+
+    const onlyUnlisted = setupArticle({ article: detailRow(6, { categoryIds: ['c-uncat'] }) });
+    const hidden = await getNewsArticle(onlyUnlisted.deps, { locale: 'th', slug: 'post-6' });
+    expect(hidden?.categories).toEqual([]);
+    expect(onlyUnlisted.list).not.toHaveBeenCalled();
+  });
+
   it('returns null for an unknown slug', async () => {
     const { deps, list } = setupArticle({ article: null });
     expect(await getNewsArticle(deps, { locale: 'th', slug: 'nope' })).toBeNull();
@@ -213,14 +256,14 @@ describe('getNewsArticle', () => {
   });
 
   it('related excludes the article itself, max 3', async () => {
-    const article = detailRow(5, { categoryIds: ['c-reviews'] });
+    const article = detailRow(5, { categoryIds: ['c-sony'] });
     const related = [row(9), row(5), row(8), row(7), row(6)];
     const { deps, list } = setupArticle({ article, related: related.slice(0, RELATED_NEWS_LIMIT + 1) });
 
     const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
 
     expect(RELATED_NEWS_LIMIT).toBe(3);
-    expect(list).toHaveBeenCalledWith({ categoryIds: ['c-reviews'], now: NOW, skip: 0, take: RELATED_NEWS_LIMIT + 1 });
+    expect(list).toHaveBeenCalledWith({ categoryIds: ['c-sony'], now: NOW, skip: 0, take: RELATED_NEWS_LIMIT + 1 });
     expect(detail?.related.map((card) => card.slug)).toEqual(['post-9', 'post-8', 'post-7']);
     expect(detail?.related[0]?.categoryName).toBe('News');
   });
@@ -257,8 +300,8 @@ describe('getNewsArticle', () => {
   });
 
   it('takes one leaf at a time, the card tag first, so a broad leaf does not crowd it out', async () => {
-    // NINTENDO (position 3) and Reviews (position 4) are both leaves of this article.
-    const article = detailRow(5, { categoryIds: ['c-news', 'c-nintendo', 'c-reviews'] });
+    // NINTENDO (position 3) and SONY (position 4) are both leaves of this article.
+    const article = detailRow(5, { categoryIds: ['c-news', 'c-nintendo', 'c-sony'] });
     const { deps, list } = setupArticle({ article });
     list.mockImplementation(async (filter: NewsListFilter) =>
       filter.categoryIds?.[0] === 'c-nintendo' ? [row(3), row(5)] : [row(30), row(29), row(3)],
@@ -266,7 +309,7 @@ describe('getNewsArticle', () => {
 
     const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-5' });
 
-    expect(list.mock.calls.map(([filter]) => filter.categoryIds)).toEqual([['c-nintendo'], ['c-reviews']]);
+    expect(list.mock.calls.map(([filter]) => filter.categoryIds)).toEqual([['c-nintendo'], ['c-sony']]);
     expect(detail?.related.map((card) => card.slug)).toEqual(['post-3', 'post-30', 'post-29']);
   });
 

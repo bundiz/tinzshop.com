@@ -48,8 +48,8 @@ function parentsFirst(snapshots: readonly NewsCategorySnapshot[]): NewsCategoryS
 /**
  * Saves the source's categories in one transaction, matched by `source_id`, parents first. A new
  * category's `position` is its rank in source id order (ruling R2); an existing one keeps its
- * position, so a later reorder is not undone. A category is written only when its slug, parent or
- * name changed. Nothing is deleted. Returns how many categories were given.
+ * position, so a later reorder is not undone. A category is written only when its slug, parent,
+ * `is_listed` or name changed. Nothing is deleted. Returns how many categories were given.
  */
 export async function upsertNewsCategories(snapshots: readonly NewsCategorySnapshot[]): Promise<number> {
   const ordered = parentsFirst(snapshots);
@@ -61,7 +61,7 @@ export async function upsertNewsCategories(snapshots: readonly NewsCategorySnaps
     async (tx) => {
       const existing = await tx.newsCategory.findMany({
         where: { sourceId: { not: null } },
-        select: { id: true, sourceId: true, slug: true, parentId: true, translations: true },
+        select: { id: true, sourceId: true, slug: true, parentId: true, isListed: true, translations: true },
       });
       const bySourceId = new Map(existing.map((row) => [row.sourceId as bigint, row]));
       const idBySourceId = new Map(existing.map((row) => [row.sourceId as bigint, row.id]));
@@ -100,6 +100,7 @@ export async function upsertNewsCategories(snapshots: readonly NewsCategorySnaps
               parentId,
               position: position.get(snapshot.sourceId) ?? ordered.length,
               sourceId: snapshot.sourceId,
+              isListed: snapshot.isListed,
               translations: { create: { locale, name } },
             },
             select: { id: true },
@@ -109,8 +110,11 @@ export async function upsertNewsCategories(snapshots: readonly NewsCategorySnaps
           continue;
         }
 
-        if (current.slug !== slug || current.parentId !== parentId) {
-          await tx.newsCategory.update({ where: { id: current.id }, data: { slug, parentId } });
+        if (current.slug !== slug || current.parentId !== parentId || current.isListed !== snapshot.isListed) {
+          await tx.newsCategory.update({
+            where: { id: current.id },
+            data: { slug, parentId, isListed: snapshot.isListed },
+          });
           parentById.set(current.id, parentId);
         }
         if (current.translations.find((t) => t.locale === locale)?.name !== name) {
@@ -142,15 +146,20 @@ function articleFields(snapshot: NewsArticleSnapshot, slug: string) {
 /**
  * Saves one post in one transaction, matched by `source_id`: an unchanged `source_modified_at`
  * writes nothing; a changed one updates the article and its `th` translation and re-links its
- * categories; a new one is created. Categories the database does not hold are not linked. Neither
- * `deleted_at` nor any staff column is touched, and no article is ever deleted.
+ * categories; a new one is created. Categories the database does not hold are not linked.
+ * `hidden` is the excluded-category rule (D-139): true sets `deleted_at` (an already-set one is kept),
+ * false clears it; the import owns `deleted_at` of imported rows before go-live. No staff column is
+ * touched, and no article row is ever deleted.
  */
-export async function upsertNewsArticle(snapshot: NewsArticleSnapshot): Promise<NewsArticleUpsertResult> {
+export async function upsertNewsArticle(
+  snapshot: NewsArticleSnapshot,
+  options: { hidden: boolean },
+): Promise<NewsArticleUpsertResult> {
   return getPrisma().$transaction(
     async (tx) => {
       const current = await tx.newsArticle.findUnique({
         where: { sourceId: snapshot.sourceId },
-        select: { id: true, sourceModifiedAt: true },
+        select: { id: true, sourceModifiedAt: true, deletedAt: true },
       });
       if (current !== null && current.sourceModifiedAt?.getTime() === snapshot.sourceModifiedAt.getTime()) {
         return 'unchanged';
@@ -170,6 +179,7 @@ export async function upsertNewsArticle(snapshot: NewsArticleSnapshot): Promise<
           data: {
             ...articleFields(snapshot, slug),
             sourceId: snapshot.sourceId,
+            deletedAt: options.hidden ? new Date() : null,
             translations: { create: { locale, title, excerpt, bodyHtml } },
             categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
           },
@@ -177,7 +187,10 @@ export async function upsertNewsArticle(snapshot: NewsArticleSnapshot): Promise<
         return 'created';
       }
 
-      await tx.newsArticle.update({ where: { id: current.id }, data: articleFields(snapshot, slug) });
+      await tx.newsArticle.update({
+        where: { id: current.id },
+        data: { ...articleFields(snapshot, slug), deletedAt: options.hidden ? (current.deletedAt ?? new Date()) : null },
+      });
       await tx.newsArticleTranslation.upsert({
         where: { articleId_locale: { articleId: current.id, locale } },
         create: { articleId: current.id, locale, title, excerpt, bodyHtml },
@@ -191,6 +204,42 @@ export async function upsertNewsArticle(snapshot: NewsArticleSnapshot): Promise<
         skipDuplicates: true,
       });
       return 'updated';
+    },
+    { timeout: TRANSACTION_TIMEOUT_MS },
+  );
+}
+
+/**
+ * The excluded-category rule (D-139) over what is stored, in one transaction, so a re-run corrects
+ * articles it skips as unchanged: an imported article whose every category link is to an excluded
+ * category gets `deleted_at` (an already-set one is kept); an imported, deleted article with a link to
+ * any other category has it cleared; then every link to an excluded category is removed. Only imported
+ * rows (`source_id` set) have `deleted_at` touched. No category or article row is deleted. A second run
+ * changes nothing.
+ */
+export async function applyExcludedNewsCategories(excludedSourceIds: readonly bigint[]): Promise<void> {
+  await getPrisma().$transaction(
+    async (tx) => {
+      const excludedIds = (
+        await tx.newsCategory.findMany({ where: { sourceId: { in: [...excludedSourceIds] } }, select: { id: true } })
+      ).map((category) => category.id);
+      await tx.newsArticle.updateMany({
+        where: {
+          sourceId: { not: null },
+          deletedAt: null,
+          categories: { some: { categoryId: { in: excludedIds } }, none: { categoryId: { notIn: excludedIds } } },
+        },
+        data: { deletedAt: new Date() },
+      });
+      await tx.newsArticle.updateMany({
+        where: {
+          sourceId: { not: null },
+          deletedAt: { not: null },
+          categories: { some: { categoryId: { notIn: excludedIds } } },
+        },
+        data: { deletedAt: null },
+      });
+      await tx.newsArticleCategory.deleteMany({ where: { categoryId: { in: excludedIds } } });
     },
     { timeout: TRANSACTION_TIMEOUT_MS },
   );
@@ -222,11 +271,18 @@ function byLocale<T extends { locale: string }>(rows: readonly T[], value: (row:
   return Object.fromEntries(rows.map((row) => [row.locale, value(row)]));
 }
 
-/** Every news category with its names, in `position` order. */
+/** Every news category with its names and whether it is listed, in `position` order. */
 export async function listNewsCategories(): Promise<NewsCategoryRow[]> {
   const rows = await getPrisma().newsCategory.findMany({
     orderBy: [{ position: 'asc' }, { slug: 'asc' }],
-    select: { id: true, slug: true, parentId: true, position: true, translations: { select: { locale: true, name: true } } },
+    select: {
+      id: true,
+      slug: true,
+      parentId: true,
+      position: true,
+      isListed: true,
+      translations: { select: { locale: true, name: true } },
+    },
   });
   return rows.map((row) => ({
     id: row.id,
@@ -234,6 +290,7 @@ export async function listNewsCategories(): Promise<NewsCategoryRow[]> {
     parentId: row.parentId,
     position: row.position,
     names: byLocale(row.translations, (t) => t.name),
+    isListed: row.isListed,
   }));
 }
 
