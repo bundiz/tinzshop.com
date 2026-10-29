@@ -19,6 +19,7 @@ Every external system named in `reference/client-summary-th.md`, in one file.
 | [K-Payment](#k-payment-kasikorn-bank) | NOT RESEARCHED — credentials in hand, sandbox testing next | Card payment, instalments, PromptPay QR — the **sole** payment method | Phase 3 |
 | [BigSeller](#bigseller) | NOT RESEARCHED — account exists, data inspection pending | Stock management, daily file sync, shipping/fulfilment, labels | Phase 2 (SKU/Excel), Phase 5 (sync) |
 | [Shopee](#shopee) | RESEARCHED — sandbox access since 2026-10-20; live go-live pending | Catalogue mirror: pull products, options, prices and stock every 10 minutes (D-094, D-095) | Phase 2 (plan 010) |
+| [Old tinzshop.com WordPress](#old-tinzshopcom-wordpress-news-import) | RESEARCHED (2026-10-29) — public REST API, no login | One-time, re-runnable import of the old site's news posts and categories (D-126, D-133) | Phase 6 (plan 012) |
 | [Mail relay](#transactional-email) | NOT RESEARCHED — category decided, provider not chosen | Automatic email at every order step | Phase 3 |
 | [Cloudflare](#cloudflare) | DECIDED — Free plan, security/bot scope only | Security, bot verification | Phase 8 |
 | [LINE](#line) | NOT RESEARCHED | Displaying the shop's LINE contact | Phase 6 |
@@ -319,6 +320,47 @@ content, which falls under the shop information the client must supply.
 
 Nothing beyond the shop information block in phase 6. **If a real LINE
 integration is wanted, that is new scope and needs a client answer first.**
+
+---
+
+## Old tinzshop.com WordPress (news import)
+
+- **Status:** RESEARCHED (2026-10-29) · **Named in:** the project owner's decisions of 2026-10-29, not the client summary · **Blocks:** nothing; it feeds plan 012
+
+### What we need it for
+
+The shop's current site holds the game news the client already publishes. Plan 012 imports it so the new site carries that news on day one (D-126). After go-live staff write news in our own admin and the old site is never read again.
+
+### What was researched
+
+Verified 2026-10-29 against the live site, see [the news design](superpowers/specs/2026-10-29-news-import-and-pages-design.md) section 3:
+
+- The site is WordPress with the public REST API open at `/wp-json/wp/v2/`; no login is needed for published posts.
+- 540 published posts and 13 categories in a tree. Each post has `id`, `slug` (percent-encoded Thai), `link`, `date_gmt`, `modified_gmt`, `title.rendered`, `excerpt.rendered`, `content.rendered`, `categories`, `featured_media` and `author`. All content is Thai.
+- `/wp-json/wp/v2/users` is public and gives each author's display `name`, used as the byline (D-132). A real person's name is never committed to this repository; test fixtures use invented names.
+- Tags (258) are not imported.
+
+### How the import behaves (plan 012)
+
+- **Adapter:** `src/server/adapters/wordpress/` is the only place that names WordPress; it maps posts to a neutral `NewsArticleSnapshot`. The base URL is the non-secret setting `NEWS_IMPORT_SOURCE_URL`.
+- **Order:** categories first, so parents exist, then posts, 100 per page, every page. Requests run one after another, with `User-Agent: TinzshopNewsImport/1.0`.
+- **Re-run:** each post is upserted by `source_id` with its category links in one transaction; an unchanged `source_modified_at` skips the update. Nothing is ever deleted. One failed post is counted and the run continues.
+- **Body HTML** is sanitised at import with an allow-list and stored sanitised (see [05](05-database.md#news)); images keep the old site's URLs (D-127).
+- **Run:** `POST /api/jobs/news-import` with `Bearer JOB_SECRET`, in every environment, under its own advisory lock.
+
+### What we do NOT know
+
+- The old site's rate limits.
+- Whether WordPress HTML uses embeds the allow-list drops; the importer reports how many posts lost an `iframe` or `script`.
+- When the old site will be shut down, which is the deadline for copying its images (D-127).
+
+### Credential required
+
+None. The REST API is public and `NEWS_IMPORT_SOURCE_URL` is the old site's origin, not a secret.
+
+### What it blocks
+
+Nothing external. Plan 012 builds against the live old site read-only.
 
 ---
 

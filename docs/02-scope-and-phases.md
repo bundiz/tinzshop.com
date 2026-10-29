@@ -333,6 +333,10 @@ Products sourced from a distributor can be sold without holding stock. Before a 
 - **Deliverables (from the source, as revised):** news, the various content pages, customer product reviews, per-product Sale Pages, and sales reports. **Migrate existing content into the new system before building the new content types on top of it** — an instruction from the 2026-09-13 answers that applies specifically here.
 - **Blocked by:** an accounting export format, still pending review (Q-050).
 
+### News (plan 012)
+
+News (REQ-047) is built ahead of the rest of this phase as [plan 012](plans/012-news-import-and-pages.md), on the project owner's decisions of 2026-10-29 ([design](superpowers/specs/2026-10-29-news-import-and-pages-design.md), D-125 to D-134): the news tables, a re-runnable import of the old WordPress site's posts and categories, and the news list, category and article pages. The old "Reviews" category is staff-written and is imported as a news category; REQ-047's "product reviews is not a news category" concerns customer reviews (REQ-054) only (D-125). The staff news editor is a later plan, together with staff sign-in (plan 002). Page 1 of the list shows 3 feature and 9 grid articles, and later pages 12 (D-134).
+
 ### Reporting
 
 **REQ-027 — Monthly sales export for accounting** · §6 · CONFIRMED, format `[Q-050]`

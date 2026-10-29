@@ -65,20 +65,20 @@
 
 **Files:** Modify `docs/11-decisions.md`, `docs/02-scope-and-phases.md`, `docs/05-database.md`, `docs/12-glossary.md`, `docs/14-integrations.md`, `CLAUDE.md` and `.env.example`.
 
-- [ ] **Step 1:** Add D-rows from D-125 for owner decisions O-1 to O-8 (spec §2) and for the WordPress REST API as the import source (spec §3, §5). Each row links to its owning doc:
+- [x] **Step 1:** Add D-rows from D-125 for owner decisions O-1 to O-8 (spec §2) and for the WordPress REST API as the import source (spec §3, §5). Each row links to its owning doc:
   - news scope goes in a short Phase 6 note in `02`, naming plan 012
   - the old-site source goes in a new "Old tinzshop.com WordPress (news import)" section in `14`
   - the tables go in `05`
-- [ ] **Step 2:** Glossary rows:
+- [x] **Step 2:** Glossary rows:
   - the tables and columns in spec §4: `news_category`, `news_category_translation`, `news_article`, `news_article_translation`, `news_article_category`, `news_article_status` (`draft`/`published`), `source_id`, `source_url`, `source_modified_at`, `published_at`, `byline_name`, `author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`, `deleted_at`, `body_html`, and the "live article" rule
   - "News import" / `news-import`
   - `NewsArticleSnapshot`
   - the three page routes
   - Extend the existing "News article" row rather than duplicating it.
-- [ ] **Step 3:**
+- [x] **Step 3:**
   - In `CLAUDE.md`, allow plan 012 alongside 010 and 011.
   - In `.env.example`, add `NEWS_IMPORT_SOURCE_URL=` with a comment (non-secret, the old site's origin).
-- [ ] **Step 4:** Commit: `docs: record the news import and pages as plan 012`.
+- [x] **Step 4:** Commit: `docs: record the news import and pages as plan 012`.
 
 ### Task 2: News tables
 
