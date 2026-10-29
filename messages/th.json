@@ -364,6 +364,75 @@
         "more": "อ่านทั้งหมด"
       },
       "videoTitle": "วิดีโอ"
+    },
+    "listing": {
+      "meta": {
+        "title": "สินค้าทั้งหมด | Tinzshop",
+        "categoryTitle": "{name} | Tinzshop"
+      },
+      "breadcrumb": {
+        "label": "เส้นทาง",
+        "home": "หน้าแรก"
+      },
+      "title": "สินค้าทั้งหมด",
+      "description": "เครื่องเกม แผ่นเกม จอย และอุปกรณ์เสริมทุกแพลตฟอร์ม",
+      "categoryDescription": "{types}สำหรับ {name}",
+      "tabs": {
+        "label": "ประเภทสินค้า",
+        "all": "ทั้งหมด"
+      },
+      "type": {
+        "console": "เครื่องเกม",
+        "game": "แผ่นเกม",
+        "controller": "จอย",
+        "accessory": "อุปกรณ์เสริม",
+        "kit": "ชุดโปรโมชั่น"
+      },
+      "filters": {
+        "label": "ตัวกรองสินค้า",
+        "toggle": "ตัวกรอง",
+        "categories": "หมวดหมู่",
+        "preOrder": "พรีออเดอร์",
+        "price": "ช่วงราคา (บาท)",
+        "min": "ราคาต่ำสุด",
+        "max": "ราคาสูงสุด",
+        "minPlaceholder": "ต่ำสุด",
+        "maxPlaceholder": "สูงสุด",
+        "preset": {
+          "under1000": "ต่ำกว่า ฿1,000",
+          "from1000": "฿1,000–5,000",
+          "from5000": "฿5,000–20,000",
+          "over20000": "มากกว่า ฿20,000"
+        },
+        "types": "ประเภทสินค้า",
+        "status": "สถานะสินค้า",
+        "inStock": "แสดงเฉพาะที่มีสินค้า",
+        "preOrderOnly": "พรีออเดอร์"
+      },
+      "toolbar": {
+        "count": "พบ <strong>{count, number}</strong> รายการ",
+        "sortLabel": "เรียงตาม",
+        "sort": {
+          "recommended": "เรียงตาม: แนะนำ",
+          "best_selling": "ขายดี",
+          "newest": "มาใหม่",
+          "price_asc": "ราคา: ต่ำ → สูง",
+          "price_desc": "ราคา: สูง → ต่ำ"
+        },
+        "viewLabel": "มุมมอง",
+        "grid": "มุมมองตาราง",
+        "list": "มุมมองรายการ"
+      },
+      "active": {
+        "label": "ตัวกรอง:",
+        "remove": "ลบตัวกรอง {name}",
+        "clear": "ล้างทั้งหมด",
+        "price": "฿{min, number} – ฿{max, number}",
+        "priceMin": "ตั้งแต่ ฿{min, number}",
+        "priceMax": "ไม่เกิน ฿{max, number}",
+        "inStock": "มีสินค้า"
+      },
+      "empty": "ไม่พบสินค้าที่ตรงกับตัวกรอง"
     }
   }
 }

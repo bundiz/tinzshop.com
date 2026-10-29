@@ -364,6 +364,75 @@
         "more": "Read all"
       },
       "videoTitle": "Video"
+    },
+    "listing": {
+      "meta": {
+        "title": "All products | Tinzshop",
+        "categoryTitle": "{name} | Tinzshop"
+      },
+      "breadcrumb": {
+        "label": "Breadcrumb",
+        "home": "Home"
+      },
+      "title": "All products",
+      "description": "Consoles, games, controllers and accessories for every platform",
+      "categoryDescription": "{types} for {name}",
+      "tabs": {
+        "label": "Product types",
+        "all": "All"
+      },
+      "type": {
+        "console": "Consoles",
+        "game": "Games",
+        "controller": "Controllers",
+        "accessory": "Accessories",
+        "kit": "Promotion sets"
+      },
+      "filters": {
+        "label": "Product filters",
+        "toggle": "Filters",
+        "categories": "Categories",
+        "preOrder": "Pre-orders",
+        "price": "Price range (THB)",
+        "min": "Minimum price",
+        "max": "Maximum price",
+        "minPlaceholder": "Min",
+        "maxPlaceholder": "Max",
+        "preset": {
+          "under1000": "Under ฿1,000",
+          "from1000": "฿1,000–5,000",
+          "from5000": "฿5,000–20,000",
+          "over20000": "Over ฿20,000"
+        },
+        "types": "Product type",
+        "status": "Availability",
+        "inStock": "In stock only",
+        "preOrderOnly": "Pre-orders"
+      },
+      "toolbar": {
+        "count": "<strong>{count, number}</strong> items found",
+        "sortLabel": "Sort by",
+        "sort": {
+          "recommended": "Sort: Recommended",
+          "best_selling": "Best selling",
+          "newest": "Newest",
+          "price_asc": "Price: low → high",
+          "price_desc": "Price: high → low"
+        },
+        "viewLabel": "View",
+        "grid": "Grid view",
+        "list": "List view"
+      },
+      "active": {
+        "label": "Filters:",
+        "remove": "Remove filter {name}",
+        "clear": "Clear all",
+        "price": "฿{min, number} – ฿{max, number}",
+        "priceMin": "From ฿{min, number}",
+        "priceMax": "Up to ฿{max, number}",
+        "inStock": "In stock"
+      },
+      "empty": "No products match these filters"
     }
   }
 }

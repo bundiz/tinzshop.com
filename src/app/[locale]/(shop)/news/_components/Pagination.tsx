@@ -7,6 +7,8 @@ export type PaginationProps = {
   basePath: string;
   page: number;
   totalPages: number;
+  /** A page's URL when the list keeps other params (the product listing's filters); else `basePath?page=n`. */
+  hrefFor?: (page: number) => string;
 };
 
 export type PageItem = number | 'gap';
@@ -36,9 +38,10 @@ const BOX =
 const LINK = `${BOX} border-border bg-bg hover:border-primary hover:text-primary`;
 
 /** The design's `.pagination`: previous, numbered pages with gaps, next. Not rendered for a single page. */
-export default function Pagination({ basePath, page, totalPages }: PaginationProps) {
+export default function Pagination({ basePath, page, totalPages, hrefFor }: PaginationProps) {
   const t = useTranslations('shop.news.pagination');
   if (totalPages <= 1) return null;
+  const href = hrefFor ?? ((target: number) => pageHref(basePath, target));
 
   const step = (target: number, label: string, icon: 'chevLeft' | 'chevRight') =>
     target < 1 || target > totalPages ? (
@@ -46,7 +49,7 @@ export default function Pagination({ basePath, page, totalPages }: PaginationPro
         <Icon name={icon} className="size-4" />
       </span>
     ) : (
-      <Link href={pageHref(basePath, target)} aria-label={label} className={LINK}>
+      <Link href={href(target)} aria-label={label} className={LINK}>
         <Icon name={icon} className="size-4" />
       </Link>
     );
@@ -64,7 +67,7 @@ export default function Pagination({ basePath, page, totalPages }: PaginationPro
             {item}
           </span>
         ) : (
-          <Link key={item} href={pageHref(basePath, item)} aria-label={t('page', { page: item })} className={LINK}>
+          <Link key={item} href={href(item)} aria-label={t('page', { page: item })} className={LINK}>
             {item}
           </Link>
         ),

@@ -24,7 +24,11 @@ export type IconName =
   | 'keyboard'
   | 'mouse'
   | 'share'
-  | 'shield';
+  | 'shield'
+  | 'filter'
+  | 'grid'
+  | 'list'
+  | 'x';
 
 export type IconProps = {
   name: IconName;
@@ -168,4 +172,15 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="m8.8 12 2.2 2.2 4.2-4.4" />
     </>
   ),
+  filter: <path d="M4 5h16l-6.2 7.4V19l-3.6-1.8v-4.8Z" />,
+  grid: (
+    <>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1" />
+    </>
+  ),
+  list: <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" />,
+  x: <path d="M6 6l12 12M18 6 6 18" />,
 };

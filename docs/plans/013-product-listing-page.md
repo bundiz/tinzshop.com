@@ -148,10 +148,10 @@ A product gets its type category as `primary_category_id` and a `product_categor
 
 ### Task 4: `/product` page
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `rejects or ignores invalid params without throwing` (Review Focus 4)
   - Render tests: the tabs mark the active category; a sidebar count; filter chips with "ล้างทั้งหมด"; pagination keeps the filters; the list view.
-- [ ] **Build** `src/app/[locale]/(shop)/product/page.tsx` (+ layout metadata) to match `design/category.html` block for block:
+- [x] **Build** `src/app/[locale]/(shop)/product/page.tsx` (+ layout metadata) to match `design/category.html` block for block:
   - breadcrumb, then the hero band (title + description of the active category, or "สินค้าทั้งหมด")
   - type tabs with icons (ทั้งหมด, เครื่องเกม, แผ่นเกม, จอย, อุปกรณ์เสริม, ชุดโปรโมชั่น)
   - the sidebar:
@@ -162,12 +162,12 @@ A product gets its type category as `primary_category_id` and a `product_categor
   - the toolbar: "พบ N รายการ", the sort select, grid/list
   - active-filter chips
   - the card grid (`ProductCard`, 4 per row on desktop as in the design) and pagination
-- [ ] **Interaction.**
+- [x] **Interaction.**
   - Filter controls are a small client component that rewrites the URL, so the page stays server-rendered and `force-dynamic`.
   - Price inputs apply on blur/Enter.
   - At 360px the sidebar becomes a "ตัวกรอง" panel.
-- [ ] **Navigation.** The header's "หมวดหมู่ทั้งหมด" and the category nav links (Nintendo Switch, PlayStation 5, IT Gadgets, พรีออเดอร์, ชุดโปรโมชั่น) now go to `/product?…`. The landing "ดูทั้งหมด" links do the same.
-- [ ] **Commit:** `feat: add the product listing page`.
+- [x] **Navigation.** The header's "หมวดหมู่ทั้งหมด" and the category nav links (Nintendo Switch, PlayStation 5, IT Gadgets, พรีออเดอร์, ชุดโปรโมชั่น) now go to `/product?…`. The landing "ดูทั้งหมด" links do the same.
+- [x] **Commit:** `feat: add the product listing page`.
 
 ### Task 5: Move the product page to `/product/{id}/detail`
 

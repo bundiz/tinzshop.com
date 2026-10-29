@@ -80,6 +80,18 @@ describe('SiteHeader', () => {
     expect(nav).toContain(`>${th.shop.category.news}</a>`);
   });
 
+  it('links "หมวดหมู่ทั้งหมด" and the product entries of the nav to the product listing (plan 013)', () => {
+    const html = render('th');
+    const nav = html.slice(html.indexOf('</header>')).replace(/&amp;/g, '&');
+    expect(nav).toMatch(new RegExp(`href="/th/product"[^>]*>.*?${th.shop.header.nav.all}`));
+    expect(nav).toMatch(new RegExp(`href="/th/product\\?category=nintendo-switch"[^>]*>${th.shop.category.switch}<`));
+    expect(nav).toMatch(new RegExp(`href="/th/product\\?category=playstation-5"[^>]*>${th.shop.category.ps5}<`));
+    expect(nav).toMatch(new RegExp(`href="/th/product\\?category=it-gadgets"[^>]*>${th.shop.category.gadgets}<`));
+    expect(nav).toMatch(new RegExp(`href="/th/product\\?pre_order=1"[^>]*>${th.shop.category.preOrder}<`));
+    expect(nav).toMatch(new RegExp(`href="/th/product\\?kit=1"[^>]*>${th.shop.category.bundles}<`));
+    expect(nav).not.toContain('href="#"');
+  });
+
   it('shows the menu outside the help links, so it is there at phone width', () => {
     const bar = utilityBar(render('th'));
     const helpLinks = bar.match(/<nav aria-label="ลิงก์ช่วยเหลือ"[\s\S]*?<\/nav>/)?.[0] ?? '';

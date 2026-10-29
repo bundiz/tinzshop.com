@@ -22,6 +22,8 @@ export type ProductSectionProps = {
   layout?: 'grid' | 'rail';
   /** `warm` is the bundle section's accent-soft wash at the top; `plain` is white. */
   tone?: 'plain' | 'warm';
+  /** Where "ดูทั้งหมด" goes: the product listing filtered to this section (plan 013); inert without one (D-124). */
+  moreHref?: string;
 };
 
 const LIST_CLASS: Record<NonNullable<ProductSectionProps['layout']>, string> = {
@@ -30,7 +32,8 @@ const LIST_CLASS: Record<NonNullable<ProductSectionProps['layout']>, string> = {
 };
 
 /**
- * One titled list of product cards with the design's "view all" link (inert until category pages exist, D-124);
+ * One titled list of product cards with the design's "view all" link to the product listing (inert when no
+ * `moreHref` is given, D-124);
  * a section with no products is not rendered at all.
  */
 export default function ProductSection({
@@ -40,6 +43,7 @@ export default function ProductSection({
   subtitleKey,
   layout = 'grid',
   tone = 'plain',
+  moreHref = '#',
 }: ProductSectionProps) {
   const t = useTranslations('shop');
   if (cards.length === 0) return null;
@@ -58,7 +62,7 @@ export default function ProductSection({
           {t(titleKey)}
         </h2>
         <a
-          href="#"
+          href={moreHref}
           className="inline-flex min-h-11 items-center gap-0.5 text-sm font-semibold whitespace-nowrap text-primary hover:underline"
         >
           {t('home.section.more')}

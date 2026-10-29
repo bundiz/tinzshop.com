@@ -7,6 +7,7 @@ import CategoryShowcase from '../_components/CategoryShowcase';
 import HeroZone from '../_components/HeroZone';
 import NewsCardSection from '../news/_components/NewsCardSection';
 import { newsListPath } from '../news/news-routes';
+import { listingHref } from '../product/listing-url';
 import ProductSection, { type ProductSectionId } from '../_components/ProductSection';
 import SiteFooter from '../_components/SiteFooter';
 import SiteHeader from '../_components/SiteHeader';
@@ -67,10 +68,21 @@ export default async function HomePage({ params }: Props) {
                 cards={catalogue.bundles}
                 layout="rail"
                 tone="warm"
+                moreHref={listingHref(locale, { kit: true })}
               />
               <CategoryShowcase />
-              <ProductSection id={BEST_SELLERS} titleKey="home.bestSellers.title" cards={catalogue.bestSellers} />
-              <ProductSection id="preOrders" titleKey="home.preOrders.title" cards={catalogue.preOrders} />
+              <ProductSection
+                id={BEST_SELLERS}
+                titleKey="home.bestSellers.title"
+                cards={catalogue.bestSellers}
+                moreHref={listingHref(locale, { sort: 'best_selling' })}
+              />
+              <ProductSection
+                id="preOrders"
+                titleKey="home.preOrders.title"
+                cards={catalogue.preOrders}
+                moreHref={listingHref(locale, { preOrder: true })}
+              />
             </>
           )}
           <NewsCardSection id="news" title={tNews('title')} cards={latestNews} moreHref={newsListPath(locale)} />

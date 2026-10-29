@@ -59,6 +59,10 @@ describe('ProductSection', () => {
   it('carries the design\'s "view all" link in the section head', () => {
     const html = render(<ProductSection id="bestSellers" titleKey="home.bestSellers.title" cards={[card]} />);
     expect(html).toMatch(new RegExp(`<a href="#"[^>]*>${th.shop.home.section.more}`));
+    const linked = render(
+      <ProductSection id="bestSellers" titleKey="home.bestSellers.title" cards={[card]} moreHref="/th/product?sort=best_selling" />,
+    );
+    expect(linked).toMatch(new RegExp(`<a href="/th/product\\?sort=best_selling"[^>]*>${th.shop.home.section.more}`));
   });
 
   it('renders the bundles section as a warm rail with subtitle, view-all and kit badges', () => {

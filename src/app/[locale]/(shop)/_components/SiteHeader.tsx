@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
+import { listingHref, NAV_CATEGORY_SLUGS } from '../product/listing-url';
 import ArticlesMenu from './ArticlesMenu';
 import type { ArticlesMenuEntry } from './articles-menu';
 import SearchForm from './SearchForm';
@@ -12,9 +13,14 @@ export type SiteHeaderProps = {
   path: string;
   /** The utility bar's "บทความ" menu, built from the listed news categories (`readArticlesMenu`, D-140). */
   articlesMenu: ArticlesMenuEntry[];
-  /** The category-nav entry drawn as current: `home` on the landing page, `news` on every news route. */
-  activeNav?: 'home' | 'news';
+  /**
+   * The category-nav entry drawn as current: `home` on the landing page, `news` on every news route, and on
+   * the product listing the entry its filters match (`listingNav`).
+   */
+  activeNav?: SiteNavKey;
 };
+
+export type SiteNavKey = 'home' | (typeof NAV_CATEGORIES)[number];
 
 type AppLocale = (typeof routing.locales)[number];
 
@@ -25,14 +31,21 @@ const LANGUAGE_NAME_KEY: Record<AppLocale, 'language.thName' | 'language.enName'
 
 const NAV_CATEGORIES = ['switch', 'ps5', 'gadgets', 'preOrder', 'bundles', 'news'] as const;
 
+/** Each product entry of the nav as a product-listing link (plan 013). */
+function navHref(locale: string, key: Exclude<(typeof NAV_CATEGORIES)[number], 'news'>): string {
+  if (key === 'preOrder') return listingHref(locale, { preOrder: true });
+  if (key === 'bundles') return listingHref(locale, { kit: true });
+  return listingHref(locale, { category: NAV_CATEGORY_SLUGS[key] });
+}
+
 /** The cart count shown until a cart exists: always 0, never the design's sample figure (D-124). */
 const CART_COUNT = 0;
 
 /**
  * The storefront header from the design: utility bar (tagline, help links, TH/EN switch), the logo,
- * search, account, wishlist and cart, and the category nav bar. Only the logo, "home", the nav's "ข่าวเกม",
- * the utility bar's "บทความ ▾" menu (D-140) and the language switch go anywhere yet; the rest render as
- * designed and are inert (D-124).
+ * search, account, wishlist and cart, and the category nav bar. The logo, "home", "หมวดหมู่ทั้งหมด" and the
+ * nav's product entries (to the product listing, plan 013), "ข่าวเกม", the utility bar's "บทความ ▾" menu
+ * (D-140) and the language switch go somewhere; the rest render as designed and are inert (D-124).
  */
 export default function SiteHeader({ path, articlesMenu, activeNav }: SiteHeaderProps) {
   const t = useTranslations('shop.header');
@@ -137,28 +150,21 @@ export default function SiteHeader({ path, articlesMenu, activeNav }: SiteHeader
       </header>
       <nav aria-label={t('nav.label')} className="border-b border-border bg-bg">
         <div className="mx-auto flex max-w-[1280px] items-center gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:px-6 [&::-webkit-scrollbar]:hidden">
-          <a
-            href="#"
+          <Link
+            href={listingHref(locale)}
             className="mr-2 flex min-h-9 items-center gap-1.5 rounded-(--radius-sm) border-b-2 border-transparent bg-primary px-3 text-sm font-semibold whitespace-nowrap text-white hover:bg-primary-dark"
           >
             <Icon name="menu" className="size-4" />
             {t('nav.all')}
-          </a>
+          </Link>
           <NavLink href={home} isActive={activeNav === 'home'}>
             {t('nav.home')}
           </NavLink>
-          {NAV_CATEGORIES.map((key) =>
-            // Only "ข่าวเกม" has a page yet; the product categories stay inert (D-124).
-            key === 'news' ? (
-              <NavLink key={key} href={news} isActive={activeNav === 'news'}>
-                {tCategory(key)}
-              </NavLink>
-            ) : (
-              <NavLink key={key} href="#" isActive={false}>
-                {tCategory(key)}
-              </NavLink>
-            ),
-          )}
+          {NAV_CATEGORIES.map((key) => (
+            <NavLink key={key} href={key === 'news' ? news : navHref(locale, key)} isActive={activeNav === key}>
+              {tCategory(key)}
+            </NavLink>
+          ))}
         </div>
       </nav>
     </>
