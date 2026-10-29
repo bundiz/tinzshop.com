@@ -1,6 +1,6 @@
 # News: database, import from the old site, and news pages — design
 
-- **Date:** 2026-10-29 · **Status:** proposed, awaiting the project owner's review
+- **Date:** 2026-10-29 · **Status:** approved by the project owner 2026-10-29
 - **Requirement:** REQ-047 (game news, staff-written, in categories). Customer product reviews stay separate (REQ-054).
 - **Design file:** `design/news.html` (the news list). There is no design for a single article; it follows the site's style.
 
