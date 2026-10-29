@@ -34,8 +34,11 @@ export type NewsListFilter = { categoryIds: string[] | null; now: Date; skip: nu
 
 export type NewsReadRepository = {
   listNewsCategories: () => Promise<NewsCategoryRow[]>;
-  /** Every (article, category) link of a live article. */
-  listLiveNewsCategoryLinks: (now: Date) => Promise<{ articleId: string; categoryId: string }[]>;
+  /**
+   * Live articles per category id, its descendants included and each article once (D-141); a category
+   * with none may be absent.
+   */
+  countLiveNewsArticlesByCategory: (now: Date) => Promise<ReadonlyMap<string, number>>;
   countLiveNewsArticles: (filter: Omit<NewsListFilter, 'skip' | 'take'>) => Promise<number>;
   /** Live articles, newest `published_at` first, each once. */
   listLiveNewsArticles: (filter: NewsListFilter) => Promise<NewsArticleRow[]>;
@@ -104,7 +107,8 @@ function subtrees(categories: readonly NewsCategoryRow[]): Map<string, Set<strin
 /**
  * The article's listed categories (D-139, D-141): an unlisted one is never a tag, a breadcrumb or a related
  * key; it stands in as its nearest listed ancestor (a cycle is cut), or as nothing when it has none. The one
- * place the roll-up rule lives on the read side, with `subtree` in `listNews` for pages and tab counts.
+ * place the roll-up rule lives on the read side, with `subtree` in `listNews` for pages and the
+ * repository's `countLiveNewsArticlesByCategory` for tab counts.
  */
 function listedCategories(categoryIds: readonly string[], byId: ReadonlyMap<string, NewsCategoryRow>): NewsCategoryRow[] {
   const result = new Map<string, NewsCategoryRow>();
@@ -177,7 +181,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
   const categories = await deps.news.listNewsCategories();
   const byId = new Map(categories.map((category) => [category.id, category]));
   const tree = subtrees(categories);
-  // A page and its tab count cover the whole subtree: an unlisted descendant rolls up (D-141).
+  // A page covers the whole subtree: an unlisted descendant rolls up (D-141).
   const subtree = (id: string): string[] => [...(tree.get(id) ?? [id])];
 
   let active: NewsCategoryRow | null = null;
@@ -192,31 +196,20 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
   const totalPages = Math.max(1, Math.ceil(total / NEWS_PAGE_SIZE));
   if (input.page > totalPages) return null;
 
-  const [rows, links] = await Promise.all([
+  const [rows, counts] = await Promise.all([
     deps.news.listLiveNewsArticles({
       categoryIds,
       now,
       skip: (input.page - 1) * NEWS_PAGE_SIZE,
       take: NEWS_PAGE_SIZE,
     }),
-    deps.news.listLiveNewsCategoryLinks(now),
+    // Counted in the database, subtree included: an unlisted descendant rolls up (D-141).
+    deps.news.countLiveNewsArticlesByCategory(now),
   ]);
 
-  const articlesByCategory = new Map<string, Set<string>>();
-  for (const link of links) {
-    const set = articlesByCategory.get(link.categoryId) ?? new Set<string>();
-    set.add(link.articleId);
-    articlesByCategory.set(link.categoryId, set);
-  }
   const tabs = categories
     .filter((category) => category.isListed)
-    .map((category) => {
-      const articles = new Set<string>();
-      for (const id of subtree(category.id)) {
-        for (const articleId of articlesByCategory.get(id) ?? []) articles.add(articleId);
-      }
-      return { category, count: articles.size };
-    })
+    .map((category) => ({ category, count: counts.get(category.id) ?? 0 }))
     .filter((tab) => tab.count > 0)
     .sort((a, b) => b.count - a.count || a.category.position - b.category.position)
     .map(({ category, count }) => ({ slug: category.slug, name: pick(category.names, input.locale), count }));

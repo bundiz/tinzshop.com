@@ -242,6 +242,7 @@ Defined in [the news design](superpowers/specs/2026-10-29-news-import-and-pages-
 Rules:
 
 - **Live article.** An article is shown only when `status = 'published'`, `published_at <= now()` and `deleted_at IS NULL`. A future `published_at` is a scheduled article; no extra status or job exists (D-130).
+- **Tab counts.** The news tabs' counts are one SQL query, `countLiveNewsArticlesByCategory(now)` in `news-repository.ts`: a recursive CTE expands each category to itself and its descendants (`UNION`, so a cycle in the stored tree still terminates), joins `news_article_category` and the live-article rule, and takes `COUNT(DISTINCT article_id)` per category, so an article in a parent and its child counts once and an unlisted descendant rolls up (D-141). It returns one row per category with a live article instead of every (article, category) link; at today's volume the planner rightly picks sequential scans and hash joins, since most articles are live.
 - **CHECK** `status <> 'published' OR published_at IS NOT NULL`, and a partial index on (`status`, `published_at` desc) where `deleted_at` is null.
 - **Staff ids** (`author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`) are plain nullable uuids with no foreign key, because `staff_user` does not exist yet; plan 002 adds the FK. Imported posts leave `author_staff_id` null.
 - **Deleting is soft** (`deleted_at`); a deleted article is never shown (D-131).
