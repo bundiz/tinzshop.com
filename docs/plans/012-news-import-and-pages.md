@@ -58,6 +58,7 @@
 | `src/server/services/news/news-read-service.ts` + tests, repository read functions | List, category and article reads | 5 |
 | `src/app/[locale]/(shop)/news/**` | List and category pages | 5 |
 | `src/app/[locale]/(shop)/news/[slug]/**`, landing news section, nav link | Article page; landing ข่าวเกมล่าสุด | 6 |
+| schema `news_category.is_listed`, adapter exclusion rules, import/read changes | No review category; unlisted Uncategorized (owner, Q-048) | 7 |
 
 ---
 
@@ -173,6 +174,51 @@
 - [x] **Step 2:** Run the tests. They fail.
 - [x] **Step 3:** Implement. The body renders the stored sanitised `body_html` inside a prose-styled container, and this is the only place HTML is rendered. The "Not found" page uses `NotFoundPanel`.
 - [x] **Step 4:** Tests, typecheck, integration tests and build pass. `/th/news/<unknown>` gives 404. Commit: `feat: add the news article page and landing news section`.
+
+### Task 7: No review category in news; hide the Uncategorized tab (owner, 2026-10-29)
+
+The project owner answered Q-048 on 2026-10-29: "เขียน blog/news ไม่มี review มีแค่ product ที่ให้ลูกค้า review". News has no review category; "review" means only customer product reviews (REQ-054). This **supersedes O-1 / D-125**. For Uncategorized: "just leave it, just show it when on the news page that does not query the category".
+
+Facts in the dev database after the first import:
+- The old site's review tree is "Reviews" (WP id 7, slug `reviews`) with its children "Nintendo" (15) and "PS5" (17).
+- 43 articles are linked to that tree, and 3 of them only to it.
+- "Uncategorized" is WP id 1, slug `uncategorized`.
+
+**Files:**
+- Modify `prisma/schema.prisma`, plus a migration adding `news_category.is_listed BOOLEAN NOT NULL DEFAULT true`.
+- Modify the WordPress adapter (exclusion rules), the news import service and repository, the news read service and repository, and the news pages' category route.
+- Docs: a new D-row superseding D-125, plus `13` (record the Q-048 answer), `05`, `14`, `07` and the glossary (`is_listed`, "excluded category", "unlisted category").
+
+**Rules:**
+1. **Excluded categories.** The WordPress category with slug `reviews` and all its descendants are *excluded*.
+   - The import stores them with `is_listed = false` and never links an article to them.
+   - On a re-run it removes existing links to them.
+   - It deletes no category row.
+2. **Articles in excluded categories only.** An article whose categories on the source are all excluded is not news.
+   - The import sets its `deleted_at`, or leaves an already-set one; this is a soft delete, so it can be restored.
+   - It is never shown.
+   - If a later source version gives it a non-excluded category, the import clears `deleted_at` again, but only if the import set it. Record who set it by keeping the rule simple: before go-live, WordPress is the master, so the import owns `deleted_at` for imported rows (note this in the D-row).
+3. **Unlisted category.** The WordPress category with slug `uncategorized` is stored with `is_listed = false`, and its links are kept.
+   - Its articles still appear under "ทั้งหมด".
+   - There is no tab for it, and it is never a card's tag.
+   - `/{locale}/news/category/uncategorized` gives 404.
+4. **Read side.** Tabs, card tags, breadcrumb categories and "related" use only listed categories. A category route for an unlisted slug is a real 404.
+5. **Where the rules live.** The slugs live in one constant in the WordPress adapter, as `{ excluded: ['reviews'], unlisted: ['uncategorized'] }`, and are mapped into the neutral snapshot fields `isListed` and `isExcluded`. No WordPress slug appears in services or pages.
+
+- [ ] **Step 1: Write the failing tests:**
+  - **adapter:** the `reviews` subtree is marked excluded and `uncategorized` is marked unlisted
+  - **service/integration:**
+    - re-running the import over the current DB removes the review links
+    - it soft-deletes the 3 review-only articles
+    - an article in News + Reviews keeps News only
+    - Uncategorized articles stay listed under ทั้งหมด
+  - **read:**
+    - tabs exclude unlisted
+    - `/news/category/reviews` and `/news/category/uncategorized` give 404
+    - a card's tag is never an unlisted category
+- [ ] **Step 2:** Run the tests. They fail.
+- [ ] **Step 3:** Implement. Add the migration (non-destructive) and apply it to the dev and test databases.
+- [ ] **Step 4:** Tests, typecheck, integration tests and build pass. The owner re-runs the import. Commit: `feat: drop review categories from news and hide the Uncategorized tab`.
 
 ---
 
