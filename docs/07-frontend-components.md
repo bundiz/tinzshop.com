@@ -131,6 +131,20 @@ that a control which does nothing is not shown.
 - **Breakpoints are the design's:** `xs` 480px, `sm` 640px, `md` 900px and `lg` 1100px, defined in rem in `globals.css`. Use these names, never `min-[…px]:` arbitrary variants: mixed with Tailwind's rem breakpoints those sorted out of order, and the card grid stayed at 3 columns on desktop. The design's grids are 2 / 3 / 4 / 5 columns for product grids and 6 cards across for a rail at `lg`.
 - **Text sizes inherit the design's line height** (1.65): `globals.css` sets it for `text-xs`, `text-sm` and `text-base`, and headings are bold as in the design.
 
+### News list pages (D-137)
+
+`/{locale}/news` and `/{locale}/news/category/{slug}` follow `design/news.html` (plan 012 Task 5), built by `NewsListView` from `listNews`.
+
+- **Blocks:** breadcrumb (home › ข่าวเกม, plus the category on a category page), the title (the category's name on a category page) and subtitle, the category tabs with counts, the feature block of the 3 newest on page 1 only (ruling R1, D-134), the "ข่าวล่าสุด" grid (1 / 2 / 3 columns) with pagination, and the sidebar beside it from `lg` (300px).
+- **Counts include descendants,** each article once, so a tab's count is what its page lists; tabs are ordered by count, then `position`.
+- **A card's tag** is the article's most specific category: one that is no ancestor of another of its categories, by `position` when several are.
+- **The sidebar** keeps the design's "หมวดหมู่ข่าว" panel (real counts) and the pre-order panel, whose button is inert (D-124). "ข่าวยอดนิยม" is left out: nothing records which articles are popular, and a ranking is never made up.
+- **Images** are the old site's URLs (D-127): a grid card's is `loading="lazy"`, a feature card's eager (D-123). A feature card with an image shows it under a dark wash with white text; one without keeps the design's gradient and icon. A grid card without an image shows `ImagePlaceholder` at 4:3.
+- **Plain text only:** titles, excerpts and category names render as escaped text; no body HTML on these pages.
+- **Not found:** `?page` must be a plain positive integer ("2", not "02" or "2abc"); anything else, a page past the end or an unknown category calls `notFound()`, rendered by `news/not-found.tsx` with `shop.notFound.*`. There is no `loading.tsx` above these routes (D-120). The category slug arrives percent-encoded and is decoded once (`decodeSlugParam`); links encode it once (`newsCategoryPath`). A malformed escape such as `%zz` is refused by Next with 400 before the page runs.
+- **Titles:** `news/layout.tsx` sets `shop.news.meta.title`; the category layout sets the category's name, or the not-found title for an unknown one. A list page past the end keeps the list's title, since a layout does not see `?page`.
+- **Empty:** an empty list or category still answers page 1, with `shop.news.empty` or `shop.news.categoryEmpty` in the grid; pagination is hidden for a single page.
+
 ## Bilingual
 
 **Thai and English, on the storefront and in the admin, from the same

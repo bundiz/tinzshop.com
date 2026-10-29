@@ -1,4 +1,10 @@
+import type { Prisma } from '@/generated/prisma/client';
 import { getPrisma } from '@/server/repositories/shared/prisma';
+import type {
+  NewsArticleRow,
+  NewsCategoryRow,
+  NewsListFilter,
+} from '@/server/services/news/news-read-service';
 import type { NewsArticleSnapshot, NewsCategorySnapshot } from '@/server/services/news/news-snapshot';
 
 const TRANSACTION_TIMEOUT_MS = 20_000;
@@ -196,4 +202,79 @@ export async function findArticleSourceStates(): Promise<ReadonlyMap<bigint, Dat
     select: { sourceId: true, sourceModifiedAt: true },
   });
   return new Map(rows.map((row) => [row.sourceId as bigint, row.sourceModifiedAt]));
+}
+
+// ---- Reads for the storefront news pages (plan 012 Task 5) ----
+
+/** The live-article rule (D-130): published, `published_at` reached, not deleted. */
+function liveArticle(now: Date): Prisma.NewsArticleWhereInput {
+  return { status: 'published', publishedAt: { lte: now }, deletedAt: null };
+}
+
+function liveArticleIn(filter: Pick<NewsListFilter, 'categoryIds' | 'now'>): Prisma.NewsArticleWhereInput {
+  return filter.categoryIds === null
+    ? liveArticle(filter.now)
+    : { ...liveArticle(filter.now), categories: { some: { categoryId: { in: filter.categoryIds } } } };
+}
+
+function byLocale<T extends { locale: string }>(rows: readonly T[], value: (row: T) => string): { th?: string; en?: string } {
+  return Object.fromEntries(rows.map((row) => [row.locale, value(row)]));
+}
+
+/** Every news category with its names, in `position` order. */
+export async function listNewsCategories(): Promise<NewsCategoryRow[]> {
+  const rows = await getPrisma().newsCategory.findMany({
+    orderBy: [{ position: 'asc' }, { slug: 'asc' }],
+    select: { id: true, slug: true, parentId: true, position: true, translations: { select: { locale: true, name: true } } },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    parentId: row.parentId,
+    position: row.position,
+    names: byLocale(row.translations, (t) => t.name),
+  }));
+}
+
+/** Every (article, category) link of a live article, for the tab counts. */
+export async function listLiveNewsCategoryLinks(now: Date): Promise<{ articleId: string; categoryId: string }[]> {
+  return getPrisma().newsArticleCategory.findMany({
+    where: { article: liveArticle(now) },
+    select: { articleId: true, categoryId: true },
+  });
+}
+
+/** How many live articles match; an article in several of the categories counts once. */
+export async function countLiveNewsArticles(filter: Pick<NewsListFilter, 'categoryIds' | 'now'>): Promise<number> {
+  return getPrisma().newsArticle.count({ where: liveArticleIn(filter) });
+}
+
+/** One page of live articles, newest `published_at` first (then id, so pages never overlap), each once. */
+export async function listLiveNewsArticles(filter: NewsListFilter): Promise<NewsArticleRow[]> {
+  const rows = await getPrisma().newsArticle.findMany({
+    where: liveArticleIn(filter),
+    orderBy: [{ publishedAt: 'desc' }, { id: 'asc' }],
+    skip: filter.skip,
+    take: filter.take,
+    select: {
+      id: true,
+      slug: true,
+      publishedAt: true,
+      bylineName: true,
+      featuredImageUrl: true,
+      translations: { select: { locale: true, title: true, excerpt: true } },
+      categories: { select: { categoryId: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    // A live article always has one: the filter requires `published_at <= now`.
+    publishedAt: row.publishedAt as Date,
+    bylineName: row.bylineName,
+    featuredImageUrl: row.featuredImageUrl,
+    titles: byLocale(row.translations, (t) => t.title),
+    excerpts: byLocale(row.translations, (t) => t.excerpt),
+    categoryIds: row.categories.map((link) => link.categoryId),
+  }));
 }

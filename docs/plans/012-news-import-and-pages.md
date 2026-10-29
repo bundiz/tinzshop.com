@@ -150,12 +150,12 @@
 - `NewsListPage = { items: NewsCardData[]; page: number; totalPages: number; total: number; categories: { slug; name; count }[]; activeCategorySlug: string | null }`
 - Only live articles are read (`status = 'published'`, `published_at <= now()`, `deleted_at` null); test `hides drafts, scheduled and deleted articles`. The category filter includes descendants, distinct articles, newest first, 12 per page. Tabs list categories that have at least one article, ordered by count.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - **service:** `includes descendant categories without duplicates` (Review Focus 3), `returns null past the last page`, `falls back to the th title on en`
   - **render:** the tabs mark the active one, and pagination links keep the category
-- [ ] **Step 2:** Run the tests. They fail.
-- [ ] **Step 3:** Build the pages to match `design/news.html`: breadcrumb, header, tabs with counts, the feature block of 3 on page 1, the grid, and pagination (`?page=n`). Use the site header and footer from plan 011. The page is `force-dynamic` and calls `notFound()` on `null`.
-- [ ] **Step 4:** Compare headless-Chrome screenshots against `design/news.html` at 1440 and 390 wide. Tests, typecheck and build pass. Commit: `feat: add news list and category pages`.
+- [x] **Step 2:** Run the tests. They fail.
+- [x] **Step 3:** Build the pages to match `design/news.html`: breadcrumb, header, tabs with counts, the feature block of 3 on page 1, the grid, and pagination (`?page=n`). Use the site header and footer from plan 011. The page is `force-dynamic` and calls `notFound()` on `null`.
+- [x] **Step 4:** Compare headless-Chrome screenshots against `design/news.html` at 1440 and 390 wide. Tests, typecheck and build pass. Commit: `feat: add news list and category pages`.
 
 ### Task 6: Article page, landing news section, nav link
 

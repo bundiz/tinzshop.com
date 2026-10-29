@@ -16,7 +16,11 @@ import {
   NEWS_IMPORT_LOCK_KEY,
 } from '@/server/repositories/shared/advisory-lock';
 import {
+  countLiveNewsArticles,
   findArticleSourceStates,
+  listLiveNewsArticles,
+  listLiveNewsCategoryLinks,
+  listNewsCategories,
   upsertNewsArticle,
   upsertNewsCategories,
 } from '@/server/repositories/news/news-repository';
@@ -49,6 +53,7 @@ import { getProductDetail, type ProductDetail } from '@/server/services/catalogu
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
 import { runNewsImport } from '@/server/services/news/news-import-service';
+import { listNews, type ListNewsInput, type NewsListPage } from '@/server/services/news/news-read-service';
 
 // Built on first use, never at import, so `next build` needs no environment.
 let shopeeClient: ShopeeClient | undefined;
@@ -102,6 +107,18 @@ export function getLandingCatalogueReader(): (locale: Locale) => Promise<Landing
 /** The product page read: built per call, needs no configuration beyond the database. */
 export function getProductDetailReader(): (productId: string, locale: Locale) => Promise<ProductDetail | null> {
   return (productId, locale) => getProductDetail({ findStorefrontProduct }, productId, locale);
+}
+
+/** The news list and category pages' read (plan 012): built per call, needs no configuration beyond the database. */
+export function getNewsReader(): (input: ListNewsInput) => Promise<NewsListPage | null> {
+  return (input) =>
+    listNews(
+      {
+        news: { listNewsCategories, listLiveNewsCategoryLinks, countLiveNewsArticles, listLiveNewsArticles },
+        now: () => new Date(),
+      },
+      input,
+    );
 }
 
 /** Development-only API docs; needs no configuration, so it works before `.env` is complete. */

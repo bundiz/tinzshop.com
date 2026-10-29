@@ -304,6 +304,46 @@
       "preOrder": "Pre-orders",
       "bundles": "Promotion sets",
       "news": "Game news"
+    },
+    "news": {
+      "meta": {
+        "title": "Game news | Tinzshop",
+        "categoryTitle": "{name} — Game news | Tinzshop"
+      },
+      "breadcrumb": {
+        "label": "Breadcrumb",
+        "home": "Home"
+      },
+      "title": "Game news",
+      "subtitle": "News and announcements from the Tinzshop team",
+      "tabs": {
+        "label": "News categories",
+        "all": "All"
+      },
+      "feature": {
+        "label": "Featured news"
+      },
+      "latest": {
+        "title": "Latest news"
+      },
+      "byline": "By {name}",
+      "bylineFallback": "the Tinzshop team",
+      "date": "{date, date, medium}",
+      "imagePlaceholderAlt": "No news image yet",
+      "empty": "There is no news yet.",
+      "categoryEmpty": "There is no news in this category yet.",
+      "pagination": {
+        "label": "Pages",
+        "previous": "Previous page",
+        "next": "Next page",
+        "page": "Page {page}"
+      },
+      "sidebar": {
+        "label": "Sidebar",
+        "preOrderTitle": "New game pre-orders",
+        "preOrderText": "Reserve new games and consoles before release",
+        "preOrderAction": "Shop pre-orders"
+      }
     }
   }
 }

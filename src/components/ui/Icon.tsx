@@ -6,6 +6,7 @@ export type IconName =
   | 'user'
   | 'heart'
   | 'chevRight'
+  | 'chevLeft'
   | 'chevDown'
   | 'menu'
   | 'truck'
@@ -71,6 +72,7 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   heart: <path d="M12 20s-7.5-4.4-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.6 12 20 12 20Z" />,
   chevRight: <path d="m9 6 6 6-6 6" />,
+  chevLeft: <path d="m15 6-6 6 6 6" />,
   chevDown: <path d="m6 9 6 6 6-6" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   truck: (
