@@ -7,6 +7,7 @@ import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { getNewsImportJobConfig, getServerConfig } from '@/server/config';
+import { createCatalogueCategoriseJobHandler } from '@/server/controllers/catalogue/catalogue-categorise-controller';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
@@ -41,6 +42,7 @@ import {
   recordSkippedSyncRun,
   startSyncRun,
 } from '@/server/repositories/catalogue/sync-run-repository';
+import { categoriseProducts } from '@/server/repositories/catalogue/categorise-repository';
 import { activateSyncedProducts } from '@/server/repositories/catalogue/activation-repository';
 import {
   findStorefrontProduct,
@@ -169,6 +171,15 @@ export function getCatalogueActivationHandler(): ReturnType<typeof createCatalog
     isProduction: process.env.NODE_ENV === 'production',
     jobSecret: () => getServerConfig().jobSecret,
     activate: activateSyncedProducts,
+  });
+}
+
+/** Development-only categorise job (D-143); the secret is read per request and never in production. */
+export function getCatalogueCategoriseHandler(): ReturnType<typeof createCatalogueCategoriseJobHandler> {
+  return createCatalogueCategoriseJobHandler({
+    isProduction: process.env.NODE_ENV === 'production',
+    jobSecret: () => getServerConfig().jobSecret,
+    categorise: categoriseProducts,
   });
 }
 

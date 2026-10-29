@@ -120,16 +120,16 @@ A product gets its type category as `primary_category_id` and a `product_categor
 
 ### Task 2: Keyword categoriser and job
 
-- [ ] **Failing tests first:**
+- [x] **Failing tests first:**
   - **Unit tests:** `categoriseByName` on real sandbox names (DualSense → PS5 controller; Portable SSD → IT Gadgets accessory; Mario Kart → Switch game; Servage Raven Case for Nintendo Switch 2 → Switch accessory; Three Tier Limit Test → no category).
   - **Integration tests:** `only fills uncategorised products and is idempotent` (Review Focus 3); `seeds the category tree when missing`.
   - **Controller tests:** 404 in production before auth; 401; 200 `{ categorised, skipped }`.
-- [ ] **Implement:**
+- [x] **Implement:**
   - The pure service (`src/server/services/catalogue/categorise-by-name.ts`, rules constant).
   - A repository function that seeds the tree and assigns in one transaction.
   - `POST /api/jobs/catalogue-categorise`, using the shared `isJobAuthorized` and the dev-only 404 in production, as with catalogue activation.
   - Document it in `06` + `docs/openapi.yaml`.
-- [ ] **Commit:** `feat: add a development job that categorises products from their names`.
+- [x] **Commit:** `feat: add a development job that categorises products from their names`.
 
 ### Task 3: Listing query in SQL
 

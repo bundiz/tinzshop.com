@@ -125,6 +125,7 @@ The mock category tree and the keyword categoriser are decided in D-143; the tre
 - **Flags, not categories.** "ชุดโปรโมชั่น" is `channel_item.is_kit` and "พรีออเดอร์" is `product.is_pre_order`.
 - **Categoriser.** A pure function over the product's Thai name, with first-match-wins keyword tables for platform and for type held in one constant in the service. A product gets its type as `primary_category_id` and a `product_category` row for both the type and its platform; a name matching no platform gets no category and shows under "ทั้งหมด" only.
 - **Admin-owned assignment is never overwritten.** The categoriser touches only a product with no `product_category` row and no `primary_category_id`, so re-running it changes nothing for products already categorised.
+- **Rule order (Task 2).** Platform rows are checked PlayStation first, then Switch, then IT Gadgets, so "DualSense Wireless Controller - PlayStation 5" is a PS5 controller and "Nintendo Switch Game" is a Switch game. Type rows are checked controller, console, game; a platform with no such type (IT Gadgets) gets its accessory type. Every plan keyword table gave a sensible result on the sandbox names, so no rule was changed. The job is `categoriseProducts` in `categorise-repository.ts` (one transaction; existing category rows are never overwritten).
 
 ## Concurrency rules
 

@@ -280,6 +280,40 @@ paths:
           description: Production. The endpoint does not exist there.
         '500':
           description: An unexpected exception.
+  /api/jobs/catalogue-categorise:
+    post:
+      tags: [Jobs]
+      summary: Categorise products from their names (development only)
+      description: |
+        Seeds the category tree if missing, then gives each product that has no category
+        (no `product_category` row and no `primary_category_id`) its type and platform from
+        keywords in its Thai name. Never changes a categorised product, so a re-run changes
+        nothing. Answers `404` when `NODE_ENV` is `production`, before the secret is checked
+        (D-143). Used until admins can assign categories.
+      security:
+        - jobSecret: []
+      responses:
+        '200':
+          description: The products newly categorised, and every other product as skipped.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [categorised, skipped]
+                properties:
+                  categorised: { type: integer, minimum: 0 }
+                  skipped: { type: integer, minimum: 0 }
+              example: { categorised: 7, skipped: 2 }
+        '401':
+          description: Missing or wrong bearer secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: auth.unauthorized, messageKey: error.auth.unauthorized } }
+        '404':
+          description: Production. The endpoint does not exist there.
+        '500':
+          description: An unexpected exception.
 components:
   securitySchemes:
     jobSecret:
