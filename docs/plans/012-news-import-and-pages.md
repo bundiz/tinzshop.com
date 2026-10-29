@@ -84,15 +84,15 @@
 
 **Files:** Modify `prisma/schema.prisma`. Create a migration via `npx prisma migrate dev --create-only --name news`, then review the SQL. Test: `tests/integration/news/news-schema.test.ts`.
 
-- [ ] **Step 1: Write the failing integration test:**
+- [x] **Step 1: Write the failing integration test:**
   - `stores an article with translations and categories`
   - `rejects a duplicate slug` (article and category)
   - `rejects a duplicate source_id`
   - `allows a category tree via parent_id`
   - `rejects a published article without published_at` (CHECK constraint, hand-written SQL)
-- [ ] **Step 2:** Run `npm run test:integration`. It fails.
-- [ ] **Step 3:** Add the five models exactly as spec §4, with `@@map`/`@map` snake_case and uuid ids `@default(dbgenerated("gen_random_uuid()")) @db.Uuid`. `source_id` is `BigInt? @unique`. Reuse the existing `Locale` enum. Add the `news_article_status` enum, the CHECK `status <> 'published' OR published_at IS NOT NULL`, and the partial index on (`status`, `published_at` desc) where `deleted_at` is null. The `*_staff_id` columns are plain nullable uuids with no FK yet (plan 002 adds it). Create the migration, apply it to the dev and test databases (non-destructive), and check that `prisma migrate diff` is empty.
-- [ ] **Step 4:** Tests pass. Commit: `feat: add news tables`.
+- [x] **Step 2:** Run `npm run test:integration`. It fails.
+- [x] **Step 3:** Add the five models exactly as spec §4, with `@@map`/`@map` snake_case and uuid ids `@default(dbgenerated("gen_random_uuid()")) @db.Uuid`. `source_id` is `BigInt? @unique`. Reuse the existing `Locale` enum. Add the `news_article_status` enum, the CHECK `status <> 'published' OR published_at IS NOT NULL`, and the partial index on (`status`, `published_at` desc) where `deleted_at` is null. The `*_staff_id` columns are plain nullable uuids with no FK yet (plan 002 adds it). Create the migration, apply it to the dev and test databases (non-destructive), and check that `prisma migrate diff` is empty.
+- [x] **Step 4:** Tests pass. Commit: `feat: add news tables`.
 
 ### Task 3: WordPress adapter
 

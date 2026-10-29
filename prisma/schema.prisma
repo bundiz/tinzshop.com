@@ -234,3 +234,89 @@ model SyncRun {
 
   @@map("sync_run")
 }
+
+enum NewsArticleStatus {
+  draft
+  published
+
+  @@map("news_article_status")
+}
+
+model NewsCategory {
+  id           String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String                    @unique
+  parentId     String?                   @map("parent_id") @db.Uuid
+  position     Int
+  sourceId     BigInt?                   @unique @map("source_id")
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  parent       NewsCategory?             @relation("NewsCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children     NewsCategory[]            @relation("NewsCategoryTree")
+  translations NewsCategoryTranslation[]
+  articles     NewsArticleCategory[]
+
+  @@index([parentId])
+  @@map("news_category")
+}
+
+model NewsCategoryTranslation {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId String       @map("category_id") @db.Uuid
+  locale     Locale
+  name       String
+  category   NewsCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@map("news_category_translation")
+}
+
+model NewsArticle {
+  id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug             String                   @unique
+  featuredImageUrl String?                  @map("featured_image_url")
+  sourceId         BigInt?                  @unique @map("source_id")
+  sourceUrl        String?                  @map("source_url")
+  sourceModifiedAt DateTime?                @map("source_modified_at") @db.Timestamptz(6)
+  status           NewsArticleStatus        @default(draft)
+  publishedAt      DateTime?                @map("published_at") @db.Timestamptz(6)
+  bylineName       String?                  @map("byline_name")
+  // Plain uuids for now: plan 002 adds the foreign keys to the staff table.
+  authorStaffId    String?                  @map("author_staff_id") @db.Uuid
+  createdByStaffId String?                  @map("created_by_staff_id") @db.Uuid
+  updatedByStaffId String?                  @map("updated_by_staff_id") @db.Uuid
+  deletedAt        DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  translations     NewsArticleTranslation[]
+  categories       NewsArticleCategory[]
+
+  // The CHECK (status <> 'published' OR published_at IS NOT NULL) and the partial index on
+  // (status, published_at DESC) WHERE deleted_at IS NULL are in the migration SQL; the index is
+  // declared here only so Prisma sees no drift.
+  @@index([status, publishedAt(sort: Desc)], map: "news_article_status_published_at_idx")
+  @@map("news_article")
+}
+
+model NewsArticleTranslation {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId String      @map("article_id") @db.Uuid
+  locale    Locale
+  title     String
+  excerpt   String      @default("")
+  bodyHtml  String      @default("") @map("body_html")
+  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, locale])
+  @@map("news_article_translation")
+}
+
+model NewsArticleCategory {
+  articleId  String       @map("article_id") @db.Uuid
+  categoryId String       @map("category_id") @db.Uuid
+  article    NewsArticle  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  category   NewsCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, categoryId])
+  @@index([categoryId])
+  @@map("news_article_category")
+}

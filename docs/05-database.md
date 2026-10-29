@@ -234,7 +234,7 @@ permission key — refund is out of scope (D-077).
 
 Defined in [the news design](superpowers/specs/2026-10-29-news-import-and-pages-design.md) (section 4), on the project owner's decisions of 2026-10-29 (D-125 to D-132). Naming follows the catalogue pattern (D-014): uuid ids and a translation table per locale. Five tables:
 
-- **`news_category`**: `slug` (unique, decoded), `parent_id` (self-reference, nullable), `position` (WordPress id order, D-134), `source_id` (WordPress category id, unique, nullable) and the timestamps. **`news_category_translation`**: `category_id`, `locale`, `name`, unique per locale.
+- **`news_category`**: `slug` (unique, decoded), `parent_id` (self-reference, nullable), `position` (WordPress id order, D-134), `source_id` (WordPress category id, `BigInt`, unique, nullable) and the timestamps. **`news_category_translation`**: `category_id`, `locale`, `name`, unique per locale.
 - **`news_article`**: `slug` (unique, decoded), `featured_image_url` (the old-site URL, D-127), `source_id` (WordPress post id, `BigInt`, unique, nullable), `source_url`, `source_modified_at`, `status` (`news_article_status`: `draft` or `published`), `published_at`, `byline_name`, `author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`, `deleted_at` and the timestamps.
 - **`news_article_translation`**: `article_id`, `locale`, `title`, `excerpt` (plain text), `body_html` (sanitised), unique per locale. Imported posts have `th` only; the storefront falls back to it on `/en`.
 - **`news_article_category`**: `article_id` and `category_id`, composite primary key, indexed on `category_id`.
