@@ -112,6 +112,10 @@ describe('titleIframes', () => {
     );
   });
 
+  it('inserts a title containing replacement patterns literally', () => {
+    expect(titleIframes('<iframe src="v"></iframe>', "a $& b $1 c")).toBe('<iframe title="a $&amp; b $1 c" src="v"></iframe>');
+  });
+
   it('titles the body\'s YouTube iframes from the message on the article page', () => {
     expect(render(<NewsArticleView article={detail()} />)).toMatch(
       new RegExp(`<iframe[^>]*title="${th.shop.news.videoTitle}"[^>]*src="https://www.youtube.com/embed/abc"`),

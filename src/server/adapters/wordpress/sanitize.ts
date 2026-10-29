@@ -40,7 +40,7 @@ const EMBED_TAGS = ["iframe", "script", "object", "embed"];
 const YOUTUBE_EMBED_HOSTS = new Set(["www.youtube.com", "youtube.com"]);
 
 /** The value as an absolute http/https URL, or null: relative, fragment and other-scheme values are refused. */
-function absoluteHttpUrl(value: string | undefined): URL | null {
+export function absoluteHttpUrl(value: string | undefined): URL | null {
   if (value === undefined) return null;
   try {
     const url = new URL(value.trim());

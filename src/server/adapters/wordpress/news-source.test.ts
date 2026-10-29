@@ -109,4 +109,23 @@ describe("createWordPressNewsSource", () => {
     expect(error).toBeInstanceOf(NewsSourceError);
     expect((error as NewsSourceError).code).toBe("timeout");
   });
+
+  it("keeps a featured image only when it is an absolute http(s) URL", async () => {
+    const urls: Record<number, string> = {
+      10: "javascript:alert(1)",
+      11: "data:image/svg+xml;base64,AAAA",
+      12: "/relative.jpg",
+      13: "http://old-site.test/ok.jpg",
+    };
+    const source = createWordPressNewsSource(
+      fakeClient({
+        listPostsPage: vi.fn(async () => ({ posts: [post(1, 10), post(2, 11), post(3, 12), post(4, 13)], totalPages: 1 })),
+        getMedia: vi.fn(async (id: number) => ({ sourceUrl: urls[id] as string })),
+      }),
+    );
+
+    const { articles } = await source.listArticlesPage(1, () => false);
+
+    expect(articles.map((a) => a.featuredImageUrl)).toEqual([null, null, null, "http://old-site.test/ok.jpg"]);
+  });
 });

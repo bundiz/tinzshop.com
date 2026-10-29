@@ -18,7 +18,7 @@ const ATTRIBUTE_ESCAPES: Record<string, string> = { '&': '&amp;', '"': '&quot;',
  */
 export function titleIframes(html: string, title: string): string {
   const escaped = title.replace(/[&"<>]/g, (character) => ATTRIBUTE_ESCAPES[character] ?? character);
-  return html.replace(/<(iframe)(?=[\s/>])/gi, `<$1 title="${escaped}"`);
+  return html.replace(/<iframe(?=[\s/>])/gi, (tag) => `${tag} title="${escaped}"`);
 }
 
 // Reading styles for the body's allow-listed elements (D-135); Tailwind's preflight resets them all.

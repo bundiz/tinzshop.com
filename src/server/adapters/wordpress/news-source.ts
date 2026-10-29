@@ -3,6 +3,7 @@ import type { NewsArticleFailure, NewsArticleSnapshot, NewsSource } from "@/serv
 import type { WordPressClient } from "./client";
 import { WordPressApiError } from "./errors";
 import { mapWordPressCategories, mapWordPressPost, wordPressModifiedAt } from "./map-post";
+import { absoluteHttpUrl } from "./sanitize";
 import type { WpPost } from "./schemas";
 
 /** A failed list is the source failing as a whole; the reason is a fixed code and the path holds no query. */
@@ -33,7 +34,8 @@ export function createWordPressNewsSource(client: WordPressClient): NewsSource {
     if (id === 0) return null;
     if (mediaUrls.has(id)) return mediaUrls.get(id) ?? null;
     const media = await client.getMedia(id);
-    const url = media?.sourceUrl ?? null;
+    // Only an absolute http(s) address is kept: it ends up in an <img src>.
+    const url = media && absoluteHttpUrl(media.sourceUrl) ? media.sourceUrl : null;
     mediaUrls.set(id, url);
     return url;
   }
