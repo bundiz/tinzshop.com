@@ -294,12 +294,31 @@ export async function listNewsCategories(): Promise<NewsCategoryRow[]> {
   }));
 }
 
-/** Every (article, category) link of a live article, for the tab counts. */
-export async function listLiveNewsCategoryLinks(now: Date): Promise<{ articleId: string; categoryId: string }[]> {
-  return getPrisma().newsArticleCategory.findMany({
-    where: { article: liveArticle(now) },
-    select: { articleId: true, categoryId: true },
-  });
+/**
+ * How many live articles each category holds, its descendants included (D-137, D-141), in one query:
+ * a recursive CTE expands every category to itself and all its descendants, and each ancestor counts
+ * the distinct live articles linked anywhere in that subtree, so an article in a parent and its child
+ * counts once. `UNION` (not `UNION ALL`) drops repeated (root, node) pairs, so a cycle in the stored
+ * tree ends the recursion. A category with no live article is absent from the map.
+ */
+export async function countLiveNewsArticlesByCategory(now: Date): Promise<Map<string, number>> {
+  const rows = await getPrisma().$queryRaw<{ category_id: string; count: bigint }[]>`
+    WITH RECURSIVE subtree (root_id, node_id) AS (
+      SELECT id, id FROM news_category
+      UNION
+      SELECT subtree.root_id, child.id
+      FROM subtree
+      JOIN news_category child ON child.parent_id = subtree.node_id
+    )
+    SELECT subtree.root_id::text AS category_id, COUNT(DISTINCT link.article_id) AS count
+    FROM subtree
+    JOIN news_article_category link ON link.category_id = subtree.node_id
+    JOIN news_article article ON article.id = link.article_id
+    WHERE article.status = 'published'
+      AND article.published_at <= ${now}
+      AND article.deleted_at IS NULL
+    GROUP BY subtree.root_id`;
+  return new Map(rows.map((row) => [row.category_id, Number(row.count)]));
 }
 
 /** How many live articles match; an article in several of the categories counts once. */

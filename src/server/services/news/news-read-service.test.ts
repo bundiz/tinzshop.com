@@ -43,14 +43,15 @@ function row(n: number, overrides: Partial<NewsArticleRow> = {}): NewsArticleRow
 function setup(options: {
   total?: number;
   rows?: NewsArticleRow[];
-  links?: { articleId: string; categoryId: string }[];
+  /** Live articles per category, subtree included, as the repository counts them. */
+  counts?: Record<string, number>;
 }) {
   const count = vi.fn(async (_filter: Omit<NewsListFilter, 'skip' | 'take'>) => options.total ?? 0);
   const list = vi.fn(async (_filter: NewsListFilter) => options.rows ?? []);
   const deps: NewsReadDeps = {
     news: {
       listNewsCategories: async () => CATEGORIES,
-      listLiveNewsCategoryLinks: async () => options.links ?? [],
+      countLiveNewsArticlesByCategory: async () => new Map(Object.entries(options.counts ?? {})),
       countLiveNewsArticles: count,
       listLiveNewsArticles: list,
     },
@@ -61,14 +62,9 @@ function setup(options: {
 
 describe('listNews', () => {
   it('includes descendant categories without duplicates', async () => {
-    // a1 sits in both News and its child NINTENDO: it counts once for News.
-    const links = [
-      { articleId: 'a1', categoryId: 'c-news' },
-      { articleId: 'a1', categoryId: 'c-nintendo' },
-      { articleId: 'a2', categoryId: 'c-article' },
-      { articleId: 'a3', categoryId: 'c-sony' },
-    ];
-    const { deps, count, list } = setup({ total: 2, rows: [row(2), row(1)], links });
+    // The repository's counts: a1 in both News and its child NINTENDO counts once for News.
+    const counts = { 'c-news': 2, 'c-nintendo': 1, 'c-article': 1, 'c-sony': 1 };
+    const { deps, count, list } = setup({ total: 2, rows: [row(2), row(1)], counts });
 
     const result = await listNews(deps, { locale: 'th', categorySlug: 'news', page: 1 });
 
@@ -130,7 +126,7 @@ describe('listNews', () => {
         row(1, { titles: { th: 'หัวข้อไทย' }, excerpts: { th: 'สรุปไทย' }, categoryIds: ['c-sony'] }),
         row(2, { titles: { th: 'ไทย', en: 'English' }, excerpts: { th: 'ไทย', en: 'English excerpt' } }),
       ],
-      links: [{ articleId: 'a1', categoryId: 'c-sony' }],
+      counts: { 'c-sony': 1 },
     });
     const result = await listNews(deps, { locale: 'en', page: 1 });
     expect(result?.items[0]).toMatchObject({ title: 'หัวข้อไทย', excerpt: 'สรุปไทย', categoryName: 'SONY EN' });
@@ -152,12 +148,8 @@ describe('listNews', () => {
   });
 
   it('gives no tab to an unlisted category, and returns null for its slug', async () => {
-    const links = [
-      { articleId: 'a1', categoryId: 'c-uncat' },
-      { articleId: 'a2', categoryId: 'c-uncat' },
-      { articleId: 'a2', categoryId: 'c-news' },
-    ];
-    const { deps, list } = setup({ total: 2, rows: [row(2), row(1, { categoryIds: ['c-uncat'] })], links });
+    const counts = { 'c-uncat': 2, 'c-news': 1 };
+    const { deps, list } = setup({ total: 2, rows: [row(2), row(1, { categoryIds: ['c-uncat'] })], counts });
 
     const all = await listNews(deps, { locale: 'th', page: 1 });
 
@@ -169,22 +161,40 @@ describe('listNews', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
-  it("filters a listed parent's subtree to listed categories", async () => {
+  it("rolls an unlisted child's articles up into its listed parent's page and tab count (D-141)", async () => {
     const withHiddenChild: NewsCategoryRow[] = [
       ...CATEGORIES,
       { id: 'c-hidden', slug: 'hidden', parentId: 'c-news', position: 6, names: { th: 'Hidden' }, isListed: false },
     ];
-    const links = [
-      { articleId: 'a1', categoryId: 'c-hidden' },
-      { articleId: 'a2', categoryId: 'c-news' },
-    ];
-    const { deps, list } = setup({ total: 1, rows: [row(2)], links });
+    // The repository rolls the hidden child's a1 up into News: News 2, the hidden child 1.
+    const counts = { 'c-news': 2, 'c-hidden': 1 };
+    const { deps, list, count } = setup({ total: 2, rows: [row(2), row(1, { categoryIds: ['c-hidden'] })], counts });
     deps.news.listNewsCategories = async () => withHiddenChild;
 
     const result = await listNews(deps, { locale: 'th', categorySlug: 'news', page: 1 });
 
-    expect(list.mock.calls[0]?.[0].categoryIds).not.toContain('c-hidden');
-    expect(result?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+    expect(new Set(list.mock.calls[0]?.[0].categoryIds)).toContain('c-hidden');
+    expect(new Set(count.mock.calls[0]?.[0].categoryIds)).toContain('c-hidden');
+    // News counts a1 (only in the unlisted child) and a2; the unlisted child has no tab.
+    expect(result?.categories).toEqual([{ slug: 'news', name: 'News', count: 2 }]);
+    list.mockClear();
+    expect(await listNews(deps, { locale: 'th', categorySlug: 'hidden', page: 1 })).toBeNull();
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("falls a card's tag back to the listed parent when its only category is an unlisted child", async () => {
+    const withHiddenChild: NewsCategoryRow[] = [
+      ...CATEGORIES,
+      { id: 'c-hidden', slug: 'hidden', parentId: 'c-news', position: 6, names: { th: 'Hidden' }, isListed: false },
+    ];
+    const { deps } = setup({
+      total: 2,
+      rows: [row(1, { categoryIds: ['c-hidden'] }), row(2, { categoryIds: ['c-hidden', 'c-nintendo'] })],
+    });
+    deps.news.listNewsCategories = async () => withHiddenChild;
+    const result = await listNews(deps, { locale: 'th', page: 1 });
+    // Never tagged with the unlisted child: News for the article only in it, the next listed leaf for the other.
+    expect(result?.items.map((item) => item.categoryName)).toEqual(['News', 'NINTENDO']);
   });
 
   it('never tags a card with an unlisted category', async () => {

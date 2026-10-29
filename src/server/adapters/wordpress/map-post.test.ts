@@ -74,13 +74,13 @@ describe("mapWordPressCategories", () => {
     return found;
   };
 
-  it("maps a child category with a decoded Thai slug", () => {
+  it("maps a child category with a decoded Thai slug; บทความ is unlisted (D-141)", () => {
     expect(bySourceId(45n)).toEqual({
       sourceId: 45n,
       parentSourceId: 5n,
       slug: "บทความ",
       translation: { locale: "th", name: "บทความ" },
-      isListed: true,
+      isListed: false,
       isExcluded: false,
     });
   });
@@ -141,6 +141,6 @@ describe("mapWordPressCategories", () => {
   });
 
   it("keeps the slug rules in one constant", () => {
-    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: [], unlisted: ["uncategorized"] });
+    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: [], unlisted: ["uncategorized", "บทความ"] });
   });
 });

@@ -325,7 +325,9 @@
       "subtitle": "News and announcements from the Tinzshop team",
       "tabs": {
         "label": "News categories",
-        "all": "All"
+        "all": "All",
+        "scrollPrev": "Scroll categories left",
+        "scrollNext": "Scroll categories right"
       },
       "feature": {
         "label": "Featured news"

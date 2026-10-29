@@ -21,7 +21,7 @@ import {
   findLiveNewsArticle,
   findArticleSourceStates,
   listLiveNewsArticles,
-  listLiveNewsCategoryLinks,
+  countLiveNewsArticlesByCategory,
   listNewsCategories,
   upsertNewsArticle,
   upsertNewsCategories,
@@ -127,7 +127,7 @@ export function getNewsReader(): (input: ListNewsInput) => Promise<NewsListPage 
   return (input) =>
     listNews(
       {
-        news: { listNewsCategories, listLiveNewsCategoryLinks, countLiveNewsArticles, listLiveNewsArticles },
+        news: { listNewsCategories, countLiveNewsArticlesByCategory, countLiveNewsArticles, listLiveNewsArticles },
         now: () => new Date(),
       },
       input,

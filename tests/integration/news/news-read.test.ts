@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getLatestNewsReader, getNewsArticleReader, getNewsReader } from '@/server/composition-root';
 import { decodeSlugParam, newsArticlePath } from '@/app/[locale]/(shop)/news/news-routes';
+import { countLiveNewsArticlesByCategory } from '@/server/repositories/news/news-repository';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 import { resetDatabase } from '../setup/database';
 
@@ -148,17 +149,19 @@ describe('unlisted categories against the database', () => {
 });
 
 describe('a listed parent with an unlisted child', () => {
-  it("leaves the unlisted child's articles out of the parent's page and tab count", async () => {
+  it("rolls the unlisted child's articles up into the parent's page and tab count, with no tab or page of its own (D-141)", async () => {
     const news = await category('news', 'News', 1);
     const hiddenChild = await category('hidden-child', 'Hidden', 2, news, false);
     const direct = await article([news]);
-    await article([hiddenChild]);
+    const viaChild = await article([hiddenChild]);
 
     const page = await listNews({ locale: 'th', categorySlug: 'news', page: 1 });
 
-    expect(page?.items.map((item) => item.slug)).toEqual([direct]);
-    expect(page?.total).toBe(1);
-    expect(page?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+    expect(new Set(page?.items.map((item) => item.slug))).toEqual(new Set([direct, viaChild]));
+    expect(page?.total).toBe(2);
+    expect(page?.categories).toEqual([{ slug: 'news', name: 'News', count: 2 }]);
+    expect(page?.items.map((item) => item.categoryName)).toEqual(['News', 'News']);
+    expect(await listNews({ locale: 'th', categorySlug: 'hidden-child', page: 1 })).toBeNull();
   });
 });
 
@@ -237,5 +240,70 @@ describe('listLatestNews against the database', () => {
     const cards = await listLatestNews({ locale: 'th', limit: 3 });
 
     expect(cards.map((card) => card.slug)).toEqual(expected);
+  });
+});
+
+describe('countLiveNewsArticlesByCategory against the database', () => {
+  /** The roll-up the service did in JS before the count moved into SQL: each subtree's distinct live articles. */
+  async function rolledUpInJs(now: Date): Promise<Map<string, number>> {
+    const categories = await prisma().newsCategory.findMany({ select: { id: true, parentId: true } });
+    const links = await prisma().newsArticleCategory.findMany({
+      where: { article: { status: 'published', publishedAt: { lte: now }, deletedAt: null } },
+      select: { articleId: true, categoryId: true },
+    });
+    const children = new Map<string, string[]>();
+    for (const c of categories) {
+      if (c.parentId !== null) children.set(c.parentId, [...(children.get(c.parentId) ?? []), c.id]);
+    }
+    const result = new Map<string, number>();
+    for (const c of categories) {
+      const seen = new Set<string>();
+      const stack = [c.id];
+      while (stack.length > 0) {
+        const id = stack.pop() as string;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        stack.push(...(children.get(id) ?? []));
+      }
+      const articles = new Set(links.filter((l) => seen.has(l.categoryId)).map((l) => l.articleId));
+      if (articles.size > 0) result.set(c.id, articles.size);
+    }
+    return result;
+  }
+
+  it('equals the JS roll-up: subtree included, each article once, only live articles, cycle-safe', async () => {
+    const news = await category('news', 'News', 1);
+    const nintendo = await category('nintendo', 'NINTENDO', 2, news);
+    const hidden = await category('บทความ', 'บทความ', 3, news, false);
+    const deep = await category('deep', 'Deep', 4, hidden);
+    const empty = await category('empty', 'Empty', 5);
+    // A two-category cycle, which the import refuses but the count must still survive.
+    const loopA = await category('loop-a', 'Loop A', 6);
+    const loopB = await category('loop-b', 'Loop B', 7, loopA);
+    await prisma().newsCategory.update({ where: { id: loopA }, data: { parentId: loopB } });
+
+    await article([news, nintendo]); // in a parent and its child: once for News
+    await article([nintendo]);
+    await article([hidden]); // unlisted child: rolls up into News
+    await article([deep, nintendo]);
+    await article([loopA]);
+    await article([loopA, loopB]);
+    await article([nintendo], { status: 'draft', publishedAt: null });
+    await article([nintendo], { publishedAt: new Date(Date.now() + 86_400_000) });
+    await article([hidden], { deletedAt: new Date('2026-02-01T00:00:00Z') });
+
+    const now = new Date();
+    const counts = await countLiveNewsArticlesByCategory(now);
+
+    expect(counts).toEqual(await rolledUpInJs(now));
+    expect(Object.fromEntries(counts)).toEqual({
+      [news]: 4,
+      [nintendo]: 3,
+      [hidden]: 2,
+      [deep]: 1,
+      [loopA]: 2,
+      [loopB]: 2,
+    });
+    expect(counts.has(empty)).toBe(false);
   });
 });
