@@ -148,17 +148,19 @@ describe('unlisted categories against the database', () => {
 });
 
 describe('a listed parent with an unlisted child', () => {
-  it("leaves the unlisted child's articles out of the parent's page and tab count", async () => {
+  it("rolls the unlisted child's articles up into the parent's page and tab count, with no tab or page of its own (D-141)", async () => {
     const news = await category('news', 'News', 1);
     const hiddenChild = await category('hidden-child', 'Hidden', 2, news, false);
     const direct = await article([news]);
-    await article([hiddenChild]);
+    const viaChild = await article([hiddenChild]);
 
     const page = await listNews({ locale: 'th', categorySlug: 'news', page: 1 });
 
-    expect(page?.items.map((item) => item.slug)).toEqual([direct]);
-    expect(page?.total).toBe(1);
-    expect(page?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+    expect(new Set(page?.items.map((item) => item.slug))).toEqual(new Set([direct, viaChild]));
+    expect(page?.total).toBe(2);
+    expect(page?.categories).toEqual([{ slug: 'news', name: 'News', count: 2 }]);
+    expect(page?.items.map((item) => item.categoryName)).toEqual(['News', 'News']);
+    expect(await listNews({ locale: 'th', categorySlug: 'hidden-child', page: 1 })).toBeNull();
   });
 });
 

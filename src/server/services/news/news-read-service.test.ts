@@ -169,7 +169,7 @@ describe('listNews', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
-  it("filters a listed parent's subtree to listed categories", async () => {
+  it("rolls an unlisted child's articles up into its listed parent's page and tab count (D-141)", async () => {
     const withHiddenChild: NewsCategoryRow[] = [
       ...CATEGORIES,
       { id: 'c-hidden', slug: 'hidden', parentId: 'c-news', position: 6, names: { th: 'Hidden' }, isListed: false },
@@ -178,13 +178,33 @@ describe('listNews', () => {
       { articleId: 'a1', categoryId: 'c-hidden' },
       { articleId: 'a2', categoryId: 'c-news' },
     ];
-    const { deps, list } = setup({ total: 1, rows: [row(2)], links });
+    const { deps, list, count } = setup({ total: 2, rows: [row(2), row(1, { categoryIds: ['c-hidden'] })], links });
     deps.news.listNewsCategories = async () => withHiddenChild;
 
     const result = await listNews(deps, { locale: 'th', categorySlug: 'news', page: 1 });
 
-    expect(list.mock.calls[0]?.[0].categoryIds).not.toContain('c-hidden');
-    expect(result?.categories).toEqual([{ slug: 'news', name: 'News', count: 1 }]);
+    expect(new Set(list.mock.calls[0]?.[0].categoryIds)).toContain('c-hidden');
+    expect(new Set(count.mock.calls[0]?.[0].categoryIds)).toContain('c-hidden');
+    // News counts a1 (only in the unlisted child) and a2; the unlisted child has no tab.
+    expect(result?.categories).toEqual([{ slug: 'news', name: 'News', count: 2 }]);
+    list.mockClear();
+    expect(await listNews(deps, { locale: 'th', categorySlug: 'hidden', page: 1 })).toBeNull();
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("falls a card's tag back to the listed parent when its only category is an unlisted child", async () => {
+    const withHiddenChild: NewsCategoryRow[] = [
+      ...CATEGORIES,
+      { id: 'c-hidden', slug: 'hidden', parentId: 'c-news', position: 6, names: { th: 'Hidden' }, isListed: false },
+    ];
+    const { deps } = setup({
+      total: 2,
+      rows: [row(1, { categoryIds: ['c-hidden'] }), row(2, { categoryIds: ['c-hidden', 'c-nintendo'] })],
+    });
+    deps.news.listNewsCategories = async () => withHiddenChild;
+    const result = await listNews(deps, { locale: 'th', page: 1 });
+    // Never tagged with the unlisted child: News for the article only in it, the next listed leaf for the other.
+    expect(result?.items.map((item) => item.categoryName)).toEqual(['News', 'NINTENDO']);
   });
 
   it('never tags a card with an unlisted category', async () => {

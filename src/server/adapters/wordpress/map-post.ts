@@ -48,14 +48,14 @@ export type NewsCategorySlugRules = { readonly excluded: readonly string[]; read
 
 /**
  * Which old-site categories are not news categories, or have no tab (owner, 2026-10-29, Q-048; D-139,
- * D-140). The one place a WordPress category slug is named. `excluded`: the category and all its
+ * D-140, D-141). The one place a WordPress category slug is named. `excluded`: the category and all its
  * descendants are never linked to an article, and a post in excluded categories only is not news. No slug
  * is excluded today: staff-written product reviews are news (D-140), and the mechanism is kept for a future
- * exclusion. `unlisted`: the category is kept and linked, but has no tab and is never shown as a tag.
+ * exclusion. `unlisted`: the category is kept and linked, but has no tab, no page and is never shown as a tag; its articles still roll up into its listed ancestors (D-141).
  */
 export const NEWS_CATEGORY_SLUG_RULES: NewsCategorySlugRules = {
   excluded: [],
-  unlisted: ["uncategorized"],
+  unlisted: ["uncategorized", "บทความ"],
 };
 
 /**

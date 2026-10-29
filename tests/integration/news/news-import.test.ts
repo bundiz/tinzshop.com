@@ -558,8 +558,8 @@ describe('news import: staff product reviews are news again, and the full re-imp
   const reviewPosts = () =>
     REVIEW_POSTS.map((p) => post(p.id, { categories: p.categories, modified_gmt: MODIFIED, featured_media: p.id }));
 
-  it('excludes no slug and keeps Uncategorized unlisted', () => {
-    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: [], unlisted: ['uncategorized'] });
+  it('excludes no slug and keeps Uncategorized and บทความ unlisted (D-141)', () => {
+    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: [], unlisted: ['uncategorized', 'บทความ'] });
   });
 
   it('lists the review tree again on a normal run, but only a full run restores the unchanged posts', async () => {

@@ -101,9 +101,23 @@ function subtrees(categories: readonly NewsCategoryRow[]): Map<string, Set<strin
   return result;
 }
 
-/** The article's listed categories (D-139): an unlisted one is never a tag, a breadcrumb or a related key. */
+/**
+ * The article's listed categories (D-139, D-141): an unlisted one is never a tag, a breadcrumb or a related
+ * key; it stands in as its nearest listed ancestor (a cycle is cut), or as nothing when it has none. The one
+ * place the roll-up rule lives on the read side, with `subtree` in `listNews` for pages and tab counts.
+ */
 function listedCategories(categoryIds: readonly string[], byId: ReadonlyMap<string, NewsCategoryRow>): NewsCategoryRow[] {
-  return categoryIds.map((id) => byId.get(id)).filter((c): c is NewsCategoryRow => c !== undefined && c.isListed);
+  const result = new Map<string, NewsCategoryRow>();
+  for (const id of categoryIds) {
+    const seen = new Set<string>();
+    let at = byId.get(id);
+    while (at !== undefined && !at.isListed && !seen.has(at.id)) {
+      seen.add(at.id);
+      at = at.parentId === null ? undefined : byId.get(at.parentId);
+    }
+    if (at !== undefined && at.isListed) result.set(at.id, at);
+  }
+  return [...result.values()];
 }
 
 /**
@@ -163,9 +177,8 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
   const categories = await deps.news.listNewsCategories();
   const byId = new Map(categories.map((category) => [category.id, category]));
   const tree = subtrees(categories);
-  // A page and its tab count cover only the listed categories of the subtree (D-139).
-  const listedSubtree = (id: string): string[] =>
-    [...(tree.get(id) ?? [id])].filter((member) => byId.get(member)?.isListed === true);
+  // A page and its tab count cover the whole subtree: an unlisted descendant rolls up (D-141).
+  const subtree = (id: string): string[] => [...(tree.get(id) ?? [id])];
 
   let active: NewsCategoryRow | null = null;
   if (input.categorySlug !== undefined) {
@@ -173,7 +186,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     active = categories.find((category) => category.isListed && category.slug === input.categorySlug) ?? null;
     if (active === null) return null;
   }
-  const categoryIds = active === null ? null : listedSubtree(active.id);
+  const categoryIds = active === null ? null : subtree(active.id);
 
   const total = await deps.news.countLiveNewsArticles({ categoryIds, now });
   const totalPages = Math.max(1, Math.ceil(total / NEWS_PAGE_SIZE));
@@ -199,7 +212,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     .filter((category) => category.isListed)
     .map((category) => {
       const articles = new Set<string>();
-      for (const id of listedSubtree(category.id)) {
+      for (const id of subtree(category.id)) {
         for (const articleId of articlesByCategory.get(id) ?? []) articles.add(articleId);
       }
       return { category, count: articles.size };
