@@ -59,6 +59,7 @@
 | `src/app/[locale]/(shop)/news/**` | List and category pages | 5 |
 | `src/app/[locale]/(shop)/news/[slug]/**`, landing news section, nav link | Article page; landing ข่าวเกมล่าสุด | 6 |
 | schema `news_category.is_listed`, adapter exclusion rules, import/read changes | No review category; unlisted Uncategorized (owner, Q-048) | 7 |
+| exclusion rules, `?full=1` import, SiteHeader บทความ dropdown | Staff reviews back as news; full re-import; header menu | 8 |
 
 ---
 
@@ -220,6 +221,63 @@ Facts in the dev database after the first import:
 - [x] **Step 3:** Implement. Add the migration (non-destructive) and apply it to the dev and test databases.
 - [x] **Step 4:** Tests, typecheck, integration tests and build pass. Commit: `feat: drop review categories from news and hide the Uncategorized tab`.
 - [ ] **Step 4 (owner):** The owner re-runs the import over the dev database. Restart the dev server first: it caches the Prisma client from before `is_listed` existed, so until then the news pages and the import answer 500. Expected afterwards: 0 created and 0 updated, 43 articles lose their review links, the 3 review-only ones are soft-deleted, and `/th/news/category/reviews` and `/th/news/category/uncategorized` give 404.
+
+### Task 8: Staff product reviews are news again; full re-import; บทความ dropdown (owner, 2026-10-29)
+
+**Owner clarification of the Q-048 answer** (2026-10-29): "there is still รีวิวสินค้า, but the requirement means รีวิวสินค้า that a blogger creates. รีวิวสินค้าโดยลูกค้า (customer product reviews) is not about this feature; it is about the other feature (REQ-054)." So:
+- the WordPress `reviews` category and its children are **news categories again**, listed, and shown as "รีวิวสินค้า";
+- only customer reviews are a separate feature.
+
+This supersedes the review part of D-139. Uncategorized stays unlisted. A new D-row is needed, citing D-125 (restored) and D-139 (partly superseded).
+
+The owner's choices for the header menu:
+- **"บทความ ▾"** in the utility bar (top dark bar), as on the old site:
+  - **รีวิวสินค้า** → `/{locale}/news/category/reviews`
+  - **สินค้า** → `/{locale}/news/category/products` (the old "Products" news category)
+  - **News ›** → `/{locale}/news`, with a submenu of exactly **Nintendo Switch 2** (`nintendo-switch-2`), **NINTENDO** (`nintendo`) and **SONY Playstation** (`sony-playstation`)
+  - No ข่าวประชาสัมพันธ์ item.
+
+**State of the dev database** (the owner already re-ran the import after Task 7):
+- `reviews` has `is_listed = false`
+- 3 articles are soft-deleted by the rule
+- review links were removed
+
+A normal re-run skips unchanged posts, so it cannot undo this.
+
+**Rules:**
+1. **Exclusion rules.** `NEWS_CATEGORY_SLUG_RULES` becomes `{ excluded: [], unlisted: ['uncategorized'] }`.
+   - Keep the excluded mechanism and its tests, using a fixture slug, so a future exclusion stays possible.
+   - The category upsert must also set `is_listed` back to `true` for a category that is no longer unlisted.
+2. **Full re-import.** `POST /api/jobs/news-import?full=1` (same secret) disables the unchanged-post skip.
+   - Every post is mapped, saved and re-linked, and images are re-read.
+   - A saved post that is not hidden by the rules has `deleted_at` cleared (the existing upsert behaviour, D-139).
+   - Any other value of `full` gives 400.
+   - Document it in 06 and openapi.
+   - After the owner runs it once, the 3 articles return, Reviews is listed and all links are back.
+3. **Dropdown.**
+   - The menu items are a single config constant of `{ labelKey, slug }`.
+   - The page reads the listed categories and renders only items whose slug exists and is listed. A missing category's item is not shown, so a link can never 404.
+   - Labels come from messages (`shop.header.articles.*`). For the 3 submenu items, use their category names from the DB.
+   - **Accessibility and mobile:**
+     - It opens on hover and on click/Enter/Space, and closes on Escape and when focus or the pointer leaves.
+     - It uses `aria-expanded` and is keyboard reachable.
+     - At phone width it works by tap, with no hover dependency.
+   - The utility bar's current "ข่าวเกม" link is replaced by "บทความ ▾". The category nav's "ข่าวเกม" stays.
+   - Style it like the site (dark bar, white menu panel), not a copy of the old colours.
+
+**Steps:**
+- [ ] **Step 1: Write the failing tests:**
+  - the rules constant, and a category that leaves `unlisted` becomes listed
+  - `full=1` re-saves an unchanged post and restores a rule-hidden article with its links (integration test on a seeded "after Task 7" state); `full=abc` gives 400
+  - the dropdown renders the configured items, hides a missing or unlisted one, and has correct `aria-expanded`/keyboard behaviour (render + interaction test)
+  - the reviews category page gives 200 once listed
+- [ ] **Step 2:** Run the tests. They fail.
+- [ ] **Step 3:** Implement. Docs:
+  - a D-row, plus a Q-048 note recording the clarification (quote it)
+  - 02, 05, 06, 07, 14, the glossary, and spec O-1 (restored)
+  - a CLAUDE.md decision range if it changes
+- [ ] **Step 4:** Tests, typecheck, integration tests and build pass. Commit: `feat: staff product reviews are news again, full re-import, and the บทความ menu`.
+- [ ] **Step 5 (owner):** run `POST /api/jobs/news-import?full=1` once (about 20 minutes), then check that Reviews is back and the dropdown works.
 
 ---
 
