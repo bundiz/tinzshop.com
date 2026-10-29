@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CATEGORY_TREE, categoriseByName } from "./categorise-by-name";
+import { CATEGORISE_RULES, CATEGORY_TREE, categoriseByName } from "./categorise-by-name";
 
 describe("categoriseByName", () => {
   it.each([
@@ -74,5 +74,20 @@ describe("categoriseByName", () => {
       "playstation-5",
       "it-gadgets",
     ]);
+  });
+
+  it('prefers PlayStation over Switch when a name has both', () => {
+    expect(categoriseByName('Switch Dock for PS5')?.platformSlug).toBe('playstation-5');
+  });
+
+  it('calls a name with Console and Game a game, not a console', () => {
+    expect(categoriseByName('Console Game Bundle - Nintendo Switch')?.typeSlug).toBe('nintendo-switch-game');
+  });
+
+  it('has every rule slug in the tree', () => {
+    const platforms = new Set(CATEGORY_TREE.map((p) => p.slug));
+    for (const rule of CATEGORISE_RULES.platforms) expect(platforms).toContain(rule.slug);
+    const types = new Set(CATEGORY_TREE.flatMap((p) => p.types.map((t) => t.type)));
+    for (const rule of CATEGORISE_RULES.types) expect(types).toContain(rule.type);
   });
 });

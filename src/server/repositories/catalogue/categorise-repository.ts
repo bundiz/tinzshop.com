@@ -14,68 +14,82 @@ export async function categoriseProducts(): Promise<{
   categorised: number;
   skipped: number;
 }> {
-  return getPrisma().$transaction(async (tx) => {
-    const idBySlug = new Map<string, string>();
-    for (const platform of CATEGORY_TREE) {
-      const nodes = [
-        { ...platform, parentSlug: null as string | null },
-        ...platform.types.map((t) => ({
-          ...t,
-          parentSlug: platform.slug as string | null,
-        })),
-      ];
-      for (const node of nodes) {
-        const parentId =
-          node.parentSlug === null
-            ? null
-            : (idBySlug.get(node.parentSlug) ?? null);
-        // An existing row (maybe edited by an admin) is left as it is.
-        const row = await tx.category.upsert({
-          where: { slug: node.slug },
-          create: { slug: node.slug, position: node.position, parentId },
-          update: {},
+  return getPrisma().$transaction(
+    async (tx) => {
+      const idBySlug = new Map<string, string>();
+      for (const platform of CATEGORY_TREE) {
+        const nodes = [
+          { ...platform, parentSlug: null as string | null },
+          ...platform.types.map((t) => ({
+            ...t,
+            parentSlug: platform.slug as string | null,
+          })),
+        ];
+        for (const node of nodes) {
+          const parentId =
+            node.parentSlug === null
+              ? null
+              : (idBySlug.get(node.parentSlug) ?? null);
+          // An existing row (maybe edited by an admin) is left as it is.
+          const row = await tx.category.upsert({
+            where: { slug: node.slug },
+            create: { slug: node.slug, position: node.position, parentId },
+            update: {},
+          });
+          idBySlug.set(node.slug, row.id);
+          await tx.categoryTranslation.createMany({
+            data: [
+              { categoryId: row.id, locale: "th", name: node.th },
+              { categoryId: row.id, locale: "en", name: node.en },
+            ],
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      const total = await tx.product.count();
+      const candidates = await tx.product.findMany({
+        where: { primaryCategoryId: null, categories: { none: {} } },
+        select: {
+          id: true,
+          translations: { where: { locale: "th" }, select: { name: true } },
+        },
+      });
+
+      // Group by type, then write each group with two statements instead of two per product.
+      const byType = new Map<string, { platformSlug: string; ids: string[] }>();
+      for (const product of candidates) {
+        const name = product.translations[0]?.name;
+        const result = name === undefined ? null : categoriseByName(name);
+        if (!result) continue;
+        const group = byType.get(result.typeSlug) ?? {
+          platformSlug: result.platformSlug,
+          ids: [],
+        };
+        group.ids.push(product.id);
+        byType.set(result.typeSlug, group);
+      }
+
+      let categorised = 0;
+      for (const [typeSlug, group] of byType) {
+        const typeId = idBySlug.get(typeSlug);
+        const platformId = idBySlug.get(group.platformSlug);
+        if (!typeId || !platformId) continue;
+        await tx.product.updateMany({
+          where: { id: { in: group.ids } },
+          data: { primaryCategoryId: typeId },
         });
-        idBySlug.set(node.slug, row.id);
-        await tx.categoryTranslation.createMany({
-          data: [
-            { categoryId: row.id, locale: "th", name: node.th },
-            { categoryId: row.id, locale: "en", name: node.en },
-          ],
+        await tx.productCategory.createMany({
+          data: group.ids.flatMap((productId) => [
+            { productId, categoryId: typeId },
+            { productId, categoryId: platformId },
+          ]),
           skipDuplicates: true,
         });
+        categorised += group.ids.length;
       }
-    }
-
-    const total = await tx.product.count();
-    const candidates = await tx.product.findMany({
-      where: { primaryCategoryId: null, categories: { none: {} } },
-      select: {
-        id: true,
-        translations: { where: { locale: "th" }, select: { name: true } },
-      },
-    });
-
-    let categorised = 0;
-    for (const product of candidates) {
-      const name = product.translations[0]?.name;
-      const result = name === undefined ? null : categoriseByName(name);
-      if (!result) continue;
-      const typeId = idBySlug.get(result.typeSlug);
-      const platformId = idBySlug.get(result.platformSlug);
-      if (!typeId || !platformId) continue;
-      await tx.product.update({
-        where: { id: product.id },
-        data: { primaryCategoryId: typeId },
-      });
-      await tx.productCategory.createMany({
-        data: [
-          { productId: product.id, categoryId: typeId },
-          { productId: product.id, categoryId: platformId },
-        ],
-        skipDuplicates: true,
-      });
-      categorised += 1;
-    }
-    return { categorised, skipped: total - categorised };
-  });
+      return { categorised, skipped: total - categorised };
+    },
+    { timeout: 60_000, maxWait: 10_000 },
+  );
 }

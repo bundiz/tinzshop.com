@@ -136,4 +136,28 @@ describe("categoriseProducts", () => {
     expect(await prisma.productCategory.count()).toBe(links);
     expect(await prisma.category.count()).toBe(12 + 1);
   });
+
+  it('leaves a product that has a category link but no primary category untouched', async () => {
+    const prisma = getPrisma();
+    await upsertCatalogueItem(noModelSnapshot({ externalItemId: 5n, parentSku: 'E', name: 'Mario Kart - Nintendo Switch Game' }), T1);
+    const target = await prisma.category.create({ data: { slug: 'admin-pick', position: 9 } });
+    const product = await productByName('Mario Kart - Nintendo Switch Game');
+    await prisma.productCategory.create({ data: { productId: product.id, categoryId: target.id } });
+
+    expect(await categoriseProducts()).toEqual({ categorised: 0, skipped: 1 });
+    const after = await productByName('Mario Kart - Nintendo Switch Game');
+    expect(after.primaryCategoryId).toBeNull();
+    expect(after.categories.map((c) => c.category.slug)).toEqual(['admin-pick']);
+  });
+
+  it('categorises 300 products in one run', async () => {
+    for (let i = 0; i < 300; i += 1) {
+      await upsertCatalogueItem(
+        noModelSnapshot({ externalItemId: BigInt(1000 + i), parentSku: `BULK-${i}`, name: `Bulk Game ${i} - Nintendo Switch Game` }),
+        T1,
+      );
+    }
+    expect(await categoriseProducts()).toEqual({ categorised: 300, skipped: 0 });
+    expect(await getPrisma().productCategory.count()).toBe(600);
+  });
 });

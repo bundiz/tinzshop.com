@@ -220,13 +220,13 @@ shop could replace ours and the sync would mirror its catalogue (D-104).
 | `/api/jobs/catalogue-activate` | `POST` | `Bearer <JOB_SECRET>` | **Development only (D-117).** `404` when `NODE_ENV` is `production`, checked before auth. `200` `{ activated: n }`, the count of products newly set active (`channel_item.external_status = 'NORMAL'` and at least one active variant; never deactivates). `401` unauthorized. Used until plan 002's admin screens exist |
 | `/api/jobs/catalogue-categorise` | `POST` | `Bearer <JOB_SECRET>` | **Development only (D-143).** `404` when `NODE_ENV` is `production`, checked before auth. `200` `{ categorised: n, skipped: m }`: `categorised` is the products newly given a category, `skipped` every other product (already categorised, or its name matched no platform). Seeds the category tree if missing. `401` unauthorized. See *Categorise job* below |
 
-### Categorise job (plan 013)
-
-`catalogue-categorise` is development only and is run by hand until admins can assign categories (plan 002). In one transaction it seeds the category tree if missing (existing rows and translations are left as they are), then reads each product's Thai name and, with `categoriseByName`, sets `primary_category_id` to the type and adds `product_category` rows for the type and its platform. It only touches a product with no `product_category` row and no `primary_category_id`, so re-running it changes nothing. The rules are in `categorise-by-name.ts` (D-143, [05](05-database.md#product-categories-plan-013)).
-
 `shopee-sync` is called every 10 minutes (plan 010). Overlapping calls are safe: the second returns `skipped`.
 
 `news-import` is not scheduled: it is run by hand, and once at go-live. It is safe to re-run: a post whose `source_modified_at` has not moved is counted `unchanged` and not written (except with `?full=1`, which writes every post again, D-140), and no row is ever deleted. Every run applies the excluded-category rule (D-139) to stored articles, unchanged ones included: links to an excluded category are removed and an imported article left only in excluded categories gets `deleted_at`. The response is unchanged. Its lock key differs from the catalogue sync's, so the two never block each other.
+
+### Categorise job (plan 013)
+
+`catalogue-categorise` is development only and is run by hand until admins can assign categories (plan 002). In one transaction it seeds the category tree if missing (existing rows and translations are left as they are), then reads each product's Thai name and, with `categoriseByName`, sets `primary_category_id` to the type and adds `product_category` rows for the type and its platform. It only touches a product with no `product_category` row and no `primary_category_id`, so re-running it changes nothing. The rules are in `categorise-by-name.ts` (D-143, [05](05-database.md#product-categories-plan-013)).
 
 ## Pagination, filtering, sorting
 
