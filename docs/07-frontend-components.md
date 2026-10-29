@@ -35,8 +35,8 @@ Components live in exactly three places (D-033).
 | Tier | Where | Knows about | Example |
 | :--- | :--- | :--- | :--- |
 | **1 — Primitive** | `src/components/ui/` | Nothing. No product, no order, no baht | `Button`, `Input`, `Dialog`, `Table` |
-| **2 — Domain** | `src/components/domain/` | The domain, used by more than one route | `PriceDisplay`, `StockBadge`, `VariantPicker` |
-| **3 — Route-owned** | Beside the route that uses it | Everything about that one screen | `CheckoutSummary` |
+| **2 — Domain** | `src/components/domain/` | The domain, used by more than one route | `PriceDisplay`, `StockBadge`, `ProductCard` |
+| **3 — Route-owned** | Beside the route that uses it | Everything about that one screen | `VariantPicker` (product page), `CheckoutSummary` |
 
 **Rule of second use.** A component is born in tier 3. It moves to tier 2 the
 first time a *second* route genuinely needs it — not when someone anticipates
@@ -97,7 +97,39 @@ Every component file, in this order:
 
 - **A price is only ever rendered by `PriceDisplay`.** It takes satang (D-010) and renders baht. No component formats money itself; that is how `฿1,995.00` and `1995 บาท` end up on the same page.
 - Dates render through one formatter that knows the locale. Thai dates may need the Buddhist era — the source document itself is dated 2569 BE — and that decision belongs in one place.
+- **How `PriceDisplay` formats (D-118).** `Intl.NumberFormat` for the page's locale with currency `THB` and the narrow symbol, so both languages show `฿`. A whole-baht price shows no decimals (`฿2,990`, as the design does); a price with satang shows two (`฿1,990.50`). A price range reads as one message with a placeholder, `shop.product.price.from` (`เริ่มต้น {price}`), never a prefix glued to the number.
+- **Dates and years use the locale's own calendar, in Bangkok time (D-118).** On `/th` that is the Buddhist era, on `/en` the Gregorian year — the design writes `วางจำหน่าย 20 พ.ย. 2569` and `© 2569`. Dates go through next-intl's formatter (`{date, date, medium}` in a message), which takes the calendar from the locale; the footer's copyright year is the `year` part of the same `Intl` format, computed from the request's current date, never written into a message.
+- **A struck-through original price shows only when it is above the price (D-123),** never when it is equal, lower or 0, and it carries visually hidden text from `shop.product.price.original` (`ราคาเดิม`), because a strikethrough is not announced by a screen reader.
 - Never render a raw stock quantity on the storefront. `StockBadge` takes a status, not a number (REQ-006, D-024).
+
+### The variant picker (D-121)
+
+The product page is a Server Component; only `VariantPicker`, `Gallery` and
+`ProductTabs` are Client Components. The picker receives the product's option
+types and its **active** variants, already priced in satang, and keeps only the
+current choice in `useState`.
+
+- A value is **disabled** only when no active variant carries it at all — the customer cannot choose what Shopee does not sell.
+- Picking a value that has no active variant with the other current choices moves those choices to the best active variant carrying it: in stock first, then cheapest. Disabling such a value instead (D-119, superseded) could make a variant unreachable — with only 1TB-Black and 2TB-White active, starting on 1TB-Black would disable both 2TB and White. `selectValue` holds this rule.
+- If the variant a value leads to is sold out, the value stays **selectable** and reads `{value} (สินค้าหมด)` (`shop.product.option.soldOut`). Disabling it as the design mockup does would hide the variant's price; selecting it shows the price and the out-of-stock `StockBadge`, so the status is said in text, not only by a greyed control.
+- The page opens on the cheapest in-stock active variant, else the cheapest active one, so its first price is one a customer can buy at when any exists.
+
+## Design fidelity and inert controls (D-124)
+
+**The storefront pages follow `design/index.html` and `design/product.html`
+block for block,** on the project owner's instruction of 2026-10-28, including
+controls whose feature does not exist yet. This replaces plan 011's earlier rule
+that a control which does nothing is not shown.
+
+- **An inert control looks exactly as designed and goes nowhere.** A link points to `#`, or to the real page when there is one (the logo and "home" go to `/{locale}`, a product card to its product page). A button is `type="button"`. The header search is a `role="search"` form with no `action` whose `onSubmit` prevents submission (`SearchForm`, the one Client Component the header needs), so pressing Enter does nothing.
+- **Never a made-up number.** The cart count is `0`, not the design's sample `3`. No rating stars, scores or review counts appear anywhere (spec O-6, only our own reviews); the product page's reviews tab is an empty state, `shop.product.reviews.empty`.
+- **Data still comes from the database.** Prices, stock, names, images and the variant picker are unchanged. A section with no products is still not rendered, so the bundle and pre-order sections appear only when the mirror has kits or pre-orders. Related products on the product page are the best sellers without the current product, until categories exist to relate by.
+- **The design's category line on a card (`card__cat`) is left out,** and the breadcrumb is home › name: the mirror holds no category names yet.
+- **Left out on purpose:** the news section ("ข่าวเกมล่าสุด") until there is news data, the design's mockup notice bar, and the footer's mockup disclaimer.
+- **Every string is a message key,** with the Thai text exactly as the design writes it. Category names shared by the nav, rail, tiles and footer live once under `shop.category`.
+- **Icons are the design's inline SVG set,** in the tier-1 primitive `Icon` (`src/components/ui/Icon.tsx`), always `aria-hidden`.
+- **Breakpoints are the design's:** `xs` 480px, `sm` 640px, `md` 900px and `lg` 1100px, defined in rem in `globals.css`. Use these names, never `min-[…px]:` arbitrary variants: mixed with Tailwind's rem breakpoints those sorted out of order, and the card grid stayed at 3 columns on desktop. The design's grids are 2 / 3 / 4 / 5 columns for product grids and 6 cards across for a rail at `lg`.
+- **Text sizes inherit the design's line height** (1.65): `globals.css` sets it for `text-xs`, `text-sm` and `text-base`, and headings are bold as in the design.
 
 ## Bilingual
 
@@ -146,6 +178,22 @@ is the state least likely to be wrong.
 | **Empty** | Say what is missing and what to do about it. "No orders yet" plus a next step, never a blank panel |
 | **Error** | The `messageKey` from the `Result` (`06-api.md`), plus a way to retry. Never a raw error, never a stack |
 | **Loaded** | The content |
+
+**A page that can be `notFound()` has no loading skeleton above it (D-120).**
+In Next 16 a `loading.tsx` boundary starts streaming with status 200 before the
+page runs, so a later `notFound()` can only stream the not-found UI into a 200.
+The product page therefore has no skeleton, and an unknown or hidden product
+answers a real 404; the landing page's skeleton sits in the `(shop)/(home)/`
+route group so it covers `/{locale}` only.
+
+**An unmatched URL under a locale gets the site's own 404 (D-122).** Without
+it, `/th/nope` showed Next's built-in English "This page could not be found".
+The catch-all `src/app/[locale]/(shop)/[...rest]/page.tsx` calls `notFound()`,
+and its `not-found.tsx` (`PageNotFound`) renders `NotFoundPanel` — header,
+`shop.notFound.*` text in the locale, a link home, footer — with a not-found
+`<title>` from the segment's `layout.tsx`. The product page's `ProductNotFound`
+uses the same panel with `shop.product.notFound.*`. Every real route is more
+specific than the catch-all, and `/api/**` sits outside the locale segment.
 
 Empty and error states are written in the same pull request as the happy path.
 They are not follow-up work; they are the states a user hits when something is
@@ -202,7 +250,6 @@ that backs it.
 | Order status labels and their colours | Q-023 — a candidate set is proposed, not adopted |
 | Which admin screens each of the six roles sees | Resolved in outline (D-062, D-063 — six fixed roles, owner edits permissions only); exact screen-to-permission mapping is phase 2 design work, not an open question |
 | Whether product text is translated by staff or by us, and what shows when a translation is missing | Q-018 residual |
-| Visual design, brand, typography | No design has been provided. This document is structure, not appearance |
 
 **Resolved since the last revision:** there is no low-stock badge — the
 storefront shows in stock / out of stock only (D-065, Q-019). `StockBadge`

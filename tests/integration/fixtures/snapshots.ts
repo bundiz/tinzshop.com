@@ -91,3 +91,31 @@ export function noModelSnapshot(overrides: Partial<CatalogueItemSnapshot> = {}):
     ...overrides,
   };
 }
+
+/** A kit item: one tier (Colour), two models, the second sold out. */
+export function kitSnapshot(overrides: Partial<CatalogueItemSnapshot> = {}): CatalogueItemSnapshot {
+  return {
+    externalItemId: 803947700n,
+    externalStatus: 'NORMAL',
+    externalCategoryId: 100003n,
+    isKit: true,
+    externalCreatedAt: new Date(1793005000_000),
+    externalUpdatedAt: new Date(1793005100_000),
+    parentSku: 'SBX-KIT-01',
+    name: 'Sandbox Promotion Set',
+    description: 'A promotion set for the sandbox shop.',
+    brandName: null,
+    weightGrams: 500,
+    images: [{ url: 'https://cf.shopee.co.th/file/sg-11134201-81z1k-kit', externalImageId: 'sg-11134201-81z1k-kit' }],
+    optionTypes: [{ name: 'Colour', values: ['White', 'Black'] }],
+    variants: [
+      model(13000001n, 'SBX-KIT-01-WHT', 1590000n, 3, 0, [0]),
+      model(13000002n, 'SBX-KIT-01-BLK', 1490000n, 0, 1, [1]),
+    ],
+    salesCount: 9,
+    ratingStar: 0,
+    ratingCount: 0,
+    rawPayload: { item_id: 803947700, source: 'fixture' },
+    ...overrides,
+  };
+}

@@ -156,6 +156,38 @@ paths:
                       runId: { type: string, format: uuid }
         '500':
           description: An unexpected exception.
+  /api/jobs/catalogue-activate:
+    post:
+      tags: [Jobs]
+      summary: Activate synced products (development only)
+      description: |
+        Sets `product.is_active` on every synced product whose Shopee item is `NORMAL`
+        and that has an active variant, so the storefront visibility rule can show it.
+        Never deactivates. Answers `404` when `NODE_ENV` is `production`, before the
+        secret is checked (D-117). Used until plan 002's admin screens exist.
+      security:
+        - jobSecret: []
+      responses:
+        '200':
+          description: The count of products newly activated; `0` when nothing was left to activate.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [activated]
+                properties:
+                  activated: { type: integer, minimum: 0 }
+              example: { activated: 9 }
+        '401':
+          description: Missing or wrong bearer secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: auth.unauthorized, messageKey: error.auth.unauthorized } }
+        '404':
+          description: Production. The endpoint does not exist there.
+        '500':
+          description: An unexpected exception.
 components:
   securitySchemes:
     jobSecret:

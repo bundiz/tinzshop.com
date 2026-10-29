@@ -7,7 +7,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Component tests render JSX with the React 17+ runtime, as Next.js does.
+  esbuild: { jsx: 'automatic' },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   },
 });

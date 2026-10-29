@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Design tokens, copied from design/css/style.css :root. */
+@theme {
+  --color-primary: #1863dc;
+  --color-primary-dark: #0056a7;
+  --color-primary-deep: #0b2e6f;
+  --color-primary-soft: #e8f0fd;
+  --color-accent: #fea601;
+  --color-accent-dark: #e08f00;
+  --color-accent-soft: #fff4dc;
+  --color-danger: #dd3333;
+  --color-success: #178a4c;
+  --color-success-soft: #e6f5ec;
+
+  --color-text: #212121;
+  --color-text-muted: #4e4b66;
+  --color-text-subtle: #85839a;
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f4f4f4;
+  --color-border: #ebebeb;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai",
+    "Sarabun", "Leelawadee UI", Thonburi, Arial, sans-serif;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+
+  --shadow-card: 0 1px 2px rgba(33, 33, 33, 0.05);
+  --shadow-hover: 0 8px 24px rgba(24, 99, 220, 0.14);
+
+  /* The design's breakpoints (480, 640, 900, 1100px), in rem like Tailwind's own so
+     every breakpoint sorts by width: mixing px arbitrary variants with rem ones emitted
+     `sm` after `min-[1100px]` and left the card grid at 3 columns. */
+  /* The design sets font sizes without line heights, so text inherits the body's 1.65
+     (generous for Thai). Tailwind's text-xs/sm/base would otherwise impose tighter ones. */
+  --text-xs--line-height: 1.65;
+  --text-sm--line-height: 1.65;
+  --text-base--line-height: 1.65;
+
+  --breakpoint-xs: 30rem;
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 56.25rem;
+  --breakpoint-lg: 68.75rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    /* Thai stacks vowels and tone marks above and below the line: a tight
+       line-height clips them (07 Designing for Thai). */
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.45;
+    font-weight: 700;
+  }
+
+  /* The design's focus ring: every link and control shows one (07 Accessibility). */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}

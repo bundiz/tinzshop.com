@@ -1,0 +1,309 @@
+{
+  "shop": {
+    "header": {
+      "tagline": "A game and IT shop for over 20 years, from our Saphan Lek store to online · Delivery across Thailand",
+      "logo": {
+        "label": "Tinzshop home",
+        "wordLead": "Tinz",
+        "wordTail": "shop",
+        "sub": "Games · Consoles · IT Gadgets"
+      },
+      "language": {
+        "label": "Language",
+        "th": "TH",
+        "en": "EN",
+        "thName": "ภาษาไทย",
+        "enName": "English"
+      },
+      "links": {
+        "label": "Help links",
+        "trackOrder": "Track an order",
+        "help": "Help",
+        "news": "Game news"
+      },
+      "search": {
+        "label": "Search products",
+        "scope": "All categories",
+        "placeholder": "Search games, consoles or IT gear",
+        "submit": "Search"
+      },
+      "actions": {
+        "label": "Your account",
+        "account": {
+          "label": "Sign in",
+          "line1": "Sign in",
+          "line2": "My account"
+        },
+        "wishlist": {
+          "label": "Wishlist",
+          "line1": "My",
+          "line2": "wishlist"
+        },
+        "cart": {
+          "label": "Cart, {count, plural, one {# item} other {# items}}",
+          "line1": "Cart",
+          "line2": "{count, plural, one {# item} other {# items}}"
+        }
+      },
+      "nav": {
+        "label": "Main categories",
+        "all": "All categories",
+        "home": "Home"
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "Tinzshop — Home",
+        "description": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop"
+      },
+      "hero": {
+        "label": "Featured",
+        "eyebrow": "New this month",
+        "title": "Play to the max<br></br>with <em>PlayStation 5</em>",
+        "text": "Consoles, games and accessories all in one place, with instalments through K-Payment",
+        "shopNow": "Shop now",
+        "viewAll": "View all products"
+      },
+      "trust": {
+        "label": "Our services",
+        "shipping": {
+          "title": "Delivery across Thailand",
+          "text": "Shipping priced by product size"
+        },
+        "payment": {
+          "title": "Pay with K-Payment",
+          "text": "Card · Instalments · PromptPay QR"
+        },
+        "store": {
+          "title": "A real store for over 20 years",
+          "text": "Our shop in Saphan Lek"
+        },
+        "taxInvoice": {
+          "title": "Automatic tax invoice",
+          "text": "Prices include VAT"
+        }
+      },
+      "bundles": {
+        "title": "Promotion sets",
+        "subtitle": "Consoles, games and accessories, bundled ready to play"
+      },
+      "bestSellers": {
+        "title": "Best sellers"
+      },
+      "preOrders": {
+        "title": "Pre-orders"
+      },
+      "empty": "No products are on sale yet",
+      "rail": {
+        "label": "Product categories",
+        "categoriesTitle": "Product categories",
+        "popularTitle": "Popular picks",
+        "controllers": "Controllers",
+        "games": "Games",
+        "headsets": "Gaming headsets",
+        "keyboards": "Keyboards",
+        "mice": "Mice"
+      },
+      "promo": {
+        "preOrder": {
+          "kicker": "Pre-orders",
+          "title": "November's new games are open for pre-order",
+          "link": "See the list"
+        },
+        "gadgets": {
+          "kicker": "IT Gadgets",
+          "title": "Keyboards, mice and headsets for gamers",
+          "link": "Shop now"
+        }
+      },
+      "welcome": {
+        "label": "Your account",
+        "hello": "Hello",
+        "text": "Welcome to Tinzshop",
+        "signIn": "Sign in",
+        "signUp": "Create an account",
+        "note": "Sign in to order and follow your orders",
+        "orders": "My orders",
+        "wishlist": "Wishlist",
+        "preOrders": "My pre-orders",
+        "contact": "Contact the shop"
+      },
+      "section": {
+        "more": "View all"
+      },
+      "showcase": {
+        "title": "Shop by category",
+        "consolesText": "Consoles, games and accessories",
+        "gadgetsText": "IT gear for gamers",
+        "preOrderText": "Reserve new games and consoles before release",
+        "tag": {
+          "consoles": "Consoles",
+          "games": "Games",
+          "controllers": "Controllers",
+          "keyboards": "Keyboards",
+          "mice": "Mice",
+          "headsets": "Headsets",
+          "newGames": "New games",
+          "newConsoles": "New consoles"
+        }
+      }
+    },
+    "product": {
+      "stock": {
+        "in_stock": "In stock",
+        "out_of_stock": "Out of stock"
+      },
+      "price": {
+        "from": "From {price}",
+        "original": "Original price"
+      },
+      "badge": {
+        "bundle": "Promotion set",
+        "preOrder": "Pre-order"
+      },
+      "releaseDate": "Releases {date, date, medium}",
+      "imagePlaceholderAlt": "No product image yet",
+      "breadcrumb": {
+        "label": "Breadcrumb",
+        "home": "Home"
+      },
+      "gallery": {
+        "label": "Product images",
+        "image": "Product image {index} of {total}",
+        "thumbnail": "Image {index}"
+      },
+      "vatNote": "Price includes VAT · Instalments through K-Payment",
+      "option": {
+        "selected": "{name}: <strong>{value}</strong>",
+        "soldOut": "{value} (out of stock)"
+      },
+      "service": {
+        "label": "Services",
+        "title": "Services from Tinzshop",
+        "shipping": {
+          "title": "Delivery across Thailand",
+          "text": "Shipping is priced by product size",
+          "rateLink": "See shipping rates"
+        },
+        "taxInvoice": {
+          "title": "Abbreviated tax invoice",
+          "text": "Issued automatically with every order. For a full tax invoice, give us your taxpayer details"
+        },
+        "store": {
+          "title": "The Tinzshop store",
+          "text": "Our shop in Saphan Lek, serving customers for over 20 years"
+        },
+        "contact": {
+          "title": "A question about this product?",
+          "link": "Contact the shop"
+        },
+        "payment": {
+          "title": "Pay with K-Payment",
+          "card": "Credit/debit card",
+          "instalment": "Instalments",
+          "promptPay": "PromptPay QR"
+        }
+      },
+      "tabs": {
+        "label": "Product information",
+        "description": "Description",
+        "spec": "Specifications",
+        "reviews": "Reviews"
+      },
+      "spec": {
+        "brand": "Brand",
+        "shippingSize": "Product size (for shipping)",
+        "shippingSizeTier": {
+          "small": "Small",
+          "medium": "Medium",
+          "large": "Large"
+        }
+      },
+      "notFound": {
+        "title": "Product not found",
+        "text": "This product does not exist or is no longer on sale",
+        "backHome": "Back to home"
+      },
+      "meta": {
+        "title": "{name} | Tinzshop"
+      },
+      "wishlist": {
+        "add": "Add to wishlist"
+      },
+      "share": "Share",
+      "quantity": {
+        "label": "Quantity",
+        "decrease": "Decrease quantity",
+        "increase": "Increase quantity"
+      },
+      "addToCart": "Add to cart",
+      "buyNow": "Buy now",
+      "reviews": {
+        "empty": "No reviews yet"
+      },
+      "related": {
+        "title": "Related products"
+      }
+    },
+    "footer": {
+      "about": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop",
+      "copyright": "© {year} Tinzshop",
+      "shopping": {
+        "title": "Shopping"
+      },
+      "help": {
+        "title": "Help",
+        "howToOrder": "How to order",
+        "payment": "Payment",
+        "shipping": "Delivery",
+        "trackOrder": "Track an order"
+      },
+      "aboutUs": {
+        "title": "About us",
+        "story": "The Tinzshop story",
+        "news": "Game news",
+        "contact": "Contact us"
+      },
+      "policy": {
+        "title": "Policies",
+        "privacy": "Privacy policy",
+        "terms": "Terms of use",
+        "claims": "Product claims"
+      },
+      "payBadge": {
+        "mark": "K",
+        "title": "Pay with K-Payment",
+        "text": "Credit/debit card · Instalments · PromptPay QR"
+      },
+      "dbdBadge": {
+        "mark": "DBD",
+        "title": "Registered for e-commerce",
+        "text": "DBD mark"
+      }
+    },
+    "error": {
+      "title": "Something went wrong",
+      "text": "This page could not be loaded. Please try again.",
+      "retry": "Try again"
+    },
+    "loading": {
+      "label": "Loading…"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "text": "The page you are looking for does not exist or has moved",
+      "backHome": "Back to home",
+      "meta": {
+        "title": "Page not found | Tinzshop"
+      }
+    },
+    "category": {
+      "switch": "Nintendo Switch",
+      "ps5": "PlayStation 5",
+      "gadgets": "IT Gadgets",
+      "preOrder": "Pre-orders",
+      "bundles": "Promotion sets",
+      "news": "Game news"
+    }
+  }
+}

@@ -1,0 +1,309 @@
+{
+  "shop": {
+    "header": {
+      "tagline": "ร้านเกมและอุปกรณ์ไอทีกว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ออนไลน์ · จัดส่งทั่วประเทศไทย",
+      "logo": {
+        "label": "Tinzshop หน้าแรก",
+        "wordLead": "Tinz",
+        "wordTail": "shop",
+        "sub": "Games · Consoles · IT Gadgets"
+      },
+      "language": {
+        "label": "ภาษา",
+        "th": "TH",
+        "en": "EN",
+        "thName": "ภาษาไทย",
+        "enName": "English"
+      },
+      "links": {
+        "label": "ลิงก์ช่วยเหลือ",
+        "trackOrder": "ติดตามคำสั่งซื้อ",
+        "help": "ช่วยเหลือ",
+        "news": "ข่าวเกม"
+      },
+      "search": {
+        "label": "ค้นหาสินค้า",
+        "scope": "ทุกหมวดหมู่",
+        "placeholder": "ค้นหาเกม คอนโซล หรืออุปกรณ์ไอที",
+        "submit": "ค้นหา"
+      },
+      "actions": {
+        "label": "บัญชีผู้ใช้",
+        "account": {
+          "label": "เข้าสู่ระบบ",
+          "line1": "เข้าสู่ระบบ",
+          "line2": "บัญชีของฉัน"
+        },
+        "wishlist": {
+          "label": "รายการที่ชอบ",
+          "line1": "รายการ",
+          "line2": "ที่ชอบ"
+        },
+        "cart": {
+          "label": "ตะกร้าสินค้า {count} รายการ",
+          "line1": "ตะกร้า",
+          "line2": "{count} รายการ"
+        }
+      },
+      "nav": {
+        "label": "หมวดหมู่หลัก",
+        "all": "หมวดหมู่ทั้งหมด",
+        "home": "หน้าแรก"
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "Tinzshop — หน้าแรก",
+        "description": "ร้านเกม คอนโซล และอุปกรณ์ไอที ให้บริการมากว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ร้านค้าออนไลน์เต็มรูปแบบ"
+      },
+      "hero": {
+        "label": "แนะนำ",
+        "eyebrow": "มาใหม่ประจำเดือน",
+        "title": "เล่นให้สุด<br></br>กับ <em>PlayStation 5</em>",
+        "text": "คอนโซล เกม และอุปกรณ์เสริม ครบในที่เดียว ผ่อนชำระผ่าน K-Payment ได้",
+        "shopNow": "ช้อปเลย",
+        "viewAll": "ดูสินค้าทั้งหมด"
+      },
+      "trust": {
+        "label": "บริการของร้าน",
+        "shipping": {
+          "title": "จัดส่งทั่วไทย",
+          "text": "ค่าส่งคิดตามขนาดสินค้า"
+        },
+        "payment": {
+          "title": "ชำระผ่าน K-Payment",
+          "text": "บัตร · ผ่อนชำระ · PromptPay QR"
+        },
+        "store": {
+          "title": "ร้านจริงกว่า 20 ปี",
+          "text": "หน้าร้านย่านสะพานเหล็ก"
+        },
+        "taxInvoice": {
+          "title": "ใบกำกับภาษีอัตโนมัติ",
+          "text": "ราคาสินค้ารวม VAT แล้ว"
+        }
+      },
+      "bundles": {
+        "title": "ชุดโปรโมชั่น",
+        "subtitle": "เครื่อง เกม และอุปกรณ์เสริม จัดเป็นชุดพร้อมเล่น"
+      },
+      "bestSellers": {
+        "title": "สินค้าขายดี"
+      },
+      "preOrders": {
+        "title": "พรีออเดอร์"
+      },
+      "empty": "ยังไม่มีสินค้าวางจำหน่าย",
+      "rail": {
+        "label": "หมวดหมู่สินค้า",
+        "categoriesTitle": "หมวดหมู่สินค้า",
+        "popularTitle": "เลือกซื้อยอดนิยม",
+        "controllers": "จอยเกม",
+        "games": "แผ่นเกม",
+        "headsets": "หูฟังเกมมิ่ง",
+        "keyboards": "คีย์บอร์ด",
+        "mice": "เมาส์"
+      },
+      "promo": {
+        "preOrder": {
+          "kicker": "พรีออเดอร์",
+          "title": "เกมใหม่เดือนพฤศจิกายน เปิดจองแล้ว",
+          "link": "ดูรายการ"
+        },
+        "gadgets": {
+          "kicker": "IT Gadgets",
+          "title": "คีย์บอร์ด เมาส์ หูฟัง สำหรับเกมเมอร์",
+          "link": "เลือกซื้อ"
+        }
+      },
+      "welcome": {
+        "label": "บัญชีผู้ใช้",
+        "hello": "สวัสดีครับ",
+        "text": "ยินดีต้อนรับสู่ Tinzshop",
+        "signIn": "เข้าสู่ระบบ",
+        "signUp": "สมัครสมาชิก",
+        "note": "เข้าสู่ระบบเพื่อสั่งซื้อและติดตามสถานะคำสั่งซื้อ",
+        "orders": "คำสั่งซื้อของฉัน",
+        "wishlist": "รายการที่ชอบ",
+        "preOrders": "พรีออเดอร์ของฉัน",
+        "contact": "ติดต่อร้าน"
+      },
+      "section": {
+        "more": "ดูทั้งหมด"
+      },
+      "showcase": {
+        "title": "เลือกตามหมวดหมู่",
+        "consolesText": "เครื่อง เกม และอุปกรณ์เสริม",
+        "gadgetsText": "อุปกรณ์ไอทีสำหรับเกมเมอร์",
+        "preOrderText": "จองเกมและเครื่องใหม่ก่อนวางจำหน่าย",
+        "tag": {
+          "consoles": "เครื่องเกม",
+          "games": "แผ่นเกม",
+          "controllers": "จอย",
+          "keyboards": "คีย์บอร์ด",
+          "mice": "เมาส์",
+          "headsets": "หูฟัง",
+          "newGames": "เกมใหม่",
+          "newConsoles": "เครื่องใหม่"
+        }
+      }
+    },
+    "product": {
+      "stock": {
+        "in_stock": "มีสินค้า",
+        "out_of_stock": "สินค้าหมด"
+      },
+      "price": {
+        "from": "เริ่มต้น {price}",
+        "original": "ราคาเดิม"
+      },
+      "badge": {
+        "bundle": "ชุดโปรโมชั่น",
+        "preOrder": "พรีออเดอร์"
+      },
+      "releaseDate": "วางจำหน่าย {date, date, medium}",
+      "imagePlaceholderAlt": "ยังไม่มีรูปสินค้า",
+      "breadcrumb": {
+        "label": "เส้นทาง",
+        "home": "หน้าแรก"
+      },
+      "gallery": {
+        "label": "รูปสินค้า",
+        "image": "ภาพสินค้า {index} / {total}",
+        "thumbnail": "ภาพที่ {index}"
+      },
+      "vatNote": "ราคารวม VAT แล้ว · ผ่อนชำระผ่าน K-Payment ได้",
+      "option": {
+        "selected": "{name}: <strong>{value}</strong>",
+        "soldOut": "{value} (สินค้าหมด)"
+      },
+      "service": {
+        "label": "บริการ",
+        "title": "บริการจาก Tinzshop",
+        "shipping": {
+          "title": "จัดส่งทั่วประเทศไทย",
+          "text": "ค่าจัดส่งคิดตามขนาดสินค้า",
+          "rateLink": "ดูอัตราค่าส่ง"
+        },
+        "taxInvoice": {
+          "title": "ใบกำกับภาษีอย่างย่อ",
+          "text": "ออกให้อัตโนมัติทุกคำสั่งซื้อ ต้องการใบกำกับภาษีเต็มรูป แจ้งข้อมูลผู้เสียภาษีได้"
+        },
+        "store": {
+          "title": "ร้าน Tinzshop",
+          "text": "หน้าร้านย่านสะพานเหล็ก ให้บริการมากว่า 20 ปี"
+        },
+        "contact": {
+          "title": "มีคำถามเกี่ยวกับสินค้า?",
+          "link": "ติดต่อร้าน"
+        },
+        "payment": {
+          "title": "ชำระเงินผ่าน K-Payment",
+          "card": "บัตรเครดิต/เดบิต",
+          "instalment": "ผ่อนชำระ",
+          "promptPay": "PromptPay QR"
+        }
+      },
+      "tabs": {
+        "label": "ข้อมูลสินค้า",
+        "description": "รายละเอียดสินค้า",
+        "spec": "ข้อมูลจำเพาะ",
+        "reviews": "รีวิว"
+      },
+      "spec": {
+        "brand": "แบรนด์",
+        "shippingSize": "ขนาดสินค้า (สำหรับค่าจัดส่ง)",
+        "shippingSizeTier": {
+          "small": "เล็ก",
+          "medium": "กลาง",
+          "large": "ใหญ่"
+        }
+      },
+      "notFound": {
+        "title": "ไม่พบสินค้า",
+        "text": "สินค้านี้ไม่มีอยู่ หรือไม่ได้วางจำหน่ายแล้ว",
+        "backHome": "กลับหน้าแรก"
+      },
+      "meta": {
+        "title": "{name} | Tinzshop"
+      },
+      "wishlist": {
+        "add": "เพิ่มในรายการที่ชอบ"
+      },
+      "share": "แชร์สินค้า",
+      "quantity": {
+        "label": "จำนวน",
+        "decrease": "ลดจำนวน",
+        "increase": "เพิ่มจำนวน"
+      },
+      "addToCart": "เพิ่มลงตะกร้า",
+      "buyNow": "ซื้อเลย",
+      "reviews": {
+        "empty": "ยังไม่มีรีวิว"
+      },
+      "related": {
+        "title": "สินค้าที่เกี่ยวข้อง"
+      }
+    },
+    "footer": {
+      "about": "ร้านเกม คอนโซล และอุปกรณ์ไอที ให้บริการมากว่า 20 ปี จากหน้าร้านย่านสะพานเหล็กสู่ร้านค้าออนไลน์เต็มรูปแบบ",
+      "copyright": "© {year} Tinzshop",
+      "shopping": {
+        "title": "ช้อปปิ้ง"
+      },
+      "help": {
+        "title": "ช่วยเหลือ",
+        "howToOrder": "วิธีสั่งซื้อ",
+        "payment": "การชำระเงิน",
+        "shipping": "การจัดส่ง",
+        "trackOrder": "ติดตามคำสั่งซื้อ"
+      },
+      "aboutUs": {
+        "title": "เกี่ยวกับเรา",
+        "story": "เรื่องราวของ Tinzshop",
+        "news": "ข่าวเกม",
+        "contact": "ติดต่อเรา"
+      },
+      "policy": {
+        "title": "นโยบาย",
+        "privacy": "นโยบายความเป็นส่วนตัว",
+        "terms": "เงื่อนไขการใช้งาน",
+        "claims": "การเคลมสินค้า"
+      },
+      "payBadge": {
+        "mark": "K",
+        "title": "ชำระเงินผ่าน K-Payment",
+        "text": "บัตรเครดิต/เดบิต · ผ่อนชำระ · PromptPay QR"
+      },
+      "dbdBadge": {
+        "mark": "DBD",
+        "title": "จดทะเบียนพาณิชย์อิเล็กทรอนิกส์",
+        "text": "เครื่องหมาย DBD"
+      }
+    },
+    "error": {
+      "title": "เกิดข้อผิดพลาด",
+      "text": "โหลดหน้านี้ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+      "retry": "ลองใหม่"
+    },
+    "loading": {
+      "label": "กำลังโหลด…"
+    },
+    "notFound": {
+      "title": "ไม่พบหน้านี้",
+      "text": "หน้าที่คุณต้องการไม่มีอยู่ หรืออาจถูกย้ายไปแล้ว",
+      "backHome": "กลับหน้าแรก",
+      "meta": {
+        "title": "ไม่พบหน้านี้ | Tinzshop"
+      }
+    },
+    "category": {
+      "switch": "Nintendo Switch",
+      "ps5": "PlayStation 5",
+      "gadgets": "IT Gadgets",
+      "preOrder": "พรีออเดอร์",
+      "bundles": "ชุดโปรโมชั่น",
+      "news": "ข่าวเกม"
+    }
+  }
+}

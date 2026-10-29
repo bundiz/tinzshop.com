@@ -176,6 +176,34 @@ describe("shopee catalogue source", () => {
     expect(items[2]?.externalStatus).toBe("UNLIST");
   });
 
+  it("reads the kit flag from tag.kit of a listing item", async () => {
+    const { client } = fake({
+      getItemList: () =>
+        Promise.resolve({
+          ...listPage,
+          item: [
+            { item_id: 5n, item_status: "NORMAL", update_time: 1, tag: { kit: true } },
+            { item_id: 6n, item_status: "NORMAL", update_time: 1, tag: { kit: false } },
+            { item_id: 7n, item_status: "NORMAL", update_time: 1 },
+          ],
+          has_next_page: false,
+        }),
+    });
+    const source = createShopeeCatalogueSource({ client, credentials });
+    const items = await source.listItems(null);
+    expect(items.map((i) => i.isKit)).toEqual([true, false, false]);
+  });
+
+  it("puts the listing's kit flag on the snapshot", async () => {
+    const { client } = fake();
+    const source = createShopeeCatalogueSource({ client, credentials });
+    const result = await source.fetchItems([{ ...listed(TWO_TIER), isKit: true }, listed(NO_MODEL)]);
+    expect(result.snapshots.map((s) => [s.externalItemId, s.isKit])).toEqual([
+      [TWO_TIER, true],
+      [NO_MODEL, false],
+    ]);
+  });
+
   it("fails with listing_stuck when has_next_page stays true and next_offset does not advance", async () => {
     for (const nextOffset of [undefined, 0]) {
       const { client } = fake({
