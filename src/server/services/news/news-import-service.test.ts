@@ -36,7 +36,7 @@ function setup(options: {
   const pages = options.pages ?? [];
   const source: NewsSource = {
     listCategories: options.categories ?? (async () => [CATEGORY]),
-    listArticlesPage: vi.fn(async (page: number) => {
+    listArticlesPage: vi.fn(async (page: number, _isUnchanged: (sourceId: bigint, modifiedAt: Date) => boolean) => {
       const found = pages[page - 1];
       if (found === undefined) throw new Error(`page ${page} was not expected`);
       return found;
@@ -52,6 +52,7 @@ function setup(options: {
     news,
     lock: async <T>(task: () => Promise<T>) =>
       options.acquired === false ? { acquired: false as const } : { acquired: true as const, value: await task() },
+    logError: vi.fn(),
   };
   return { deps, source, news };
 }
@@ -60,8 +61,8 @@ describe('runNewsImport', () => {
   it('imports categories first, then every page of posts', async () => {
     const { deps, news, source } = setup({
       pages: [
-        { articles: [article(1n), article(2n, undefined, 2)], failures: [], totalPages: 2 },
-        { articles: [article(3n)], failures: [], totalPages: 2 },
+        { articles: [article(1n), article(2n, undefined, 2)], failures: [], skipped: 0, totalPages: 2 },
+        { articles: [article(3n)], failures: [], skipped: 0, totalPages: 2 },
       ],
     });
 
@@ -74,6 +75,7 @@ describe('runNewsImport', () => {
       updated: 0,
       unchanged: 0,
       failed: 0,
+      failedPosts: [],
       removedEmbeds: 2,
     });
     expect(news.upsertNewsCategories).toHaveBeenCalledWith([CATEGORY]);
@@ -89,6 +91,7 @@ describe('runNewsImport', () => {
         {
           articles: [article(1n), article(2n), article(3n)],
           failures: [{ sourceId: 9n, reason: 'invalid_response' }],
+          skipped: 0,
           totalPages: 1,
         },
       ],
@@ -100,13 +103,30 @@ describe('runNewsImport', () => {
 
     const summary = await runNewsImport(deps);
 
-    expect(summary).toMatchObject({ outcome: 'succeeded', created: 1, updated: 1, failed: 2 });
+    expect(summary).toMatchObject({
+      outcome: 'succeeded',
+      created: 1,
+      updated: 1,
+      failed: 2,
+      failedPosts: [
+        { sourceId: '9', reason: 'invalid_response' },
+        { sourceId: '2', reason: 'save_failed' },
+      ],
+    });
     expect(news.upsertNewsArticle).toHaveBeenCalledTimes(3);
+    expect(deps.logError).toHaveBeenCalledWith('news import: post 2 save_failed: Error: save failed');
   });
 
   it('counts an unchanged post without writing it', async () => {
     const { deps, news } = setup({
-      pages: [{ articles: [article(1n, '2026-01-01T00:00:00Z'), article(2n, '2026-02-02T00:00:00Z')], failures: [], totalPages: 1 }],
+      pages: [
+        {
+          articles: [article(1n, '2026-01-01T00:00:00Z'), article(2n, '2026-02-02T00:00:00Z')],
+          failures: [],
+          skipped: 4,
+          totalPages: 1,
+        },
+      ],
       states: new Map([
         [1n, new Date('2026-01-01T00:00:00Z')],
         [2n, new Date('2026-01-01T00:00:00Z')],
@@ -116,8 +136,22 @@ describe('runNewsImport', () => {
 
     const summary = await runNewsImport(deps);
 
-    expect(summary).toMatchObject({ outcome: 'succeeded', created: 0, updated: 1, unchanged: 1 });
+    expect(summary).toMatchObject({ outcome: 'succeeded', created: 0, updated: 1, unchanged: 5 });
     expect(news.upsertNewsArticle).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells the source which posts are unchanged, by source id and modified time', async () => {
+    const { deps, source } = setup({
+      pages: [{ articles: [], failures: [], skipped: 0, totalPages: 1 }],
+      states: new Map([[1n, new Date('2026-01-01T00:00:00Z')]]),
+    });
+
+    await runNewsImport(deps);
+
+    const isUnchanged = vi.mocked(source.listArticlesPage).mock.calls[0]?.[1];
+    expect(isUnchanged?.(1n, new Date('2026-01-01T00:00:00Z'))).toBe(true);
+    expect(isUnchanged?.(1n, new Date('2026-01-02T00:00:00Z'))).toBe(false);
+    expect(isUnchanged?.(2n, new Date('2026-01-01T00:00:00Z'))).toBe(false);
   });
 
   it('fails the run when the category list cannot be read', async () => {
@@ -136,23 +170,26 @@ describe('runNewsImport', () => {
       updated: 0,
       unchanged: 0,
       failed: 0,
+      failedPosts: [],
       removedEmbeds: 0,
       errorCode: 'http_error',
     });
+    expect(deps.logError).toHaveBeenCalledWith('news import failed: NewsSourceError: News source failed: http_error — /categories');
     expect(news.upsertNewsCategories).not.toHaveBeenCalled();
     expect(source.listArticlesPage).not.toHaveBeenCalled();
   });
 
   it('fails the run on an unreadable page but keeps what it counted', async () => {
-    const { deps } = setup({ pages: [{ articles: [article(1n)], failures: [], totalPages: 3 }] });
+    const { deps } = setup({ pages: [{ articles: [article(1n)], failures: [], skipped: 0, totalPages: 3 }] });
 
     const summary = await runNewsImport(deps);
 
     expect(summary).toMatchObject({ outcome: 'failed', created: 1, errorCode: 'unexpected' });
+    expect(deps.logError).toHaveBeenCalledWith('news import failed: Error: page 2 was not expected');
   });
 
   it('handles a source with no posts', async () => {
-    const { deps } = setup({ pages: [{ articles: [], failures: [], totalPages: 0 }] });
+    const { deps } = setup({ pages: [{ articles: [], failures: [], skipped: 0, totalPages: 0 }] });
 
     expect(await runNewsImport(deps)).toMatchObject({ outcome: 'succeeded', created: 0 });
   });

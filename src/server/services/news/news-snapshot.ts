@@ -55,6 +55,8 @@ export type NewsArticleFailure = { sourceId: bigint; reason: string };
 export type NewsArticlePage = {
   articles: NewsArticleSnapshot[];
   failures: NewsArticleFailure[];
+  /** Posts on this page the import said were unchanged; neither mapped nor their images read. */
+  skipped: number;
   /** How many pages the source has; 0 when it has no posts. */
   totalPages: number;
 };
@@ -66,6 +68,9 @@ export type NewsArticlePage = {
 export type NewsSource = {
   /** Every category. */
   listCategories(): Promise<NewsCategorySnapshot[]>;
-  /** One page of posts, 1-based. */
-  listArticlesPage(page: number): Promise<NewsArticlePage>;
+  /**
+   * One page of posts, 1-based. A post for which `isUnchanged(sourceId, modifiedAt)` is true is only
+   * counted in `skipped`.
+   */
+  listArticlesPage(page: number, isUnchanged: (sourceId: bigint, modifiedAt: Date) => boolean): Promise<NewsArticlePage>;
 };

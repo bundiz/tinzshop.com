@@ -21,6 +21,8 @@ function post(id: number, featuredMedia: number, author = 1): WpPost {
   };
 }
 
+const NONE_UNCHANGED = (): boolean => false;
+
 function fakeClient(overrides: Partial<WordPressClient> = {}): WordPressClient {
   return {
     listCategories: vi.fn(async (): Promise<WpCategory[]> => [
@@ -46,11 +48,12 @@ describe("createWordPressNewsSource", () => {
     const client = fakeClient();
     const source = createWordPressNewsSource(client);
 
-    const first = await source.listArticlesPage(1);
-    await source.listArticlesPage(2);
+    const first = await source.listArticlesPage(1, NONE_UNCHANGED);
+    await source.listArticlesPage(2, NONE_UNCHANGED);
 
     expect(first.totalPages).toBe(1);
     expect(first.failures).toEqual([]);
+    expect(first.skipped).toBe(0);
     expect(first.articles.map((a) => a.featuredImageUrl)).toEqual([
       "https://old-site.test/media/10.jpg",
       "https://old-site.test/media/10.jpg",
@@ -68,6 +71,20 @@ describe("createWordPressNewsSource", () => {
     expect(client.listPostsPage).toHaveBeenNthCalledWith(1, 1);
   });
 
+  it("skips a post the import says is unchanged, without mapping it or reading its image", async () => {
+    const client = fakeClient();
+    const seen: [bigint, string][] = [];
+    const page = await createWordPressNewsSource(client).listArticlesPage(1, (sourceId, modifiedAt) => {
+      seen.push([sourceId, modifiedAt.toISOString()]);
+      return sourceId !== 4n;
+    });
+
+    expect(seen[0]).toEqual([1n, "2025-10-24T01:00:00.000Z"]);
+    expect(page.skipped).toBe(3);
+    expect(page.articles.map((a) => a.sourceId)).toEqual([4n]);
+    expect(vi.mocked(client.getMedia).mock.calls.map(([id]) => id)).toEqual([11]);
+  });
+
   it("reports a post whose image cannot be read as a failure and keeps the rest", async () => {
     const client = fakeClient({
       getMedia: vi.fn(async (id: number) => {
@@ -75,7 +92,7 @@ describe("createWordPressNewsSource", () => {
         return { sourceUrl: `https://old-site.test/media/${id}.jpg` };
       }),
     });
-    const page = await createWordPressNewsSource(client).listArticlesPage(1);
+    const page = await createWordPressNewsSource(client).listArticlesPage(1, NONE_UNCHANGED);
 
     expect(page.articles.map((a) => a.sourceId)).toEqual([1n, 2n, 3n]);
     expect(page.failures).toEqual([{ sourceId: 4n, reason: "http_error" }]);

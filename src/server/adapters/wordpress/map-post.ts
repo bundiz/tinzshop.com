@@ -7,6 +7,11 @@ function gmtToDate(value: string): Date {
   return new Date(`${value}Z`);
 }
 
+/** The post's last-modified time as stored in `source_modified_at`, read without mapping the post. */
+export function wordPressModifiedAt(post: WpPost): Date {
+  return gmtToDate(post.modified_gmt);
+}
+
 /**
  * One WordPress post as a neutral article snapshot. Imported posts are published, in Thai only.
  * `authorName` null leaves the byline null; the page shows the fallback text.
@@ -22,7 +27,7 @@ export function mapWordPressPost(
     sourceId: BigInt(post.id),
     slug: decodeSlug(post.slug),
     sourceUrl: post.link,
-    sourceModifiedAt: gmtToDate(post.modified_gmt),
+    sourceModifiedAt: wordPressModifiedAt(post),
     status: "published",
     publishedAt: gmtToDate(post.date_gmt),
     bylineName: byline === "" ? null : byline,

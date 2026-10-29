@@ -1,24 +1,16 @@
-import { timingSafeEqual } from 'node:crypto';
+import { isJobAuthorized } from '@/server/controllers/shared/job-auth';
 
 import type { CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 
 // A job response is never cacheable.
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
-function isAuthorized(header: string | null, jobSecret: string): boolean {
-  if (header === null) return false;
-  const given = Buffer.from(header);
-  const expected = Buffer.from(`Bearer ${jobSecret}`);
-  // timingSafeEqual throws on unequal lengths; a length mismatch is simply a refusal.
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
-
 export function createCatalogueSyncJobHandler(deps: {
   jobSecret: string;
   runSync: () => Promise<CatalogueSyncSummary>;
 }): (request: Request) => Promise<Response> {
   return async (request) => {
-    if (!isAuthorized(request.headers.get('authorization'), deps.jobSecret)) {
+    if (!isJobAuthorized(request.headers.get('authorization'), deps.jobSecret)) {
       return Response.json(
         { error: { code: 'auth.unauthorized', messageKey: 'error.auth.unauthorized' } },
         { status: 401, headers: NO_STORE },

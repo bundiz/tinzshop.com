@@ -1,40 +1,34 @@
-import { timingSafeEqual } from 'node:crypto';
+import { isJobAuthorized } from '@/server/controllers/shared/job-auth';
 
 import type { NewsImportSummary } from '@/server/services/news/news-import-service';
 
 // A job response is never cacheable.
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
-function isAuthorized(header: string | null, jobSecret: string): boolean {
-  if (header === null) return false;
-  const given = Buffer.from(header);
-  const expected = Buffer.from(`Bearer ${jobSecret}`);
-  // timingSafeEqual throws on unequal lengths; a length mismatch is simply a refusal.
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
-
 /**
- * `POST /api/jobs/news-import` (plan 012). The secret is checked before anything else, so an
- * unauthenticated caller learns nothing about configuration. `runImport` is null when
- * `NEWS_IMPORT_SOURCE_URL` is not set.
+ * `POST /api/jobs/news-import` (plan 012). Order: the secret (401), then the source setting (503),
+ * then the run. Both settings are read per request and only when needed, so an unauthenticated
+ * caller learns nothing about configuration. `sourceUrl` is null when `NEWS_IMPORT_SOURCE_URL` is unset.
  */
 export function createNewsImportJobHandler(deps: {
   jobSecret: () => string;
-  runImport: (() => Promise<NewsImportSummary>) | null;
+  sourceUrl: () => string | null;
+  runImport: (sourceUrl: string) => Promise<NewsImportSummary>;
 }): (request: Request) => Promise<Response> {
   return async (request) => {
-    if (!isAuthorized(request.headers.get('authorization'), deps.jobSecret())) {
+    if (!isJobAuthorized(request.headers.get('authorization'), deps.jobSecret())) {
       return Response.json(
         { error: { code: 'auth.unauthorized', messageKey: 'error.auth.unauthorized' } },
         { status: 401, headers: NO_STORE },
       );
     }
 
-    if (deps.runImport === null) {
+    const sourceUrl = deps.sourceUrl();
+    if (sourceUrl === null) {
       return Response.json({ error: { code: 'news_import.not_configured' } }, { status: 503, headers: NO_STORE });
     }
 
-    const summary = await deps.runImport();
+    const summary = await deps.runImport(sourceUrl);
 
     if (summary.outcome === 'failed') {
       // The reason is a fixed code; posts saved before the failure stay, and a re-run continues.

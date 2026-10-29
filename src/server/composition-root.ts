@@ -6,7 +6,7 @@ import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-sour
 import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-source';
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
-import { getServerConfig } from '@/server/config';
+import { getNewsImportJobConfig, getServerConfig } from '@/server/config';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
@@ -124,22 +124,20 @@ export function getCatalogueActivationHandler(): ReturnType<typeof createCatalog
 }
 
 /**
- * The news import job (plan 012), built per request. Without `NEWS_IMPORT_SOURCE_URL` the handler
- * answers `503 news_import.not_configured` after the secret check.
+ * The news import job (plan 012). Settings are read per request, after the secret check where they
+ * can be, and only the job's own (`JOB_SECRET`, `NEWS_IMPORT_SOURCE_URL`), so a missing Shopee
+ * setting never affects it. Without the source URL the handler answers `503 news_import.not_configured`.
  */
 export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHandler> {
-  const config = getServerConfig();
-  const baseUrl = config.newsImportSourceUrl;
   return createNewsImportJobHandler({
-    jobSecret: () => config.jobSecret,
-    runImport:
-      baseUrl === null
-        ? null
-        : () =>
-            runNewsImport({
-              source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
-              news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates },
-              lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
-            }),
+    jobSecret: () => getNewsImportJobConfig().jobSecret,
+    sourceUrl: () => getNewsImportJobConfig().newsImportSourceUrl,
+    runImport: (baseUrl) =>
+      runNewsImport({
+        source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
+        news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates },
+        lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
+        logError: (message) => console.error(message),
+      }),
   });
 }

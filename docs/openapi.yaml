@@ -193,9 +193,10 @@ paths:
                     categories: 13
                     created: 0
                     updated: 1
-                    unchanged: 539
-                    failed: 0
-                    removedEmbeds: 71
+                    unchanged: 538
+                    failed: 1
+                    failedPosts: [{ sourceId: '5492', reason: save_failed }]
+                    removedEmbeds: 0
                 skipped:
                   value: { outcome: skipped }
         '401':
@@ -225,7 +226,7 @@ paths:
                         enum: [network_error, timeout, http_error, non_json_response, invalid_response, missing_total_pages, unexpected]
                       summary: { $ref: '#/components/schemas/NewsImportCounts' }
         '503':
-          description: '`NEWS_IMPORT_SOURCE_URL` is not set. Checked after the secret.'
+          description: '`NEWS_IMPORT_SOURCE_URL` is not set. Checked after the secret (401 first, then 503, then the run).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
@@ -303,14 +304,25 @@ components:
                       message: { type: string }
     NewsImportCounts:
       type: object
-      required: [categories, created, updated, unchanged, failed, removedEmbeds]
+      required: [categories, created, updated, unchanged, failed, failedPosts, removedEmbeds]
       properties:
         categories: { type: integer, minimum: 0, description: Categories read from the source and saved. }
         created: { type: integer, minimum: 0 }
         updated: { type: integer, minimum: 0 }
         unchanged: { type: integer, minimum: 0, description: Posts whose source time had not moved; not written. }
         failed: { type: integer, minimum: 0, description: Posts that failed to map or save; the run carried on. }
-        removedEmbeds: { type: integer, minimum: 0, description: Embeds the body allow-list removed, summed over every post read (D-135). }
+        failedPosts:
+          type: array
+          description: One entry per failed post.
+          items:
+            type: object
+            required: [sourceId, reason]
+            properties:
+              sourceId: { type: string, pattern: '^[1-9][0-9]*$', description: The old post id as a decimal string. }
+              reason:
+                type: string
+                description: The client's fixed reason for a post that could not be read or mapped (`http_error`, `timeout`, `mapping_failed`, ...), or `save_failed`.
+        removedEmbeds: { type: integer, minimum: 0, description: Embeds the body allow-list removed from the posts created or updated this run (D-135). }
     SyncSummary:
       type: object
       required: [outcome, runId, itemsSeen, itemsCreated, itemsUpdated, itemsDeactivated, apiCalls, warnings]

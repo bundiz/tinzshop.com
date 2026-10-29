@@ -72,6 +72,26 @@ export function parseServerConfig(env: Readonly<Record<string, string | undefine
   };
 }
 
+export type NewsImportJobConfig = {
+  readonly jobSecret: string;
+  readonly newsImportSourceUrl: string | null;
+};
+
+const newsImportJobSchema = envSchema.pick({ JOB_SECRET: true, NEWS_IMPORT_SOURCE_URL: true });
+
+/** Only what the news import job needs, so a missing Shopee setting does not break it. */
+export function parseNewsImportJobConfig(env: Readonly<Record<string, string | undefined>>): NewsImportJobConfig {
+  const result = newsImportJobSchema.safeParse(env);
+  if (!result.success) {
+    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
+  }
+  return { jobSecret: result.data.JOB_SECRET, newsImportSourceUrl: result.data.NEWS_IMPORT_SOURCE_URL ?? null };
+}
+
+export function getNewsImportJobConfig(): NewsImportJobConfig {
+  return parseNewsImportJobConfig(process.env);
+}
+
 let cached: ServerConfig | undefined;
 
 export function getServerConfig(): ServerConfig {

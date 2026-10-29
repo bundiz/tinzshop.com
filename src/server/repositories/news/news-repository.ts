@@ -19,7 +19,8 @@ function slugFor(snapshot: { slug: string; sourceId: bigint }, holderId: string 
 
 /**
  * Parents before children, whatever order the source listed them in; otherwise source id order. A
- * cycle is cut where it is found, and a category that names itself as parent is top level.
+ * cycle is cut where it is found (the writer also refuses a parent that would close a loop), and a
+ * category that names itself as parent is top level.
  */
 function parentsFirst(snapshots: readonly NewsCategorySnapshot[]): NewsCategorySnapshot[] {
   const sorted = [...snapshots].sort((a, b) => compareSourceIds(a.sourceId, b.sourceId));
@@ -57,13 +58,30 @@ export async function upsertNewsCategories(snapshots: readonly NewsCategorySnaps
       });
       const bySourceId = new Map(existing.map((row) => [row.sourceId as bigint, row]));
       const idBySourceId = new Map(existing.map((row) => [row.sourceId as bigint, row.id]));
+      // Every category's parent as it stands in this transaction, to refuse a cycle on any run.
+      const parentById = new Map(
+        (await tx.newsCategory.findMany({ select: { id: true, parentId: true } })).map((row) => [row.id, row.parentId]),
+      );
+      const wouldCycle = (id: string, parentId: string): boolean => {
+        const visited = new Set<string>();
+        for (let at: string | null = parentId; at !== null; at = parentById.get(at) ?? null) {
+          if (at === id || visited.has(at)) return true;
+          visited.add(at);
+        }
+        return false;
+      };
 
       for (const snapshot of ordered) {
         const current = bySourceId.get(snapshot.sourceId);
-        const parentId =
+        const wantedParentId =
           snapshot.parentSourceId === null || snapshot.parentSourceId === snapshot.sourceId
             ? null
             : (idBySourceId.get(snapshot.parentSourceId) ?? null);
+        // A parent whose ancestors include this category would close a loop: store it top level.
+        const parentId =
+          wantedParentId !== null && current !== undefined && wouldCycle(current.id, wantedParentId)
+            ? null
+            : wantedParentId;
         const holder = await tx.newsCategory.findUnique({ where: { slug: snapshot.slug }, select: { id: true } });
         const slug = slugFor(snapshot, holder?.id ?? null, current?.id);
         const { locale, name } = snapshot.translation;
@@ -80,11 +98,13 @@ export async function upsertNewsCategories(snapshots: readonly NewsCategorySnaps
             select: { id: true },
           });
           idBySourceId.set(snapshot.sourceId, created.id);
+          parentById.set(created.id, parentId);
           continue;
         }
 
         if (current.slug !== slug || current.parentId !== parentId) {
           await tx.newsCategory.update({ where: { id: current.id }, data: { slug, parentId } });
+          parentById.set(current.id, parentId);
         }
         if (current.translations.find((t) => t.locale === locale)?.name !== name) {
           await tx.newsCategoryTranslation.upsert({

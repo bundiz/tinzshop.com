@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseServerConfig } from '@/server/config';
+import { parseNewsImportJobConfig, parseServerConfig } from '@/server/config';
 
 const VALID = {
   SHOPEE_PARTNER_ID: '1236675',
@@ -76,5 +76,25 @@ describe('parseServerConfig', () => {
     expect(() => parseServerConfig({ ...VALID, NEWS_IMPORT_SOURCE_URL: value })).toThrow(
       'NEWS_IMPORT_SOURCE_URL',
     );
+  });
+});
+
+describe('parseNewsImportJobConfig', () => {
+  it('needs only the job secret, not the Shopee settings', () => {
+    expect(parseNewsImportJobConfig({ JOB_SECRET: 'j'.repeat(32) })).toEqual({
+      jobSecret: 'j'.repeat(32),
+      newsImportSourceUrl: null,
+    });
+  });
+
+  it('reads the source URL when set', () => {
+    expect(
+      parseNewsImportJobConfig({ JOB_SECRET: 'j'.repeat(32), NEWS_IMPORT_SOURCE_URL: 'https://old-site.test' })
+        .newsImportSourceUrl,
+    ).toBe('https://old-site.test');
+  });
+
+  it('rejects a missing job secret, naming the variable', () => {
+    expect(() => parseNewsImportJobConfig({})).toThrow('JOB_SECRET');
   });
 });

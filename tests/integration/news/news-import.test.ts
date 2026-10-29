@@ -53,16 +53,24 @@ function post(id: number, overrides: Partial<WpPost> = {}): WpPost {
   };
 }
 
-function fakeClient(state: { posts: WpPost[]; perPage?: number }): WordPressClient {
+function fakeClient(state: {
+  posts: WpPost[];
+  perPage?: number;
+  categories?: WpCategory[];
+  mediaReads?: number[];
+}): WordPressClient {
   return {
-    listCategories: async () => CATEGORIES,
+    listCategories: async () => state.categories ?? CATEGORIES,
     listPostsPage: async (page) => {
       const perPage = state.perPage ?? 100;
       const totalPages = Math.ceil(state.posts.length / perPage);
       return { posts: state.posts.slice((page - 1) * perPage, page * perPage), totalPages };
     },
     listAuthors: async () => AUTHORS,
-    getMedia: async (id) => (id === 0 ? null : { sourceUrl: `https://old-site.test/media/${id}.jpg` }),
+    getMedia: async (id) => {
+      state.mediaReads?.push(id);
+      return id === 0 ? null : { sourceUrl: `https://old-site.test/media/${id}.jpg` };
+    },
   };
 }
 
@@ -71,6 +79,7 @@ function run(client: WordPressClient): Promise<NewsImportSummary> {
     source: createWordPressNewsSource(client),
     news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates },
     lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
+    logError: () => {},
   });
 }
 
@@ -94,6 +103,7 @@ describe('news import', () => {
       updated: 0,
       unchanged: 0,
       failed: 0,
+      failedPosts: [],
       removedEmbeds: 3,
     });
 
@@ -146,14 +156,21 @@ describe('news import', () => {
   });
 
   it('is idempotent and updates only changed posts', async () => {
-    const state = { posts: [post(101), post(102, { categories: [14] }), post(103)] };
+    const state = {
+      posts: [post(101, { featured_media: 77 }), post(102, { categories: [14], featured_media: 78 }), post(103)],
+      mediaReads: [] as number[],
+    };
     await run(fakeClient(state));
+    expect(state.mediaReads).toEqual([77, 78]);
+    state.mediaReads = [];
     const before = await prisma().newsArticle.findMany({ orderBy: { sourceId: 'asc' } });
     const categoriesBefore = await prisma().newsCategory.findMany({ orderBy: { sourceId: 'asc' } });
 
     const again = await run(fakeClient(state));
 
-    expect(again).toMatchObject({ outcome: 'succeeded', created: 0, updated: 0, unchanged: 3, failed: 0 });
+    expect(again).toMatchObject({ outcome: 'succeeded', created: 0, updated: 0, unchanged: 3, failed: 0, removedEmbeds: 0 });
+    // Unchanged posts are neither mapped nor have their images read again.
+    expect(state.mediaReads).toEqual([]);
     const after = await prisma().newsArticle.findMany({ orderBy: { sourceId: 'asc' } });
     expect(after.map((a) => [a.id, a.updatedAt.getTime()])).toEqual(before.map((a) => [a.id, a.updatedAt.getTime()]));
     const categoriesAfter = await prisma().newsCategory.findMany({ orderBy: { sourceId: 'asc' } });
@@ -163,12 +180,12 @@ describe('news import', () => {
 
     // Post 102 changed upstream: new title and categories. Post 103 is gone from the source.
     state.posts = [
-      post(101),
+      post(101, { featured_media: 77 }),
       post(102, { modified_gmt: '2026-01-05T08:00:00', title: { rendered: 'แก้ไขแล้ว' }, categories: [3, 5] }),
     ];
     const third = await run(fakeClient(state));
 
-    expect(third).toMatchObject({ outcome: 'succeeded', created: 0, updated: 1, unchanged: 1, failed: 0 });
+    expect(third).toMatchObject({ outcome: 'succeeded', created: 0, updated: 1, unchanged: 1, failed: 0, removedEmbeds: 1 });
     const changed = await prisma().newsArticle.findUniqueOrThrow({
       where: { sourceId: 102n },
       include: { translations: true, categories: { include: { category: true } } },
@@ -196,6 +213,29 @@ describe('news import', () => {
     expect(second).toMatchObject({ updated: 2, failed: 0 });
     const articles = await prisma().newsArticle.findMany({ orderBy: { sourceId: 'asc' } });
     expect(articles.map((a) => a.slug)).toEqual(['ข่าว', 'ข่าว-202']);
+  });
+
+  it('never stores a category parent cycle, on the first run or a later one', async () => {
+    const cycle: WpCategory[] = [
+      { id: 61, parent: 62, count: 0, slug: 'cycle-a', name: 'A' },
+      { id: 62, parent: 61, count: 0, slug: 'cycle-b', name: 'B' },
+    ];
+    const state = { posts: [], categories: cycle };
+
+    const parents = async () =>
+      (await prisma().newsCategory.findMany({ orderBy: { sourceId: 'asc' }, include: { parent: true } })).map(
+        (c) => [c.sourceId, c.parent?.sourceId ?? null],
+      );
+
+    expect(await run(fakeClient(state))).toMatchObject({ outcome: 'succeeded', categories: 2 });
+    const first = await parents();
+    expect(first).toEqual([
+      [61n, 62n],
+      [62n, null],
+    ]);
+
+    expect(await run(fakeClient(state))).toMatchObject({ outcome: 'succeeded' });
+    expect(await parents()).toEqual(first);
   });
 
   it('is skipped while another import holds the lock, and not blocked by the catalogue sync', async () => {

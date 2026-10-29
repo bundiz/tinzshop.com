@@ -26,7 +26,9 @@ type NewsImportCounts = {
   unchanged: number;
   /** Posts that failed to map or to save; the run carried on without them. */
   failed: number;
-  /** Embeds the body allow-list removed, summed over every post read this run. */
+  /** Which posts failed and why: the source's fixed reason, or `save_failed`. */
+  failedPosts: { sourceId: string; reason: string }[];
+  /** Embeds the body allow-list removed from the posts created or updated this run. */
   removedEmbeds: number;
 };
 
@@ -44,15 +46,34 @@ export type NewsImportDeps = {
     findArticleSourceStates: typeof findArticleSourceStates;
   };
   lock: <T>(task: () => Promise<T>) => Promise<{ acquired: true; value: T } | { acquired: false }>;
+  /** Server log; given an error's name and message only, never a URL, query or response body. */
+  logError: (message: string) => void;
 };
 
 function errorCodeOf(error: unknown): string {
   return error instanceof NewsSourceError ? error.code : 'unexpected';
 }
 
+/** Name and message only. A `WordPressApiError`/`NewsSourceError` message is an API path and a reason. */
+function describe(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : 'non-Error thrown';
+}
+
 async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary, { outcome: 'skipped' }>> {
   const { source, news } = deps;
-  const counts: NewsImportCounts = { categories: 0, created: 0, updated: 0, unchanged: 0, failed: 0, removedEmbeds: 0 };
+  const counts: NewsImportCounts = {
+    categories: 0,
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    failed: 0,
+    failedPosts: [],
+    removedEmbeds: 0,
+  };
+  const fail = (sourceId: bigint, reason: string): void => {
+    counts.failed += 1;
+    counts.failedPosts.push({ sourceId: sourceId.toString(), reason });
+  };
 
   try {
     // Categories first, so every parent and every linked category exists before the posts.
@@ -60,24 +81,30 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
     counts.categories = await news.upsertNewsCategories(categories);
 
     const known = await news.findArticleSourceStates();
+    const isUnchanged = (sourceId: bigint, modifiedAt: Date): boolean =>
+      known.get(sourceId)?.getTime() === modifiedAt.getTime();
+
     let page = 1;
     let totalPages = 1;
     do {
-      const result = await source.listArticlesPage(page);
-      totalPages = result.totalPages;
-      counts.failed += result.failures.length;
+      const batch = await source.listArticlesPage(page, isUnchanged);
+      totalPages = batch.totalPages;
+      counts.unchanged += batch.skipped;
+      for (const failure of batch.failures) fail(failure.sourceId, failure.reason);
 
-      for (const article of result.articles) {
-        counts.removedEmbeds += article.removedEmbeds;
+      for (const article of batch.articles) {
         // A post whose source time has not moved is not written at all.
-        if (known.get(article.sourceId)?.getTime() === article.sourceModifiedAt.getTime()) {
+        if (isUnchanged(article.sourceId, article.sourceModifiedAt)) {
           counts.unchanged += 1;
           continue;
         }
         try {
-          counts[await news.upsertNewsArticle(article)] += 1;
-        } catch {
-          counts.failed += 1;
+          const result = await news.upsertNewsArticle(article);
+          counts[result] += 1;
+          if (result !== 'unchanged') counts.removedEmbeds += article.removedEmbeds;
+        } catch (error) {
+          deps.logError(`news import: post ${article.sourceId} save_failed: ${describe(error)}`);
+          fail(article.sourceId, 'save_failed');
         }
       }
       page += 1;
@@ -86,6 +113,7 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
     return { outcome: 'succeeded', ...counts };
   } catch (error) {
     // Posts saved before the failure stay; a re-run picks up the rest. Nothing is ever deleted.
+    deps.logError(`news import failed: ${describe(error)}`);
     return { outcome: 'failed', ...counts, errorCode: errorCodeOf(error) };
   }
 }
