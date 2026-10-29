@@ -133,13 +133,13 @@
 - Repository: `upsertNewsCategories(snapshots)` (parents first), `upsertNewsArticle(snapshot)` returning `'created' | 'updated' | 'unchanged'`, and `findArticleSourceStates()`.
 - Use a separate advisory lock key from the catalogue sync.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - **unit:** `counts a failed post and continues`, and `fails the run when the category list cannot be read`
   - **integration:** `imports categories with parents and articles with links`, and `is idempotent and updates only changed posts` (Review Focus 2)
   - **controller:** 401 without the secret, 200 with the summary, `skipped` on concurrent runs
-- [ ] **Step 2:** Run the tests. They fail.
-- [ ] **Step 3:** Implement. Media URLs are fetched once per distinct `featured_media`. Nothing is ever deleted.
-- [ ] **Step 4:** Tests pass. Document the endpoint in `06` + `openapi.yaml`. Commit: `feat: add the re-runnable news import job`.
+- [x] **Step 2:** Run the tests. They fail.
+- [x] **Step 3:** Implement. Media URLs are fetched once per distinct `featured_media`. Nothing is ever deleted.
+- [x] **Step 4:** Tests pass. Document the endpoint in `06` + `openapi.yaml`. Commit: `feat: add the re-runnable news import job`.
 
 ### Task 5: News list and category pages
 

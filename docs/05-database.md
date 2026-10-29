@@ -246,6 +246,7 @@ Rules:
 - **Staff ids** (`author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`) are plain nullable uuids with no foreign key, because `staff_user` does not exist yet; plan 002 adds the FK. Imported posts leave `author_staff_id` null.
 - **Deleting is soft** (`deleted_at`); a deleted article is never shown (D-131).
 - **`body_html` is stored already sanitised** at import with an allow-list, and rendered only from the stored value; it is the only HTML the site renders from data.
+- **Imported slugs stay unique:** a decoded slug already held by another row gets `-{source_id}` appended, the same on every re-run (D-136).
 - **Not stored now:** revision history, tags, comments and SEO fields beyond the excerpt.
 
 ## Deletion and retention

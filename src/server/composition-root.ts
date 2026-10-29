@@ -1,13 +1,25 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { createWordPressClient } from '@/server/adapters/wordpress/client';
+import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-source';
 import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-source';
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { getServerConfig } from '@/server/config';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
-import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
+import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
+import {
+  tryWithAdvisoryLock,
+  CATALOGUE_SYNC_LOCK_KEY,
+  NEWS_IMPORT_LOCK_KEY,
+} from '@/server/repositories/shared/advisory-lock';
+import {
+  findArticleSourceStates,
+  upsertNewsArticle,
+  upsertNewsCategories,
+} from '@/server/repositories/news/news-repository';
 import {
   listKnownItems,
   markItemsNotFound,
@@ -36,6 +48,7 @@ import {
 import { getProductDetail, type ProductDetail } from '@/server/services/catalogue/product-detail-service';
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
+import { runNewsImport } from '@/server/services/news/news-import-service';
 
 // Built on first use, never at import, so `next build` needs no environment.
 let shopeeClient: ShopeeClient | undefined;
@@ -107,5 +120,26 @@ export function getCatalogueActivationHandler(): ReturnType<typeof createCatalog
     isProduction: process.env.NODE_ENV === 'production',
     jobSecret: () => getServerConfig().jobSecret,
     activate: activateSyncedProducts,
+  });
+}
+
+/**
+ * The news import job (plan 012), built per request. Without `NEWS_IMPORT_SOURCE_URL` the handler
+ * answers `503 news_import.not_configured` after the secret check.
+ */
+export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHandler> {
+  const config = getServerConfig();
+  const baseUrl = config.newsImportSourceUrl;
+  return createNewsImportJobHandler({
+    jobSecret: () => config.jobSecret,
+    runImport:
+      baseUrl === null
+        ? null
+        : () =>
+            runNewsImport({
+              source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
+              news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates },
+              lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
+            }),
   });
 }

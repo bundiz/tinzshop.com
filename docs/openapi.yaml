@@ -16,7 +16,7 @@ tags:
   - name: Shopee
     description: Shop authorization callback (D-104)
   - name: Jobs
-    description: Scheduled jobs, called by a scheduler every 10 minutes
+    description: Secret-authenticated jobs; the Shopee sync runs every 10 minutes, the news import by hand
 paths:
   /api/callbacks/shopee:
     get:
@@ -156,6 +156,82 @@ paths:
                       runId: { type: string, format: uuid }
         '500':
           description: An unexpected exception.
+  /api/jobs/news-import:
+    post:
+      tags: [Jobs]
+      summary: Import the old site's news (re-runnable)
+      description: |
+        Copies every category and published post from the old site
+        (`NEWS_IMPORT_SOURCE_URL`) into the news tables, categories first, under its own
+        advisory lock (D-136). Works in every environment and is run by hand, and once at
+        go-live. A post whose `source_modified_at` has not moved is `unchanged` and not
+        written; nothing is ever deleted. A post that fails to map or save is counted in
+        `failed` and the run continues. Behaviour: `14-integrations.md#how-the-import-behaves-plan-012`.
+      security:
+        - jobSecret: []
+      responses:
+        '200':
+          description: The import succeeded (possibly with failed posts), or was skipped because another import held the lock.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: '#/components/schemas/NewsImportCounts'
+                      - type: object
+                        required: [outcome]
+                        properties:
+                          outcome: { type: string, const: succeeded }
+                  - type: object
+                    required: [outcome]
+                    properties:
+                      outcome: { type: string, const: skipped }
+              examples:
+                succeeded:
+                  value:
+                    outcome: succeeded
+                    categories: 13
+                    created: 0
+                    updated: 1
+                    unchanged: 539
+                    failed: 0
+                    removedEmbeds: 71
+                skipped:
+                  value: { outcome: skipped }
+        '401':
+          description: Missing or wrong bearer secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: auth.unauthorized, messageKey: error.auth.unauthorized } }
+        '502':
+          description: |
+            The run stopped: the category list, the author list or a page of posts could not
+            be read, or a write failed outside a single post. Posts saved before the stop stay;
+            a re-run continues.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: object
+                    required: [code, reason, summary]
+                    properties:
+                      code: { type: string, const: news_import.failed }
+                      reason:
+                        type: string
+                        enum: [network_error, timeout, http_error, non_json_response, invalid_response, missing_total_pages, unexpected]
+                      summary: { $ref: '#/components/schemas/NewsImportCounts' }
+        '503':
+          description: '`NEWS_IMPORT_SOURCE_URL` is not set. Checked after the secret.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: news_import.not_configured } }
+        '500':
+          description: An unexpected exception.
   /api/jobs/catalogue-activate:
     post:
       tags: [Jobs]
@@ -225,6 +301,16 @@ components:
                     properties:
                       path: { type: string }
                       message: { type: string }
+    NewsImportCounts:
+      type: object
+      required: [categories, created, updated, unchanged, failed, removedEmbeds]
+      properties:
+        categories: { type: integer, minimum: 0, description: Categories read from the source and saved. }
+        created: { type: integer, minimum: 0 }
+        updated: { type: integer, minimum: 0 }
+        unchanged: { type: integer, minimum: 0, description: Posts whose source time had not moved; not written. }
+        failed: { type: integer, minimum: 0, description: Posts that failed to map or save; the run carried on. }
+        removedEmbeds: { type: integer, minimum: 0, description: Embeds the body allow-list removed, summed over every post read (D-135). }
     SyncSummary:
       type: object
       required: [outcome, runId, itemsSeen, itemsCreated, itemsUpdated, itemsDeactivated, apiCalls, warnings]

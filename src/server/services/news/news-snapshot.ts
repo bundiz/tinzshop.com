@@ -47,3 +47,25 @@ export type NewsCategorySnapshot = {
   slug: string;
   translation: { locale: NewsLocale; name: string };
 };
+
+/** One post the source could not turn into a snapshot; `reason` is a fixed code, never a body or URL. */
+export type NewsArticleFailure = { sourceId: bigint; reason: string };
+
+/** One page of the source's posts, as snapshots, with the posts that failed to map. */
+export type NewsArticlePage = {
+  articles: NewsArticleSnapshot[];
+  failures: NewsArticleFailure[];
+  /** How many pages the source has; 0 when it has no posts. */
+  totalPages: number;
+};
+
+/**
+ * Where the news import reads from (spec 2026-10-29 §5). The adapter implements it; a failure of the
+ * source as a whole is a `NewsSourceError`.
+ */
+export type NewsSource = {
+  /** Every category. */
+  listCategories(): Promise<NewsCategorySnapshot[]>;
+  /** One page of posts, 1-based. */
+  listArticlesPage(page: number): Promise<NewsArticlePage>;
+};

@@ -216,9 +216,12 @@ shop could replace ours and the sync would mirror its catalogue (D-104).
 | Endpoint | Method | Auth | Statuses |
 | :--- | :--- | :--- | :--- |
 | `/api/jobs/shopee-sync` | `POST` | `Bearer <JOB_SECRET>` | `200` the run summary, for `succeeded` or `skipped` (another run held the lock). `502` `{ error: { code: 'catalogue_sync.failed', runId } }` when the run failed; the cause is in that `sync_run` row, not in the response; a failed run may still have committed some item upserts (D-109). `401` unauthorized. An unexpected exception is `500` |
+| `/api/jobs/news-import` | `POST` | `Bearer <JOB_SECRET>` | **Every environment** (plan 012, D-136). Imports every category and post from the old site (`NEWS_IMPORT_SOURCE_URL`) under its own advisory lock. `200` the summary `{ outcome: 'succeeded', categories, created, updated, unchanged, failed, removedEmbeds }`, or `{ outcome: 'skipped' }` when another import held the lock; `failed` counts posts that failed to map or save, and a run with failed posts still succeeds. `502` `{ error: { code: 'news_import.failed', reason, summary } }` when the run stopped (the category list, the author list or a page could not be read, or a write failed outside a single post); `reason` is a fixed code (`network_error`, `timeout`, `http_error`, `non_json_response`, `invalid_response`, `missing_total_pages` or `unexpected`), `summary` holds the counts so far, and the posts saved before the stop stay. `503` `{ error: { code: 'news_import.not_configured' } }` when `NEWS_IMPORT_SOURCE_URL` is unset, checked after the secret. `401` unauthorized. An unexpected exception is `500` |
 | `/api/jobs/catalogue-activate` | `POST` | `Bearer <JOB_SECRET>` | **Development only (D-117).** `404` when `NODE_ENV` is `production`, checked before auth. `200` `{ activated: n }`, the count of products newly set active (`channel_item.external_status = 'NORMAL'` and at least one active variant; never deactivates). `401` unauthorized. Used until plan 002's admin screens exist |
 
 `shopee-sync` is called every 10 minutes (plan 010). Overlapping calls are safe: the second returns `skipped`.
+
+`news-import` is not scheduled: it is run by hand, and once at go-live. It is safe to re-run: a post whose `source_modified_at` has not moved is counted `unchanged` and not written, and nothing is ever deleted. Its lock key differs from the catalogue sync's, so the two never block each other.
 
 ## Pagination, filtering, sorting
 

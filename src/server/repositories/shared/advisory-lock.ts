@@ -4,6 +4,9 @@ import { getDatabaseUrl } from '@/server/config';
 /** Serialises catalogue sync runs across processes (plan 010). */
 export const CATALOGUE_SYNC_LOCK_KEY = 6_251_010n;
 
+/** Serialises news import runs (plan 012); distinct from the catalogue sync, so the two never block each other. */
+export const NEWS_IMPORT_LOCK_KEY = 6_251_012n;
+
 /**
  * Runs `task` only if the session-level advisory lock is free. The lock lives on a dedicated
  * connection, so it is released on every exit path, including a throwing task.
