@@ -167,9 +167,17 @@ paths:
         go-live. A post whose `source_modified_at` has not moved is `unchanged` and not
         written; no row is ever deleted (an imported article in excluded categories
         only is soft-deleted, D-139). A post that fails to map or save is counted in
-        `failed` and the run continues. Behaviour: `14-integrations.md#how-the-import-behaves-plan-012`.
+        `failed` and the run continues. `?full=1` is the full re-import (D-140): no post is
+        skipped as unchanged, so every post is mapped, its image read, saved (counted
+        `updated`) and re-linked. Behaviour: `14-integrations.md#how-the-import-behaves-plan-012`.
       security:
         - jobSecret: []
+      parameters:
+        - name: full
+          in: query
+          required: false
+          description: 'Exactly `1` for the full re-import (D-140). Any other value, repeated included, is `400`.'
+          schema: { type: string, enum: ['1'] }
       responses:
         '200':
           description: The import succeeded (possibly with failed posts), or was skipped because another import held the lock.
@@ -200,6 +208,12 @@ paths:
                     removedEmbeds: 0
                 skipped:
                   value: { outcome: skipped }
+        '400':
+          description: '`full` has a value other than `1`. Checked after the secret and before the source setting.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: news_import.invalid_full } }
         '401':
           description: Missing or wrong bearer secret.
           content:
@@ -227,7 +241,7 @@ paths:
                         enum: [network_error, timeout, http_error, non_json_response, invalid_response, missing_total_pages, unexpected]
                       summary: { $ref: '#/components/schemas/NewsImportCounts' }
         '503':
-          description: '`NEWS_IMPORT_SOURCE_URL` is not set. Checked after the secret (401 first, then 503, then the run).'
+          description: '`NEWS_IMPORT_SOURCE_URL` is not set. Checked after the secret and `full` (401, then 400, then 503, then the run).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }

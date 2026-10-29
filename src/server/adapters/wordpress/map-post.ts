@@ -43,32 +43,38 @@ export function mapWordPressPost(
   };
 }
 
-/**
- * Which old-site categories are not news categories (owner, 2026-10-29, Q-048; D-139). The one place a
- * WordPress category slug is named. `excluded`: the category and all its descendants are never linked
- * to an article, and a post in excluded categories only is not news. `unlisted`: the category is kept
- * and linked, but has no tab and is never shown as a tag.
- */
-export const NEWS_CATEGORY_SLUG_RULES = {
-  excluded: ["reviews"],
-  unlisted: ["uncategorized"],
-} as const satisfies { excluded: readonly string[]; unlisted: readonly string[] };
+/** Which old-site category slugs are excluded (not news) and which are unlisted. */
+export type NewsCategorySlugRules = { readonly excluded: readonly string[]; readonly unlisted: readonly string[] };
 
-const EXCLUDED_SLUGS: ReadonlySet<string> = new Set(NEWS_CATEGORY_SLUG_RULES.excluded);
-const UNLISTED_SLUGS: ReadonlySet<string> = new Set(NEWS_CATEGORY_SLUG_RULES.unlisted);
+/**
+ * Which old-site categories are not news categories, or have no tab (owner, 2026-10-29, Q-048; D-139,
+ * D-140). The one place a WordPress category slug is named. `excluded`: the category and all its
+ * descendants are never linked to an article, and a post in excluded categories only is not news. No slug
+ * is excluded today: staff-written product reviews are news (D-140), and the mechanism is kept for a future
+ * exclusion. `unlisted`: the category is kept and linked, but has no tab and is never shown as a tag.
+ */
+export const NEWS_CATEGORY_SLUG_RULES: NewsCategorySlugRules = {
+  excluded: [],
+  unlisted: ["uncategorized"],
+};
 
 /**
  * Every WordPress category as a neutral snapshot, in the order given; parent 0 means top level. A
- * category is excluded when it or any ancestor has an excluded slug (a parent cycle is cut); an
+ * category is excluded when it or any ancestor has an excluded slug in `rules` (a parent cycle is cut); an
  * excluded or unlisted category has `isListed` false.
  */
-export function mapWordPressCategories(categories: readonly WpCategory[]): NewsCategorySnapshot[] {
+export function mapWordPressCategories(
+  categories: readonly WpCategory[],
+  rules: NewsCategorySlugRules = NEWS_CATEGORY_SLUG_RULES,
+): NewsCategorySnapshot[] {
+  const excludedSlugs: ReadonlySet<string> = new Set(rules.excluded);
+  const unlistedSlugs: ReadonlySet<string> = new Set(rules.unlisted);
   const byId = new Map(categories.map((category) => [category.id, category]));
   const slugOf = (category: WpCategory): string => decodeSlug(category.slug);
   const isExcluded = (category: WpCategory): boolean => {
     const seen = new Set<number>();
     for (let at: WpCategory | undefined = category; at !== undefined && !seen.has(at.id); at = byId.get(at.parent)) {
-      if (EXCLUDED_SLUGS.has(slugOf(at))) return true;
+      if (excludedSlugs.has(slugOf(at))) return true;
       seen.add(at.id);
     }
     return false;
@@ -81,7 +87,7 @@ export function mapWordPressCategories(categories: readonly WpCategory[]): NewsC
       parentSourceId: category.parent === 0 ? null : BigInt(category.parent),
       slug,
       translation: { locale: "th", name: decodeHtmlEntities(category.name).trim() },
-      isListed: !excluded && !UNLISTED_SLUGS.has(slug),
+      isListed: !excluded && !unlistedSlugs.has(slug),
       isExcluded: excluded,
     };
   });

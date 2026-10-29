@@ -96,26 +96,42 @@ describe("mapWordPressCategories", () => {
     });
   });
 
-  it("marks the reviews subtree excluded and unlisted", () => {
+  it("lists the reviews subtree: staff product reviews are news (D-140)", () => {
     for (const id of [7n, 15n, 17n]) {
-      expect(bySourceId(id)).toMatchObject({ isExcluded: true, isListed: false });
+      expect(bySourceId(id)).toMatchObject({ isExcluded: false, isListed: true });
     }
-    expect(mapped.filter((c) => c.isExcluded).map((c) => c.sourceId).sort()).toEqual([15n, 17n, 7n].sort());
+    expect(mapped.filter((c) => c.isExcluded)).toEqual([]);
   });
 
   it("marks uncategorized unlisted but not excluded", () => {
     expect(bySourceId(1n)).toMatchObject({ slug: "uncategorized", isListed: false, isExcluded: false });
   });
 
-  it("excludes a grandchild of reviews, whatever the list order, and survives a parent cycle", () => {
+  // The excluded mechanism stays for a future exclusion; it is exercised with a fixture slug.
+  const FIXTURE_RULES = { excluded: ["not-news"], unlisted: ["uncategorized"] };
+
+  it("marks an excluded subtree excluded and unlisted", () => {
+    const list = [
+      { id: 7, parent: 0, count: 0, slug: "not-news", name: "Not news" },
+      { id: 15, parent: 7, count: 0, slug: "not-news-a", name: "A" },
+      { id: 5, parent: 0, count: 0, slug: "news", name: "News" },
+    ];
+    expect(mapWordPressCategories(list, FIXTURE_RULES).map((c) => [c.sourceId, c.isExcluded, c.isListed])).toEqual([
+      [7n, true, false],
+      [15n, true, false],
+      [5n, false, true],
+    ]);
+  });
+
+  it("excludes a grandchild of an excluded category, whatever the list order, and survives a parent cycle", () => {
     const list = [
       { id: 90, parent: 15, count: 0, slug: "deep", name: "Deep" },
-      { id: 15, parent: 7, count: 0, slug: "nintendo-reviews", name: "Nintendo" },
-      { id: 7, parent: 0, count: 0, slug: "reviews", name: "Reviews" },
+      { id: 15, parent: 7, count: 0, slug: "not-news-a", name: "A" },
+      { id: 7, parent: 0, count: 0, slug: "not-news", name: "Not news" },
       { id: 61, parent: 62, count: 0, slug: "cycle-a", name: "A" },
       { id: 62, parent: 61, count: 0, slug: "cycle-b", name: "B" },
     ];
-    expect(mapWordPressCategories(list).map((c) => [c.sourceId, c.isExcluded])).toEqual([
+    expect(mapWordPressCategories(list, FIXTURE_RULES).map((c) => [c.sourceId, c.isExcluded])).toEqual([
       [90n, true],
       [15n, true],
       [7n, true],
@@ -125,6 +141,6 @@ describe("mapWordPressCategories", () => {
   });
 
   it("keeps the slug rules in one constant", () => {
-    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: ["reviews"], unlisted: ["uncategorized"] });
+    expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: [], unlisted: ["uncategorized"] });
   });
 });

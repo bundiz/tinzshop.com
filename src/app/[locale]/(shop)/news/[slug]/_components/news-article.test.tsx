@@ -52,15 +52,15 @@ function detail(overrides: Partial<NewsArticleDetail> = {}): NewsArticleDetail {
 
 describe('NewsArticleView', () => {
   it('shows "โดย {bylineName}", or the fallback byline when there is none', () => {
-    expect(text(render(<NewsArticleView article={detail()} />))).toContain('โดย Invented Writer');
-    expect(text(render(<NewsArticleView article={detail({ bylineName: null })} />))).toContain('โดย ทีม Tinzshop');
-    expect(text(render(<NewsArticleView article={detail({ bylineName: null })} />, 'en'))).toContain(
+    expect(text(render(<NewsArticleView article={detail()} articlesMenu={[]} />))).toContain('โดย Invented Writer');
+    expect(text(render(<NewsArticleView article={detail({ bylineName: null })} articlesMenu={[]} />))).toContain('โดย ทีม Tinzshop');
+    expect(text(render(<NewsArticleView article={detail({ bylineName: null })} articlesMenu={[]} />, 'en'))).toContain(
       'By the Tinzshop team',
     );
   });
 
   it('renders the stored body as HTML, and every other field as escaped text', () => {
-    const html = render(<NewsArticleView article={detail()} />);
+    const html = render(<NewsArticleView article={detail()} articlesMenu={[]} />);
     expect(html).toContain('<p>ย่อหน้า <strong>หนา</strong></p>');
     expect(html).toContain('<h1');
     expect(html).toContain('รีวิว &lt;Switch 2&gt; &amp; อื่นๆ');
@@ -69,14 +69,14 @@ describe('NewsArticleView', () => {
   });
 
   it('loads the featured image eagerly and lazy-loads embeds in the body', () => {
-    const html = render(<NewsArticleView article={detail()} />);
+    const html = render(<NewsArticleView article={detail()} articlesMenu={[]} />);
     expect(html).toMatch(/<img[^>]*src="https:\/\/old.example\/hero.jpg"[^>]*loading="eager"|<img[^>]*loading="eager"[^>]*src="https:\/\/old.example\/hero.jpg"/);
     expect(html).toMatch(/<iframe loading="lazy"[^>]*src="https:\/\/www.youtube.com\/embed\/abc"/);
-    expect(render(<NewsArticleView article={detail({ featuredImageUrl: null })} />)).not.toContain('loading="eager"');
+    expect(render(<NewsArticleView article={detail({ featuredImageUrl: null })} articlesMenu={[]} />)).not.toContain('loading="eager"');
   });
 
   it('shows the date with the Buddhist year on /th, the breadcrumb and the category links', () => {
-    const html = render(<NewsArticleView article={detail()} />);
+    const html = render(<NewsArticleView article={detail()} articlesMenu={[]} />);
     expect(text(html)).toContain('2569');
     expect(html).toContain('href="/th/news"');
     expect(html).toContain('href="/th/news/category/news"');
@@ -87,10 +87,10 @@ describe('NewsArticleView', () => {
   });
 
   it('lists the related articles, and leaves the section out when there are none', () => {
-    const html = render(<NewsArticleView article={detail()} />);
+    const html = render(<NewsArticleView article={detail()} articlesMenu={[]} />);
     expect(text(html)).toContain(th.shop.news.related.title);
     for (const n of [1, 2, 3]) expect(html).toContain(`href="/th/news/post-${n}"`);
-    expect(text(render(<NewsArticleView article={detail({ related: [] })} />))).not.toContain(
+    expect(text(render(<NewsArticleView article={detail({ related: [] })} articlesMenu={[]} />))).not.toContain(
       th.shop.news.related.title,
     );
   });
@@ -117,10 +117,10 @@ describe('titleIframes', () => {
   });
 
   it('titles the body\'s YouTube iframes from the message on the article page', () => {
-    expect(render(<NewsArticleView article={detail()} />)).toMatch(
+    expect(render(<NewsArticleView article={detail()} articlesMenu={[]} />)).toMatch(
       new RegExp(`<iframe[^>]*title="${th.shop.news.videoTitle}"[^>]*src="https://www.youtube.com/embed/abc"`),
     );
-    expect(render(<NewsArticleView article={detail()} />, 'en')).toContain(`title="${en.shop.news.videoTitle}"`);
+    expect(render(<NewsArticleView article={detail()} articlesMenu={[]} />, 'en')).toContain(`title="${en.shop.news.videoTitle}"`);
   });
 });
 
@@ -143,10 +143,10 @@ describe('NewsCardSection on the landing page', () => {
 
 describe('SiteHeader news link', () => {
   it('links "ข่าวเกม" to the news list and marks it current only on news routes', () => {
-    const plain = render(<SiteHeader path="/" />);
+    const plain = render(<SiteHeader path="/" articlesMenu={[]} />);
     expect(plain).toContain('href="/th/news"');
     expect(plain).not.toContain('aria-current="page"');
-    const onNews = render(<SiteHeader path="/news" activeNav="news" />, 'en');
+    const onNews = render(<SiteHeader path="/news" activeNav="news" articlesMenu={[]} />, 'en');
     expect(onNews).toMatch(/<a aria-current="page"[^>]*href="\/en\/news"|<a[^>]*href="\/en\/news"[^>]*aria-current="page"/);
     expect(onNews.match(/aria-current="page"/g)).toHaveLength(1);
   });

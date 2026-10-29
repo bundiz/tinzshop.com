@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Implemented 2026-10-29; the owner's re-import (Task 7 Step 4) and the manual tests are outstanding
+- **Status:** Implemented 2026-10-29; the owner's full re-import (Task 8 Step 5) and the manual tests are outstanding
 - **Phase:** 6 (news), as an early slice on the owner's request of 2026-10-29
 - **Requirements:** REQ-047 (staff-written game news in categories)
 - **Depends on plan:** 011 (site header and footer, `[locale]` routing, D-120/D-122 404 rules)
@@ -266,17 +266,17 @@ A normal re-run skips unchanged posts, so it cannot undo this.
    - Style it like the site (dark bar, white menu panel), not a copy of the old colours.
 
 **Steps:**
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - the rules constant, and a category that leaves `unlisted` becomes listed
   - `full=1` re-saves an unchanged post and restores a rule-hidden article with its links (integration test on a seeded "after Task 7" state); `full=abc` gives 400
   - the dropdown renders the configured items, hides a missing or unlisted one, and has correct `aria-expanded`/keyboard behaviour (render + interaction test)
   - the reviews category page gives 200 once listed
-- [ ] **Step 2:** Run the tests. They fail.
-- [ ] **Step 3:** Implement. Docs:
+- [x] **Step 2:** Run the tests. They fail.
+- [x] **Step 3:** Implement. Docs:
   - a D-row, plus a Q-048 note recording the clarification (quote it)
   - 02, 05, 06, 07, 14, the glossary, and spec O-1 (restored)
   - a CLAUDE.md decision range if it changes
-- [ ] **Step 4:** Tests, typecheck, integration tests and build pass. Commit: `feat: staff product reviews are news again, full re-import, and the บทความ menu`.
+- [x] **Step 4:** Tests, typecheck, integration tests and build pass. Commit: `feat: staff product reviews are news again, full re-import, and the บทความ menu`.
 - [ ] **Step 5 (owner):** run `POST /api/jobs/news-import?full=1` once (about 20 minutes), then check that Reviews is back and the dropdown works.
 
 ---
@@ -299,6 +299,6 @@ Staff news editor/admin, comments, tags, search, old-URL redirects, image copyin
 
 ## Outcome
 
-Implemented on branch `feat/win/news` (2026-10-29): the news tables, the WordPress adapter and import job, and the news list, category and article pages and the landing news section. After the owner's answer to Q-048 (D-139, superseding D-125) news has no review category and the old "Uncategorized" category is unlisted (Task 7). The final whole-branch review's findings were fixed in one pass: the featured image URL is kept only when it is an absolute http(s) URL, the iframe title is inserted literally, and the stale documentation and `.env.example` wording were corrected.
+Implemented on branch `feat/win/news` (2026-10-29): the news tables, the WordPress adapter and import job, and the news list, category and article pages and the landing news section. After the owner's answer to Q-048 (D-139, superseding D-125) news has no review category and the old "Uncategorized" category is unlisted (Task 7). The owner then clarified that staff-written product reviews are news (D-140, superseding the review part of D-139 and restoring D-125): the review tree is listed again, the import has a full re-import (`?full=1`), and the utility bar has the "บทความ ▾" menu (Task 8). The final whole-branch review's findings were fixed in one pass: the featured image URL is kept only when it is an absolute http(s) URL, the iframe title is inserted literally, and the stale documentation and `.env.example` wording were corrected.
 
-The import has been run once against the live old site (540 articles, 13 categories), before Task 7. The owner's re-run after Task 7 (Step 4), which applies D-139 to the stored articles, is pending, and so are the manual tests; no manual test box is ticked.
+The import has been run once against the live old site (540 articles, 13 categories), before Task 7, and the owner re-ran it after Task 7, which applied D-139 to the dev database (Reviews unlisted, 3 articles soft-deleted, the review links removed; as reported in the Task 8 brief). The owner's full re-import (Task 8 Step 5), which restores them, is pending, and so are the manual tests; no manual test box is ticked.

@@ -20,7 +20,7 @@ const SUCCEEDED: NewsImportSummary = {
 
 const SOURCE_URL = 'https://old-site.test';
 
-type RunImport = (sourceUrl: string) => Promise<NewsImportSummary>;
+type RunImport = (sourceUrl: string, options: { full: boolean }) => Promise<NewsImportSummary>;
 
 function setup(summary: NewsImportSummary = SUCCEEDED, sourceUrl: () => string | null = () => SOURCE_URL) {
   const runImport = vi.fn<RunImport>(async () => summary);
@@ -29,9 +29,9 @@ function setup(summary: NewsImportSummary = SUCCEEDED, sourceUrl: () => string |
   return {
     runImport,
     readSourceUrl,
-    call: (authorization?: string) =>
+    call: (authorization?: string, query = '') =>
       handler(
-        new Request(URL, {
+        new Request(`${URL}${query}`, {
           method: 'POST',
           headers: authorization === undefined ? {} : { Authorization: authorization },
         }),
@@ -68,7 +68,29 @@ describe('createNewsImportJobHandler', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await response.json()).toEqual(SUCCEEDED);
-    expect(runImport).toHaveBeenCalledWith(SOURCE_URL);
+    expect(runImport).toHaveBeenCalledWith(SOURCE_URL, { full: false });
+  });
+
+  it('runs a full re-import for full=1', async () => {
+    const { runImport, call } = setup();
+    const response = await call(`Bearer ${SECRET}`, '?full=1');
+
+    expect(response.status).toBe(200);
+    expect(runImport).toHaveBeenCalledWith(SOURCE_URL, { full: true });
+  });
+
+  it('answers 400 for any other value of full, after the secret and before the source setting', async () => {
+    const { runImport, readSourceUrl, call } = setup();
+
+    expect((await call(undefined, '?full=abc')).status).toBe(401);
+    for (const query of ['?full=abc', '?full=', '?full=0', '?full=true', '?full=1&full=1']) {
+      const response = await call(`Bearer ${SECRET}`, query);
+      expect(response.status).toBe(400);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      expect(await response.json()).toEqual({ error: { code: 'news_import.invalid_full' } });
+    }
+    expect(readSourceUrl).not.toHaveBeenCalled();
+    expect(runImport).not.toHaveBeenCalled();
   });
 
   it('answers 200 skipped on a concurrent run', async () => {

@@ -147,10 +147,10 @@ describe('runNewsImport', () => {
       options,
     ]);
     expect(calls).toEqual([
-      [1n, [5n], { hidden: false }],
-      [2n, [], { hidden: true }],
-      [3n, [1n], { hidden: false }],
-      [4n, [], { hidden: false }],
+      [1n, [5n], { hidden: false, full: false }],
+      [2n, [], { hidden: true, full: false }],
+      [3n, [1n], { hidden: false, full: false }],
+      [4n, [], { hidden: false, full: false }],
     ]);
   });
 
@@ -221,6 +221,21 @@ describe('runNewsImport', () => {
     expect(isUnchanged?.(1n, new Date('2026-01-01T00:00:00Z'))).toBe(true);
     expect(isUnchanged?.(1n, new Date('2026-01-02T00:00:00Z'))).toBe(false);
     expect(isUnchanged?.(2n, new Date('2026-01-01T00:00:00Z'))).toBe(false);
+  });
+
+  it('in a full run, skips nothing: the source maps every post and each is written in full (D-140)', async () => {
+    const { deps, news, source } = setup({
+      pages: [{ articles: [article(1n, '2026-01-01T00:00:00Z')], failures: [], skipped: 0, totalPages: 1 }],
+      states: new Map([[1n, new Date('2026-01-01T00:00:00Z')]]),
+      upsert: async () => 'updated',
+    });
+
+    const summary = await runNewsImport(deps, { full: true });
+
+    expect(summary).toMatchObject({ outcome: 'succeeded', updated: 1, unchanged: 0 });
+    const isUnchanged = vi.mocked(source.listArticlesPage).mock.calls[0]?.[1];
+    expect(isUnchanged?.(1n, new Date('2026-01-01T00:00:00Z'))).toBe(false);
+    expect(vi.mocked(news.upsertNewsArticle).mock.calls[0]?.[1]).toEqual({ hidden: false, full: true });
   });
 
   it('fails the run when the category list cannot be read', async () => {

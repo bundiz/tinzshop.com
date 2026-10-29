@@ -68,7 +68,13 @@ function describe(error: unknown): string {
   return typeof code === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(code) ? `${error.name} ${code}` : error.name;
 }
 
-async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary, { outcome: 'skipped' }>> {
+/** `full`: the full re-import (D-140); no post is skipped as unchanged, so every post is read and saved again. */
+export type NewsImportOptions = { full: boolean };
+
+async function execute(
+  deps: NewsImportDeps,
+  { full }: NewsImportOptions,
+): Promise<Exclude<NewsImportSummary, { outcome: 'skipped' }>> {
   const { source, news } = deps;
   const counts: NewsImportCounts = {
     categories: 0,
@@ -93,9 +99,10 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
     const excluded = new Set(categories.filter((category) => category.isExcluded).map((c) => c.sourceId));
     await news.applyExcludedNewsCategories([...excluded]);
 
-    const known = await news.findArticleSourceStates();
+    // A full run treats every post as changed: each is mapped, its image read, saved and re-linked.
+    const known = full ? new Map<bigint, Date | null>() : await news.findArticleSourceStates();
     const isUnchanged = (sourceId: bigint, modifiedAt: Date): boolean =>
-      known.get(sourceId)?.getTime() === modifiedAt.getTime();
+      !full && known.get(sourceId)?.getTime() === modifiedAt.getTime();
 
     let page = 1;
     let totalPages = 1;
@@ -115,7 +122,7 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
         const kept = article.categorySourceIds.filter((sourceId) => !excluded.has(sourceId));
         const hidden = article.categorySourceIds.length > 0 && kept.length === 0;
         try {
-          const result = await news.upsertNewsArticle({ ...article, categorySourceIds: kept }, { hidden });
+          const result = await news.upsertNewsArticle({ ...article, categorySourceIds: kept }, { hidden, full });
           counts[result] += 1;
           if (result !== 'unchanged') counts.removedEmbeds += article.removedEmbeds;
         } catch (error) {
@@ -136,9 +143,12 @@ async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary,
 
 /**
  * One news import run (spec 2026-10-29 §5): categories, the excluded-category rule over stored articles
- * (D-139), then every page of posts, under a lock.
+ * (D-139), then every page of posts, under a lock. `full` (D-140) skips no post as unchanged.
  */
-export async function runNewsImport(deps: NewsImportDeps): Promise<NewsImportSummary> {
-  const result = await deps.lock(() => execute(deps));
+export async function runNewsImport(
+  deps: NewsImportDeps,
+  options: NewsImportOptions = { full: false },
+): Promise<NewsImportSummary> {
+  const result = await deps.lock(() => execute(deps, options));
   return result.acquired ? result.value : { outcome: 'skipped' };
 }

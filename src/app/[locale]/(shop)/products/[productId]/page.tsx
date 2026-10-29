@@ -6,6 +6,7 @@ import { getLandingCatalogueReader } from '@/server/composition-root';
 import ProductSection from '../../_components/ProductSection';
 import SiteFooter from '../../_components/SiteFooter';
 import SiteHeader from '../../_components/SiteHeader';
+import { readArticlesMenu } from '../../_components/read-articles-menu';
 import Breadcrumb from './_components/Breadcrumb';
 import BuyActions from './_components/BuyActions';
 import Gallery from './_components/Gallery';
@@ -33,10 +34,11 @@ export default async function ProductPage({ params }: Props) {
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const [product, t, catalogue] = await Promise.all([
+  const [product, t, catalogue, articlesMenu] = await Promise.all([
     readProduct(productId, locale),
     getTranslations({ locale, namespace: 'shop.product' }),
     getLandingCatalogueReader()(locale),
+    readArticlesMenu(locale),
   ]);
   if (product === null) notFound();
   // Related products: the best sellers, without this one, until categories exist to relate by (D-124).
@@ -44,7 +46,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <SiteHeader path={`/products/${product.productId}`} />
+      <SiteHeader path={`/products/${product.productId}`} articlesMenu={articlesMenu} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <Breadcrumb productName={product.name} />

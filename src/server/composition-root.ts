@@ -58,8 +58,10 @@ import { runNewsImport } from '@/server/services/news/news-import-service';
 import {
   getNewsArticle,
   listLatestNews,
+  listListedNewsCategories,
   listNews,
   type GetNewsArticleInput,
+  type ListedNewsCategory,
   type ListNewsInput,
   type NewsArticleDetail,
   type NewsCardData,
@@ -146,6 +148,11 @@ export function getLatestNewsReader(): (input: { locale: Locale; limit: number }
   return (input) => listLatestNews({ news: { listNewsCategories, listLiveNewsArticles }, now: () => new Date() }, input);
 }
 
+/** The header's listed news categories, for the บทความ menu (D-140): built per call, needs only the database. */
+export function getListedNewsCategoriesReader(): (locale: Locale) => Promise<ListedNewsCategory[]> {
+  return (locale) => listListedNewsCategories({ news: { listNewsCategories } }, { locale });
+}
+
 /** Development-only API docs; needs no configuration, so it works before `.env` is complete. */
 export function getApiDocsHandlers(): ReturnType<typeof createApiDocsHandlers> {
   return createApiDocsHandlers({
@@ -174,12 +181,15 @@ export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHan
   return createNewsImportJobHandler({
     jobSecret: () => getNewsImportJobConfig().jobSecret,
     sourceUrl: () => getNewsImportJobConfig().newsImportSourceUrl,
-    runImport: (baseUrl) =>
-      runNewsImport({
-        source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
-        news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates, applyExcludedNewsCategories },
-        lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
-        logError: (message) => console.error(message),
-      }),
+    runImport: (baseUrl, options) =>
+      runNewsImport(
+        {
+          source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
+          news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates, applyExcludedNewsCategories },
+          lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
+          logError: (message) => console.error(message),
+        },
+        options,
+      ),
   });
 }

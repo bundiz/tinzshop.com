@@ -2,6 +2,7 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import { readArticlesMenu } from '../../../_components/read-articles-menu';
 import NewsListView from '../../_components/NewsListView';
 import { decodeSlugParam, parsePageParam } from '../../news-routes';
 import { readNewsList } from '../../read-news';
@@ -29,5 +30,5 @@ export default async function NewsCategoryPage({ params, searchParams }: Props) 
   const list = await readNewsList(locale, categorySlug, page);
   if (list === null) notFound();
 
-  return <NewsListView list={list} />;
+  return <NewsListView list={list} articlesMenu={await readArticlesMenu(locale)} />;
 }

@@ -18,8 +18,14 @@
       "links": {
         "label": "Help links",
         "trackOrder": "Track an order",
-        "help": "Help",
-        "news": "Game news"
+        "help": "Help"
+      },
+      "articles": {
+        "label": "Articles",
+        "reviews": "Product reviews",
+        "products": "Products",
+        "news": "News",
+        "submenu": "{name} submenu"
       },
       "search": {
         "label": "Search products",

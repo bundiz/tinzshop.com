@@ -148,12 +148,13 @@ function articleFields(snapshot: NewsArticleSnapshot, slug: string) {
  * writes nothing; a changed one updates the article and its `th` translation and re-links its
  * categories; a new one is created. Categories the database does not hold are not linked.
  * `hidden` is the excluded-category rule (D-139): true sets `deleted_at` (an already-set one is kept),
- * false clears it; the import owns `deleted_at` of imported rows before go-live. No staff column is
- * touched, and no article row is ever deleted.
+ * false clears it; the import owns `deleted_at` of imported rows before go-live. `full` (the full
+ * re-import, D-140) writes an existing row even when `source_modified_at` has not moved, so it is
+ * `updated`. No staff column is touched, and no article row is ever deleted.
  */
 export async function upsertNewsArticle(
   snapshot: NewsArticleSnapshot,
-  options: { hidden: boolean },
+  options: { hidden: boolean; full: boolean },
 ): Promise<NewsArticleUpsertResult> {
   return getPrisma().$transaction(
     async (tx) => {
@@ -161,7 +162,11 @@ export async function upsertNewsArticle(
         where: { sourceId: snapshot.sourceId },
         select: { id: true, sourceModifiedAt: true, deletedAt: true },
       });
-      if (current !== null && current.sourceModifiedAt?.getTime() === snapshot.sourceModifiedAt.getTime()) {
+      if (
+        !options.full &&
+        current !== null &&
+        current.sourceModifiedAt?.getTime() === snapshot.sourceModifiedAt.getTime()
+      ) {
         return 'unchanged';
       }
 

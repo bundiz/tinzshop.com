@@ -18,8 +18,14 @@
       "links": {
         "label": "ลิงก์ช่วยเหลือ",
         "trackOrder": "ติดตามคำสั่งซื้อ",
-        "help": "ช่วยเหลือ",
-        "news": "ข่าวเกม"
+        "help": "ช่วยเหลือ"
+      },
+      "articles": {
+        "label": "บทความ",
+        "reviews": "รีวิวสินค้า",
+        "products": "สินค้า",
+        "news": "News",
+        "submenu": "เมนูย่อย {name}"
       },
       "search": {
         "label": "ค้นหาสินค้า",

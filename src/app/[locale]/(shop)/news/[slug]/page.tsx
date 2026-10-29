@@ -2,6 +2,7 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import { readArticlesMenu } from '../../_components/read-articles-menu';
 import { decodeSlugParam } from '../news-routes';
 import { readNewsArticle } from '../read-news';
 import NewsArticleView from './_components/NewsArticleView';
@@ -27,5 +28,5 @@ export default async function NewsArticlePage({ params }: Props) {
   const article = await readNewsArticle(locale, articleSlug);
   if (article === null) notFound();
 
-  return <NewsArticleView article={article} />;
+  return <NewsArticleView article={article} articlesMenu={await readArticlesMenu(locale)} />;
 }

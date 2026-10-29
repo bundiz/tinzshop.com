@@ -352,3 +352,22 @@ export async function listLatestNews(
   const tree = subtrees(categories);
   return rows.map((row) => toCard(row, byId, tree, input.locale));
 }
+
+// ---- The header's บทความ menu (plan 012 Task 8, D-140) ----
+
+/** A listed category as the header menu needs it: its slug and its name in the locale. */
+export type ListedNewsCategory = { slug: string; name: string };
+
+export type ListedNewsCategoriesDeps = { news: Pick<NewsReadRepository, 'listNewsCategories'> };
+
+/** Every listed news category (D-139), in `position` order, named in the locale; never an unlisted one. */
+export async function listListedNewsCategories(
+  deps: ListedNewsCategoriesDeps,
+  input: { locale: NewsLocale },
+): Promise<ListedNewsCategory[]> {
+  const categories = await deps.news.listNewsCategories();
+  return categories
+    .filter((category) => category.isListed)
+    .sort((a, b) => a.position - b.position)
+    .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) }));
+}

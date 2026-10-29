@@ -5,6 +5,7 @@ import {
   RELATED_NEWS_LIMIT,
   getNewsArticle,
   listLatestNews,
+  listListedNewsCategories,
   listNews,
   type NewsArticleDetailRow,
   type NewsArticleRow,
@@ -364,5 +365,18 @@ describe('listLatestNews', () => {
     expect(list).toHaveBeenCalledWith({ categoryIds: null, now: NOW, skip: 0, take: 3 });
     expect(cards.map((card) => card.slug)).toEqual(['post-3', 'post-2', 'post-1']);
     expect(cards[0]).toMatchObject({ title: 'ข่าว 3', categoryName: 'News' });
+  });
+});
+
+describe('listListedNewsCategories', () => {
+  it('returns every listed category, slug and name in the locale, in position order, and no unlisted one', async () => {
+    const deps = { news: { listNewsCategories: async () => CATEGORIES } };
+    expect(await listListedNewsCategories(deps, { locale: 'en' })).toEqual([
+      { slug: 'บทความ', name: 'บทความ' },
+      { slug: 'news', name: 'News' },
+      { slug: 'nintendo', name: 'NINTENDO' },
+      { slug: 'sony', name: 'SONY EN' },
+      { slug: 'empty', name: 'ว่าง' },
+    ]);
   });
 });

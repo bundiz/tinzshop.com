@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import type { NewsListPage } from '@/server/services/news/news-read-service';
 import SiteFooter from '../../_components/SiteFooter';
+import type { ArticlesMenuEntry } from '../../_components/articles-menu';
 import SiteHeader from '../../_components/SiteHeader';
 import { newsCategoryPath, newsListPath } from '../news-routes';
 import NewsFeature from './NewsFeature';
@@ -13,6 +14,8 @@ import Pagination from './Pagination';
 
 export type NewsListViewProps = {
   list: NewsListPage;
+  /** The header's "บทความ" menu (`readArticlesMenu`). */
+  articlesMenu: ArticlesMenuEntry[];
 };
 
 /** How many of page 1's articles go to the feature block (ruling R1, D-134); the rest fill the grid. */
@@ -23,7 +26,7 @@ const FEATURE_COUNT = 3;
  * feature block (page 1 only), the "ข่าวล่าสุด" grid and pagination beside the sidebar, inside the site header
  * and footer.
  */
-export default function NewsListView({ list }: NewsListViewProps) {
+export default function NewsListView({ list, articlesMenu }: NewsListViewProps) {
   const t = useTranslations('shop.news');
   const locale = useLocale();
   const category = list.activeCategorySlug;
@@ -35,7 +38,7 @@ export default function NewsListView({ list }: NewsListViewProps) {
 
   return (
     <>
-      <SiteHeader path={pathWithoutLocale} activeNav="news" />
+      <SiteHeader path={pathWithoutLocale} activeNav="news" articlesMenu={articlesMenu} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">

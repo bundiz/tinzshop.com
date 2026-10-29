@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import SiteFooter from '../../../_components/SiteFooter';
+import type { ArticlesMenuEntry } from '../../../_components/articles-menu';
 import SiteHeader from '../../../_components/SiteHeader';
 import NewsCardSection from '../../_components/NewsCardSection';
 import { newsArticlePath, newsCategoryPath, newsListPath } from '../../news-routes';
@@ -10,6 +11,8 @@ import ArticleBody from './ArticleBody';
 
 export type NewsArticleViewProps = {
   article: NewsArticleDetail;
+  /** The header's "บทความ" menu (`readArticlesMenu`). */
+  articlesMenu: ArticlesMenuEntry[];
 };
 
 /**
@@ -17,14 +20,14 @@ export type NewsArticleViewProps = {
  * title, byline and date, the featured image (eager, D-123), the stored body in a reading column, and
  * "ข่าวที่เกี่ยวข้อง". There is no design file for it; it follows the site's panels and type.
  */
-export default function NewsArticleView({ article }: NewsArticleViewProps) {
+export default function NewsArticleView({ article, articlesMenu }: NewsArticleViewProps) {
   const t = useTranslations('shop.news');
   const locale = useLocale();
   const byline = t('byline', { name: article.bylineName ?? t('bylineFallback') });
 
   return (
     <>
-      <SiteHeader path={newsArticlePath(locale, article.slug).slice(locale.length + 1)} activeNav="news" />
+      <SiteHeader path={newsArticlePath(locale, article.slug).slice(locale.length + 1)} activeNav="news" articlesMenu={articlesMenu} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">
