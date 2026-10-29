@@ -4,6 +4,8 @@
 .env.*.local
 *.pem
 *.key
+# Local database copies shared between teammates (docs/16-local-setup.md, path B)
+*.dump
 # Shopee sandbox spike: saved tokens and raw API dumps
 .shopee-sandbox/
 
