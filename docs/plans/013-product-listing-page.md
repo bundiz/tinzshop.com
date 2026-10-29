@@ -51,7 +51,13 @@
   - `sort` (`recommended` default, `best_selling`, `newest`, `price_asc`, `price_desc`)
   - `view` (`grid` default, `list`)
   - `page`
-  - An invalid value answers a real 404. Never let it throw (D-120, D-122).
+  - Invalid values follow rulings R1 and R2 below. Nothing ever throws (D-120, D-122).
+- **Ruling R1 (facet counts).** Each facet count applies every active filter except the facet's own dimension.
+- **Ruling R2 (invalid params).**
+  - An invalid `page`, or an unknown `category`, `type`, `sort` or `view`, gives a real 404.
+  - A non-numeric or negative `min`/`max` is ignored (that filter is dropped, with no error).
+  - `min > max` is swapped.
+  - Nothing ever throws.
 - **Paging and sort.**
   - 24 products per page.
   - Ties break by `product.id`, so pages never overlap.
@@ -69,7 +75,7 @@
 1. **Filter combinations.** A category plus a type plus a price range plus in-stock combine with AND. Each facet count reflects the other active filters, not itself, and an article-style double count never happens. Owner: Task 3, test `combines filters with AND and counts facets without double counting`.
 2. **A product with several variants at different prices.** The price range uses the cheapest active variant, and a sold-out cheapest variant still counts for price but not for "มีสินค้า". Owner: Task 3, test `filters and sorts by the cheapest active variant`.
 3. **Admin work survives the categoriser.** A product that already has a category is never re-categorised, and re-running the job changes nothing. Owner: Task 2, test `only fills uncategorised products and is idempotent`.
-4. **Hostile query strings.** Inputs like `?min=abc`, `?page=0`, `?type=…` repeated 1000 times, `?sort=drop`, or `?category=../x` answer 404 or are ignored, never a 500. Owner: Task 4, test `rejects or ignores invalid params without throwing`.
+4. **Hostile query strings.** Inputs like `?min=abc`, `?page=0`, `?type=…` repeated 1000 times, `?sort=drop`, or `?category=../x` answer 404 or are ignored per R2, never a 500. Owner: Task 4, test `rejects or ignores invalid params without throwing`.
 5. **Old links.** The landing cards, related products and the breadcrumb point at `/product/{id}/detail`, and nothing links to `/products/…` any more. Owner: Task 5, test `no link targets the old /products route`.
 
 ---
