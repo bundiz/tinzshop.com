@@ -198,6 +198,8 @@ No audit log of price, stock or order-status changes is built.
 
 > **Plan 011 (D-117), an early slice of this phase.** On the project owner's request of 2026-10-28, the landing page and the product page, filled from the Shopee catalogue mirror, are built first — `plans/011-landing-page-from-mirror.md`. The storefront visibility rule is unchanged (a product shows only when `product.is_active`, its `channel_item.external_status = 'NORMAL'`, and at least one variant is active). Until plan 002's admin screens exist, the development-only job endpoint `POST /api/jobs/catalogue-activate` turns on synced products. It does **not** deliver REQ-001 (no category pages) or REQ-002 (no search). It touches REQ-003 only in part: the product page has a variant picker showing the selected variant's price and stock status, without a cart.
 
+> **Plan 013 (D-142 to D-146), an early slice of this phase.** On the project owner's request of 2026-10-29, the product listing page `/{locale}/product` (category tabs, sidebar filters, sort, grid/list, pagination) is built, the product page moves to `/{locale}/product/{productId}/detail`, and a development job assigns mock categories from product-name keywords — `plans/013-product-listing-page.md`. It delivers REQ-001 (browse by category) against those mock categories only; admin category assignment stays with plan 002. It does **not** deliver REQ-002 (search).
+
 **REQ-001 — Browse products by category** · §2 · CONFIRMED
 A customer can browse products filtered to a category. The categories named are Nintendo Switch, PlayStation 5, IT Gadgets and Pre-Order.
 

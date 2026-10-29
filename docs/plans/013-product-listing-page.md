@@ -107,10 +107,10 @@ A product gets its type category as `primary_category_id` and a `product_categor
 
 ### Task 1: Docs, branch and names
 
-- [ ] **Decision rows.** Add D-rows from the next free number for owner decisions 1–4, for the category tree, and for the URL-param filter contract. The owning docs are `02` (a Phase 3 note naming plan 013), `05` (the tree and categoriser), `06` (the job endpoint) and `07` (the listing page).
-- [ ] **Glossary rows:** the routes, every query param, `StorefrontListing*` names, the categoriser and its job, and "product type".
-- [ ] **`CLAUDE.md`:** allow plan 013 alongside 010–012.
-- [ ] **Commit:** `docs: record the product listing page as plan 013`.
+- [x] **Decision rows.** Add D-rows from the next free number for owner decisions 1–4, for the category tree, and for the URL-param filter contract. The owning docs are `02` (a Phase 3 note naming plan 013), `05` (the tree and categoriser), `06` (the job endpoint) and `07` (the listing page).
+- [x] **Glossary rows:** the routes, every query param, `StorefrontListing*` names, the categoriser and its job, and "product type".
+- [x] **`CLAUDE.md`:** allow plan 013 alongside 010–012.
+- [x] **Commit:** `docs: record the product listing page as plan 013`.
 
 ### Task 2: Keyword categoriser and job
 

@@ -131,6 +131,16 @@ that a control which does nothing is not shown.
 - **Breakpoints are the design's:** `xs` 480px, `sm` 640px, `md` 900px and `lg` 1100px, defined in rem in `globals.css`. Use these names, never `min-[…px]:` arbitrary variants: mixed with Tailwind's rem breakpoints those sorted out of order, and the card grid stayed at 3 columns on desktop. The design's grids are 2 / 3 / 4 / 5 columns for product grids and 6 cards across for a rail at `lg`.
 - **Text sizes inherit the design's line height** (1.65): `globals.css` sets it for `text-xs`, `text-sm` and `text-base`, and headings are bold as in the design.
 
+### The product listing page (plan 013)
+
+`/{locale}/product` follows `design/category.html` block for block (D-124): breadcrumb, hero band, type tabs, sidebar filters, toolbar, active-filter chips, card grid and pagination. Decisions: D-142 to D-146.
+
+- **URL-param contract (D-145).** `category`, `type` (repeatable), `min`, `max`, `in_stock=1`, `kit=1`, `pre_order=1`, `sort` (`recommended` default, `best_selling`, `newest`, `price_asc`, `price_desc`), `view` (`grid` default, `list`) and `page`; 24 per page.
+- **Invalid values (R2, D-146).** An invalid `page`, or an unknown `category`, `type`, `sort` or `view`, is a real 404 (D-120); a bad `min` or `max` is ignored and `min` greater than `max` is swapped. Nothing throws.
+- **Facet counts (R1, D-146).** Each count applies every active filter except its own dimension.
+- **Sort.** "แนะนำ" is best-selling first, in-stock before sold-out (D-144); price filters and sorts use the cheapest active variant.
+- **Rendering.** Cards are `ProductCard` with `PriceDisplay` and `StockBadge`; no ratings. The page is server-rendered and `force-dynamic`; the filter controls are a small client component that rewrites the URL. Controls that do nothing yet render inert (D-124). There is no `loading.tsx` above `/product/{id}/detail` (D-120).
+
 ### News list pages (D-137)
 
 `/{locale}/news` and `/{locale}/news/category/{slug}` follow `design/news.html` (plan 012 Task 5), built by `NewsListView` from `listNews`.

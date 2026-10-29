@@ -117,6 +117,15 @@ The public storefront never sees `stock_quantity`. It sees a derived
 in the service layer, and the raw number is not present in any public API
 response (D-024). Low stock is removed from scope (Q-019).
 
+### Product categories (plan 013)
+
+The mock category tree and the keyword categoriser are decided in D-143; the tree is `category` rows seeded by the categoriser job if missing.
+
+- **Tree.** Platforms at the top level (`nintendo-switch`, `playstation-5`, `it-gadgets`); product types are their children (`{platform}-console`, `{platform}-game`, `{platform}-controller`, `{platform}-accessory`; IT Gadgets has only `it-gadgets-accessory`). Names come from `category_translation`.
+- **Flags, not categories.** "ชุดโปรโมชั่น" is `channel_item.is_kit` and "พรีออเดอร์" is `product.is_pre_order`.
+- **Categoriser.** A pure function over the product's Thai name, with first-match-wins keyword tables for platform and for type held in one constant in the service. A product gets its type as `primary_category_id` and a `product_category` row for both the type and its platform; a name matching no platform gets no category and shows under "ทั้งหมด" only.
+- **Admin-owned assignment is never overwritten.** The categoriser touches only a product with no `product_category` row and no `primary_category_id`, so re-running it changes nothing for products already categorised.
+
 ## Concurrency rules
 
 > **Superseded for website orders (D-096).** The website no longer deducts
