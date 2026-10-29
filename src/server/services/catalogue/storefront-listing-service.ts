@@ -55,7 +55,9 @@ export type StorefrontListingParams = {
 export type StorefrontListingFilter = {
   categoryId: string | null;
   typeIds: string[];
+  /** Inclusive lower bound. */
   minSatang: bigint | null;
+  /** Inclusive upper bound: `max` baht means below `max + 1` baht, so `max=999` covers ฿999.99 (D-148). */
   maxSatang: bigint | null;
   inStock: boolean;
   kit: boolean;
@@ -130,7 +132,8 @@ function oneOf<T extends string>(allowed: readonly T[], value: string): value is
  * `page` that is not a plain positive integer up to 10,000, or an unknown `category`, `type`, `sort` or
  * `view`, or one of those given twice with non-empty values (`type` excepted, which repeats; at most 20
  * distinct types are used, after every one is checked). A bad `min` or `max` is dropped, and `min > max`
- * is swapped. A flag is on only for the value `1`. Category slugs are checked against the stored tree: `category` must be a
+ * is swapped. A flag is on only for the value `1`. With a `category`, a known `type` of another platform is
+ * dropped (D-148). Category slugs are checked against the stored tree: `category` must be a
  * platform (no parent) and each `type` a product type (has a parent). Never throws.
  */
 export function parseStorefrontListingParams(
@@ -167,7 +170,12 @@ export function parseStorefrontListingParams(
   // Every distinct slug is checked before the cap, so an unknown one is always a 404 wherever it comes.
   const distinctTypes = [...new Set(values(searchParams.type))];
   if (distinctTypes.some((slug) => !typeSlugs.has(slug))) return null;
-  const types = distinctTypes.slice(0, STOREFRONT_LISTING_MAX_TYPES);
+  // A type outside the chosen platform could never match (AND), so it is dropped rather than shown as chosen.
+  const categoryId = category === null ? null : categories.find((c) => c.slug === category && c.parentId === null)?.id;
+  const parentOf = new Map(categories.map((c) => [c.slug, c.parentId]));
+  const types = distinctTypes
+    .filter((slug) => categoryId === null || parentOf.get(slug) === categoryId)
+    .slice(0, STOREFRONT_LISTING_MAX_TYPES);
 
   let minBaht = baht(searchParams.min);
   let maxBaht = baht(searchParams.max);
@@ -199,7 +207,7 @@ export function toStorefrontListingFilter(
     categoryId: params.category === null ? null : idOf(params.category),
     typeIds: params.types.map(idOf),
     minSatang: params.minBaht === null ? null : BigInt(params.minBaht) * 100n,
-    maxSatang: params.maxBaht === null ? null : BigInt(params.maxBaht) * 100n,
+    maxSatang: params.maxBaht === null ? null : (BigInt(params.maxBaht) + 1n) * 100n - 1n,
     inStock: params.inStock,
     kit: params.kit,
     preOrder: params.preOrder,

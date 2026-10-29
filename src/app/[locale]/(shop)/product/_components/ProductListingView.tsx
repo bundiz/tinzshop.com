@@ -47,12 +47,15 @@ const KIND_ICON: Record<ProductTypeKey, IconName> = {
   accessory: 'headphones',
 };
 
-/** The design's price presets, in whole baht; both bounds are inclusive (D-147). */
+/**
+ * The design's price presets, in whole baht, with no overlap: `min` is inclusive and `max` means below
+ * `max + 1` baht, so ต่ำกว่า ฿1,000 (`max=999`) covers ฿999.99 (D-148).
+ */
 const PRICE_PRESETS = [
   { key: 'under1000', minBaht: null, maxBaht: 999 },
-  { key: 'from1000', minBaht: 1000, maxBaht: 5000 },
-  { key: 'from5000', minBaht: 5000, maxBaht: 20000 },
-  { key: 'over20000', minBaht: 20001, maxBaht: null },
+  { key: 'from1000', minBaht: 1000, maxBaht: 4999 },
+  { key: 'from5000', minBaht: 5000, maxBaht: 19999 },
+  { key: 'over20000', minBaht: 20000, maxBaht: null },
 ] as const;
 
 /** The nav entry the listing's filters match, drawn as current in the header. */
@@ -148,7 +151,15 @@ export default function ProductListingView({ listing, articlesMenu }: ProductLis
   ];
   const clearHref = href(clearedListing(active));
 
-  const filterTitle = (text: string) => <p className="mb-2 text-sm font-bold">{text}</p>;
+  // Each sidebar block is headed (h2, under the page's h1); a checkbox group is also a fieldset whose legend
+  // holds that heading, so a screen reader announces the group with each box.
+  const filterTitle = (text: string) => <h2 className="mb-2 text-sm font-bold">{text}</h2>;
+  const filterGroup = (title: string, children: ReactNode) => (
+    <fieldset className="m-0 min-w-0 border-0 p-0">
+      <legend className="p-0">{filterTitle(title)}</legend>
+      {children}
+    </fieldset>
+  );
   const filterBlock = (children: ReactNode) => (
     <div className="border-b border-border py-3.5 last:border-b-0">{children}</div>
   );
@@ -273,39 +284,43 @@ export default function ProductListingView({ listing, articlesMenu }: ProductLis
                   </>,
                 )}
                 {filterBlock(
-                  <>
-                    {filterTitle(t('filters.types'))}
-                    {kindsInScope.map((kind) => (
+                  filterGroup(
+                    t('filters.types'),
+                    <>
+                      {kindsInScope.map((kind) => (
+                        <ListingCheck
+                          key={kind}
+                          label={kindLabel(kind)}
+                          count={kindCount(facets.types, kind, active.category)}
+                          checked={chosenKinds.includes(kind)}
+                          href={change({ types: toggleKind(facets.types, active, kind) })}
+                        />
+                      ))}
                       <ListingCheck
-                        key={kind}
-                        label={kindLabel(kind)}
-                        count={kindCount(facets.types, kind, active.category)}
-                        checked={chosenKinds.includes(kind)}
-                        href={change({ types: toggleKind(facets.types, active, kind) })}
+                        label={t('type.kit')}
+                        count={facets.kit}
+                        checked={active.kit}
+                        href={change({ kit: !active.kit })}
                       />
-                    ))}
-                    <ListingCheck
-                      label={t('type.kit')}
-                      count={facets.kit}
-                      checked={active.kit}
-                      href={change({ kit: !active.kit })}
-                    />
-                  </>,
+                    </>,
+                  ),
                 )}
                 {filterBlock(
-                  <>
-                    {filterTitle(t('filters.status'))}
-                    <ListingCheck
-                      label={t('filters.inStock')}
-                      checked={active.inStock}
-                      href={change({ inStock: !active.inStock })}
-                    />
-                    <ListingCheck
-                      label={t('filters.preOrderOnly')}
-                      checked={active.preOrder}
-                      href={change({ preOrder: !active.preOrder })}
-                    />
-                  </>,
+                  filterGroup(
+                    t('filters.status'),
+                    <>
+                      <ListingCheck
+                        label={t('filters.inStock')}
+                        checked={active.inStock}
+                        href={change({ inStock: !active.inStock })}
+                      />
+                      <ListingCheck
+                        label={t('filters.preOrderOnly')}
+                        checked={active.preOrder}
+                        href={change({ preOrder: !active.preOrder })}
+                      />
+                    </>,
+                  ),
                 )}
               </ListingFilterPanel>
 

@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   useOptimistic,
+  useRef,
   useState,
   useTransition,
   type KeyboardEvent,
@@ -71,6 +72,65 @@ export function parseBahtInput(text: string): number | null {
   return /^[0-9]{1,12}$/.test(trimmed) ? Number(trimmed) : null;
 }
 
+/** What a price input shows for a URL value. */
+const bahtText = (value: number | null): string => (value === null ? '' : String(value));
+
+/**
+ * One price input, controlled: what is typed stays local until blur or Enter, and a new URL value (another
+ * control, back/forward) replaces it. It is never remounted, so it keeps focus after Enter.
+ */
+function PriceInput({
+  value,
+  label,
+  placeholder,
+  onApply,
+}: {
+  value: number | null;
+  label: string;
+  placeholder: string;
+  /** Called with the new whole-baht value (`null` clears the bound) when it differs from `value`. */
+  onApply: (next: number | null) => void;
+}) {
+  const [text, setText] = useState(bahtText(value));
+  // Resync when the URL's value changes (React's "adjust state when a prop changes" pattern).
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    setText(bahtText(value));
+  }
+  const apply = () => {
+    const trimmed = text.trim();
+    const next = parseBahtInput(trimmed);
+    // An entry that is not whole baht (or a non-canonical one, "0100") goes back to what the URL holds.
+    if (trimmed !== '' && next === null) {
+      setText(bahtText(value));
+      return;
+    }
+    if (next === value) {
+      setText(bahtText(value));
+      return;
+    }
+    onApply(next);
+  };
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      min={0}
+      step={1}
+      aria-label={label}
+      placeholder={placeholder}
+      value={text}
+      onChange={(event) => setText(event.currentTarget.value)}
+      onBlur={apply}
+      onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') apply();
+      }}
+      className="h-[38px] w-full min-w-0 rounded-(--radius-sm) border border-border px-2.5 text-sm focus:border-primary focus:outline-none"
+    />
+  );
+}
+
 /** The ช่วงราคา inputs: a change applies on blur or Enter, never on every keystroke. */
 export function ListingPriceRange({
   locale,
@@ -82,45 +142,30 @@ export function ListingPriceRange({
   labels: { min: string; max: string; minPlaceholder: string; maxPlaceholder: string };
 }) {
   const [, go] = useListingNavigation();
-  const apply = (key: 'minBaht' | 'maxBaht', text: string) => {
-    const value = parseBahtInput(text);
-    if (value === active[key]) return;
-    go(listingHref(locale, nextListing(active, { [key]: value })));
+  // Enter then blur would apply the same change twice before the new URL arrives; keyed by the URL it
+  // started from, so the same change made again from another state still applies.
+  const pending = useRef<string | null>(null);
+  const apply = (key: 'minBaht' | 'maxBaht') => (next: number | null) => {
+    const href = listingHref(locale, nextListing(active, { [key]: next }));
+    const change = `${listingHref(locale, active)} -> ${href}`;
+    if (pending.current === change) return;
+    pending.current = change;
+    go(href);
   };
-  const onKeyDown = (key: 'minBaht' | 'maxBaht') => (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') apply(key, event.currentTarget.value);
-  };
-  const input =
-    'h-[38px] w-full min-w-0 rounded-(--radius-sm) border border-border px-2.5 text-sm focus:border-primary focus:outline-none';
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-      <input
-        // A new URL value resets what is typed.
-        key={`min-${active.minBaht}`}
-        type="number"
-        inputMode="numeric"
-        min={0}
-        step={1}
-        aria-label={labels.min}
+      <PriceInput
+        value={active.minBaht}
+        label={labels.min}
         placeholder={labels.minPlaceholder}
-        defaultValue={active.minBaht ?? ''}
-        onBlur={(event) => apply('minBaht', event.currentTarget.value)}
-        onKeyDown={onKeyDown('minBaht')}
-        className={input}
+        onApply={apply('minBaht')}
       />
       <span aria-hidden="true">–</span>
-      <input
-        key={`max-${active.maxBaht}`}
-        type="number"
-        inputMode="numeric"
-        min={0}
-        step={1}
-        aria-label={labels.max}
+      <PriceInput
+        value={active.maxBaht}
+        label={labels.max}
         placeholder={labels.maxPlaceholder}
-        defaultValue={active.maxBaht ?? ''}
-        onBlur={(event) => apply('maxBaht', event.currentTarget.value)}
-        onKeyDown={onKeyDown('maxBaht')}
-        className={input}
+        onApply={apply('maxBaht')}
       />
     </div>
   );

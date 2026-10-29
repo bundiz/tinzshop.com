@@ -64,6 +64,19 @@ describe('parseStorefrontListingParams', () => {
     });
   });
 
+  it('drops a known type of another platform when a category is chosen', () => {
+    expect(parse({ category: 'playstation-5', type: ['nintendo-switch-game', 'playstation-5-game'] })?.types).toEqual([
+      'playstation-5-game',
+    ]);
+    expect(parse({ category: 'playstation-5', type: 'nintendo-switch-game' })?.types).toEqual([]);
+    expect(parse({ type: ['nintendo-switch-game', 'playstation-5-game'] })?.types).toEqual([
+      'nintendo-switch-game',
+      'playstation-5-game',
+    ]);
+    // An unknown type is still a 404, chosen category or not.
+    expect(parse({ category: 'playstation-5', type: 'xbox-game' })).toBeNull();
+  });
+
   it.each([
     ['page 0', { page: '0' }],
     ['a negative page', { page: '-1' }],
@@ -143,13 +156,13 @@ describe('parseStorefrontListingParams', () => {
 });
 
 describe('toStorefrontListingFilter', () => {
-  it('maps slugs to ids and baht to satang', () => {
+  it('maps slugs to ids and baht to satang, max covering every satang below the next baht', () => {
     const params = parse({ category: 'playstation-5', type: 'playstation-5-game', min: '10', max: '20', page: '2' });
     expect(toStorefrontListingFilter(params!, TREE)).toEqual({
       categoryId: 'ps',
       typeIds: ['ps-game'],
       minSatang: 1000n,
-      maxSatang: 2000n,
+      maxSatang: 2099n,
       inStock: false,
       kit: false,
       preOrder: false,

@@ -112,7 +112,11 @@ describe('ProductListingView', () => {
     expect(side).toMatch(/เครื่องเกม<span[^>]*>27<\/span>/);
     expect(side).toMatch(/ชุดโปรโมชั่น<span[^>]*>12<\/span>/);
     expect(side).toContain('href="/th/product?category=playstation-5"');
-    expect(side).toContain('href="/th/product?min=1000&max=5000"');
+    // The presets do not overlap: max means below max + 1 baht (D-148).
+    expect(side).toContain('href="/th/product?max=999"');
+    expect(side).toContain('href="/th/product?min=1000&max=4999"');
+    expect(side).toContain('href="/th/product?min=5000&max=19999"');
+    expect(side).toContain('href="/th/product?min=20000"');
     expect(text(side)).not.toContain('คะแนนรีวิว');
   });
 
@@ -152,6 +156,12 @@ describe('ProductListingView', () => {
     expect(text(html)).toContain(th.shop.listing.empty);
     expect(html).toMatch(/href="\/th\/product"[^>]*>ล้างทั้งหมด</);
     expect(html).not.toContain('data-view=');
+  });
+
+  it('heads each sidebar block and groups the checkboxes in fieldsets', () => {
+    const side = sidebar(render(listing()));
+    expect(side.match(/<h2[^>]*>[^<]+<\/h2>/g)?.map(text)).toEqual(['หมวดหมู่', 'ช่วงราคา (บาท)', 'ประเภทสินค้า', 'สถานะสินค้า']);
+    expect(side.match(/<fieldset[^>]*><legend[^>]*><h2[^>]*>([^<]+)<\/h2>/g)?.map(text)).toEqual(['ประเภทสินค้า', 'สถานะสินค้า']);
   });
 
   it('has the ตัวกรอง disclosure for narrow screens, closed at first', () => {

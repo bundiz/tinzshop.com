@@ -120,9 +120,10 @@ response (D-024). Low stock is removed from scope (Q-019).
 
 ### Product categories (plan 013)
 
-The mock category tree and the keyword categoriser are decided in D-143; the tree is `category` rows seeded by the categoriser job if missing.
+The mock category tree and the keyword categoriser are decided in D-143. The tree is `category` rows seeded by the **data migration** `seed_category_tree` (ruling R5, D-149), so every environment has it after `prisma migrate deploy`; the categoriser job's own upsert seeds the same rows if missing.
 
 - **Tree.** Platforms at the top level (`nintendo-switch`, `playstation-5`, `it-gadgets`); product types are their children (`{platform}-console`, `{platform}-game`, `{platform}-controller`, `{platform}-accessory`; IT Gadgets has only `it-gadgets-accessory`). Names come from `category_translation`.
+- **Seed migration (D-149).** `prisma/migrations/…_seed_category_tree/migration.sql` inserts the 3 platforms, their 9 types, positions and th/en names with `INSERT … ON CONFLICT … DO NOTHING`, so it is idempotent and never overwrites an edited row. It holds exactly `CATEGORY_TREE` (`categorise-by-name.ts`); the unit test `category-tree-migration.test.ts` parses the SQL and fails if the two drift. A change to the tree needs a new migration as well as the constant. Integration tests truncate every table, so they do not see the seed; they create the categories they need.
 - **Flags, not categories.** "ชุดโปรโมชั่น" is `channel_item.is_kit` and "พรีออเดอร์" is `product.is_pre_order`.
 - **Categoriser.** A pure function over the product's Thai name, with first-match-wins keyword tables for platform and for type held in one constant in the service. A product gets its type as `primary_category_id` and a `product_category` row for both the type and its platform; a name matching no platform gets no category and shows under "ทั้งหมด" only.
 - **Admin-owned assignment is never overwritten.** The categoriser touches only a product with no `product_category` row and no `primary_category_id`, so re-running it changes nothing for products already categorised.

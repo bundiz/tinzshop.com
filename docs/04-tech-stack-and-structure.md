@@ -18,7 +18,7 @@ described there.
 | Validation | **Zod** | One schema validates the HTTP boundary, the form, and the domain input — so client and server can never disagree about what is valid (D-021, D-034). |
 | Styling | **Tailwind CSS** | Mobile-first by construction, which REQ-009 requires. No separate stylesheet to keep in step with a component. |
 | i18n | **next-intl** | Locale segment in the URL, message catalogues per language, applied identically to storefront and admin (REQ-007, REQ-033). |
-| Tests | **Vitest** + **Playwright** | Vitest for domain and integration, Playwright for the handful of end-to-end journeys. See `08-security-testing.md`. |
+| Tests | **Vitest** + **Playwright** | Vitest for domain and integration, Playwright for the handful of end-to-end journeys. `jsdom` (dev only) for the few component tests that need a real DOM, opted into per file (D-150). See `08-security-testing.md`. |
 | Lint / format | **ESLint** + **Prettier** | Including the import-boundary rule that enforces the layering in `03-architecture.md`. |
 
 **Versions are pinned exactly, never by range.** The version actually chosen
