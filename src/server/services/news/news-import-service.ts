@@ -54,9 +54,16 @@ function errorCodeOf(error: unknown): string {
   return error instanceof NewsSourceError ? error.code : 'unexpected';
 }
 
-/** Name and message only. A `WordPressApiError`/`NewsSourceError` message is an API path and a reason. */
+/**
+ * What may be logged about an error. Our own `NewsSourceError` message is a fixed code and an API
+ * path, so it is kept. Any other error (a database error can embed its query arguments, such as a
+ * post's body or URL) is logged by name and, when it has one, its string `code` only, never its message.
+ */
 function describe(error: unknown): string {
-  return error instanceof Error ? `${error.name}: ${error.message}` : 'non-Error thrown';
+  if (error instanceof NewsSourceError) return `${error.name}: ${error.message}`;
+  if (!(error instanceof Error)) return 'non-Error thrown';
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(code) ? `${error.name} ${code}` : error.name;
 }
 
 async function execute(deps: NewsImportDeps): Promise<Exclude<NewsImportSummary, { outcome: 'skipped' }>> {

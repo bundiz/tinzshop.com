@@ -114,7 +114,7 @@ describe('runNewsImport', () => {
       ],
     });
     expect(news.upsertNewsArticle).toHaveBeenCalledTimes(3);
-    expect(deps.logError).toHaveBeenCalledWith('news import: post 2 save_failed: Error: save failed');
+    expect(deps.logError).toHaveBeenCalledWith('news import: post 2 save_failed: Error');
   });
 
   it('counts an unchanged post without writing it', async () => {
@@ -185,7 +185,38 @@ describe('runNewsImport', () => {
     const summary = await runNewsImport(deps);
 
     expect(summary).toMatchObject({ outcome: 'failed', created: 1, errorCode: 'unexpected' });
-    expect(deps.logError).toHaveBeenCalledWith('news import failed: Error: page 2 was not expected');
+    expect(deps.logError).toHaveBeenCalledWith('news import failed: Error');
+  });
+
+  it('logs an unexpected error by name and code, never its message', async () => {
+    class PrismaClientKnownRequestError extends Error {
+      readonly code = 'P2002';
+      constructor(message: string) {
+        super(message);
+        this.name = 'PrismaClientKnownRequestError';
+      }
+    }
+    const leak = 'Invalid invocation: { bodyHtml: "SECRET_BODY", sourceUrl: "https://old-site.test/SECRET_BODY" }';
+    const { deps } = setup({
+      pages: [{ articles: [article(1n)], failures: [], skipped: 0, totalPages: 1 }],
+      upsert: async () => {
+        throw new PrismaClientKnownRequestError(leak);
+      },
+    });
+    deps.news.upsertNewsCategories = vi.fn(async () => {
+      throw new TypeError(leak);
+    });
+
+    await runNewsImport(deps);
+    deps.news.upsertNewsCategories = vi.fn(async () => 1);
+    await runNewsImport(deps);
+
+    const lines = vi.mocked(deps.logError).mock.calls.map(([line]) => line);
+    expect(lines).toEqual([
+      'news import failed: TypeError',
+      'news import: post 1 save_failed: PrismaClientKnownRequestError P2002',
+    ]);
+    expect(lines.join('\n')).not.toContain('SECRET_BODY');
   });
 
   it('handles a source with no posts', async () => {
