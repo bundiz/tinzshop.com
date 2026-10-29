@@ -17,6 +17,11 @@ This change designs the news tables, imports everything from the old site, and b
 - **O-1, Reviews category:** the old "Reviews" category (37 posts, such as "รีวิว Mobapad HuBen 2") holds **staff-written** articles, so it is imported as a news category. D-084 / REQ-047's "product reviews is not a news category" concerns **customer** reviews (REQ-054) only.
 - **O-2, import mode:** a one-time import that can be **re-run safely until go-live**. A re-run adds new posts and updates changed ones. After go-live, staff write news in our own admin, which is a later plan; the old site is then never read again.
 - **O-3, images:** keep the old site's image URLs for now, like Shopee images (spec 2026-10-26 O-5). They must be copied before the old site is shut down. File storage is not chosen yet (ADR-0002, phase 7).
+- **O-4, bloggers write news on our site after go-live,** so the tables are built for authoring from the start. The editor itself is a later plan, together with staff sign-in (plan 002).
+- **O-5, publishing:** a blogger publishes their own article; no approval step. An Admin can also edit or unpublish.
+- **O-6, scheduling:** a blogger can publish now, or set a future publish time, and the article appears on the site automatically at that time.
+- **O-7, ownership:** any blogger can edit or delete any article, not only their own.
+- **O-8, byline:** the article shows the writer's display name ("โดย …"). For imported posts this is the old WordPress author's display name.
 
 ## 3. What the old site offers (verified 2026-10-29)
 
@@ -32,6 +37,7 @@ This change designs the news tables, imports everything from the old site, and b
   - **Top level:** Nintendo Switch 2 (415), gulikit (20), เกี่ยวกับ Tinzshop (1) and Uncategorized (5).
 - **Tags.** 258 tags exist. They are not imported (YAGNI; no design shows them).
 - **Language.** All content is Thai.
+- **Authors.** `/wp-json/wp/v2/users` is public and gives each author's display `name`; posts carry an `author` id. Real staff names must never be committed (test fixtures use invented names).
 
 ## 4. Data model (new tables)
 
@@ -52,12 +58,16 @@ Naming follows the catalogue pattern (D-014): snake_case, singular, uuid ids, an
 **`news_article`**
 - `id`
 - `slug`, unique, decoded
-- `published_at`, from `date_gmt`
-- `is_published`, boolean, true for imported posts
 - `featured_image_url`, nullable, the old-site URL (O-3)
 - `source_id`, the WordPress post id, unique and nullable
 - `source_url`, the old `link`, kept for a future redirect map
 - `source_modified_at`, the `modified_gmt` value, which tells a re-import what changed
+- `status`, enum `news_article_status`: `draft` or `published` (the owner's set, O-5). Imported posts are `published`.
+- `published_at`, nullable, required when `published`; imported from `date_gmt`. **An article is live when `status = 'published'` and `published_at <= now()`**, so a future time is a scheduled article (O-6), and no extra status or job is needed.
+- `byline_name`, the display name shown as "โดย …" (O-8), copied when the article is saved; imported from the WordPress author's `name`
+- `author_staff_id`, nullable uuid: the staff member who wrote it. The FK to `staff_user` is added by the staff sign-in plan (002), because that table does not exist yet. It is null for imported posts.
+- `created_by_staff_id`, `updated_by_staff_id`, nullable uuids, same FK note; together they record who changed the article (O-7)
+- `deleted_at`, nullable: deleting is soft, so an article deleted by mistake can be restored, and order lines and links never dangle. A deleted article is never shown.
 - `created_at`, `updated_at`
 
 **`news_article_translation`**
@@ -72,8 +82,10 @@ Naming follows the catalogue pattern (D-014): snake_case, singular, uuid ids, an
 - composite primary key
 
 Notes:
-- **The author is not stored.** The design shows "โดยทีม Tinzshop", so the page renders that line as a fixed message.
-- **No article status set beyond `is_published` is invented** (compare Q-023, which covers order statuses).
+- **Bilingual writing.** Bloggers can write `th` and `en` translations; imported posts have `th` only.
+- **Indexes.** Add an index on (`status`, `published_at` desc) where `deleted_at` is null, for the list pages. `news_article_category` gets an index on `category_id`.
+- **Not stored now:** revision history, tags, comments and SEO fields beyond the excerpt. They can be added when the editor plan needs them.
+- **Images written by bloggers** need file storage, which is not chosen yet (phase 7). Until then the editor plan can only take image URLs.
 
 ## 5. Import
 
@@ -95,7 +107,7 @@ Notes:
 
 ## 6. Pages
 
-- **`/{locale}/news`**: every published article, newest first, 12 per page, `?page=n`. The layout follows `design/news.html`:
+- **`/{locale}/news`**: every live article (published, `published_at` reached, not deleted), newest first, 12 per page, `?page=n`. The layout follows `design/news.html`:
   - breadcrumb, then title and subtitle
   - **category tabs**: "ทั้งหมด" plus each category that has articles, with its count
   - a **feature block** of the 3 newest articles on page 1
@@ -103,7 +115,7 @@ Notes:
   - **pagination**
 - **`/{locale}/news/category/{slug}`**: the same layout, filtered. A category includes its **descendants' articles**, so clicking "News" shows everything under News.
 - **`/{locale}/news/{slug}`**: the article page:
-  - breadcrumb, category label(s), title, date (Thai Buddhist year on `/th`, D-118), featured image and sanitised body
+  - breadcrumb, category label(s), title, byline "โดย {byline_name}", date (Thai Buddhist year on `/th`, D-118), featured image and sanitised body
   - "ข่าวที่เกี่ยวข้อง": up to 3 other articles from the same category
 - **Not found:**
   - an unknown slug or category answers a real 404 (D-120, D-122)
@@ -115,7 +127,7 @@ Notes:
 
 ## 7. Non-goals
 
-The staff news editor and admin (a later plan), comments, tags, search, redirects from old URLs (`source_url` is kept to build them later), copying images, and RSS.
+The staff news editor and admin (a later plan, built on these tables together with staff sign-in), comments, tags, search, redirects from old URLs (`source_url` is kept to build them later), copying images, and RSS.
 
 ## 8. Risks
 

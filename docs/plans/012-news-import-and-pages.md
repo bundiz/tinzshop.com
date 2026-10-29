@@ -65,12 +65,12 @@
 
 **Files:** Modify `docs/11-decisions.md`, `docs/02-scope-and-phases.md`, `docs/05-database.md`, `docs/12-glossary.md`, `docs/14-integrations.md`, `CLAUDE.md` and `.env.example`.
 
-- [ ] **Step 1:** Add D-rows from D-125 for owner decisions O-1 to O-3 (spec §2) and for the WordPress REST API as the import source (spec §3, §5). Each row links to its owning doc:
+- [ ] **Step 1:** Add D-rows from D-125 for owner decisions O-1 to O-8 (spec §2) and for the WordPress REST API as the import source (spec §3, §5). Each row links to its owning doc:
   - news scope goes in a short Phase 6 note in `02`, naming plan 012
   - the old-site source goes in a new "Old tinzshop.com WordPress (news import)" section in `14`
   - the tables go in `05`
 - [ ] **Step 2:** Glossary rows:
-  - the tables and columns in spec §4: `news_category`, `news_category_translation`, `news_article`, `news_article_translation`, `news_article_category`, `source_id`, `source_url`, `source_modified_at`, `body_html`
+  - the tables and columns in spec §4: `news_category`, `news_category_translation`, `news_article`, `news_article_translation`, `news_article_category`, `news_article_status` (`draft`/`published`), `source_id`, `source_url`, `source_modified_at`, `published_at`, `byline_name`, `author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`, `deleted_at`, `body_html`, and the "live article" rule
   - "News import" / `news-import`
   - `NewsArticleSnapshot`
   - the three page routes
@@ -89,23 +89,25 @@
   - `rejects a duplicate slug` (article and category)
   - `rejects a duplicate source_id`
   - `allows a category tree via parent_id`
+  - `rejects a published article without published_at` (CHECK constraint, hand-written SQL)
 - [ ] **Step 2:** Run `npm run test:integration`. It fails.
-- [ ] **Step 3:** Add the five models exactly as spec §4, with `@@map`/`@map` snake_case and uuid ids `@default(dbgenerated("gen_random_uuid()")) @db.Uuid`. `source_id` is `BigInt? @unique`. Reuse the existing `Locale` enum. Create the migration, apply it to the dev and test databases (non-destructive), and check that `prisma migrate diff` is empty.
+- [ ] **Step 3:** Add the five models exactly as spec §4, with `@@map`/`@map` snake_case and uuid ids `@default(dbgenerated("gen_random_uuid()")) @db.Uuid`. `source_id` is `BigInt? @unique`. Reuse the existing `Locale` enum. Add the `news_article_status` enum, the CHECK `status <> 'published' OR published_at IS NOT NULL`, and the partial index on (`status`, `published_at` desc) where `deleted_at` is null. The `*_staff_id` columns are plain nullable uuids with no FK yet (plan 002 adds it). Create the migration, apply it to the dev and test databases (non-destructive), and check that `prisma migrate diff` is empty.
 - [ ] **Step 4:** Tests pass. Commit: `feat: add news tables`.
 
 ### Task 3: WordPress adapter
 
-**Files:** Create `src/server/adapters/wordpress/client.ts`, `schemas.ts`, `map-post.ts`, `sanitize.ts`, the tests beside them, and `__fixtures__/` (real responses saved once from the live API: 2 posts with HTML, plus the categories list). Modify `src/server/config.ts` (`NEWS_IMPORT_SOURCE_URL`, optional URL). Modify `package.json` (pinned `sanitize-html`).
+**Files:** Create `src/server/adapters/wordpress/client.ts`, `schemas.ts`, `map-post.ts`, `sanitize.ts`, the tests beside them, and `__fixtures__/` (real responses saved once from the live API: 2 posts with HTML, plus the categories list). **Replace every author name and the users list in fixtures with invented names** (hard rule 2: no real people's names in the repo). Modify `src/server/config.ts` (`NEWS_IMPORT_SOURCE_URL`, optional URL). Modify `package.json` (pinned `sanitize-html`).
 
 **Interfaces:**
 - `createWordPressClient({ baseUrl, fetch })` returns:
   - `listCategories(): Promise<WpCategory[]>`, all pages
   - `listPostsPage(page, perPage=100): Promise<{ posts: WpPost[]; totalPages: number }>`
+  - `listAuthors(): Promise<Map<number, string>>` (id → display name)
   - `getMedia(id): Promise<{ sourceUrl } | null>`
 - `sanitizeArticleHtml(html: string): { html: string; removedEmbeds: number }`
 - `htmlToPlainText(html: string): string`
 - `decodeSlug(s: string): string`
-- `mapWordPressPost(post, mediaUrl: string | null): NewsArticleSnapshot`
+- `mapWordPressPost(post, mediaUrl: string | null, authorName: string | null): NewsArticleSnapshot` (status `published`, `bylineName` = author name, else the `shop.news.bylineFallback` text decided in Task 6: the snapshot carries `null`)
 - `mapWordPressCategory(c): NewsCategorySnapshot`
 - The snapshot types are declared in `src/server/services/news/news-snapshot.ts` (Task 4 uses them; create the file here, types only).
 
@@ -146,7 +148,7 @@
 **Interfaces:**
 - `listNews({ locale, categorySlug?, page }): Promise<NewsListPage | null>`. It returns `null` for an unknown category or a page past the end.
 - `NewsListPage = { items: NewsCardData[]; page: number; totalPages: number; total: number; categories: { slug; name; count }[]; activeCategorySlug: string | null }`
-- The category filter includes descendants, distinct articles, newest first, 12 per page. Tabs list categories that have at least one article, ordered by count.
+- Only live articles are read (`status = 'published'`, `published_at <= now()`, `deleted_at` null); test `hides drafts, scheduled and deleted articles`. The category filter includes descendants, distinct articles, newest first, 12 per page. Tabs list categories that have at least one article, ordered by count.
 
 - [ ] **Step 1: Write the failing tests:**
   - **service:** `includes descendant categories without duplicates` (Review Focus 3), `returns null past the last page`, `falls back to the th title on en`
@@ -161,7 +163,7 @@
 
 **Interfaces:**
 - `getNewsArticle({ locale, slug }): Promise<NewsArticleDetail | null>`
-- `NewsArticleDetail = { slug; title; publishedAt; featuredImageUrl; bodyHtml; categories: { slug; name }[]; related: NewsCardData[] }`
+- `NewsArticleDetail = { slug; title; bylineName: string | null; publishedAt; featuredImageUrl; bodyHtml; categories: { slug; name }[]; related: NewsCardData[] }`. The page shows "โดย {bylineName}", or the message `shop.news.bylineFallback` ("ทีม Tinzshop") when it is null.
 
 - [ ] **Step 1: Write the failing tests:**
   - `opens an article by a Thai slug` (Review Focus 4)
