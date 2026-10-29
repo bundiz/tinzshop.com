@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Not started — written 2026-10-29, awaiting the project owner's review
+- **Status:** Implemented 2026-10-29; the owner's re-import (Task 7 Step 4) and the manual tests are outstanding
 - **Phase:** 6 (news), as an early slice on the owner's request of 2026-10-29
 - **Requirements:** REQ-047 (staff-written game news in categories)
 - **Depends on plan:** 011 (site header and footer, `[locale]` routing, D-120/D-122 404 rules)
@@ -241,4 +241,6 @@ Staff news editor/admin, comments, tags, search, old-URL redirects, image copyin
 
 ## Outcome
 
-Not started.
+Implemented on branch `feat/win/news` (2026-10-29): the news tables, the WordPress adapter and import job, and the news list, category and article pages and the landing news section. After the owner's answer to Q-048 (D-139, superseding D-125) news has no review category and the old "Uncategorized" category is unlisted (Task 7). The final whole-branch review's findings were fixed in one pass: the featured image URL is kept only when it is an absolute http(s) URL, the iframe title is inserted literally, and the stale documentation and `.env.example` wording were corrected.
+
+The import has been run once against the live old site (540 articles, 13 categories), before Task 7. The owner's re-run after Task 7 (Step 4), which applies D-139 to the stored articles, is pending, and so are the manual tests; no manual test box is ticked.
