@@ -18,8 +18,14 @@
       "links": {
         "label": "ลิงก์ช่วยเหลือ",
         "trackOrder": "ติดตามคำสั่งซื้อ",
-        "help": "ช่วยเหลือ",
-        "news": "ข่าวเกม"
+        "help": "ช่วยเหลือ"
+      },
+      "articles": {
+        "label": "บทความ",
+        "reviews": "รีวิวสินค้า",
+        "products": "สินค้า",
+        "news": "News",
+        "submenu": "เมนูย่อย {name}"
       },
       "search": {
         "label": "ค้นหาสินค้า",
@@ -304,6 +310,58 @@
       "preOrder": "พรีออเดอร์",
       "bundles": "ชุดโปรโมชั่น",
       "news": "ข่าวเกม"
+    },
+    "news": {
+      "meta": {
+        "title": "ข่าวเกม | Tinzshop",
+        "categoryTitle": "{name} — ข่าวเกม | Tinzshop",
+        "articleTitle": "{title} — ข่าวเกม | Tinzshop"
+      },
+      "breadcrumb": {
+        "label": "เส้นทาง",
+        "home": "หน้าแรก"
+      },
+      "title": "ข่าวเกม",
+      "subtitle": "ข่าวสารและประกาศจากทีม Tinzshop",
+      "tabs": {
+        "label": "หมวดหมู่ข่าว",
+        "all": "ทั้งหมด"
+      },
+      "feature": {
+        "label": "ข่าวเด่น"
+      },
+      "latest": {
+        "title": "ข่าวล่าสุด"
+      },
+      "byline": "โดย {name}",
+      "bylineFallback": "ทีม Tinzshop",
+      "date": "{date, date, medium}",
+      "imagePlaceholderAlt": "ยังไม่มีรูปภาพข่าว",
+      "empty": "ยังไม่มีข่าวในขณะนี้",
+      "categoryEmpty": "ยังไม่มีข่าวในหมวดนี้",
+      "pagination": {
+        "label": "เลขหน้า",
+        "previous": "หน้าก่อนหน้า",
+        "next": "หน้าถัดไป",
+        "page": "หน้า {page}"
+      },
+      "sidebar": {
+        "label": "แถบข้าง",
+        "preOrderTitle": "พรีออเดอร์เกมใหม่",
+        "preOrderText": "จองเกมและเครื่องใหม่ก่อนวางจำหน่าย",
+        "preOrderAction": "ดูสินค้าพรีออเดอร์"
+      },
+      "article": {
+        "categoriesLabel": "หมวดของข่าวนี้"
+      },
+      "related": {
+        "title": "ข่าวที่เกี่ยวข้อง"
+      },
+      "landing": {
+        "title": "ข่าวเกมล่าสุด",
+        "more": "อ่านทั้งหมด"
+      },
+      "videoTitle": "วิดีโอ"
     }
   }
 }

@@ -1,13 +1,31 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { createWordPressClient } from '@/server/adapters/wordpress/client';
+import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-source';
 import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-source';
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
-import { getServerConfig } from '@/server/config';
+import { getNewsImportJobConfig, getServerConfig } from '@/server/config';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
-import { tryWithAdvisoryLock, CATALOGUE_SYNC_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
+import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
+import {
+  tryWithAdvisoryLock,
+  CATALOGUE_SYNC_LOCK_KEY,
+  NEWS_IMPORT_LOCK_KEY,
+} from '@/server/repositories/shared/advisory-lock';
+import {
+  applyExcludedNewsCategories,
+  countLiveNewsArticles,
+  findLiveNewsArticle,
+  findArticleSourceStates,
+  listLiveNewsArticles,
+  listLiveNewsCategoryLinks,
+  listNewsCategories,
+  upsertNewsArticle,
+  upsertNewsCategories,
+} from '@/server/repositories/news/news-repository';
 import {
   listKnownItems,
   markItemsNotFound,
@@ -36,6 +54,19 @@ import {
 import { getProductDetail, type ProductDetail } from '@/server/services/catalogue/product-detail-service';
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
+import { runNewsImport } from '@/server/services/news/news-import-service';
+import {
+  getNewsArticle,
+  listLatestNews,
+  listListedNewsCategories,
+  listNews,
+  type GetNewsArticleInput,
+  type ListedNewsCategory,
+  type ListNewsInput,
+  type NewsArticleDetail,
+  type NewsCardData,
+  type NewsListPage,
+} from '@/server/services/news/news-read-service';
 
 // Built on first use, never at import, so `next build` needs no environment.
 let shopeeClient: ShopeeClient | undefined;
@@ -91,6 +122,37 @@ export function getProductDetailReader(): (productId: string, locale: Locale) =>
   return (productId, locale) => getProductDetail({ findStorefrontProduct }, productId, locale);
 }
 
+/** The news list and category pages' read (plan 012): built per call, needs no configuration beyond the database. */
+export function getNewsReader(): (input: ListNewsInput) => Promise<NewsListPage | null> {
+  return (input) =>
+    listNews(
+      {
+        news: { listNewsCategories, listLiveNewsCategoryLinks, countLiveNewsArticles, listLiveNewsArticles },
+        now: () => new Date(),
+      },
+      input,
+    );
+}
+
+/** The news article page's read (plan 012 Task 6): built per call, needs no configuration beyond the database. */
+export function getNewsArticleReader(): (input: GetNewsArticleInput) => Promise<NewsArticleDetail | null> {
+  return (input) =>
+    getNewsArticle(
+      { news: { listNewsCategories, listLiveNewsArticles, findLiveNewsArticle }, now: () => new Date() },
+      input,
+    );
+}
+
+/** The landing page's newest news (plan 012 Task 6): built per call, needs no configuration beyond the database. */
+export function getLatestNewsReader(): (input: { locale: Locale; limit: number }) => Promise<NewsCardData[]> {
+  return (input) => listLatestNews({ news: { listNewsCategories, listLiveNewsArticles }, now: () => new Date() }, input);
+}
+
+/** The header's listed news categories, for the บทความ menu (D-140): built per call, needs only the database. */
+export function getListedNewsCategoriesReader(): (locale: Locale) => Promise<ListedNewsCategory[]> {
+  return (locale) => listListedNewsCategories({ news: { listNewsCategories } }, { locale });
+}
+
 /** Development-only API docs; needs no configuration, so it works before `.env` is complete. */
 export function getApiDocsHandlers(): ReturnType<typeof createApiDocsHandlers> {
   return createApiDocsHandlers({
@@ -107,5 +169,27 @@ export function getCatalogueActivationHandler(): ReturnType<typeof createCatalog
     isProduction: process.env.NODE_ENV === 'production',
     jobSecret: () => getServerConfig().jobSecret,
     activate: activateSyncedProducts,
+  });
+}
+
+/**
+ * The news import job (plan 012). Settings are read per request, after the secret check where they
+ * can be, and only the job's own (`JOB_SECRET`, `NEWS_IMPORT_SOURCE_URL`), so a missing Shopee
+ * setting never affects it. Without the source URL the handler answers `503 news_import.not_configured`.
+ */
+export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHandler> {
+  return createNewsImportJobHandler({
+    jobSecret: () => getNewsImportJobConfig().jobSecret,
+    sourceUrl: () => getNewsImportJobConfig().newsImportSourceUrl,
+    runImport: (baseUrl, options) =>
+      runNewsImport(
+        {
+          source: createWordPressNewsSource(createWordPressClient({ baseUrl })),
+          news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates, applyExcludedNewsCategories },
+          lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
+          logError: (message) => console.error(message),
+        },
+        options,
+      ),
   });
 }

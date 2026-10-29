@@ -10,7 +10,8 @@ const COLUMNS = [
 
 /**
  * The storefront footer from the design: logo and description, four link columns, the K-Payment and DBD
- * badges and the copyright line. The column links are inert until their pages exist (D-124).
+ * badges and the copyright line. The column links are inert until their pages exist (D-124); "ข่าวเกม" goes to
+ * the news list.
  */
 export default function SiteFooter() {
   const t = useTranslations('shop');
@@ -39,9 +40,9 @@ export default function SiteFooter() {
             <ul>
               {column.links.map((link) => (
                 <li key={link} className="mb-1.5">
-                  <a href="#" className="hover:text-accent">
+                  <Link href={link === 'news' ? `/${locale}/news` : '#'} className="hover:text-accent">
                     {column.key === 'shopping' ? t(`category.${link}`) : t(`footer.${column.key}.${link}`)}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -3,13 +3,17 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
+import ArticlesMenu from './ArticlesMenu';
+import type { ArticlesMenuEntry } from './articles-menu';
 import SearchForm from './SearchForm';
 
 export type SiteHeaderProps = {
   /** The current page's path without the locale, e.g. `/`; the language switch links to it in the other locale. */
   path: string;
-  /** The category-nav entry drawn as current; only the home page has one today. */
-  activeNav?: 'home';
+  /** The utility bar's "บทความ" menu, built from the listed news categories (`readArticlesMenu`, D-140). */
+  articlesMenu: ArticlesMenuEntry[];
+  /** The category-nav entry drawn as current: `home` on the landing page, `news` on every news route. */
+  activeNav?: 'home' | 'news';
 };
 
 type AppLocale = (typeof routing.locales)[number];
@@ -26,14 +30,17 @@ const CART_COUNT = 0;
 
 /**
  * The storefront header from the design: utility bar (tagline, help links, TH/EN switch), the logo,
- * search, account, wishlist and cart, and the category nav bar. Only the logo, "home" and the
- * language switch go anywhere yet; the rest render as designed and are inert (D-124).
+ * search, account, wishlist and cart, and the category nav bar. Only the logo, "home", the nav's "ข่าวเกม",
+ * the utility bar's "บทความ ▾" menu (D-140) and the language switch go anywhere yet; the rest render as
+ * designed and are inert (D-124).
  */
-export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
+export default function SiteHeader({ path, articlesMenu, activeNav }: SiteHeaderProps) {
   const t = useTranslations('shop.header');
+  const tArticles = useTranslations('shop.header.articles');
   const tCategory = useTranslations('shop.category');
   const locale = useLocale();
   const home = `/${locale}`;
+  const news = `/${locale}/news`;
 
   return (
     <>
@@ -41,6 +48,17 @@ export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
         <div className="mx-auto flex min-h-9 max-w-[1280px] items-center justify-between gap-4 px-4 md:px-6">
           <p className="min-w-0 truncate">{t('tagline')}</p>
           <div className="flex flex-none items-center gap-[18px]">
+            {/* Outside the help links, which are hidden on a phone, so it works there by tap; first in the cluster, so its
+                submenu has room to open to the right on a desktop. */}
+            <ArticlesMenu
+              label={tArticles('label')}
+              items={articlesMenu.map((entry) => ({
+                label: tArticles(entry.labelKey),
+                href: entry.href,
+                submenuLabel: entry.children.length > 0 ? tArticles('submenu', { name: tArticles(entry.labelKey) }) : null,
+                children: entry.children.map((child) => ({ label: child.name, href: child.href })),
+              }))}
+            />
             <nav aria-label={t('links.label')} className="hidden sm:block">
               <ul className="flex items-center gap-[18px]">
                 <li>
@@ -51,11 +69,6 @@ export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
                 <li>
                   <a href="#" className="hover:text-white">
                     {t('links.help')}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t('links.news')}
                   </a>
                 </li>
               </ul>
@@ -134,11 +147,18 @@ export default function SiteHeader({ path, activeNav }: SiteHeaderProps) {
           <NavLink href={home} isActive={activeNav === 'home'}>
             {t('nav.home')}
           </NavLink>
-          {NAV_CATEGORIES.map((key) => (
-            <NavLink key={key} href="#" isActive={false}>
-              {tCategory(key)}
-            </NavLink>
-          ))}
+          {NAV_CATEGORIES.map((key) =>
+            // Only "ข่าวเกม" has a page yet; the product categories stay inert (D-124).
+            key === 'news' ? (
+              <NavLink key={key} href={news} isActive={activeNav === 'news'}>
+                {tCategory(key)}
+              </NavLink>
+            ) : (
+              <NavLink key={key} href="#" isActive={false}>
+                {tCategory(key)}
+              </NavLink>
+            ),
+          )}
         </div>
       </nav>
     </>

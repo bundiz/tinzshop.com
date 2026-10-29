@@ -96,7 +96,7 @@ table obeys; the spec carries the columns. Summary of spec section 5:
 - **Orders and the manual stock list (5.5).** `order_line` gains `stock_adjustment_outcome`, `stock_adjustment_at` and `stock_adjustment_by_staff_id`, and snapshots `product_name`, `option_summary` and `model_sku`. The admin list is paid, unadjusted, non-pre-order lines (D-096).
 - **Identity (5.8, D-103).** `parent_sku` and `model_sku` are indexed but **not unique**; identity is Shopee's item and model id. Empty or duplicate SKUs are reported in `sync_run.warnings` (codes in `14-integrations.md#how-the-sync-behaves-plan-010`, D-111).
 - **External status (D-105).** `channel_item.external_status` holds Shopee's `item_status`, or `'NOT_FOUND'` once a known item is no longer returned; a not-found item stays in the stock sweep and is restored when Shopee returns it again (D-110). `channel_listing.external_status` is null for every model Shopee still returns and `'NOT_FOUND'` for a model that vanished from its item; whether a returned model is active lives in `variant.is_active` (from Shopee's `MODEL_NORMAL`), because the snapshot carries that flag and not the raw model status. The raw model status is therefore not queryable; `raw_payload` holds base info only. `markItemsNotFound` marks `channel_item` only — the storefront visibility rule already hides any item whose status is not `NORMAL`.
-- **Unchanged (5.9).** Staff, customer, addresses, roles and permissions, cart, tax invoice, product review, sale page, content pages and news.
+- **Unchanged (5.9).** Staff, customer, addresses, roles and permissions, cart, tax invoice, product review, sale page and content pages. News is defined in [News](#news) below.
 
 Option types per product are at most two, because the site mirrors Shopee's
 structure (D-094, Q-013). The join-table shape is unchanged.
@@ -229,6 +229,27 @@ TypeScript union fails REQ-035 outright, which is why this is a join table.
 admin UI lets the owner toggle which permissions each of the six holds; it
 never offers a way to insert a seventh row. There is no `order.refund`
 permission key — refund is out of scope (D-077).
+
+## News
+
+Defined in [the news design](superpowers/specs/2026-10-29-news-import-and-pages-design.md) (section 4), on the project owner's decisions of 2026-10-29 (D-125 to D-132; D-125 superseded by D-139 and restored by D-140). Naming follows the catalogue pattern (D-014): uuid ids and a translation table per locale. Five tables:
+
+- **`news_category`**: `slug` (unique, decoded), `parent_id` (self-reference, nullable), `position` (WordPress id order, D-134), `source_id` (WordPress category id, `BigInt`, unique, nullable), `is_listed` (boolean, not null, default `true`; D-139) and the timestamps. **`news_category_translation`**: `category_id`, `locale`, `name`, unique per locale.
+- **`news_article`**: `slug` (unique, decoded), `featured_image_url` (the old-site URL, D-127), `source_id` (WordPress post id, `BigInt`, unique, nullable), `source_url`, `source_modified_at`, `status` (`news_article_status`: `draft` or `published`), `published_at`, `byline_name`, `author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`, `deleted_at` and the timestamps.
+- **`news_article_translation`**: `article_id`, `locale`, `title`, `excerpt` (plain text), `body_html` (sanitised), unique per locale. Imported posts have `th` only; the storefront falls back to it on `/en`.
+- **`news_article_category`**: `article_id` and `category_id`, composite primary key, indexed on `category_id`.
+
+Rules:
+
+- **Live article.** An article is shown only when `status = 'published'`, `published_at <= now()` and `deleted_at IS NULL`. A future `published_at` is a scheduled article; no extra status or job exists (D-130).
+- **CHECK** `status <> 'published' OR published_at IS NOT NULL`, and a partial index on (`status`, `published_at` desc) where `deleted_at` is null.
+- **Staff ids** (`author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`) are plain nullable uuids with no foreign key, because `staff_user` does not exist yet; plan 002 adds the FK. Imported posts leave `author_staff_id` null.
+- **Deleting is soft** (`deleted_at`); a deleted article is never shown (D-131).
+- **Listed and unlisted categories (D-139).** A category with `is_listed = false` has no tab, is never a card's tag, a breadcrumb or a related-articles key, and its category route is a 404; its articles still appear under "ทั้งหมด". An *excluded category* is stored unlisted and never linked to any article; none is excluded today, since the old site's review tree is news again (D-140). An *unlisted category* (Uncategorized) keeps its links. No category row is deleted, and a category that is no longer unlisted is set back to listed on the next import.
+- **Who sets `deleted_at` before go-live (D-139).** The import owns `deleted_at` of imported rows (`source_id` set): it sets it on an article whose source categories are all excluded, keeps one already set, and clears it only when a changed source version gives the article another category; the pass over stored articles never clears it. It never touches a row without `source_id`. The full re-import (`?full=1`, D-140) saves every post again, so it clears `deleted_at` on every imported article the rules do not hide, including the ones D-139 hid.
+- **`body_html` is stored already sanitised** at import with an allow-list, and rendered only from the stored value; it is the only HTML the site renders from data. **Invariant: every writer of `body_html` — the import today, the staff news editor later — passes it through the same sanitiser before saving.** The article page renders it as HTML and adds attributes to its `<img>` and `<iframe>` tags by string (D-138), which is safe only because sanitised HTML escapes every literal `<`; an unsanitised write would be rendered as is.
+- **Imported slugs stay unique:** a decoded slug already held by another row gets `-{source_id}` appended, the same on every re-run (D-136).
+- **Not stored now:** revision history, tags, comments and SEO fields beyond the excerpt.
 
 ## Deletion and retention
 

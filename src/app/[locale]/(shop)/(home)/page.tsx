@@ -2,18 +2,25 @@ import { hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
-import { getLandingCatalogueReader } from '@/server/composition-root';
+import { getLandingCatalogueReader, getLatestNewsReader } from '@/server/composition-root';
 import CategoryShowcase from '../_components/CategoryShowcase';
 import HeroZone from '../_components/HeroZone';
+import NewsCardSection from '../news/_components/NewsCardSection';
+import { newsListPath } from '../news/news-routes';
 import ProductSection, { type ProductSectionId } from '../_components/ProductSection';
 import SiteFooter from '../_components/SiteFooter';
 import SiteHeader from '../_components/SiteHeader';
+import { readArticlesMenu } from '../_components/read-articles-menu';
 import TrustStrip from '../_components/TrustStrip';
+import { readLatestNewsOrNone } from './read-latest-news';
 
 // Prices and stock come from the mirror on every request; the page is never statically cached.
 export const dynamic = 'force-dynamic';
 
 const BEST_SELLERS: ProductSectionId = 'bestSellers';
+
+/** "ข่าวเกมล่าสุด" shows the newest few, as the design's three cards (D-124). */
+const LATEST_NEWS_COUNT = 3;
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -21,23 +28,28 @@ type Props = {
 
 /**
  * The storefront landing page, built from the Shopee catalogue mirror (plan 011) and laid out block for block
- * as `design/index.html` (D-124). The design's news section is left out: there is no news data yet.
+ * as `design/index.html` (D-124), ending with "ข่าวเกมล่าสุด", the 3 newest live articles (plan 012), which is
+ * left out when there are none.
  */
 export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const [catalogue, t] = await Promise.all([
+  const [catalogue, latestNews, t, tNews, articlesMenu] = await Promise.all([
     getLandingCatalogueReader()(locale),
+    // A failing news read hides the news section; it never takes the landing page down.
+    readLatestNewsOrNone(() => getLatestNewsReader()({ locale, limit: LATEST_NEWS_COUNT })),
     getTranslations({ locale, namespace: 'shop.home' }),
+    getTranslations({ locale, namespace: 'shop.news.landing' }),
+    readArticlesMenu(locale),
   ]);
   const isEmpty =
     catalogue.bundles.length === 0 && catalogue.bestSellers.length === 0 && catalogue.preOrders.length === 0;
 
   return (
     <>
-      <SiteHeader path="/" activeNav="home" />
+      <SiteHeader path="/" activeNav="home" articlesMenu={articlesMenu} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <HeroZone shopNowTarget={catalogue.bestSellers.length > 0 ? BEST_SELLERS : null} />
@@ -61,6 +73,7 @@ export default async function HomePage({ params }: Props) {
               <ProductSection id="preOrders" titleKey="home.preOrders.title" cards={catalogue.preOrders} />
             </>
           )}
+          <NewsCardSection id="news" title={tNews('title')} cards={latestNews} moreHref={newsListPath(locale)} />
         </div>
       </main>
       <SiteFooter />

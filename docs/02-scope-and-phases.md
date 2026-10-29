@@ -333,6 +333,10 @@ Products sourced from a distributor can be sold without holding stock. Before a 
 - **Deliverables (from the source, as revised):** news, the various content pages, customer product reviews, per-product Sale Pages, and sales reports. **Migrate existing content into the new system before building the new content types on top of it** — an instruction from the 2026-09-13 answers that applies specifically here.
 - **Blocked by:** an accounting export format, still pending review (Q-050).
 
+### News (plan 012)
+
+News (REQ-047) is built ahead of the rest of this phase as [plan 012](plans/012-news-import-and-pages.md), on the project owner's decisions of 2026-10-29 ([design](superpowers/specs/2026-10-29-news-import-and-pages-design.md), D-125 to D-140; D-125 was superseded by D-139 and restored by D-140): the news tables, a re-runnable import of the old WordPress site's posts and categories, and the news list, category and article pages. Staff-written product reviews are news: the old site's `reviews` category tree is a listed news category shown as "รีวิวสินค้า", and only **customer** product reviews (REQ-054) are a separate feature (owner, Q-048 clarification; D-140, which supersedes the review part of D-139). The old "Uncategorized" category is unlisted: it has no tab, and its articles appear under "ทั้งหมด" (D-139). The header's utility bar has a "บทความ ▾" menu of news categories (D-140). The staff news editor is a later plan, together with staff sign-in (plan 002). Page 1 of the list shows 3 feature and 9 grid articles, and later pages 12 (D-134).
+
 ### Reporting
 
 **REQ-027 — Monthly sales export for accounting** · §6 · CONFIRMED, format `[Q-050]`

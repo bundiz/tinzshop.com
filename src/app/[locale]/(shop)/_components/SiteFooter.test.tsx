@@ -32,6 +32,12 @@ describe('SiteFooter', () => {
     expect(render('en', now)).toContain('© 2027 Tinzshop');
   });
 
+  it('links "ข่าวเกม" to the news list and leaves the other column links inert', () => {
+    const html = render('th', new Date('2026-10-28T05:00:00Z'));
+    expect(html).toContain(`href="/th/news">${th.shop.footer.aboutUs.news}<`);
+    expect(html).toContain(`href="#">${th.shop.footer.aboutUs.story}<`);
+  });
+
   it('renders the design\'s link columns and payment badge', () => {
     const html = render('th', new Date('2026-10-28T05:00:00Z'));
     for (const title of [th.shop.footer.shopping.title, th.shop.footer.help.title, th.shop.footer.aboutUs.title, th.shop.footer.policy.title]) {

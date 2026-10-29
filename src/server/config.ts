@@ -9,6 +9,8 @@ export type ServerConfig = {
   };
   readonly jobSecret: string;
   readonly channelTokenEncryptionKey: Buffer;
+  /** The old site's origin the news import reads (not a secret); null when unset. */
+  readonly newsImportSourceUrl: string | null;
 };
 
 const DEFAULT_SHOPEE_API_BASE_URL = 'https://openplatform.sandbox.test-stable.shopee.sg';
@@ -35,6 +37,15 @@ const envSchema = z.object({
   CHANNEL_TOKEN_ENCRYPTION_KEY: z
     .string()
     .refine((value) => Buffer.from(value, 'base64').length === 32, 'must be 32 bytes, base64 encoded'),
+  // Optional: only the news import needs it.
+  NEWS_IMPORT_SOURCE_URL: z.preprocess(
+    emptyAsUndefined,
+    z
+      .string()
+      .url()
+      .refine((value) => /^https?:\/\//.test(value), 'must be an http or https URL')
+      .optional(),
+  ),
 });
 
 function describeIssues(error: z.ZodError): string {
@@ -57,7 +68,28 @@ export function parseServerConfig(env: Readonly<Record<string, string | undefine
     },
     jobSecret: data.JOB_SECRET,
     channelTokenEncryptionKey: Buffer.from(data.CHANNEL_TOKEN_ENCRYPTION_KEY, 'base64'),
+    newsImportSourceUrl: data.NEWS_IMPORT_SOURCE_URL ?? null,
   };
+}
+
+export type NewsImportJobConfig = {
+  readonly jobSecret: string;
+  readonly newsImportSourceUrl: string | null;
+};
+
+const newsImportJobSchema = envSchema.pick({ JOB_SECRET: true, NEWS_IMPORT_SOURCE_URL: true });
+
+/** Only what the news import job needs, so a missing Shopee setting does not break it. */
+export function parseNewsImportJobConfig(env: Readonly<Record<string, string | undefined>>): NewsImportJobConfig {
+  const result = newsImportJobSchema.safeParse(env);
+  if (!result.success) {
+    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
+  }
+  return { jobSecret: result.data.JOB_SECRET, newsImportSourceUrl: result.data.NEWS_IMPORT_SOURCE_URL ?? null };
+}
+
+export function getNewsImportJobConfig(): NewsImportJobConfig {
+  return parseNewsImportJobConfig(process.env);
 }
 
 let cached: ServerConfig | undefined;
