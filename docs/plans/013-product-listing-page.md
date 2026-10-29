@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Not started — written 2026-10-29, awaiting the project owner's review
+- **Status:** Implemented 2026-10-29; owner manual checks outstanding
 - **Phase:** 3 (storefront), an early slice on the owner's request of 2026-10-29
 - **Requirements touched:**
   - REQ-001 (browse products by category)
@@ -52,7 +52,7 @@
   - `view` (`grid` default, `list`)
   - `page`
   - Invalid values follow rulings R1 and R2 below. Nothing ever throws (D-120, D-122).
-- **Ruling R1 (facet counts).** Each facet count applies every active filter except the facet's own dimension.
+- **Ruling R1 (facet counts).** Each facet count applies every active filter except the facet's own dimension. Refined in the final review (D-148): the platform facet matches the type dimension by kind (every platform's type of each chosen kind), so its counts agree with the platform links, which carry the chosen kinds over.
 - **Ruling R2 (invalid params).**
   - An invalid `page`, or an unknown `category`, `type`, `sort` or `view`, gives a real 404.
   - A non-numeric or negative `min`/`max` is ignored (that filter is dropped, with no error).
@@ -196,4 +196,13 @@ Search, admin category assignment (plan 002), mapping Shopee categories, a wishl
 
 ## Outcome
 
-Not started.
+Implemented 2026-10-29 on `feat/win/products`; the manual test checklist above is not yet run.
+
+- **Routes (D-142).** `/{locale}/product` is the listing; the product page moved to `/{locale}/product/{productId}/detail`, and the old `/{locale}/products/{productId}` route and every link to it are gone.
+- **Categoriser job (D-143).** `categoriseByName` (keyword rules `CATEGORISE_RULES`) and `categoriseProducts` behind the development-only `POST /api/jobs/catalogue-categorise`; a product that already has a category is never touched.
+- **Category tree migration (D-149).** `seed_category_tree` seeds the 3 platforms and 9 types, so the platform links answer 200 before the job runs.
+- **SQL listing and facets (D-145 to D-148).** `listStorefrontProducts` filters, sorts and pages in SQL over the visible products; `countStorefrontFacets` counts every facet in one query under R1, the platform facet matching types by kind (D-148).
+- **Landing in SQL (D-147).** `listStorefrontCandidates` sorts and limits each landing section in SQL, at most 18 rows.
+- **Variant index.** Migration `variant_product_id_index` indexes `variant.product_id` and `option_type.product_id` for the card and product-page reads (D-147).
+- **jsdom (D-150).** Component tests that need a real DOM opt in per file (`*.dom.test.tsx`).
+- **Decisions.** D-142 to D-151.

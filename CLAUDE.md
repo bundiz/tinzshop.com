@@ -37,7 +37,7 @@ register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 **Implementation is unblocked for plans 010, 011, 012 and 013 only** (the Shopee catalogue
 mirror — `docs/plans/010-shopee-catalogue-mirror.md`; the landing page and
 product page built from it — `docs/plans/011-landing-page-from-mirror.md`, D-117;
-the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-146),
+the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151),
 plan 010 on the project owner's
 approval of 2026-10-26 (`docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`,
 §2 *Authority*). Shopee is the master for the catalogue (D-094), so options and
