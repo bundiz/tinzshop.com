@@ -25,8 +25,9 @@ export default async function NewsArticlePage({ params }: Props) {
 
   const articleSlug = decodeSlugParam(slug);
   if (articleSlug === null) notFound();
-  const article = await readNewsArticle(locale, articleSlug);
+  // The header's menu is read alongside, as on the home and product pages.
+  const [article, articlesMenu] = await Promise.all([readNewsArticle(locale, articleSlug), readArticlesMenu(locale)]);
   if (article === null) notFound();
 
-  return <NewsArticleView article={article} articlesMenu={await readArticlesMenu(locale)} />;
+  return <NewsArticleView article={article} articlesMenu={articlesMenu} />;
 }

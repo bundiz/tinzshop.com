@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import ArticlesMenu, {
   CLOSED,
+  activationPointer,
   articlesMenuReducer,
   isHoverPointer,
   shouldFlipLeft,
@@ -64,27 +65,68 @@ describe('ArticlesMenu', () => {
 });
 
 describe('articlesMenuReducer', () => {
-  it('toggles on click, Enter or Space (the button\'s own activation)', () => {
-    const open = articlesMenuReducer(CLOSED, { type: 'toggle' });
-    expect(open).toEqual({ open: true, submenu: null });
-    expect(articlesMenuReducer(open, { type: 'toggle' })).toEqual(CLOSED);
+  const NEWS = '/th/news';
+  const OPEN = { open: true, submenu: null };
+  const WITH_SUBMENU = { open: true, submenu: NEWS };
+
+  it('hover open, then mouse click, stays open: for the menu', () => {
+    const hovered = articlesMenuReducer(CLOSED, { type: 'open' });
+    expect(hovered).toEqual(OPEN);
+    expect(articlesMenuReducer(hovered, { type: 'activate', pointer: 'mouse' })).toEqual(OPEN);
+    // A mouse click on a closed menu (closed by Escape while hovering) opens it.
+    expect(articlesMenuReducer(CLOSED, { type: 'activate', pointer: 'mouse' })).toEqual(OPEN);
   });
 
-  it('opens on hover and closes when the pointer or focus leaves, or on Escape, closing the submenu too', () => {
-    const open = articlesMenuReducer(CLOSED, { type: 'open' });
-    expect(open).toEqual({ open: true, submenu: null });
-    const withSubmenu = articlesMenuReducer(open, { type: 'toggleSubmenu', key: '/th/news' });
-    expect(withSubmenu).toEqual({ open: true, submenu: '/th/news' });
-    expect(articlesMenuReducer(withSubmenu, { type: 'open' })).toBe(withSubmenu);
-    expect(articlesMenuReducer(withSubmenu, { type: 'toggleSubmenu', key: '/th/news' })).toEqual(open);
-    expect(articlesMenuReducer(withSubmenu, { type: 'close' })).toEqual(CLOSED);
-    expect(articlesMenuReducer(withSubmenu, { type: 'closeSubmenu' })).toEqual(open);
-    expect(articlesMenuReducer(open, { type: 'openSubmenu', key: '/th/news' })).toEqual(withSubmenu);
+  it('hover open, then mouse click, stays open: for the submenu', () => {
+    const hovered = articlesMenuReducer(OPEN, { type: 'openSubmenu', key: NEWS });
+    expect(hovered).toEqual(WITH_SUBMENU);
+    expect(articlesMenuReducer(hovered, { type: 'activateSubmenu', key: NEWS, pointer: 'mouse' })).toEqual(WITH_SUBMENU);
+  });
+
+  it('keyboard Enter toggles the menu and the submenu', () => {
+    const open = articlesMenuReducer(CLOSED, { type: 'activate', pointer: 'keyboard' });
+    expect(open).toEqual(OPEN);
+    expect(articlesMenuReducer(open, { type: 'activate', pointer: 'keyboard' })).toEqual(CLOSED);
+    const sub = articlesMenuReducer(open, { type: 'activateSubmenu', key: NEWS, pointer: 'keyboard' });
+    expect(sub).toEqual(WITH_SUBMENU);
+    expect(articlesMenuReducer(sub, { type: 'activateSubmenu', key: NEWS, pointer: 'keyboard' })).toEqual(OPEN);
+  });
+
+  it('touch tap toggles the menu and the submenu', () => {
+    const open = articlesMenuReducer(CLOSED, { type: 'activate', pointer: 'touch' });
+    expect(open).toEqual(OPEN);
+    expect(articlesMenuReducer(open, { type: 'activate', pointer: 'touch' })).toEqual(CLOSED);
+    const sub = articlesMenuReducer(open, { type: 'activateSubmenu', key: NEWS, pointer: 'touch' });
+    expect(sub).toEqual(WITH_SUBMENU);
+    expect(articlesMenuReducer(sub, { type: 'activateSubmenu', key: NEWS, pointer: 'touch' })).toEqual(OPEN);
+  });
+
+  it('closes on Escape, focus leaving or the mouse leaving, closing the submenu too', () => {
+    expect(articlesMenuReducer(WITH_SUBMENU, { type: 'close' })).toEqual(CLOSED);
+    expect(articlesMenuReducer(WITH_SUBMENU, { type: 'closeSubmenu' })).toEqual(OPEN);
+    expect(articlesMenuReducer(WITH_SUBMENU, { type: 'open' })).toBe(WITH_SUBMENU);
   });
 
   it('never opens the submenu of a closed menu', () => {
-    expect(articlesMenuReducer(CLOSED, { type: 'openSubmenu', key: '/th/news' })).toEqual(CLOSED);
-    expect(articlesMenuReducer(CLOSED, { type: 'toggleSubmenu', key: '/th/news' })).toEqual(CLOSED);
+    expect(articlesMenuReducer(CLOSED, { type: 'openSubmenu', key: NEWS })).toEqual(CLOSED);
+    for (const pointer of ['mouse', 'touch', 'keyboard'] as const) {
+      expect(articlesMenuReducer(CLOSED, { type: 'activateSubmenu', key: NEWS, pointer })).toEqual(CLOSED);
+    }
+  });
+});
+
+describe('activationPointer', () => {
+  it('reads a click with detail 0, or an empty pointer type, as the keyboard', () => {
+    expect(activationPointer(0, 'mouse')).toBe('keyboard');
+    expect(activationPointer(0, undefined)).toBe('keyboard');
+    expect(activationPointer(1, '')).toBe('keyboard');
+  });
+
+  it('reads a touch or pen tap as such, and any other click as the mouse', () => {
+    expect(activationPointer(1, 'touch')).toBe('touch');
+    expect(activationPointer(1, 'pen')).toBe('pen');
+    expect(activationPointer(1, 'mouse')).toBe('mouse');
+    expect(activationPointer(1, undefined)).toBe('mouse');
   });
 });
 

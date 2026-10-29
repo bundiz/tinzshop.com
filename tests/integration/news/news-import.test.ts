@@ -620,4 +620,19 @@ describe('news import: staff product reviews are news again, and the full re-imp
     // A normal run after it changes nothing.
     expect(await run(fakeClient(state))).toMatchObject({ outcome: 'succeeded', updated: 0, unchanged: 6 });
   });
+
+  it('in full mode clears deleted_at on an imported article soft-deleted for another reason (documented in D-140)', async () => {
+    await seedAfterTask7();
+    const otherwiseDeleted = new Date('2026-03-01T00:00:00Z');
+    await prisma().newsArticle.update({ where: { sourceId: 706n }, data: { deletedAt: otherwiseDeleted } });
+    const state = { posts: reviewPosts(), categories: REVIEW_CATEGORIES };
+
+    // A normal run keeps it: the post is unchanged, so it is not written.
+    await run(fakeClient(state));
+    expect((await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 706n } })).deletedAt).toEqual(otherwiseDeleted);
+
+    // The full run saves every post again, and the rules do not hide this one.
+    await run(fakeClient(state), { full: true });
+    expect((await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 706n } })).deletedAt).toBeNull();
+  });
 });

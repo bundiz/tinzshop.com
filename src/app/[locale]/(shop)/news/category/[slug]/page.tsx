@@ -27,8 +27,9 @@ export default async function NewsCategoryPage({ params, searchParams }: Props) 
   const categorySlug = decodeSlugParam(slug);
   const page = parsePageParam((await searchParams).page);
   if (categorySlug === null || page === null) notFound();
-  const list = await readNewsList(locale, categorySlug, page);
+  // The header's menu is read alongside, as on the home and product pages.
+  const [list, articlesMenu] = await Promise.all([readNewsList(locale, categorySlug, page), readArticlesMenu(locale)]);
   if (list === null) notFound();
 
-  return <NewsListView list={list} articlesMenu={await readArticlesMenu(locale)} />;
+  return <NewsListView list={list} articlesMenu={articlesMenu} />;
 }
