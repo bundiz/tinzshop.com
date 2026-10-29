@@ -1,5 +1,7 @@
 # Tinzshop Documentation
 
+To **install and run the app locally** (Docker PostgreSQL, `.env`, loading the data), see the root [`README.md`](../README.md).
+
 Start here. Everything in this folder derives from one source:
 `reference/client-summary-th.md`.
 

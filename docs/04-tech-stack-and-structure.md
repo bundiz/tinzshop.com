@@ -187,6 +187,10 @@ module, so a missing variable fails immediately and loudly rather than as
 | `test` | Vitest — domain and integration | Every pull request |
 | `test:e2e` | Playwright | Every pull request touching a route |
 | `db:migrate` | Applies migrations locally | — |
+| `db:up`, `db:deploy`, `db:generate` | Start the local Docker PostgreSQL, apply every migration non-interactively, generate the Prisma client | — |
+| `job:*`, `data:load` | Call the job endpoints on a running dev server through `scripts/run-job.mjs` (`JOB_SECRET` and `APP_URL` from `.env`); `data:load` runs sync, activate, categorise and news import in order | — |
+
+How to set up and run the app locally, step by step, is in the repository's root [`README.md`](../README.md).
 
 The import-boundary rule is not advisory. It fails the build when
 `src/server/services/` imports React, Next, or Prisma, and when `src/app/`

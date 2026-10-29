@@ -17,7 +17,14 @@
     "db:up": "docker compose up -d postgres",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "db:deploy": "prisma migrate deploy",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "job:shopee-sync": "node --env-file=.env scripts/run-job.mjs shopee-sync",
+    "job:activate": "node --env-file=.env scripts/run-job.mjs catalogue-activate",
+    "job:categorise": "node --env-file=.env scripts/run-job.mjs catalogue-categorise",
+    "job:news-import": "node --env-file=.env scripts/run-job.mjs news-import",
+    "job:news-import:full": "node --env-file=.env scripts/run-job.mjs news-import --full",
+    "data:load": "npm run job:shopee-sync && npm run job:activate && npm run job:categorise && npm run job:news-import"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
