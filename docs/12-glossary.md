@@ -277,6 +277,7 @@ Plan 014 (ADR-0003, D-152 to D-175).
 | Cognito callback route | เส้นทางรับกลับจาก Cognito | `GET /api/callbacks/cognito?code&state`: checks `state`, exchanges the code, starts the customer session and redirects. | `GET /api/callbacks/cognito` |
 | Cognito identity interface | อินเทอร์เฟซตัวตนของ Cognito | The interface the auth services declare and `src/server/adapters/cognito/` implements, so services never import the AWS SDK. Failures throw `CognitoError` (plan 014). | `CognitoIdentity` |
 | Auth module | โมดูลการยืนยันตัวตน | The module folder `auth` in controllers, services and repositories (adapter: `cognito/`). The planned `access/` folder stays for permission evaluation (R3, D-175). | `auth` |
+| Customer repository types | ชนิดข้อมูลของที่เก็บข้อมูลลูกค้า | The names in `src/server/repositories/auth/` (plan 014): `CustomerRecord`, `NewCustomerSession`, `CustomerSessionRecord`, and the functions `upsertCustomerBySub`, `insertCustomerSession`, `findCustomerSession`, `updateSessionAccessToken`, `deleteCustomerSession`, `deleteCustomerSessions` and `hitRateLimit`. | `CustomerRecord`, `upsertCustomerBySub` |
 
 ## Terms deliberately NOT defined here
 

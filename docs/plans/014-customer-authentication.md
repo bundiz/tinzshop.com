@@ -143,18 +143,18 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 - `hitRateLimit(key: string, windowStart: Date, sweepBefore: Date): Promise<number>`. It increments with `INSERT … ON CONFLICT DO UPDATE … RETURNING count` and deletes rows with `window_start < sweepBefore`, in one transaction.
 - `CustomerRecord = { id; cognitoSub; email; firstName; lastName }`
 
-- [ ] **Failing integration tests:**
+- [x] **Failing integration tests:**
   - `upsert creates once and keeps names on a second sign-in`
   - `two upserts for one sub at once make one row`
   - `upsert refuses an email held by another sub`
   - `email is stored lowercased` (Review Focus 3; the migration adds `CHECK (email = lower(email))`)
   - `session lookup returns the customer and deleting all sessions for a customer leaves others`
   - `hitRateLimit counts within a window and sweeps ended windows`
-- [ ] **Implement:**
+- [x] **Implement:**
   - **Models:** `Customer` (`customer`), `CustomerSession` (`customer_session`, FK on delete cascade, index on `customer_id`) and `AuthRateLimit` (`auth_rate_limit`, PK `key, window_start`), with the fields of §5 in snake_case.
   - **Migration:** forward-only, with its SQL reviewed (D-015).
   - **Repository functions:** as above.
-- [ ] **Commit:** `feat: add customer, session and rate-limit tables`
+- [x] **Commit:** `feat: add customer, session and rate-limit tables`
 
 ### Task 4: Config, Cognito adapter and the session service
 
