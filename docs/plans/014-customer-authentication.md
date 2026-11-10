@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Not started — approved design 2026-11-04
+- **Status:** In progress — approved design 2026-11-04; Task 1 (docs and names) done 2026-11-10
 - **Phase:** 3 (storefront), an early slice on the project owner's request of 2026-11-03
 - **Requirements touched:**
   - REQ-011, the register and sign-in part. Order history and invoices stay open.
@@ -73,13 +73,13 @@
 
 ### Task 1: Docs, decisions and names
 
-- [ ] **ADR-0003** "Customer authentication via Amazon Cognito", status Accepted (2026-11-04). It records:
+- [x] **ADR-0003** "Customer authentication via Amazon Cognito", status Accepted (2026-11-04). It records:
   - Context: 08's in-house design.
   - Options: in-house versus Cognito (§3).
   - Decision and consequences: hash lock-in, AWS dependency, Lambda, the D-074 exception.
   
   **ADR-0002** gets one Context line: "Customer login depends on AWS Cognito (ADR-0003)". It stays Proposed.
-- [ ] **D-rows from D-152:**
+- [x] **D-rows from D-152:**
   - O-1 to O-10
   - the "my call" items in §4 to §8: Lite tier, email-only required attribute, password policy, bilingual template, names copied once, the session key, deleting an unverified account on Google sign-in, the rate limits, the header menu
   - the D-074 exception
@@ -87,7 +87,7 @@
   - rulings R1 to R3
   
   The O-10 row says that plan 013's product pages (D-142) now require sign-in.
-- [ ] **Owning docs:**
+- [x] **Owning docs:**
   - **`08` §Authentication:** the customer row points to ADR-0003. Staff are unchanged.
   - **`05`:** the three tables.
   - **`06`:** `GET /api/auth/google`, `GET /api/callbacks/cognito`, and the auth Server Actions with their error codes. Also add them to `docs/openapi.yaml`.
@@ -95,10 +95,10 @@
   - **`14`:** a Cognito section with the pool setup checklist (§4), copied as steps.
   - **`04`:** `adapters/cognito/`, `auth/` modules, `infra/cognito/`; the dependencies, removed from *Deliberately not in the stack yet*.
   - **`02`:** a phase 3 note naming plan 014.
-- [ ] **`13-open-questions.md`:**
+- [x] **`13-open-questions.md`:**
   - Google sign-in recorded as the owner's request (no source).
   - A new UNRESOLVED question, Q-059: who owns and pays for the AWS account at go-live.
-- [ ] **Glossary:**
+- [x] **Glossary:**
   - customer session
   - user pool
   - account linking
@@ -108,8 +108,8 @@
   - the three cookies
   - every route in this plan
   - the `CognitoIdentity` interface
-- [ ] **`CLAUDE.md`:** allow plan 014 alongside 010 to 013.
-- [ ] **Commit:** `docs: record customer authentication with Cognito as plan 014`
+- [x] **`CLAUDE.md`:** allow plan 014 alongside 010 to 013.
+- [x] **Commit:** `docs: record customer authentication with Cognito as plan 014`
 
 ### Task 2: Verify Cognito in the dev pool (with the owner)
 

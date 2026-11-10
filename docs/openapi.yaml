@@ -15,9 +15,67 @@ servers:
 tags:
   - name: Shopee
     description: Shop authorization callback (D-104)
+  - name: Customer auth
+    description: Customer sign-in with Google through Amazon Cognito (ADR-0003, plan 014)
   - name: Jobs
     description: Secret-authenticated jobs; the Shopee sync runs every 10 minutes, the news import by hand
 paths:
+  /api/auth/google:
+    get:
+      tags: [Customer auth]
+      summary: Start customer sign-in with Google
+      description: |
+        Sets the sealed `tinzshop_oauth` cookie (state, PKCE verifier, `returnTo`,
+        `locale`; 10 minutes, path `/api`) and redirects to Cognito's authorize
+        endpoint with `identity_provider=Google`. Behaviour: `06-api.md`.
+      parameters:
+        - name: returnTo
+          in: query
+          description: |
+            A path on this site. It must start with `/` but not `//`, contain no `\`
+            and no locale prefix; anything else becomes `/`.
+          schema: { type: string }
+        - name: locale
+          in: query
+          schema: { type: string, enum: [th, en] }
+      responses:
+        '302':
+          description: Redirect to Cognito's authorize endpoint.
+          headers:
+            Location: { schema: { type: string, format: uri } }
+            Set-Cookie:
+              description: The sealed `tinzshop_oauth` cookie.
+              schema: { type: string }
+  /api/callbacks/cognito:
+    get:
+      tags: [Customer auth]
+      summary: Cognito returns the customer after Google sign-in
+      description: |
+        Checks `state` against the `tinzshop_oauth` cookie, exchanges the code with the
+        client secret and the PKCE verifier, verifies the ID token, upserts the
+        customer by `sub`, starts a customer session and redirects. Every outcome is
+        a redirect; the code and tokens are never echoed. A failure redirects to
+        `/{locale}/sign-in?error=google`. The first Google sign-in after account
+        linking may be retried once by redirecting to Cognito again.
+      parameters:
+        - name: code
+          in: query
+          description: One-time authorization code.
+          schema: { type: string }
+        - name: state
+          in: query
+          schema: { type: string }
+      responses:
+        '302':
+          description: |
+            Success: `/{locale}{returnTo}` with the `tinzshop_session` cookie set and
+            `tinzshop_oauth` cleared. Failure: `/{locale}/sign-in?error=google`. One
+            retry: Cognito's authorize endpoint.
+          headers:
+            Location: { schema: { type: string } }
+            Set-Cookie:
+              description: '`tinzshop_session` on success; `tinzshop_oauth` cleared.'
+              schema: { type: string }
   /api/callbacks/shopee:
     get:
       tags: [Shopee]

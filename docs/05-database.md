@@ -49,6 +49,8 @@ product ──1 channel_item ──< channel_listing    Shopee item link (spec s
 
 customer ──< order
 customer ──< product_review
+customer ──< customer_session         plan 014
+auth_rate_limit                        plan 014, no foreign keys
 
 role ──< role_permission >── permission     six roles: 4 staff + customer + guest
 
@@ -263,6 +265,16 @@ Rules:
 - **`body_html` is stored already sanitised** at import with an allow-list, and rendered only from the stored value; it is the only HTML the site renders from data. **Invariant: every writer of `body_html` — the import today, the staff news editor later — passes it through the same sanitiser before saving.** The article page renders it as HTML and adds attributes to its `<img>` and `<iframe>` tags by string (D-138), which is safe only because sanitised HTML escapes every literal `<`; an unsanitised write would be rendered as is.
 - **Imported slugs stay unique:** a decoded slug already held by another row gets `-{source_id}` appended, the same on every re-run (D-136).
 - **Not stored now:** revision history, tags, comments and SEO fields beyond the excerpt.
+
+## Customer authentication (plan 014)
+
+Defined in [the customer authentication design](superpowers/specs/2026-11-03-customer-authentication-design.md) (section 5), ADR-0003 and D-152 to D-175. Cognito holds the password, reset codes and the Google link; these three tables hold the rest. Naming follows the existing tables: snake_case, singular, uuid ids.
+
+- **`customer`**, created on the customer's first successful sign-in by either path: `id`, `cognito_sub` (unique, the Cognito user's id), `email` (unique, stored lowercased, with `CHECK (email = lower(email))`), `first_name`, `last_name` (nullable, because some Google accounts have none), `created_at`, `updated_at`. It is written by an **upsert on `cognito_sub`**, so two first sign-ins at once make one row. Names are copied from Cognito once, on create (D-166); email is copied at each sign-in. If the email belongs to a different `sub`, sign-in fails and is logged: it must never be silently overwritten. The other fields listed under *Access control* and *Deletion and retention* (phone, tax ids, PDPA deletion) come with the plans that use them.
+- **`customer_session`**: `id`, `token_hash` (unique, SHA-256 of the random cookie token; the cookie value is never stored), `customer_id` (FK), `refresh_token_sealed` and `access_token_sealed` (`encryptSecret` under `SESSION_TOKEN_ENCRYPTION_KEY`, D-167), `access_token_expires_at`, `expires_at` (sign-in time + 7 days), `created_at`. A password reset deletes every row of that customer.
+- **`auth_rate_limit`**: `key` (for example `sign-in:ip:{ip}` or `sign-in:email:{sha256}`), `window_start`, `count`; primary key (`key`, `window_start`). A key holds an IP address, which is personal data, so rows are deleted when their window ends.
+
+There is no password, reset-token or Google-account table. The `role` table (D-062) comes with plan 002; until then any signed-in person who has a `customer` row is a customer.
 
 ## Deletion and retention
 

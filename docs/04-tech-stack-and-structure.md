@@ -36,6 +36,8 @@ this table names the choice, not the number.
 | Error tracking, metrics | No availability or performance target exists in the source at all | Phase 7 |
 | Component library | Deliberate — see `07-frontend-components.md` | — |
 
+Plan 014 (D-172) adds two dependencies to the stack, both published by AWS and installed as exact versions: `@aws-sdk/client-cognito-identity-provider`, imported only by `src/server/adapters/cognito/`, and `aws-jwt-verify`, for ID-token checks. Hosting stays deferred (ADR-0002).
+
 Adding anything to the left column requires a `D-0NN` row in
 `11-decisions.md` in the same pull request.
 
@@ -58,6 +60,8 @@ Route groups still give clean file-level ownership, because `(shop)` and
 ```
 tinzshop.com/
 ├── docs/                         ← this documentation
+├── infra/
+│   └── cognito/              ← the pre sign-up Lambda, plain ESM, deployed by hand until phase 7 (plan 014)
 ├── prisma/
 │   ├── schema.prisma             ← the single schema
 │   ├── migrations/               ← forward-only, reviewed as SQL (D-015)
@@ -86,10 +90,12 @@ tinzshop.com/
 │   │   ├── controllers/          ← read the request, validate with Zod, call ONE service, shape the response
 │   │   │   ├── catalogue/        ← e.g. catalogue-sync-controller.ts + catalogue-sync-controller.test.ts
 │   │   │   ├── channel/          ← shop authorization callback
+│   │   │   ├── auth/             ← customer sign-in, registration and Google routes (plan 014, R3)
 │   │   │   └── api-docs/         ← development-only Swagger UI (D-115)
 │   │   ├── services/             ← business rules. Framework-free (D-002): no React, Next or Prisma
 │   │   │   ├── catalogue/
 │   │   │   ├── channel/          ← channel authorization
+│   │   │   ├── auth/             ← customer auth flows, session rules, rate limits (plan 014)
 │   │   │   ├── shared/           ← money (bahtToSatang)
 │   │   │   ├── cart/
 │   │   │   ├── order/
@@ -100,9 +106,11 @@ tinzshop.com/
 │   │   ├── repositories/         ← Prisma queries. The only place Prisma is imported
 │   │   │   ├── catalogue/        ← catalogue and sync_run
 │   │   │   ├── channel/          ← channel_authorization
+│   │   │   ├── auth/             ← customer, customer_session, auth_rate_limit (plan 014)
 │   │   │   └── shared/           ← Prisma client, advisory lock
 │   │   └── adapters/             ← one directory per external system
 │   │       ├── kpayment/         ← sole payment method (D-072); credentials in hand
+│   │       ├── cognito/          ← customer sign-in; the only code that imports the AWS SDK or builds a Cognito URL (plan 014)
 │   │       ├── shopee/           ← Shopee HTTP, signing, tokens; nothing else builds a Shopee URL
 │   │       ├── bigseller/        ← fulfilment/labels; catalogue direction superseded by D-095
 │   │       └── mail-relay/       ← transactional email (D-074); provider TBD

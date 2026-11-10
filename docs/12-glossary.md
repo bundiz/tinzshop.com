@@ -254,6 +254,30 @@ their file names in `.claude/agents/`.
 | Message catalogue | แคตตาล็อกข้อความ | The Thai and English text of every user-facing string, one JSON file per locale, both carrying every key (D-031, D-032). Keys are dot paths; the storefront's namespaces are `shop.header`, `shop.home`, `shop.product`, `shop.footer`, and `shop.error` and `shop.loading` for the storefront's error and loading states. A key-parity test fails when one file has a key the other lacks, or a message is empty (plan 011). | `messages/th.json`, `messages/en.json` |
 | Locale routing | การกำหนดเส้นทางตามภาษา | The next-intl configuration that puts every page under `/th` or `/en`: `th` is the default, `/` redirects to `/th`, and the locale is never detected from a browser header or a cookie. The proxy runs on page routes only, never on `/api/**`, `/_next/**` or a path with a file extension (plan 011). | `routing`, `src/i18n/routing.ts`, `src/proxy.ts` |
 
+## Customer authentication
+
+Plan 014 (ADR-0003, D-152 to D-175).
+
+| English | Thai | Definition | Identifier |
+| :--- | :--- | :--- | :--- |
+| Customer session | เซสชันของลูกค้า | Our own session for a signed-in customer (plan 014): a row in `customer_session` found by the SHA-256 of the `tinzshop_session` cookie, holding the Cognito tokens sealed. It lasts 7 days from sign-in and can be ended at once. Not the same as a Cognito token. See D-158, D-167. | `customer_session` |
+| User pool | กลุ่มผู้ใช้ (Cognito user pool) | The Amazon Cognito directory that holds customers' email, password and Google link. One customer pool; staff get a second pool in plan 002 (D-159). Set up by hand from the checklist in `14-integrations.md`. | `user_pool` |
+| Account linking | การเชื่อมบัญชี | Making a Google sign-in and a password registration with the same email one Cognito user, one `sub` and one `customer` row (O-3, D-154). Done by the pre sign-up trigger. | `account_linking` |
+| Access token, ID token and refresh token | โทเค็นเข้าถึง โทเค็นระบุตัวตน และโทเค็นรีเฟรช | The three Cognito tokens. Access and ID tokens last 15 minutes; the refresh token lasts 7 days from sign-in and is not rotated (D-158). They are stored sealed in `customer_session` and never reach the browser's JavaScript. The code reads `exp` from the tokens and does not hard-code a lifetime. | `access_token`, `id_token`, `refresh_token` |
+| Pre sign-up trigger | ทริกเกอร์ก่อนสมัคร (pre sign-up Lambda) | The one AWS Lambda we write: on a Google login's first visit it links Google to the existing verified user, deletes an unverified one, or creates a normal user (D-168). Lives in `infra/cognito/pre-sign-up/`. | `pre_sign_up` |
+| Auth rate limit | ขีดจำกัดอัตราการเข้าสู่ระบบ | The `auth_rate_limit` table: counters per `key` (`{action}:ip:{ip}` or `{action}:email:{sha256}`) and `window_start`, deleted when the window ends (D-169). | `auth_rate_limit` |
+| Customer session cookie | คุกกี้เซสชันลูกค้า | `tinzshop_session`: HttpOnly, Secure, `SameSite=Lax`, path `/`, 32 random bytes in base64url; only its SHA-256 is stored. | `tinzshop_session` |
+| Google sign-in state cookie | คุกกี้สถานะการเข้าสู่ระบบด้วย Google | `tinzshop_oauth`: sealed, HttpOnly, 10 minutes, path `/api`. Holds the OAuth `state`, the PKCE verifier, `returnTo` and `locale` between `GET /api/auth/google` and the callback. | `tinzshop_oauth` |
+| Pending registration cookie | คุกกี้การสมัครที่รอยืนยัน | `tinzshop_pending`: sealed, HttpOnly, 1 hour, path `/`. Holds the email between register and verify. Sealed means `encryptSecret` with `SESSION_TOKEN_ENCRYPTION_KEY`. | `tinzshop_pending` |
+| Sign-in route | หน้าเข้าสู่ระบบ | `/{locale}/sign-in`: email, password, forgot-password link, Google button, link to register. | `/{locale}/sign-in` |
+| Register route | หน้าสมัครสมาชิก | `/{locale}/register`: first name, last name, email, password and password again. | `/{locale}/register` |
+| Verify route | หน้ายืนยันรหัส | `/{locale}/register/verify`: the 6-digit code and resend; shows a new-password field in the reset case (D-160). | `/{locale}/register/verify` |
+| Forgot-password route | หน้าลืมรหัสผ่าน | `/{locale}/forgot-password`: the email, then the code and a new password. | `/{locale}/forgot-password` |
+| Google sign-in route | เส้นทางเริ่มเข้าสู่ระบบด้วย Google | `GET /api/auth/google?returnTo&locale`: sets the state cookie and redirects to Cognito with Google as the provider. | `GET /api/auth/google` |
+| Cognito callback route | เส้นทางรับกลับจาก Cognito | `GET /api/callbacks/cognito?code&state`: checks `state`, exchanges the code, starts the customer session and redirects. | `GET /api/callbacks/cognito` |
+| Cognito identity interface | อินเทอร์เฟซตัวตนของ Cognito | The interface the auth services declare and `src/server/adapters/cognito/` implements, so services never import the AWS SDK. Failures throw `CognitoError` (plan 014). | `CognitoIdentity` |
+| Auth module | โมดูลการยืนยันตัวตน | The module folder `auth` in controllers, services and repositories (adapter: `cognito/`). The planned `access/` folder stays for permission evaluation (R3, D-175). | `auth` |
+
 ## Terms deliberately NOT defined here
 
 These appear in the source but have no definition that can be written today

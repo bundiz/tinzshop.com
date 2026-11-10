@@ -11,7 +11,8 @@ source for what it must do is `docs/reference/client-summary-th.md`.
 catalogue mirror), plan 011's code (the landing page and product page) and
 plan 012's code (the news tables, the import from the old WordPress site and
 the news pages) and plan 013's code (the product listing page and a mock
-category assignment). No other application code exists yet.**
+category assignment). Plan 014 (customer authentication with Amazon Cognito) is
+documented and its code is being built. No other application code exists yet.**
 
 **The stack is decided.** Next.js (App Router), TypeScript, PostgreSQL and
 Prisma, as one route-grouped application, with the commerce domain written
@@ -24,9 +25,9 @@ code or name a host as chosen.
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 58 open questions are on record —
+CONFIRMED, not PROPOSED. 59 open questions are on record —
 see `docs/13-open-questions.md` for the full record: 41 RESOLVED, 6 PARTIALLY
-RESOLVED, 11 still genuinely UNRESOLVED (most waiting on a BigSeller
+RESOLVED, 12 still genuinely UNRESOLVED (most waiting on a BigSeller
 data-inspection session, the Shopee live go-live, or Shopee's API call limit). Total budget is 100,000 THB and
 a proposed schedule exists — `docs/02-scope-and-phases.md#schedule-and-budget`
 — but it is a project-side proposal pending client confirmation, not itself a
@@ -34,10 +35,10 @@ client commitment. Only *our own* engineering decisions in
 `docs/11-decisions.md` are Accepted in the strict ADR sense; treat both that
 register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 
-**Implementation is unblocked for plans 010, 011, 012 and 013 only** (the Shopee catalogue
+**Implementation is unblocked for plans 010, 011, 012, 013 and 014 only** (the Shopee catalogue
 mirror — `docs/plans/010-shopee-catalogue-mirror.md`; the landing page and
 product page built from it — `docs/plans/011-landing-page-from-mirror.md`, D-117;
-the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151),
+the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151; customer registration and sign-in through Amazon Cognito, with Google sign-in, and sign-in required for the product pages — `docs/plans/014-customer-authentication.md`, D-152 to D-175, ADR-0003),
 plan 010 on the project owner's
 approval of 2026-10-26 (`docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`,
 §2 *Authority*). Shopee is the master for the catalogue (D-094), so options and
@@ -46,8 +47,11 @@ plan. Plan 002 is superseded in part by plan 010; its staff authentication and
 role scope is unchanged. Plan 011 is on the project owner's request of 2026-10-28. Plan 012 is on the
 project owner's decisions of 2026-10-29
 (`docs/superpowers/specs/2026-10-29-news-import-and-pages-design.md`, §2). Plan 013 is on the
-project owner's request of 2026-10-29. Build only what
-plans 010, 011, 012 and 013 describe — do not scaffold the rest of the application to
+project owner's request of 2026-10-29. Plan 014 is on the project owner's
+decisions of 2026-11-03 and approval of 2026-11-04
+(`docs/superpowers/specs/2026-11-03-customer-authentication-design.md`, §2); its
+Cognito dev-pool checks (Task 2) must pass before Tasks 6 to 8 are built. Build only what
+plans 010, 011, 012, 013 and 014 describe — do not scaffold the rest of the application to
 get ahead of the other plans. K-Payment is the
 **sole** payment method (bank transfer and standalone PromptPay are removed),
 and website orders never change stock — staff adjust stock in BigSeller by

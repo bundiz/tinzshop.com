@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 41 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 11 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 12 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -535,6 +535,20 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** None yet. Checked in the sandbox on 2026-10-28: `v2.product.get_kit_item` does not exist (`error_not_found`), so no Shopee API to read a kit's components is known. `v2.product.add_kit_item` failed with `product.error_busi` "Unexpected description type OR description setting." for every description form tried (request id `e3e3e7f35ee4b1f520cdd1b6c5fea800`), so no real kit exists in the sandbox to inspect.
 - **Effect:** Until answered, a kit is stored and shown as a product with `channel_item.is_kit = true` and its own price and stock as the mirror reads them; its components are not stored. The ชุดโปรโมชั่น section and the product page badge depend only on the kit flag from `get_item_list` (`tag.kit`). If kit price or stock do not come through like a normal item's, the mirror's kit rows would be wrong and need another source (spec §8 risk 5).
 - **Ask:** developers, then Shopee support
+
+---
+
+## Blocking Phase 3 — customer authentication (plan 014)
+
+### Owner request not in the source: Google sign-in
+Not a question. The client source (`reference/client-summary-th.md`) does not mention Google sign-in or Amazon Cognito. Both are the project owner's request of 2026-11-03, approved 2026-11-04 (D-152, D-154, ADR-0003); the source's REQ-011 asks only for customer registration and sign-in. Treat them as the project owner's decisions, not as client requirements, until the client confirms them.
+
+### Q-059: Who owns and pays for the AWS account at go-live?
+- **Status:** UNRESOLVED — not yet asked
+- **Question:** Customer login runs on Amazon Cognito (ADR-0003). Who owns the AWS account that holds the production user pool, the pre sign-up Lambda and the Amazon SES sender, and who pays for it: the client or us?
+- **Answer:** None yet.
+- **Effect:** It affects the handover, not the build. Until it is answered, the dev pool runs in the project owner's account. The free tier covers 10,000 monthly active users (O-1); Amazon SES emails cost a little. The production sender also needs DNS records on tinzshop.com, whose control is Q-053.
+- **Ask:** client, via the project owner
 
 ---
 

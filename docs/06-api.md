@@ -146,7 +146,7 @@ internal id the caller has no right to.** See `08-security-testing.md`.
 
 | Caller | Authenticated by |
 | :--- | :--- |
-| Customer | Session cookie, `HttpOnly`, `Secure`, `SameSite=Lax` |
+| Customer | Session cookie `tinzshop_session`, `HttpOnly`, `Secure`, `SameSite=Lax`; signed in through Cognito (ADR-0003, plan 014) |
 | Guest | No session. A cart is keyed by an opaque cookie value |
 | Staff | Session cookie plus a second factor (REQ-032) |
 | External system | Request signature. Never a session, never an API key in a query string |
@@ -208,6 +208,53 @@ encrypted.
 Any other exception is `500`. The shop allow-list exists because any shop
 that authorizes our partner app can produce a valid code; without it, that
 shop could replace ours and the sync would mirror its catalogue (D-104).
+
+### `GET /api/auth/google` and `GET /api/callbacks/cognito` (plan 014)
+
+Customer sign-in with Google (ADR-0003, D-154). Both are browser `GET`s that answer **302**, never a body, and every response is `Cache-Control: no-store`. They live outside the locale segment (fixed URLs); the locale travels in a query parameter and in the `tinzshop_oauth` cookie. Neither takes a signature or a session.
+
+**`GET /api/auth/google?returnTo&locale`** starts the sign-in.
+
+| Parameter | Rule |
+| :--- | :--- |
+| `returnTo` | A path on this site: it must start with `/` but not `//`, contain no `\` and no locale prefix; otherwise it becomes `/`. |
+| `locale` | `th` or `en`. |
+
+It sets the sealed, HttpOnly `tinzshop_oauth` cookie (10 minutes, path `/api`) holding the `state`, the PKCE verifier, `returnTo` and `locale`, then answers `302` to Cognito's authorize endpoint with `identity_provider=Google`, so the customer goes straight to Google.
+
+**`GET /api/callbacks/cognito?code&state`** is where Cognito returns the customer. It checks `state` against the cookie, exchanges the code at Cognito's token endpoint with the client secret and the PKCE verifier, verifies the ID token, upserts the `customer` row by `sub`, starts a `customer_session`, sets `tinzshop_session`, clears `tinzshop_oauth` and answers `302`.
+
+| Status | `Location` | When |
+| :--- | :--- | :--- |
+| `302` | `/{locale}{returnTo}` | Success; the session cookie is set. |
+| `302` | Cognito's authorize endpoint | The first Google sign-in after account linking fails once inside Cognito; the callback retries the authorize step **once** (`retried` in the cookie). The exact error is confirmed in plan 014 Task 2. |
+| `302` | `/{locale}/sign-in?error=google` | Any other failure: `state` mismatch (no token exchange is made), a refused or failed code exchange, an invalid ID token, or an email held by another `sub` (logged by hash only). |
+
+The code and the tokens are never in a response body or a log.
+
+### Customer auth Server Actions (plan 014)
+
+The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`, not HTTP endpoints, so they are not in `openapi.yaml`; they carry Next's CSRF protection. Each validates `FormData` with Zod, calls one controller in `src/server/controllers/auth/`, and returns `{ fieldErrors?, formError?: messageKey, redirectTo? }` for `useActionState`. A user-facing `formError` is a message key under `shop.auth.*` (D-032); Cognito's own text is never shown.
+
+| Action | Does | Next step or error |
+| :--- | :--- | :--- |
+| `register` | Sign up (`given_name`, `family_name`). | Always `verify`, whether the email is new, already registered (a reset code is sent, D-160) or never confirmed (the code is resent). |
+| `confirmRegistration` | Confirms the 6-digit code. | `sign_in` (R1, D-173), or `choose_password` when the account was already confirmed (the reset case). |
+| `completePasswordChoice` | Confirms the reset code with the new password, signs in, ends the customer's other sessions. | Signed in. |
+| `resendCode` | Resends the sign-up code. | Rate-limited. |
+| `signIn` | Email and password, sets the session cookie. | `redirectTo` is the safe `returnTo`. An unconfirmed account goes to `verify`. |
+| `requestPasswordReset` | Sends a reset code. | Always "if this email has an account, we sent a code". |
+| `confirmPasswordReset` | Code plus new password; ends **all** of the customer's sessions. | Back to sign-in. |
+| `signOut` | Deletes the session row, revokes the refresh token, clears the cookie. | Redirect home. |
+
+**Error codes and message keys** (from the plan; plan 014 Task 7 completes the field-by-field mapping here):
+
+| Code | `messageKey` | When |
+| :--- | :--- | :--- |
+| `auth.rate_limited` | `shop.auth.error.rateLimited` | A limit in D-169 is exceeded; returned before Cognito is called. |
+| (none; a form error) | `shop.auth.error.invalidCredentials` | A wrong password or an unknown email. The same message for both (no enumeration). |
+
+The adapter reports Cognito failures as a `CognitoError` with one of `username_exists`, `code_mismatch`, `code_expired`, `already_confirmed`, `not_authorized`, `user_not_confirmed`, `invalid_password`, `limit_exceeded` or `unavailable`. These are internal: the controller maps each to a message key, and `username_exists` and `already_confirmed` never reach the screen as such (D-160).
 
 ## Scheduled jobs
 

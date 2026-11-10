@@ -25,6 +25,8 @@ if left longer:
   depends on what the origin is, and on who controls DNS for tinzshop.com
   (Q-053, Q-054).
 
+Customer login depends on AWS Cognito (ADR-0003).
+
 ## Options considered
 
 *None have been evaluated. This section is deliberately empty of conclusions.*

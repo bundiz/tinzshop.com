@@ -44,8 +44,8 @@ checklist.
 
 | Who | How |
 | :--- | :--- |
-| Customer | Email and password. Argon2id hashing — never MD5, SHA-1, or a bare SHA-256 |
-| Staff | The same, plus a mandatory second factor (REQ-032) |
+| Customer | Email and password, or Google, through Amazon Cognito ([ADR-0003](adr/ADR-0003-customer-authentication.md)). Cognito stores and hashes the password; we never do. Our own revocable session sits on top (`customer_session`, plan 014) |
+| Staff | Email and password with Argon2id hashing — never MD5, SHA-1, or a bare SHA-256 — plus a mandatory second factor (REQ-032). Unchanged until plan 002; staff get their own user pool and tables (D-159) |
 | Guest | No account. An opaque cart cookie carrying no personal data |
 
 Session cookies are `HttpOnly`, `Secure`, `SameSite=Lax`, with a server-side
@@ -61,6 +61,8 @@ Rules that follow:
 - Staff sessions expire sooner than customer sessions.
 
 > **Resolved (Q-017, D-064): email OTP only.** No SMS provider is needed.
+
+**Customers with Cognito (plan 014, D-152 to D-175).** The rules above apply as follows: Cognito carries reset codes (single-use, short-lived) and its built-in lockout covers the per-account limit; the per-source limit and the per-email counter are ours (`auth_rate_limit`, D-169). Sessions are 7 days from sign-in and the cookie value is a random token of which only the SHA-256 is stored. Register, resend and forgot password never reveal whether an email has an account (D-160). Passwords, codes, tokens, cookie values and raw emails are never logged.
 
 ### Authorization
 
