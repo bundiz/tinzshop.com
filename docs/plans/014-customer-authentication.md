@@ -189,7 +189,7 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
   - `CurrentCustomer = { id; firstName; email }`
 - **Helpers:** `resolveClientIp(headers: Headers, trusted)` and `safeReturnTo(value: string | null) → string`.
 
-- [ ] **Failing unit tests:**
+- [x] **Failing unit tests:**
   - **Config:** `parseAuthConfig` rejects a short key and an empty client secret, and the error never contains values.
   - **Adapter** (fake SDK `send`, like the Shopee tests):
     - each Cognito exception maps to its code, and a thrown network error maps to `unavailable`
@@ -204,8 +204,8 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
     - `refresh unavailable keeps the session and returns null` (Review Focus 2)
     - `past expires_at deletes the session without calling Cognito`
   - **`safeReturnTo`:** the Review Focus 4 table. **`resolveClientIp`:** takes the right-most `X-Forwarded-For` entry, and `cf-connecting-ip` when it is configured.
-- [ ] **Implement** to pass. Install the dependencies as exact versions: `npx npm@11.21.0 install --save-exact @aws-sdk/client-cognito-identity-provider@<latest> aws-jwt-verify@<latest>`, recording the versions in the D-row. Add the 6 + 1 variables to `.env.example` as placeholders, with a comment on each.
-- [ ] **Commit:** `feat: add the Cognito adapter and customer sessions`
+- [x] **Implement** to pass. Install the dependencies as exact versions: `npx npm@11.21.0 install --save-exact @aws-sdk/client-cognito-identity-provider@<latest> aws-jwt-verify@<latest>`, recording the versions in the D-row. Add the 6 + 1 variables to `.env.example` as placeholders, with a comment on each.
+- [x] **Commit:** `feat: add the Cognito adapter and customer sessions`
 
 ### Task 5: Rate limits
 
