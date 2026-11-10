@@ -213,13 +213,13 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 
 **Produces:** `checkAuthRateLimit(deps, action: 'sign_in' | 'register' | 'verify' | 'resend' | 'forgot_password', { ip, email, now }) → { ok: true } | { ok: false; error: { code: 'auth.rate_limited', messageKey: 'shop.auth.error.rateLimited' } }`. It keys both the IP and the hashed, lowercased email.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `11th sign-in in 15 minutes from one ip is refused`
   - `6th forgot-password for one email from many ips is refused`
   - `email case does not split the counter` (Review Focus 3)
   - `the raw email never appears in a key`
-- [ ] **Implement** to pass.
-- [ ] **Commit:** `feat: rate-limit customer sign-in, registration and reset`
+- [x] **Implement** to pass.
+- [x] **Commit:** `feat: rate-limit customer sign-in, registration and reset`
 
 ### Task 6: Pre sign-up Lambda (account linking)
 
