@@ -48,7 +48,7 @@ One **customer user pool**. Staff get a second pool in plan 002.
 - **Required attributes: email only.** Required attributes cannot be changed after the pool is created, and some Google accounts have no family name. First and last name are enforced by our form, not by Cognito.
 - **Self sign-up:** on. **Email verification:** a code, sent automatically on sign-up.
 - **Prevent user existence errors:** on, so sign-in and password reset don't reveal whether an email is registered.
-- **Password policy:** at least 8 characters with letters and numbers. This is my call; the exact policy is set once and stated on the register page.
+- **Password policy:** at least 8 characters, with at least one number, one lowercase letter, one uppercase letter and one special character. The owner chose this on 2026-11-11 (D-177), replacing my first call of "letters and numbers"; the policy is set once on the pool and stated on the register page.
 - **Built-in lockout:** Cognito locks an account temporarily after repeated failed sign-ins. That covers 08's per-account limit. The per-source limit is ours (§7).
 - **App client:** one confidential client with a client secret.
   - Auth flows: `USER_PASSWORD_AUTH` and refresh token.

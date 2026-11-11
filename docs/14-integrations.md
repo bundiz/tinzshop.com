@@ -299,7 +299,7 @@ In the AWS console:
 4. **Required attributes.** Email only (D-163). This cannot be changed after the pool is created.
 5. **Self sign-up.** On. **Email verification:** a code, sent automatically on sign-up.
 6. **Prevent user existence errors.** On.
-7. **Password policy.** At least 8 characters with letters and numbers (D-164).
+7. **Password policy.** Minimum length 8; tick *Contains at least 1 number*, *lowercase letter*, *uppercase letter* and *special character* (D-177, which replaced "letters and numbers" on 2026-11-11). The register page states and checks the same five rules.
 8. **Emails.** Development: Cognito's built-in sender, limited to a few dozen emails a day. Production: Amazon SES with a `tinzshop.com` sender, which needs DNS records (Q-053).
 9. **Email template.** One bilingual message for the verification and the reset code, Thai first and English below (D-165). This avoids a message Lambda.
 10. **Cognito domain.** Add a prefix domain for the OAuth endpoints. Customers see it only for a moment during the Google redirect.

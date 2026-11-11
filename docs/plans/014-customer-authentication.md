@@ -236,7 +236,7 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
   - `creates a confirmed user with Google names and an unusable random password, then links`
   - `passes ordinary sign-ups through unchanged`
   - `matches the email case-insensitively`
-- [ ] **Implement** to pass. The random password is 32 bytes from `crypto.randomBytes` and is never logged.
+- [ ] **Implement** to pass. The random password is 32 bytes from `crypto.randomBytes`, base64url-encoded, with a fixed suffix that guarantees one uppercase letter, one lowercase letter, one number and one special character so it passes the pool policy (D-177); it is never logged.
 - [ ] **Commit:** `feat: add the Cognito pre sign-up trigger that links Google to one account`
 
 ### Task 7: Customer auth service and Server Actions
@@ -259,7 +259,7 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 - `confirmPasswordReset` (also ends all sessions)
 - `signOut`
 
-The controller validates `FormData` with Zod: names 1 to 100 characters after trimming, an email, a password matching the pool policy, the two passwords equal, and a code of 6 digits. It returns `{ fieldErrors?, formError?: messageKey, redirectTo? }` for `useActionState`.
+The controller validates `FormData` with Zod: names 1 to 100 characters after trimming, an email, a password matching the pool policy (D-177: at least 8 characters, with at least one number, one lowercase letter, one uppercase letter and one special character, using Cognito's documented set of special characters), the two passwords equal, and a code of 6 digits. It returns `{ fieldErrors?, formError?: messageKey, redirectTo? }` for `useActionState`.
 
 - [ ] **Failing tests:**
   - `register with a taken email shows the same verify step and starts a reset` (O-9)
