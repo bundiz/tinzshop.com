@@ -229,15 +229,15 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 
 **Produces:** `createPreSignUpHandler({ cognito })`, plus `export const handler` built with the runtime's SDK client. Plain ESM JavaScript with JSDoc types, so the Lambda needs no build step.
 
-- [ ] **Failing tests,** one for each §6.3 case, on a `PreSignUp_ExternalProvider` event:
+- [x] **Failing tests,** one for each §6.3 case, on a `PreSignUp_ExternalProvider` event:
   - `rejects a Google email that is not verified`
   - `links to an existing verified user`
   - `deletes an unverified user, then creates and links`
   - `creates a confirmed user with Google names and an unusable random password, then links`
   - `passes ordinary sign-ups through unchanged`
   - `matches the email case-insensitively`
-- [ ] **Implement** to pass. The random password is 32 bytes from `crypto.randomBytes`, base64url-encoded, with a fixed suffix that guarantees one uppercase letter, one lowercase letter, one number and one special character so it passes the pool policy (D-177); it is never logged.
-- [ ] **Commit:** `feat: add the Cognito pre sign-up trigger that links Google to one account`
+- [x] **Implement** to pass. The random password is 32 bytes from `crypto.randomBytes`, base64url-encoded, with a fixed suffix that guarantees one uppercase letter, one lowercase letter, one number and one special character so it passes the pool policy (D-177); it is never logged.
+- [x] **Commit:** `feat: add the Cognito pre sign-up trigger that links Google to one account`
 
 ### Task 7: Customer auth service and Server Actions
 
