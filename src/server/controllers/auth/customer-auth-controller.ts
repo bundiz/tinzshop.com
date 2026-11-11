@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import {
-  completePasswordChoice,
   confirmPasswordReset,
   confirmRegistration,
   register,
@@ -30,7 +29,7 @@ export type AuthFormState = {
   /** A message key for a non-error confirmation. */
   notice?: string;
   /** Which step the page shows next when it stays on the same route. */
-  step?: 'choose_password' | 'reset';
+  step?: 'reset';
 };
 
 export type AuthCookieChanges = {
@@ -113,7 +112,13 @@ export async function handleRegister(deps: CustomerAuthDeps, formData: FormData,
   return { state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: parsed.data.email.toLowerCase() } } };
 }
 
-/** The 6-digit code step. An already-confirmed account turns it into the choose-a-password step (O-9). */
+/**
+ * Where the verify page's "Got a password-reset email instead? Set a new password" link goes (Q-060, D-179).
+ * It shows the code and new-password fields for the email in the pending cookie, and sends no new code.
+ */
+export const PASSWORD_RESET_CODE_PATH = '/forgot-password?step=reset';
+
+/** The 6-digit code step. Every failure is the same wrong-code answer, whoever owns the email (Q-060). */
 export async function handleVerify(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
   if (ctx.pendingEmail === null) return pendingGone('/register');
   const parsed = codeOnlySchema.safeParse(fieldsOf(formData));
@@ -121,32 +126,7 @@ export async function handleVerify(deps: CustomerAuthDeps, formData: FormData, c
   const result = await confirmRegistration(deps, { email: ctx.pendingEmail, code: parsed.data.code, ip: ctx.ip, now: ctx.now });
   if (!result.ok) return failure(result.error);
   // R1 (D-173): no auto sign-in. The pending cookie stays so the sign-in page can prefill the email.
-  if (result.data.next === 'choose_password') return { state: { step: 'choose_password' } };
   return { state: { redirectTo: '/sign-in?confirmed=1' } };
-}
-
-/** The O-9 step: code from the reset email plus a new password; signs the customer in. */
-export async function handleChoosePassword(
-  deps: CustomerAuthDeps,
-  formData: FormData,
-  ctx: AuthRequestContext,
-): Promise<AuthActionOutcome> {
-  if (ctx.pendingEmail === null) return pendingGone('/register');
-  const fields = fieldsOf(formData);
-  const parsed = codeAndPasswordSchema.safeParse(fields);
-  if (!parsed.success) return { state: { ...invalid(parsed.error).state, step: 'choose_password' } };
-  const result = await completePasswordChoice(deps, {
-    email: ctx.pendingEmail,
-    code: parsed.data.code,
-    newPassword: parsed.data.password,
-    ip: ctx.ip,
-    now: ctx.now,
-  });
-  if (!result.ok) return failure(result.error, { step: 'choose_password' });
-  return {
-    state: { redirectTo: safeReturnTo(fields.returnTo ?? null) },
-    cookies: { setSession: result.data.session, clearPending: true },
-  };
 }
 
 export async function handleResendCode(deps: CustomerAuthDeps, _formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {

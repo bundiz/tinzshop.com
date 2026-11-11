@@ -110,10 +110,10 @@ All forms are Server Actions, which carry CSRF protection (06). Every Cognito ca
 3. `/{locale}/register/verify` takes the code (`ConfirmSignUp`) and has a "resend code" button (`ResendConfirmationCode`, rate-limited).
 4. Once confirmed, the customer is signed in straight away, without retyping: the action signs in with the password it still holds for that request (§6.2, step 2 onward).
 
-**The email already has an account (O-9):** `SignUp` answers `UsernameExistsException`. The action then calls `ForgotPassword` for that email, throws away the typed password, and shows **the same verify page** a new registration gets. So:
-- **The stranger** sees exactly what a new registrant sees, and learns nothing.
-- **The real owner** gets a reset code by email; the bilingual template says what it is for. They type it on the verify page. `ConfirmSignUp` then fails because the account is already confirmed. That's the moment the action knows this is the reset case, and the person has just proved they own the email. So it is safe to say "This email already has an account. Choose a new password to finish", and `ConfirmForgotPassword` uses the same code with the new password. Then they are signed in.
-- **Neither person** can get a different answer before entering a valid code.
+**The email already has an account (O-9, changed by Q-060 and D-179):** `SignUp` answers `UsernameExistsException`. The action then calls `ForgotPassword` for that email, throws away the typed password, and shows **the same verify page** a new registration gets. So:
+- **The stranger** sees exactly what a new registrant sees, and learns nothing. Whatever code they type, `ConfirmSignUp` fails and the page says the code is wrong. A confirmed account (`already_confirmed`) is answered exactly like a wrong code (`code_mismatch`): the same message, the same state and the same cookies.
+- **The real owner** gets a reset code by email; the bilingual template says what it is for. The verify page always shows the link "Got a password-reset email instead? Set a new password" (`/forgot-password?step=reset`). It opens the reset-code step for the email in the pending cookie, with the code and a new password. No new code is sent. `ConfirmForgotPassword` finishes it, every session of that account ends, and the customer signs in on the sign-in page. This costs the owner one extra click and one sign-in.
+- **Neither person** can get a different answer before entering a valid code. The reset step also gives one answer (a wrong code) for a wrong code, an unconfirmed account and an unknown user.
 
 **The email has an account that was never confirmed:** the code is resent and the page goes to verify. The password stays the one from the first attempt.
 

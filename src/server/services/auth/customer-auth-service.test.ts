@@ -5,7 +5,6 @@ import { createCognitoIdentity } from '@/server/adapters/cognito/client';
 import { CognitoError, type CognitoErrorCode } from '@/server/adapters/cognito/errors';
 import type { CognitoIdentity } from './cognito-identity';
 import {
-  completePasswordChoice,
   confirmPasswordReset,
   confirmRegistration,
   register,
@@ -175,11 +174,9 @@ describe('non-Cognito errors surface (D-022)', () => {
     await expect(register(build({ cognito: { signUp: bug } }).deps, reg)).rejects.toThrow('boom');
     await expect(register(build({ cognito: { signUp: fail('username_exists'), forgotPassword: bug } }).deps, reg)).rejects.toThrow('boom');
   });
-  it('confirmRegistration, completePasswordChoice and confirmPasswordReset rethrow a bug', async () => {
+  it('confirmRegistration and confirmPasswordReset rethrow a bug', async () => {
     await expect(confirmRegistration(build({ cognito: { confirmSignUp: bug } }).deps, { ...base, email: 'a@example.com', code: '123456' })).rejects.toThrow('boom');
     const pw = { ...base, email: 'a@example.com', code: '123456', newPassword: 'N3wpass!x' };
-    await expect(completePasswordChoice(build({ cognito: { confirmForgotPassword: bug } }).deps, pw)).rejects.toThrow('boom');
-    await expect(completePasswordChoice(build({ cognito: { signInWithPassword: bug } }).deps, pw)).rejects.toThrow('boom');
     await expect(confirmPasswordReset(build({ cognito: { confirmForgotPassword: bug } }).deps, pw)).rejects.toThrow('boom');
   });
   it('signIn, resendCode and requestPasswordReset rethrow a bug', async () => {
@@ -199,9 +196,13 @@ describe('confirmRegistration', () => {
     expect(t.calls.map((c) => c.fn)).toEqual(['confirmSignUp']);
   });
 
-  it('verify with a reset code on a confirmed account asks for a new password', async () => {
-    const t = build({ cognito: { confirmSignUp: fail('already_confirmed') } });
-    expect(await confirmRegistration(t.deps, input)).toEqual({ ok: true, data: { next: 'choose_password' } });
+  it('verify with any code on a confirmed account answers like a wrong code', async () => {
+    const confirmed = build({ cognito: { confirmSignUp: fail('already_confirmed') } });
+    const wrong = build({ cognito: { confirmSignUp: fail('code_mismatch') } });
+    const a = await confirmRegistration(confirmed.deps, input);
+    const b = await confirmRegistration(wrong.deps, input);
+    expect(a).toEqual(b);
+    expect(a).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.codeInvalid', details: { field: 'code' } } });
   });
 
   it('a wrong code is a code field error', async () => {
@@ -220,28 +221,6 @@ describe('confirmRegistration', () => {
   it('an unknown email answers like a wrong code', async () => {
     const t = build({ cognito: { confirmSignUp: fail('not_authorized') } });
     expect(await confirmRegistration(t.deps, input)).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.codeInvalid' } });
-  });
-});
-
-describe('completePasswordChoice', () => {
-  const input = { ...base, email: 'Ann@Example.com', code: '123456', newPassword: 'N3wpass!x' };
-
-  it('resets, ends every other session, then signs in', async () => {
-    const t = build();
-    const result = await completePasswordChoice(t.deps, input);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.data.customer).toMatchObject({ id: 'c1', firstName: 'Ann' });
-    expect(result.data.session.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(t.calls.map((c) => c.fn)).toEqual(['confirmForgotPassword', 'signInWithPassword', 'verifyIdToken']);
-    expect(t.state.deletedAll).toEqual(['c1']);
-    expect(t.state.inserted).toHaveLength(1);
-  });
-
-  it('a wrong code is a code field error and nothing changes', async () => {
-    const t = build({ cognito: { confirmForgotPassword: fail('code_mismatch') } });
-    expect(await completePasswordChoice(t.deps, input)).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.codeInvalid' } });
-    expect(t.state.deletedAll).toEqual([]);
   });
 });
 
@@ -361,6 +340,29 @@ describe('password reset', () => {
     expect(t.state.deletedAll).toEqual([]);
   });
 
+  it('reset step answers the same for wrong code, unconfirmed and unknown user', async () => {
+    const input = { ...base, email: 'ann@example.com', code: '123456', newPassword: 'N3wpass!x' };
+    const results = [];
+    for (const code of ['code_mismatch', 'user_not_confirmed', 'not_authorized', 'already_confirmed', 'unavailable'] as const) {
+      const t = build({ cognito: { confirmForgotPassword: fail(code) } });
+      results.push(await confirmPasswordReset(t.deps, input));
+      expect(t.state.deletedAll).toEqual([]);
+    }
+    for (const r of results) {
+      expect(r).toEqual(results[0]);
+    }
+    expect(results[0]).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.codeInvalid', details: { field: 'code' } } });
+  });
+
+  it('reset keeps its own answers for an expired code, a throttle and a refused password', async () => {
+    const input = { ...base, email: 'ann@example.com', code: '123456', newPassword: 'N3wpass!x' };
+    const key = async (code: CognitoErrorCode) =>
+      confirmPasswordReset(build({ cognito: { confirmForgotPassword: fail(code) } }).deps, input);
+    expect(await key('code_expired')).toMatchObject({ error: { messageKey: 'shop.auth.error.codeExpired' } });
+    expect(await key('limit_exceeded')).toMatchObject({ error: { messageKey: 'shop.auth.error.rateLimited' } });
+    expect(await key('invalid_password')).toMatchObject({ error: { messageKey: 'shop.auth.error.passwordPolicy' } });
+  });
+
   it('a wrong reset code changes nothing', async () => {
     const t = build({ cognito: { confirmForgotPassword: fail('code_mismatch') } });
     expect(await confirmPasswordReset(t.deps, { ...base, email: 'ann@example.com', code: '123456', newPassword: 'N3wpass!x' })).toMatchObject({
@@ -375,7 +377,6 @@ describe('rate limits', () => {
   it.each([
     ['register', (d: CustomerAuthDeps) => register(d, reg)],
     ['verify', (d: CustomerAuthDeps) => confirmRegistration(d, { ...base, email: 'a@example.com', code: '123456' })],
-    ['verify', (d: CustomerAuthDeps) => completePasswordChoice(d, { ...base, email: 'a@example.com', code: '123456', newPassword: 'N3wpass!x' })],
     ['verify', (d: CustomerAuthDeps) => confirmPasswordReset(d, { ...base, email: 'a@example.com', code: '123456', newPassword: 'N3wpass!x' })],
     ['resend', (d: CustomerAuthDeps) => resendCode(d, { ...base, email: 'a@example.com' })],
     ['sign_in', (d: CustomerAuthDeps) => signIn(d, { ...base, email: 'a@example.com', password: 'x' })],

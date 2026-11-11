@@ -4,7 +4,6 @@ import type { CustomerAuthDeps } from '@/server/services/auth/customer-auth-serv
 import { failedPasswordRules } from '@/server/services/auth/password-policy';
 
 import {
-  handleChoosePassword,
   handleForgotPassword,
   handleRegister,
   handleResendCode,
@@ -12,6 +11,7 @@ import {
   handleSignIn,
   handleSignOut,
   handleVerify,
+  PASSWORD_RESET_CODE_PATH,
   type AuthRequestContext,
 } from './customer-auth-controller';
 
@@ -128,33 +128,27 @@ describe('verify', () => {
     expect(out.state).toEqual({ redirectTo: '/register?expired=1' });
   });
 
-  it('a confirmed account switches to the choose-a-password step', async () => {
+  it('a confirmed account gets the same state and cookies as a wrong code', async () => {
     const { CognitoError } = await import('@/server/adapters/cognito/errors');
-    const t = build({ cognito: { confirmSignUp: vi.fn(async () => { throw new CognitoError('already_confirmed'); }) } });
-    const out = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com' }));
-    expect(out.state).toEqual({ step: 'choose_password' });
+    const run = (code: 'already_confirmed' | 'code_mismatch') =>
+      handleVerify(build({ cognito: { confirmSignUp: vi.fn(async () => { throw new CognitoError(code); }) } }).deps, form({ code: '000000' }), ctx({ pendingEmail: 'ann@example.com' }));
+    const confirmed = await run('already_confirmed');
+    expect(confirmed).toEqual(await run('code_mismatch'));
+    expect(confirmed).toEqual({ state: { fieldErrors: { code: 'shop.auth.error.codeInvalid' } } });
   });
 
-  it('choosing a password signs in, clears pending and honours a safe returnTo', async () => {
+  it('reset step reachable from verify uses the pending email without sending a new code', async () => {
+    expect(PASSWORD_RESET_CODE_PATH).toBe('/forgot-password?step=reset');
     const t = build();
-    const out = await handleChoosePassword(
+    // The register-time pending cookie is all the reset step needs.
+    const out = await handleResetPassword(
       t.deps,
-      form({ code: '123456', password: 'N3wpass!x', passwordConfirm: 'N3wpass!x', returnTo: '//evil.example' }),
+      form({ code: '123456', password: 'N3wpass!x', passwordConfirm: 'N3wpass!x' }),
       ctx({ pendingEmail: 'ann@example.com' }),
     );
-    expect(out.state.redirectTo).toBe('/');
-    expect(out.cookies?.clearPending).toBe(true);
-    expect(out.cookies?.setSession?.token).toBeTruthy();
-  });
-
-  it('choosing a mismatched password stays on the step', async () => {
-    const t = build();
-    const out = await handleChoosePassword(
-      t.deps,
-      form({ code: '123456', password: 'N3wpass!x', passwordConfirm: 'other' }),
-      ctx({ pendingEmail: 'ann@example.com' }),
-    );
-    expect(out.state).toEqual({ fieldErrors: { passwordConfirm: 'shop.auth.error.passwordMismatch' }, step: 'choose_password' });
+    expect(out.state).toEqual({ redirectTo: '/sign-in?reset=1' });
+    expect(t.cognito.confirmForgotPassword).toHaveBeenCalledWith({ email: 'ann@example.com', code: '123456', newPassword: 'N3wpass!x' });
+    expect(t.cognito.forgotPassword).not.toHaveBeenCalled();
   });
 });
 
@@ -223,10 +217,9 @@ describe('sign-in, resend, reset and sign-out', () => {
     }
   });
 
-  it('choose-password, reset and resend without a pending cookie go back to the first step', async () => {
+  it('reset and resend without a pending cookie go back to the first step', async () => {
     const t = build();
     const f = form({ code: '123456', password: 'N3wpass!x', passwordConfirm: 'N3wpass!x' });
-    expect((await handleChoosePassword(t.deps, f, ctx())).state).toEqual({ redirectTo: '/register?expired=1' });
     expect((await handleResetPassword(t.deps, f, ctx())).state).toEqual({ redirectTo: '/forgot-password?expired=1' });
     expect((await handleResendCode(t.deps, f, ctx())).state).toEqual({ redirectTo: '/register?expired=1' });
     expect(t.getCognito).not.toHaveBeenCalled();

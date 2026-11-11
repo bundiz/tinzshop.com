@@ -64,7 +64,7 @@
 
 - **R1, after verifying the code.** The spec (§6.1 step 4) signs in "with the password it still holds for that request". But the code is entered in a later request, and keeping a password between requests is not acceptable. So:
   - **Ordinary verify:** it redirects to sign-in, with the email filled in and the message `shop.auth.verify.confirmed`.
-  - **O-9 reset path:** the customer types a new password in that same request, so they are signed in directly.
+  - **O-9 reset path:** the customer follows the verify page's link to the reset-code step, sets a new password there and signs in afterwards (Q-060, D-179).
   - If check 7 in Task 2 shows Cognito can sign in from the confirmation itself, Task 7 uses that instead. Cost if wrong: one extra password entry.
 - **R2, Server Components cannot set cookies.** The session read never writes the cookie. A dead session is treated as signed out and its cookie is cleared by the next Server Action or route handler. Cost: none to the visitor.
 - **R3, module name.** `auth` is the module folder in every layer. The planned `access/` folder (04) stays for permission evaluation.
@@ -251,8 +251,7 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 - `register`, which always returns `{ next: 'verify' }`:
   - **O-9:** on `username_exists` it calls `forgotPassword`.
   - **Never-confirmed account:** if `forgotPassword` answers `user_not_confirmed`, it calls `resendConfirmationCode` instead (§6.1).
-- `confirmRegistration`, which returns `{ next: 'sign_in' }`, or `{ next: 'choose_password' }` on `already_confirmed`
-- `completePasswordChoice` (`confirmForgotPassword`, then sign-in and end all other sessions)
+- `confirmRegistration`, which returns `{ next: 'sign_in' }`; an `already_confirmed` account answers exactly like a wrong code (Q-060, D-179)
 - `resendCode`
 - `signIn`
 - `requestPasswordReset`
@@ -264,7 +263,9 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 - [x] **Failing tests:**
   - `register with a taken email shows the same verify step and starts a reset` (O-9)
   - `register with a never-confirmed email resends the sign-up code`
-  - `verify with a reset code on a confirmed account asks for a new password`
+  - `verify with any code on a confirmed account answers like a wrong code` (Q-060)
+  - `reset step reachable from verify uses the pending email without sending a new code`
+  - `reset step answers the same for wrong code, unconfirmed and unknown user`
   - `wrong password and unknown email give the same error`
   - `unconfirmed sign-in goes to verify`
   - `forgot password answers the same for unknown emails`
@@ -274,7 +275,7 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
   - `rate-limited action returns rateLimited before calling Cognito`
 - [x] **Implement** to pass. The actions set and clear the cookies (session and pending).
 - [x] **Commit:** `feat: add customer registration, verification, sign-in and reset`
-- **Built notes (Task 7):** the O-9 `choose_password` step relies on ConfirmSignUp answering `already_confirmed` for a reset code on a confirmed account; Task 2 checks 3 to 7 were not run, so this and the other Cognito answers Task 7 assumes are on the manual checklist. Forgot-password and the follow-up steps of register and resend answer identically whatever Cognito returns (D-178).
+- **Built notes (Task 7):** Q-060 was resolved on 2026-11-11 ("same answer", D-179): there is no `choose_password` step and no `completePasswordChoice`; the verify page links to the reset-code step (`PASSWORD_RESET_CODE_PATH`, `/forgot-password?step=reset`). Forgot-password and the follow-up steps of register and resend answer identically whatever Cognito returns (D-178).
 
 
 ### Task 8: Google sign-in routes
@@ -318,7 +319,7 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 - **Produces:** `SiteHeaderProps.customer?: { firstName: string } | null`.
 
 - [ ] **Failing tests:**
-  - **Render tests:** each page shows its fields, the other page's link at the top right, and the "ลืมรหัสผ่าน?" link on the password label row. The verify page switches to a new-password field on `choose_password`.
+  - **Render tests:** each page shows its fields, the other page's link at the top right, and the "ลืมรหัสผ่าน?" link on the password label row. The verify page always shows the link "Got a password-reset email instead? Set a new password" to `PASSWORD_RESET_CODE_PATH`; `/forgot-password?step=reset` shows the code and new-password fields from the pending cookie.
   - **Header:** the signed-out header links to sign-in; the signed-in header shows the first name and the "ออกจากระบบ" form.
   - **Gating:**
     - `signed-out /product redirects to sign-in with returnTo`
@@ -351,7 +352,7 @@ These are run by a person against the dev pool. Never tick a box for a check nob
 - [ ] Sign in with Google using that same email: it's the same account (one `customer` row), with no visible error, even on the first link.
 - [ ] Sign in with Google with a new Gmail: an account is created without a last name.
 - [ ] Wrong password and unknown email show the same message. Repeating it 11 times in 15 minutes shows the rate-limit message.
-- [ ] Q-060: register a victim-style email that already has an account, then enter a wrong code such as 000000 on the verify page. Note whether the choose-a-password step appears (it would reveal the account exists) or a wrong-code error; report the result under Q-060 and Task 2 check 6.
+- [ ] Q-060: register an email that already has an account, then enter a wrong code such as 000000 on the verify page: you see the same wrong-code message as for any wrong code. Click "Got a password-reset email instead?", enter the emailed code and a new password: you can then sign in, and an earlier signed-in browser is signed out.
 - [ ] Sign in with an unconfirmed account: you land on verify and a fresh code arrives; the resend button counts against its own limit.
 - [ ] Forgot password works, and an earlier signed-in browser is signed out afterwards.
 - [ ] Wait more than 60 minutes, then click around: there's no sign-in prompt, and `customer_session.access_token_expires_at` moved forward.

@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 
 import { getCustomerAuthDeps } from '@/server/composition-root';
 import {
-  handleChoosePassword,
   handleForgotPassword,
   handleRegister,
   handleResendCode,
@@ -43,10 +42,6 @@ export async function registerAction(_previous: AuthFormState, formData: FormDat
 
 export async function verifyAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
   return run(formData, (ctx) => handleVerify(getCustomerAuthDeps(), formData, ctx));
-}
-
-export async function choosePasswordAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
-  return run(formData, (ctx) => handleChoosePassword(getCustomerAuthDeps(), formData, ctx));
 }
 
 export async function resendCodeAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {

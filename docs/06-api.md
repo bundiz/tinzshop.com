@@ -239,12 +239,11 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 | Action | Does | Next step or error |
 | :--- | :--- | :--- |
 | `register` | Sign up (`given_name`, `family_name`). | Always `verify`, whether the email is new, already registered (a reset code is sent, D-160) or never confirmed (the code is resent). |
-| `confirmRegistration` | Confirms the 6-digit code. | `sign_in` (R1, D-173), or `choose_password` when the account was already confirmed (the reset case). |
-| `completePasswordChoice` | Confirms the reset code with the new password, signs in, ends the customer's other sessions. | Signed in. |
+| `confirmRegistration` | Confirms the 6-digit code. | `sign_in` (R1, D-173). Any failure, including an already-confirmed account, is the same `auth.invalid_code` (Q-060, D-179). |
 | `resendCode` | Resends the sign-up code. | Rate-limited. |
 | `signIn` | Email and password, sets the session cookie. | `redirectTo` is the safe `returnTo`. An unconfirmed account goes to `verify`. |
 | `requestPasswordReset` | Sends a reset code. | Always "if this email has an account, we sent a code". |
-| `confirmPasswordReset` | Code plus new password; ends **all** of the customer's sessions. | Back to sign-in. |
+| `confirmPasswordReset` | Code plus new password for the email in the pending cookie (set by register or by the forgot-password form, so the verify page's link needs no new code); ends **all** of the customer's sessions. | Back to sign-in. A wrong code, an unconfirmed account, an unknown user and an unmapped Cognito refusal are all `auth.invalid_code`. |
 | `signOut` | Deletes the session row, revokes the refresh token, clears the cookie. | Redirect home. |
 
 **Error codes and message keys.** The service returns `Result<…>` (`{ ok: false, error: { code, message, messageKey, details? } }`); a `details.field` makes the controller put the key under `fieldErrors[field]`, otherwise it is the `formError`.
@@ -261,6 +260,8 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 | (validation) | `shop.auth.error.nameRequired`, `nameTooLong`, `emailInvalid`, `passwordMismatch` (field `passwordConfirm`), `passwordRequired`, `codeFormat` | Zod checks in the controller, before the service. |
 | (controller) | none | The pending cookie is missing or over an hour old; the customer is sent back to the first step with `?expired=1` (a redirect carries no form state, so there is no `formError`). |
 
+**Reasoning behind D-179 (Q-060).** `ConfirmSignUp` reports "already confirmed" before it checks the code, so using that answer to open a choose-a-password step would tell a stranger who typed any code that the email has an account. The verify step therefore answers a confirmed account exactly like a wrong code (same error, same state, same cookies). The owner of an existing account follows the standing link on the verify page to the reset-code step, `PASSWORD_RESET_CODE_PATH` = `/forgot-password?step=reset` (exported from the controller), which reads the email from `tinzshop_pending` and sends no code. The `choose_password` step and `completePasswordChoice` do not exist.
+
 **Reasoning behind D-178.**
 - **Pending cookie.** `tinzshop_pending` is sealed and carries the email with its issue time, so a tampered or stale one reads as absent. It stays after a correct verify or reset so the sign-in page can prefill the email (R1, D-173), and is cleared by a sign-in.
 - **Reset purge.** After a reset the service finds the customer with `findCustomerByEmail` and deletes every session row. This needs no extra Cognito sign-in and cannot fail on Cognito being down. A person who never signed in on the site has no rows, so nothing is purged.
@@ -268,7 +269,7 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 - **Sign-in resend.** A sign-in that finds an unconfirmed account sends the code again and goes to verify. That resend counts against the `resend` limit; when it is over, the customer still goes to verify but no code is sent.
 - **Refused email.** If a correct sign-in belongs to a Cognito user whose email another customer holds, the just-issued refresh token is revoked before the refusal.
 
-The controller's state also carries `notice?: messageKey` (`shop.auth.verify.resent`) and `step?: 'choose_password' | 'reset'` for pages that stay on one route. Redirect targets are locale-less (`/register/verify`, `/sign-in?confirmed=1`, `/sign-in?reset=1`); the action adds the locale from the `locale` form field.
+The controller's state also carries `notice?: messageKey` (`shop.auth.verify.resent`) and `step?: 'reset'` for pages that stay on one route. Redirect targets are locale-less (`/register/verify`, `/sign-in?confirmed=1`, `/sign-in?reset=1`); the action adds the locale from the `locale` form field.
 
 The adapter reports Cognito failures as a `CognitoError` with one of `username_exists`, `code_mismatch`, `code_expired`, `already_confirmed`, `not_authorized`, `user_not_confirmed`, `invalid_password`, `limit_exceeded` or `unavailable`. These are internal: the controller maps each to a message key, and `username_exists` and `already_confirmed` never reach the screen as such (D-160).
 

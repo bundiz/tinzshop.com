@@ -139,18 +139,20 @@ export async function register(
   return { ok: true, data: { next: 'verify' } };
 }
 
-/** Confirms the sign-up code. An already-confirmed account means the code was a reset code (O-9). */
+/**
+ * Confirms the sign-up code. A confirmed account answers exactly like a wrong code (Q-060, D-179), so
+ * a stranger cannot learn that an email has an account.
+ */
 export async function confirmRegistration(
   deps: CustomerAuthDeps,
   input: Base & { email: string; code: string },
-): Promise<Result<{ next: 'sign_in' | 'choose_password' }>> {
+): Promise<Result<{ next: 'sign_in' }>> {
   const gated = await gate(deps, 'verify', input);
   if ('refusal' in gated) return gated.refusal;
   try {
     await deps.getCognito().confirmSignUp({ email: gated.email, code: input.code });
     return { ok: true, data: { next: 'sign_in' } };
   } catch (e) {
-    if (codeOf(e) === 'already_confirmed') return { ok: true, data: { next: 'choose_password' } };
     return codeFailure(e);
   }
 }
@@ -160,7 +162,7 @@ async function endSessionsFor(deps: CustomerAuthDeps, email: string): Promise<vo
   if (existing !== null) await endAllCustomerSessions(deps.session, existing.id);
 }
 
-/** Signs in with a password the request holds, and starts the session. Shared by sign-in and the O-9 path. */
+/** Signs in with a password the request holds, and starts the session.  */
 async function signInAndStart(
   deps: CustomerAuthDeps,
   cognito: CognitoIdentity,
@@ -183,31 +185,6 @@ async function signInAndStart(
   }
   const session = await startCustomerSession(deps.session, { customerId: upsert.customer.id, tokens, now: input.now });
   return { customer: { id: upsert.customer.id, firstName: upsert.customer.firstName }, session };
-}
-
-/** The O-9 finish: the reset code proves the email, so set the new password, end every session, sign in. */
-export async function completePasswordChoice(
-  deps: CustomerAuthDeps,
-  input: Base & { email: string; code: string; newPassword: string },
-): Promise<Result<SignedIn>> {
-  const gated = await gate(deps, 'verify', input);
-  if ('refusal' in gated) return gated.refusal;
-  const { email } = gated;
-  const cognito = deps.getCognito();
-  try {
-    await cognito.confirmForgotPassword({ email, code: input.code, newPassword: input.newPassword });
-  } catch (e) {
-    return codeFailure(e);
-  }
-  try {
-    await endSessionsFor(deps, email);
-    const signedIn = await signInAndStart(deps, cognito, { email, password: input.newPassword, now: input.now });
-    if (signedIn === 'email_taken') return accountConflict();
-    return { ok: true, data: signedIn };
-  } catch (e) {
-    deps.log?.('sign-in after password choice failed', { emailHash: emailHash(email), code: codeOf(e) });
-    return unavailable();
-  }
 }
 
 const accountConflict = () =>
@@ -278,6 +255,12 @@ export async function confirmPasswordReset(
   try {
     await deps.getCognito().confirmForgotPassword({ email: gated.email, code: input.code, newPassword: input.newPassword });
   } catch (e) {
+    // Wrong code, unconfirmed account and unknown user must look alike (Q-060), and Cognito may report
+    // the unconfirmed case as an unmapped InvalidParameterException (`unavailable`); log the code only.
+    if (codeOf(e) === 'unavailable') {
+      deps.log?.('password reset failed', { emailHash: emailHash(gated.email), code: 'unavailable' });
+      return invalidCode();
+    }
     return codeFailure(e);
   }
   await endSessionsFor(deps, gated.email);
