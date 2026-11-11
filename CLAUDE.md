@@ -50,7 +50,7 @@ project owner's decisions of 2026-10-29
 project owner's request of 2026-10-29. Plan 014 is on the project owner's
 decisions of 2026-11-03 and approval of 2026-11-04
 (`docs/superpowers/specs/2026-11-03-customer-authentication-design.md`, §2); its
-Cognito dev-pool checks 3 to 7 (Task 2) were moved to the plan's manual test checklist
+Cognito dev-pool checks 3 to 6 (Task 2) were moved to the plan's manual test checklist (check 7 became moot under ruling R1)
 on 2026-11-11. Build only what
 plans 010, 011, 012, 013 and 014 describe — do not scaffold the rest of the application to
 get ahead of the other plans. K-Payment is the
