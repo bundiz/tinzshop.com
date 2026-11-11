@@ -354,6 +354,7 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 A whole-branch review after Task 10 asked for these; each was built test first.
 
 - [x] **Q-061, "second code" (D-186).** The pending cookie carries `createdHere`, true only after this browser's successful `SignUp` or an unconfirmed password sign-in. After a correct verify code, any other account gets a second code and goes to `/forgot-password?step=reset&setPassword=1`, so a password a stranger set on an unconfirmed account never survives. The flag is sealed as 1 or 0, so the cookie is the same length either way. Tests: `verify on an account created in this browser goes to sign-in`, `verify on an account not created here asks for a password with a second code`, `the created-here flag is set only by a successful sign-up or an unconfirmed password sign-in`, `an old pending cookie without the flag is treated as not created here`.
+- [x] **Sign-in logging (spec §7).** A started session logs `{ customerId }` (password and Google), a failed password sign-in (`not_authorized`, `user_not_confirmed`) logs `{ emailHash, code }`, and a refresh that meets `unavailable` or `limit_exceeded` logs `{ customerId, code }` (the Task 4 minor). Tests assert the calls and that no raw email appears.
 - [x] **No dead ends, no orphaned sessions (D-187).** The reset step has "Send a new code"; "Forgot password?" on the sign-in page carries `returnTo`; a sign-in over an older session cookie ends that session first, on both the password and the Google path.
 
 ---

@@ -33,8 +33,8 @@ export type CustomerSessionDeps = {
     delete(tokenHash: string): Promise<void>;
     deleteAll(customerId: string): Promise<void>;
   };
-  /** Receives a message and a customer id only. */
-  log?: (message: string, fields: { customerId: string }) => void;
+  /** Receives a message, a customer id and at most a Cognito failure code: never a token, cookie value or email. */
+  log?: (message: string, fields: { customerId: string; code?: string }) => void;
 };
 
 function hashToken(token: string): string {
@@ -103,7 +103,10 @@ export async function readCustomerSession(
       await deps.sessions.delete(tokenHash);
       return null;
     }
+    // Cognito unreachable or throttling: the row is kept and this request is signed out. Logged so a lasting
+    // outage shows up (spec §7); a definite rejection above is an ordinary sign-out and is not.
     if (code === null) deps.log?.('customer session refresh failed unexpectedly', { customerId: row.customerId });
+    else deps.log?.('customer session refresh failed', { customerId: row.customerId, code });
     return null;
   }
 }

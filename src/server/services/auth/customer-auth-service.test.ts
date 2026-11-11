@@ -332,6 +332,20 @@ describe('signIn', () => {
     expect(t.calls.map((c) => c.fn)).toEqual(['signInWithPassword']);
   });
 
+  it('a session start is logged with the customer id only', async () => {
+    const t = build();
+    await signIn(t.deps, input);
+    expect(t.state.logs).toEqual([{ message: 'customer signed in', fields: { customerId: 'c1' } }]);
+  });
+
+  it.each(['not_authorized', 'user_not_confirmed'] as const)('a failed password sign-in (%s) is logged by email hash and code', async (code) => {
+    const t = build({ cognito: { signInWithPassword: fail(code) } });
+    await signIn(t.deps, input);
+    expect(t.state.logs).toContainEqual({ message: 'password sign-in failed', fields: { emailHash: sha('ann@example.com'), code } });
+    const logged = JSON.stringify(t.state.logs);
+    for (const secret of ['ann@example.com', 'Ann@Example.com', 'Passw0rd!']) expect(logged).not.toContain(secret);
+  });
+
   it('signing in while an older session cookie is present ends that session first', async () => {
     const t = build();
     const order: string[] = [];

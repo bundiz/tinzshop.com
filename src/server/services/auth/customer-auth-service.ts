@@ -179,7 +179,8 @@ async function endSessionsFor(deps: CustomerAuthDeps, email: string): Promise<vo
  * token is revoked so no live token is left behind; the log carries the email hash only.
  *
  * `previousToken` is the session cookie the browser already held: that session is ended (row deleted,
- * refresh token revoked) before the new one starts, so a sign-in never leaves an orphaned row.
+ * refresh token revoked) before the new one starts, so a sign-in never leaves an orphaned row. A
+ * started session is logged with the customer id only (spec §7).
  */
 export async function startSessionFromTokens(
   deps: CustomerAuthDeps,
@@ -205,6 +206,7 @@ export async function startSessionFromTokens(
     await endCustomerSession(deps.session, input.previousToken);
   }
   const session = await startCustomerSession(deps.session, { customerId: upsert.customer.id, tokens, now: input.now });
+  deps.log?.('customer signed in', { customerId: upsert.customer.id });
   return { customer: { id: upsert.customer.id, firstName: upsert.customer.firstName }, session };
 }
 
@@ -252,6 +254,9 @@ export async function signIn(
     return { ok: true, data: { next: 'done', ...signedIn } };
   } catch (e) {
     const code = codeOf(e);
+    if (code === 'not_authorized' || code === 'user_not_confirmed') {
+      deps.log?.('password sign-in failed', { emailHash: emailHash(email), code });
+    }
     if (code === 'user_not_confirmed') {
       // The resend counts against the resend limit like any other; over it, the customer still goes to verify.
       const allowed = await checkAuthRateLimit(deps.rateLimit, 'resend', { ip: input.ip, email, now: input.now });

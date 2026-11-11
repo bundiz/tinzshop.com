@@ -169,7 +169,7 @@ From 08, as they apply with Cognito:
   
   Cognito's lockout and code throttling sit on top of this. The limits are my call: 10 per 15 minutes for sign-in, and 5 per hour for the others.
 - **Reading the client IP** depends on what sits in front of the app (Cloudflare, plan 008), so it is one config switch, `TRUSTED_PROXY_HEADER`. Until that is set, the app uses the **right-most** `X-Forwarded-For` entry, the one the nearest proxy adds, and never trusts the left-most one, which the client controls.
-- **Logs:** sign-in successes and failures are logged with the customer id or a hashed email. Passwords, codes, tokens and session ids are never logged.
+- **Logs:** sign-in successes and failures are logged with the customer id or a hashed email. Passwords, codes, tokens and session ids are never logged. As built: `customer signed in` with `{ customerId }` once a session starts (in `startSessionFromTokens`, so both password and Google sign-in log it); `password sign-in failed` with `{ emailHash, code }` for `not_authorized` and `user_not_confirmed`; and `customer session refresh failed` with `{ customerId, code }` when a silent refresh meets `unavailable` or `limit_exceeded` (the session is kept).
 - **Customer sessions are longer than staff sessions** (08): 7 days here, with staff shorter in plan 002.
 - **The Google `returnTo`** is checked to be a path on this site.
 

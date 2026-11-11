@@ -138,6 +138,26 @@ describe('readCustomerSession', () => {
     expect(state.deleted).toEqual([]);
   });
 
+  it.each<CognitoErrorCode>(['unavailable', 'limit_exceeded'])('refresh %s is logged with the customer id and the code only', async (code) => {
+    const log = vi.fn();
+    const { deps } = build(rowFor('tok', { accessTokenExpiresAt: new Date(NOW.getTime() - 1) }), async () => {
+      throw new CognitoError(code);
+    });
+    await readCustomerSession({ ...deps, log }, 'tok', NOW);
+    expect(log).toHaveBeenCalledWith('customer session refresh failed', { customerId: 'c1', code });
+    const logged = JSON.stringify(log.mock.calls);
+    for (const secret of ['tok', sha('tok'), 'a@b.co', 'R']) expect(logged).not.toContain(`"${secret}"`);
+  });
+
+  it('a definite refresh rejection is not logged as a failure', async () => {
+    const log = vi.fn();
+    const { deps } = build(rowFor('tok', { accessTokenExpiresAt: new Date(NOW.getTime() - 1) }), async () => {
+      throw new CognitoError('not_authorized');
+    });
+    await readCustomerSession({ ...deps, log }, 'tok', NOW);
+    expect(log).not.toHaveBeenCalled();
+  });
+
   it('an unexpected error keeps the session, returns null and logs only the customer id', async () => {
     const log = vi.fn();
     const { deps, state } = build(rowFor('tok', { accessTokenExpiresAt: new Date(NOW.getTime() - 1) }), async () => {

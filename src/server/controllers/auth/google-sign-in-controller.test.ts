@@ -173,8 +173,8 @@ describe('GET /api/callbacks/cognito', () => {
 });
 
 describe('a Google sign-in over an older session', () => {
-  it('ends the older session before starting the new one', async () => {
-    const { deps } = build();
+  it('ends the older session before starting the new one, and logs the sign-in by customer id', async () => {
+    const { deps, log } = build();
     const order: string[] = [];
     deps.auth.session.sessions.delete = async () => {
       order.push('delete');
@@ -185,6 +185,8 @@ describe('a Google sign-in over an older session', () => {
     const out = await handleGoogleCallback(deps, callback({ sessionToken: 'old-cookie' }));
     expect(out.setSession).toBeDefined();
     expect(order).toEqual(['delete', 'insert']);
+    expect(log).toHaveBeenCalledWith('customer signed in', { customerId: 'c1' });
+    expect(JSON.stringify(log.mock.calls)).not.toContain('example.com');
   });
 });
 
