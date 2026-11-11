@@ -16,7 +16,7 @@
 **Goal:**
 - A customer registers with email and password (confirmed by a 6-digit code), or signs in with Google.
 - One email is one account.
-- Sessions are ours: a 15-minute access token refreshed silently, and 7 days from sign-in.
+- Sessions are ours: a 60-minute access token refreshed silently (D-176), and 7 days from sign-in.
 - Product pages require sign-in.
 
 **Architecture:**
@@ -38,7 +38,7 @@
   - Only repositories import Prisma.
 - **No AWS credentials in the app.** It uses public Cognito APIs with `COGNITO_CLIENT_ID` and `COGNITO_CLIENT_SECRET` only (§4).
 - **Secret hash.** Every call that has the client secret sends `SECRET_HASH = base64(HMAC-SHA256(clientSecret, username + clientId))`. The username is the email for sign-up, sign-in and reset, and the `sub` for refresh.
-- **Token lifetimes are pool settings, not code:** access 15 min, ID 15 min, refresh 7 days, rotation off (O-7). The code reads `exp` from the tokens and never hard-codes 15 minutes.
+- **Token lifetimes are pool settings, not code:** access 60 min, ID 60 min, refresh 7 days, rotation off (O-7; D-176 replaced 15 min on 2026-11-11). The code reads `exp` from the tokens and never hard-codes a lifetime.
 - **Cookies:**
   - `tinzshop_session`: HttpOnly, Secure, `SameSite=Lax`, path `/`, `maxAge` until `expires_at`. The value is 32 random bytes in base64url; only its SHA-256 is stored.
   - `tinzshop_oauth` (Google state): sealed, HttpOnly, 10 minutes, path `/api`.
@@ -115,8 +115,8 @@
 
 The owner creates the dev pool from the `14` checklist, with a Google client. Then a person runs each check and writes the answer here. **Tasks 3 to 5 may start in parallel. Tasks 6 to 8 wait for this one.** An answer that contradicts the spec goes back to the owner (§13).
 
-- [ ] 1. Cognito is offered in `ap-southeast-7`: ______ (otherwise `ap-southeast-1`)
-- [ ] 2. The Lite tier allows the Google provider, the pre sign-up trigger and 15 min / 7 day tokens: ______
+- [x] 1. Cognito is offered in `ap-southeast-7`: **yes.** The dev pool is in `ap-southeast-7` on the Lite tier (2026-11-11).
+- [x] 2. The Lite tier allows the Google provider, the pre sign-up trigger and 60 min / 7 day tokens: **yes.** The console offers Google under *Add identity provider* and *Pre sign-up trigger* under *Add Lambda trigger*; refresh is set to 7 days, and a real sign-in through the Cognito login page returned an access and an ID token with 60-minute lifetimes, a refresh token and scopes `openid profile email` (2026-11-11).
 - [ ] 3. The first Google sign-in after the trigger links the user fails once. Error text in the callback: ______
 - [ ] 4. A user made by `AdminCreateUser` + `AdminSetUserPassword` (permanent) can use `ForgotPassword`: ______
 - [ ] 5. Registering again with an unconfirmed email gives `UsernameExistsException`, and `ResendConfirmationCode` works: ______
@@ -350,7 +350,7 @@ These are run by a person against the dev pool. Never tick a box for a check nob
 - [ ] Sign in with Google with a new Gmail: an account is created without a last name.
 - [ ] Wrong password and unknown email show the same message. Repeating it 11 times in 15 minutes shows the rate-limit message.
 - [ ] Forgot password works, and an earlier signed-in browser is signed out afterwards.
-- [ ] Wait more than 15 minutes, then click around: there's no sign-in prompt, and `customer_session.access_token_expires_at` moved forward.
+- [ ] Wait more than 60 minutes, then click around: there's no sign-in prompt, and `customer_session.access_token_expires_at` moved forward.
 - [ ] Sign out: the cookie is gone, and the back button doesn't show a signed-in page.
 - [ ] Signed out, open `/th/product` and a product: you're sent to sign-in, then back to that product. News stays open.
 - [ ] At 360px wide, all four pages fit with no sideways scroll.

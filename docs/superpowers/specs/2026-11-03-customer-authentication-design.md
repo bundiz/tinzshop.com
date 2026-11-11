@@ -21,7 +21,7 @@ Either way, one person has **one account**. Login is handled by **Amazon Cognito
 - **O-4, email verification:** a password registration is confirmed with a 6-digit code sent by email before the account can sign in.
 - **O-5, registration fields:** first name, last name, email, password and password again. These match what Google gives (given name, family name, email).
 - **O-6, phone and address:** not asked at registration. They belong to the customer's profile, which is the next plan (§12).
-- **O-7, tokens:** the access token lives **15 minutes** and is refreshed silently. The refresh token lives **7 days counted from sign-in**, after which the customer signs in again. Visiting does not extend it.
+- **O-7, tokens:** the access token lives **60 minutes** and is refreshed silently (the owner changed this from 15 minutes on 2026-11-11, D-176). The refresh token lives **7 days counted from sign-in**, after which the customer signs in again. Visiting does not extend it.
 - **O-8, staff are separate:** staff sign in on their own page, against their own user pool and tables. They are not built here.
 - **O-9, registering an email that already has an account** (2026-11-04): the page gives the same "check your email" answer as a new registration, so nobody can learn whether an email has an account. Behind the scenes the real owner is sent a password-reset code (§6.1).
 - **O-10, signed-out visitors** (2026-11-04): REQ-053 / D-061 applies as written. A visitor who isn't signed in sees only the home page's products. The all-products page and product pages send them to sign-in first (§8).
@@ -55,7 +55,7 @@ One **customer user pool**. Staff get a second pool in plan 002.
   - OAuth: authorization code grant with PKCE, scopes `openid email profile`.
   - Identity providers: Cognito and Google.
   - Callback URLs: `http://localhost:3000/api/callbacks/cognito` and `http://localhost:3002/api/callbacks/cognito` for dev; the production URL is added at go-live.
-  - Token validity: access 15 min, ID 15 min, refresh 7 days.
+  - Token validity: access 60 min, ID 60 min, refresh 7 days (D-176).
   - Refresh-token rotation: off (O-7).
 - **Cognito domain** (a prefix domain) for the OAuth endpoints. Customers see it only for a moment during the Google redirect.
 - **Google identity provider:** set up with the Google OAuth client id and secret. Those two values live **in Cognito, not in our `.env`**. Attribute mapping: `email`, `email_verified`, `given_name`, `family_name`.
@@ -141,7 +141,7 @@ All forms are Server Actions, which carry CSRF protection (06). Every Cognito ca
 2. `access_token_expires_at` has passed? The helper refreshes (`InitiateAuth` with `REFRESH_TOKEN_AUTH`) and stores the new sealed access token and expiry.
    - **Refresh fails** (the user was disabled or deleted, signed out everywhere, or the 7 days ran out): delete the row, and the visitor is signed out.
    - **Two requests refresh at once:** that's harmless, because rotation is off and the refresh token doesn't change.
-3. So a change made in Cognito reaches the site within 15 minutes, and a sign-out made on the site takes effect at once.
+3. So a change made in Cognito reaches the site within 60 minutes, and a sign-out made on the site takes effect at once.
 
 ### 6.5 Sign out
 - **Sign out (this device):** a Server Action deletes the session row, revokes the refresh token (`RevokeToken`) and clears the cookie.

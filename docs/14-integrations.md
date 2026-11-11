@@ -308,7 +308,7 @@ In the AWS console:
     - OAuth: authorization code grant with PKCE; scopes `openid email profile`.
     - Identity providers: Cognito and Google.
     - Callback URLs: `http://localhost:3000/api/callbacks/cognito` and `http://localhost:3002/api/callbacks/cognito` for development. The production URL is added at go-live.
-    - Token validity: access 15 minutes, ID 15 minutes, refresh 7 days. Refresh-token rotation off (O-7). Whether the Lite tier allows these lifetimes is checked in plan 014 Task 2.
+    - Token validity: access 60 minutes, ID 60 minutes, refresh 7 days. Refresh-token rotation off (O-7, D-176). The Lite tier allows these lifetimes (plan 014 Task 2).
 
 In the Google Cloud console:
 
