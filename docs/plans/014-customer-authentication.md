@@ -343,11 +343,11 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 
 ### Task 10: Local setup and the manual checks
 
-- [ ] **`16-local-setup.md`:**
+- [x] **`16-local-setup.md`:**
   - a Cognito step: get the 6 values from a teammate privately; add the dev callback ports 3000 and 3002
   - a note that product pages now need a signed-in dev account
-- [ ] **`14`:** the Lambda deploy steps link to `infra/cognito/pre-sign-up/README.md`.
-- [ ] **Commit:** `docs: add Cognito to the local setup guide`
+- [x] **`14`:** the Lambda deploy steps link to `infra/cognito/pre-sign-up/README.md`.
+- [x] **Commit:** `docs: add Cognito to the local setup guide`
 
 ---
 

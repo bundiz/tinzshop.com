@@ -293,8 +293,8 @@ The owner follows these steps by hand; infrastructure-as-code waits for phase 7.
 
 In the AWS console:
 
-1. **Region.** Create the pool in Asia Pacific (Thailand) `ap-southeast-7` if Cognito is offered there, otherwise Singapore `ap-southeast-1`. Which one is checked in plan 014 Task 2.
-2. **Create the customer user pool.** Feature tier: Lite, unless plan 014 Task 2 finds a needed feature only in Essentials (D-162).
+1. **Region.** Asia Pacific (Thailand) `ap-southeast-7`. Cognito is offered there and the dev pool runs there (plan 014 Task 2, 2026-11-11). It is an opt-in region, so it must be enabled on the AWS account first. Singapore `ap-southeast-1` is the fallback.
+2. **Create the customer user pool.** Feature tier: Lite (D-162); plan 014 Task 2 found everything needed on it.
 3. **Sign-in identifier.** Email, case-insensitive.
 4. **Required attributes.** Email only (D-163). This cannot be changed after the pool is created.
 5. **Self sign-up.** On. **Email verification:** a code, sent automatically on sign-up.
@@ -316,8 +316,8 @@ In the Google Cloud console:
 
 Back in the AWS console:
 
-13. **Google identity provider.** Add Google to the pool with the client id and secret from step 12. Attribute mapping: `email`, `email_verified`, `given_name`, `family_name`. Whether the Lite tier allows the Google provider is checked in plan 014 Task 2.
-14. **Pre sign-up Lambda.** Deploy the account-linking trigger from `infra/cognito/pre-sign-up/` and attach it to the pool as the pre sign-up trigger. It runs on a Google login's first visit (`PreSignUp_ExternalProvider`). Whether the Lite tier allows the trigger is checked in plan 014 Task 2. The deploy steps and the IAM role's permissions will be in that folder's `README.md` (plan 014 Tasks 6 and 10).
+13. **Google identity provider.** Add Google to the pool with the client id and secret from step 12. Attribute mapping: `email`, `email_verified`, `given_name`, `family_name`. The Lite tier offers the Google provider (plan 014 Task 2).
+14. **Pre sign-up Lambda.** Deploy the account-linking trigger from `infra/cognito/pre-sign-up/` and attach it to the pool as the pre sign-up trigger. It runs on a Google login's first visit (`PreSignUp_ExternalProvider`). The Lite tier offers the trigger (plan 014 Task 2). The deploy steps and the IAM role's permissions are in [`infra/cognito/pre-sign-up/README.md`](../infra/cognito/pre-sign-up/README.md).
 15. **Hand over the six values** (see *Credential required*) to each developer privately.
 
 ---
