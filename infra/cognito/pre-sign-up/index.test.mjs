@@ -11,7 +11,16 @@ function fakeCognito(users = []) {
     async send(command) {
       const name = command.constructor.name;
       calls.push({ name, input: command.input });
-      if (name === 'ListUsersCommand') return { Users: users };
+      if (name === 'ListUsersCommand') {
+        // Honour the filter like Cognito: exact, case-sensitive email match.
+        const m = /^email = "(.*)"$/.exec(command.input.Filter ?? '');
+        if (!m) throw new Error('unsupported filter');
+        return {
+          Users: users.filter((u) =>
+            (u.Attributes ?? []).some((a) => a.Name === 'email' && a.Value === m[1]),
+          ),
+        };
+      }
       if (name === 'AdminCreateUserCommand') {
         return { User: { Username: 'created-user-id' } };
       }
@@ -48,14 +57,19 @@ const nativeUser = (over = {}) => ({
   ...over,
 });
 
+const GENERIC = 'Sign-in could not be completed.';
 const names = (c) => c.calls.map((x) => x.name);
 
 describe('pre sign-up trigger', () => {
   it('rejects a Google email that is not verified', async () => {
     const cognito = fakeCognito();
     const handler = createPreSignUpHandler({ cognito });
-    await expect(handler(googleEvent({ email_verified: 'false' }))).rejects.toThrow();
-    await expect(handler(googleEvent({ email_verified: undefined }))).rejects.toThrow();
+    for (const email_verified of ['false', undefined]) {
+      const error = await handler(googleEvent({ email_verified })).catch((e) => e);
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toBe(GENERIC);
+      expect(error.message.toLowerCase()).not.toContain('example.com');
+    }
     expect(cognito.calls).toEqual([]);
   });
 
@@ -149,17 +163,83 @@ describe('pre sign-up trigger', () => {
   });
 
   it('matches the email case-insensitively', async () => {
+    // Native users are stored lowercased (the app lowercases every email).
+    const cognito = fakeCognito([nativeUser()]);
+    await createPreSignUpHandler({ cognito })(googleEvent({ email: 'Somchai@Example.COM' }, 'Google_42'));
+    expect(cognito.calls[0].input.Filter).toBe('email = "somchai@example.com"');
+    expect(names(cognito)).toEqual(['ListUsersCommand', 'AdminLinkProviderForUserCommand']);
+    expect(cognito.calls[1].input.DestinationUser.ProviderAttributeValue).toBe('native-user-id');
+    expect(cognito.calls[1].input.SourceUser.ProviderAttributeValue).toBe('42');
+  });
+
+  it('rejects a provider other than Google', async () => {
+    const cognito = fakeCognito();
+    await expect(
+      createPreSignUpHandler({ cognito })(googleEvent({}, 'facebook_123')),
+    ).rejects.toThrow(GENERIC);
+    expect(cognito.calls).toEqual([]);
+  });
+
+  it('rejects a user name with no underscore', async () => {
+    const cognito = fakeCognito();
+    await expect(createPreSignUpHandler({ cognito })(googleEvent({}, 'google123'))).rejects.toThrow(GENERIC);
+    expect(cognito.calls).toEqual([]);
+  });
+
+  it('rejects an email containing a quote or a backslash', async () => {
+    for (const email of ['a"b@example.com', 'a\\b@example.com']) {
+      const cognito = fakeCognito();
+      await expect(createPreSignUpHandler({ cognito })(googleEvent({ email }))).rejects.toThrow(GENERIC);
+      expect(cognito.calls).toEqual([]);
+    }
+  });
+
+  it('ignores an EXTERNAL_PROVIDER user with the same email', async () => {
+    const cognito = fakeCognito([nativeUser({ Username: 'Google_old', UserStatus: 'EXTERNAL_PROVIDER' })]);
+    await createPreSignUpHandler({ cognito })(googleEvent());
+    expect(names(cognito)).toEqual([
+      'ListUsersCommand',
+      'AdminCreateUserCommand',
+      'AdminSetUserPasswordCommand',
+      'AdminLinkProviderForUserCommand',
+    ]);
+  });
+
+  it('prefers a verified native user over an unverified one', async () => {
+    const unverified = nativeUser({
+      Username: 'unverified-id',
+      UserStatus: 'UNCONFIRMED',
+      Attributes: [
+        { Name: 'email', Value: 'somchai@example.com' },
+        { Name: 'email_verified', Value: 'false' },
+      ],
+    });
+    const cognito = fakeCognito([unverified, nativeUser()]);
+    await createPreSignUpHandler({ cognito })(googleEvent());
+    expect(names(cognito)).toEqual(['ListUsersCommand', 'AdminLinkProviderForUserCommand']);
+    expect(cognito.calls[1].input.DestinationUser.ProviderAttributeValue).toBe('native-user-id');
+  });
+
+  it('rejects, without deleting, a confirmed user whose email is not verified', async () => {
     const cognito = fakeCognito([
       nativeUser({
+        UserStatus: 'CONFIRMED',
         Attributes: [
-          { Name: 'email', Value: 'SOMCHAI@EXAMPLE.COM' },
-          { Name: 'email_verified', Value: 'true' },
+          { Name: 'email', Value: 'somchai@example.com' },
+          { Name: 'email_verified', Value: 'false' },
         ],
       }),
     ]);
-    await createPreSignUpHandler({ cognito })(googleEvent({ email: 'SomChai@Example.COM' }, 'Google_42'));
-    expect(cognito.calls[0].input.Filter).toBe('email = "somchai@example.com"');
-    expect(names(cognito)).toEqual(['ListUsersCommand', 'AdminLinkProviderForUserCommand']);
-    expect(cognito.calls[1].input.SourceUser.ProviderAttributeValue).toBe('42');
+    await expect(createPreSignUpHandler({ cognito })(googleEvent())).rejects.toThrow(GENERIC);
+    expect(names(cognito)).toEqual(['ListUsersCommand']);
+  });
+
+  it('creates the user without names Google did not send', async () => {
+    const cognito = fakeCognito([]);
+    await createPreSignUpHandler({ cognito })(googleEvent({ given_name: undefined, family_name: undefined }));
+    expect(cognito.calls[1].input.UserAttributes).toEqual([
+      { Name: 'email', Value: 'somchai@example.com' },
+      { Name: 'email_verified', Value: 'true' },
+    ]);
   });
 });

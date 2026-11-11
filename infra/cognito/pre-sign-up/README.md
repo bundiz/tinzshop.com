@@ -6,11 +6,12 @@ email and links Google to it:
 
 - Google says the email is not verified: reject.
 - A verified normal user exists: link Google to it.
-- A normal user exists but was never verified: delete it, create a new one, link.
+- A normal user exists but was never verified (status UNCONFIRMED): delete it, create a new one, link.
 - None exists: create a confirmed user (names from Google, random unusable
   password, no invite email), then link.
 
-Any other trigger source (`PreSignUp_SignUp`, `PreSignUp_AdminCreateUser`) passes
+Any other unverified state (for example CONFIRMED with an unverified email) is
+rejected without deleting. Any other trigger source (`PreSignUp_SignUp`, `PreSignUp_AdminCreateUser`) passes
 through unchanged. The code is plain ESM JavaScript, with no build step.
 
 ## Deploy by hand (console)
@@ -53,6 +54,12 @@ AWS console.
 
 Also attach the basic Lambda logging policy so the function can write logs. The
 function logs only the trigger outcome, never an email, a password or a token.
+
+## Emails are stored lowercased
+
+The app lowercases every email it sends to Cognito, so native users are stored
+lowercased and the trigger searches for the lowercased email. A user created by
+hand in the console with a mixed-case email will not be matched.
 
 ## Known behaviour
 
