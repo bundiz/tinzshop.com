@@ -12,6 +12,7 @@ import ProductSection, { type ProductSectionId } from '../_components/ProductSec
 import SiteFooter from '../_components/SiteFooter';
 import SiteHeader from '../_components/SiteHeader';
 import { readArticlesMenu } from '../_components/read-articles-menu';
+import { readCurrentCustomer } from '../_components/read-current-customer';
 import TrustStrip from '../_components/TrustStrip';
 import { readLatestNewsOrNone } from './read-latest-news';
 
@@ -37,23 +38,24 @@ export default async function HomePage({ params }: Props) {
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const [catalogue, latestNews, t, tNews, articlesMenu] = await Promise.all([
+  const [catalogue, latestNews, t, tNews, articlesMenu, customer] = await Promise.all([
     getLandingCatalogueReader()(locale),
     // A failing news read hides the news section; it never takes the landing page down.
     readLatestNewsOrNone(() => getLatestNewsReader()({ locale, limit: LATEST_NEWS_COUNT })),
     getTranslations({ locale, namespace: 'shop.home' }),
     getTranslations({ locale, namespace: 'shop.news.landing' }),
     readArticlesMenu(locale),
+    readCurrentCustomer(),
   ]);
   const isEmpty =
     catalogue.bundles.length === 0 && catalogue.bestSellers.length === 0 && catalogue.preOrders.length === 0;
 
   return (
     <>
-      <SiteHeader path="/" activeNav="home" articlesMenu={articlesMenu} />
+      <SiteHeader path="/" activeNav="home" articlesMenu={articlesMenu} customer={customer} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
-          <HeroZone shopNowTarget={catalogue.bestSellers.length > 0 ? BEST_SELLERS : null} />
+          <HeroZone shopNowTarget={catalogue.bestSellers.length > 0 ? BEST_SELLERS : null} customer={customer} />
           <TrustStrip />
           {isEmpty ? (
             <section className="mt-4 rounded-(--radius) bg-bg p-8 text-center text-text-muted">

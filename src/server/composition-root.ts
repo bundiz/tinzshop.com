@@ -23,7 +23,11 @@ import {
 import type { GoogleSignInDeps } from '@/server/controllers/auth/google-sign-in-controller';
 import type { CognitoIdentity } from '@/server/services/auth/cognito-identity';
 import type { CustomerAuthDeps } from '@/server/services/auth/customer-auth-service';
-import type { CustomerSessionDeps } from '@/server/services/auth/customer-session-service';
+import {
+  readCustomerSession,
+  type CurrentCustomer,
+  type CustomerSessionDeps,
+} from '@/server/services/auth/customer-session-service';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
 import {
   tryWithAdvisoryLock,
@@ -281,4 +285,12 @@ export function getGoogleSignInDeps(): GoogleSignInDeps {
     auth: getCustomerAuthDeps(),
     redirectUri: `${getAuthConfig().appUrl}/api/callbacks/cognito`,
   };
+}
+
+/**
+ * The signed-in customer for a session cookie value, or null (plan 014 Task 9). Built per call; with no
+ * cookie it answers null without reading auth config. It never writes a cookie (D-174, R2).
+ */
+export function getCurrentCustomerReader(): (token: string | undefined, now: Date) => Promise<CurrentCustomer | null> {
+  return (token, now) => readCustomerSession(getCustomerSessionDeps(), token, now);
 }

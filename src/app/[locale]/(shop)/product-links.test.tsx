@@ -98,6 +98,10 @@ vi.mock('@/server/composition-root', () => ({
   getProductDetailReader: () => async (productId: string) => (productId === THIS_ID ? DETAIL : null),
 }));
 vi.mock('./_components/read-articles-menu', () => ({ readArticlesMenu: async () => [] }));
+// The product pages need a signed-in customer (plan 014); these are links tests, so one is signed in.
+vi.mock('./_components/read-current-customer', () => ({
+  readCurrentCustomer: async () => ({ id: 'c1', firstName: 'Test', email: 'test@example.test' }),
+}));
 vi.mock('next/navigation', async (importOriginal) => ({
   ...(await importOriginal<typeof import('next/navigation')>()),
   useRouter: () => ({ push: vi.fn() }),

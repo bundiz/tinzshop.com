@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -35,5 +36,20 @@ describe('message catalogues', () => {
   it('no message is an empty string', () => {
     const empty = [...th, ...en].filter(([, v]) => v.trim() === '').map(([k]) => k);
     expect(empty).toEqual([]);
+  });
+
+  it('holds every shop.auth.* key the server code can return, in both languages', () => {
+    const srcDir = fileURLToPath(new URL('..', import.meta.url));
+    const files = (readdirSync(srcDir, { recursive: true }) as string[])
+      .filter((file) => /\.(ts|tsx)$/.test(file) && !/\.test\.tsx?$/.test(file))
+      .map((file) => join(srcDir, file));
+    const used = new Set<string>();
+    for (const file of files) {
+      for (const match of readFileSync(file, 'utf8').matchAll(/'(shop\.auth\.[A-Za-z]+(?:\.[A-Za-z]+)+)'/g)) used.add(match[1]!);
+    }
+    expect(used.size).toBeGreaterThan(15);
+    // `shop.auth.password.rule.*` and `shop.auth.error.*` are written out in full where they are returned.
+    const missing = [...used].filter((key) => !th.has(key) || !en.has(key));
+    expect(missing).toEqual([]);
   });
 });

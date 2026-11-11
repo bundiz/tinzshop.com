@@ -318,7 +318,7 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 - **Consumes:** the Task 7 actions, `readCustomerSession` (through the composition root as `getCurrentCustomerReader()`) and `safeReturnTo`.
 - **Produces:** `SiteHeaderProps.customer?: { firstName: string } | null`.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - **Render tests:** each page shows its fields, the other page's link at the top right, and the "ลืมรหัสผ่าน?" link on the password label row. The verify page always shows the link "Got a password-reset email instead? Set a new password" to `PASSWORD_RESET_CODE_PATH`; `/forgot-password?step=reset` shows the code and new-password fields from the pending cookie.
   - **Header:** the signed-out header links to sign-in; the signed-in header shows the first name and the "ออกจากระบบ" form.
   - **Gating:**
@@ -327,11 +327,19 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
     - `signed-in customer opening sign-in goes home`
   - **News:** `news pages stay public`.
   - **Messages:** the message key parity test passes for th and en.
-- [ ] **Build:**
-  - **Card** (§8): centred, `max-w-sm`, with the design's `@theme` tokens. The title and description sit at the top, with the other page's link at the top right. Labels sit above the inputs. The primary button is full width, and the outline Google button below it carries the Google mark. Mobile is checked at 360px, with controls at least 44px tall (07).
+- [x] **Build:**
+  - **Card** (§8): centred, `max-w-sm`, with the design's `@theme` tokens. The title and description sit at the top, with the other page's link at the top right. Labels sit above the inputs. The primary button is full width, and the outline Google button below it carries the Google mark. Mobile is checked at 360px, with controls at least 44px tall (07). *(Built to 44px controls and a `max-w-sm` card; nobody has looked at 360px yet, which stays on the manual checklist.)*
   - **Gating:** `/product` and `/product/{id}/detail` call `redirect()` to `/{locale}/sign-in?returnTo=…` when there is no customer (D-041, on the server).
   - **Home page:** the welcome box's buttons link to sign-in and register.
-- [ ] **Commit:** `feat: add the sign-in and register pages and require sign-in for products`
+- [x] **Commit:** `feat: add the sign-in and register pages and require sign-in for products`
+
+**Built (Task 9).** Notes for the next reader:
+- The pages are `sign-in`, `register`, `register/verify` and `forgot-password` under `(auth)/`, with the parts `AuthCard`, `AuthField`, `AuthForm` (client), `GoogleButton`, `AuthNotice` and `AuthShell` in `(auth)/_components/`. `AuthForm` submits from code (`startTransition` around the action) rather than as `<form action>`, so React does not wipe the typed name and email after an error (D-181).
+- The header gets the customer from `readCurrentCustomer()` (`(shop)/_components/read-current-customer.ts`, one read per request, never writes a cookie). The gate is `requireCustomer()` in `require-customer.ts`. Every page that draws `SiteHeader` passes the customer: home, both product pages, the news pages and the not-found screens.
+- Redirect notices the pages show: sign-in `?confirmed=1` (with the email prefilled from the pending cookie), `?reset=1`, `?error=google`; register and forgot-password `?expired=1`.
+- `safeReturnTo` now rejects a locale prefix in any letter case and a path over 512 characters (the Task 4 finding).
+- The home page's welcome panel greets a signed-in customer by first name (`shop.home.welcome.helloName`) and drops its sign-in and register buttons.
+- Needs a person: the 360px check and a real browser pass of the forms (the render and DOM tests cover the markup and behaviour, not the layout). See the manual checklist below.
 
 ### Task 10: Local setup and the manual checks
 

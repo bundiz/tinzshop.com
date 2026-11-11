@@ -16,6 +16,8 @@ export type NewsListViewProps = {
   list: NewsListPage;
   /** The header's "บทความ" menu (`readArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
+  /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
+  customer?: { firstName: string } | null;
 };
 
 /** How many of page 1's articles go to the feature block (ruling R1, D-134); the rest fill the grid. */
@@ -26,7 +28,7 @@ const FEATURE_COUNT = 3;
  * feature block (page 1 only), the "ข่าวล่าสุด" grid and pagination beside the sidebar, inside the site header
  * and footer.
  */
-export default function NewsListView({ list, articlesMenu }: NewsListViewProps) {
+export default function NewsListView({ list, articlesMenu, customer = null }: NewsListViewProps) {
   const t = useTranslations('shop.news');
   const locale = useLocale();
   const category = list.activeCategorySlug;
@@ -38,7 +40,7 @@ export default function NewsListView({ list, articlesMenu }: NewsListViewProps) 
 
   return (
     <>
-      <SiteHeader path={pathWithoutLocale} activeNav="news" articlesMenu={articlesMenu} />
+      <SiteHeader path={pathWithoutLocale} activeNav="news" articlesMenu={articlesMenu} customer={customer} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">

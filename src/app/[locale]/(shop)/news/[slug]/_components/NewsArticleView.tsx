@@ -13,6 +13,8 @@ export type NewsArticleViewProps = {
   article: NewsArticleDetail;
   /** The header's "บทความ" menu (`readArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
+  /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
+  customer?: { firstName: string } | null;
 };
 
 /**
@@ -20,14 +22,14 @@ export type NewsArticleViewProps = {
  * title, byline and date, the featured image (eager, D-123), the stored body in a reading column, and
  * "ข่าวที่เกี่ยวข้อง". There is no design file for it; it follows the site's panels and type.
  */
-export default function NewsArticleView({ article, articlesMenu }: NewsArticleViewProps) {
+export default function NewsArticleView({ article, articlesMenu, customer = null }: NewsArticleViewProps) {
   const t = useTranslations('shop.news');
   const locale = useLocale();
   const byline = t('byline', { name: article.bylineName ?? t('bylineFallback') });
 
   return (
     <>
-      <SiteHeader path={newsArticlePath(locale, article.slug).slice(locale.length + 1)} activeNav="news" articlesMenu={articlesMenu} />
+      <SiteHeader path={newsArticlePath(locale, article.slug).slice(locale.length + 1)} activeNav="news" articlesMenu={articlesMenu} customer={customer} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">

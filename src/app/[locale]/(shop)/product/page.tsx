@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { readArticlesMenu } from '../_components/read-articles-menu';
+import { queryString, requireCustomer } from '../_components/require-customer';
 import ProductListingView from './_components/ProductListingView';
 import { readProductListing } from './read-listing';
 
@@ -32,18 +33,19 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 /**
  * Every visible product, filtered, sorted and paged by the URL's search params (plan 013, D-145), as
- * `design/category.html`. Invalid params or a page past the end are a real 404 (R2, D-120).
+ * `design/category.html`. Invalid params or a page past the end are a real 404 (R2, D-120). A visitor who is not
+ * signed in is sent to sign-in first (plan 014).
  */
 export default async function ProductListPage({ params, searchParams }: Props) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  const query = await searchParams;
+  // Sign-in is required for the product pages (O-10): on the server, back to this listing with its filters after.
+  const customer = await requireCustomer(locale, `/product${queryString(query)}`);
 
-  const [listing, articlesMenu] = await Promise.all([
-    readProductListing(locale, await searchParams),
-    readArticlesMenu(locale),
-  ]);
+  const [listing, articlesMenu] = await Promise.all([readProductListing(locale, query), readArticlesMenu(locale)]);
   if (listing === null) notFound();
 
-  return <ProductListingView listing={listing} articlesMenu={articlesMenu} />;
+  return <ProductListingView listing={listing} articlesMenu={articlesMenu} customer={customer} />;
 }

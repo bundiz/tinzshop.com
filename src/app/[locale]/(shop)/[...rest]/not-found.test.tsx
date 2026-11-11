@@ -17,6 +17,8 @@ vi.mock('../_components/read-articles-menu', () => ({
   readRequestArticlesMenu: async () => [{ labelKey: 'news', href: `/${request.locale}/news`, children: [] }],
 }));
 
+vi.mock('../_components/read-current-customer', () => ({ readCurrentCustomer: async () => null }));
+
 async function render(locale: 'th' | 'en'): Promise<string> {
   request.locale = locale;
   const page: ReactNode = await PageNotFound();

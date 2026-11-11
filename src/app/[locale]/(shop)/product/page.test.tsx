@@ -46,6 +46,8 @@ vi.mock('@/server/composition-root', () => ({
         locale,
       ),
 }));
+const session = vi.hoisted(() => ({ customer: { id: 'c1', firstName: 'Test', email: 'test@example.test' } as { id: string; firstName: string; email: string } | null }));
+vi.mock('../_components/read-current-customer', () => ({ readCurrentCustomer: async () => session.customer }));
 vi.mock('../_components/read-articles-menu', () => ({ readArticlesMenu: async () => [] }));
 vi.mock('next-intl/server', () => ({
   setRequestLocale: () => {},
@@ -69,6 +71,41 @@ async function visit(searchParams: StorefrontListingSearchParams, locale = 'th')
     throw error;
   }
 }
+
+/** The path a page redirected to, from the error `redirect()` throws; null when it did not redirect. */
+function redirectedTo(error: unknown): string | null {
+  const digest = (error as { digest?: string }).digest ?? '';
+  return digest.startsWith('NEXT_REDIRECT') ? (digest.split(';')[2] ?? null) : null;
+}
+
+describe('the product listing page, signed out', () => {
+  it('signed-out /product redirects to sign-in with returnTo', async () => {
+    session.customer = null;
+    try {
+      const attempt = ProductListPage({
+        params: Promise.resolve({ locale: 'th' }),
+        searchParams: Promise.resolve({ category: 'playstation-5', sort: 'newest', type: ['a', 'b'] }),
+      });
+      await expect(attempt).rejects.toSatisfy(
+        (error) => redirectedTo(error) === `/th/sign-in?returnTo=${encodeURIComponent('/product?category=playstation-5&sort=newest&type=a&type=b')}`,
+      );
+      await expect(
+        ProductListPage({ params: Promise.resolve({ locale: 'en' }), searchParams: Promise.resolve({}) }),
+      ).rejects.toSatisfy((error) => redirectedTo(error) === `/en/sign-in?returnTo=${encodeURIComponent('/product')}`);
+    } finally {
+      session.customer = { id: 'c1', firstName: 'Test', email: 'test@example.test' };
+    }
+  });
+
+  it('answers an unknown locale with a 404 before it asks who is signed in', async () => {
+    session.customer = null;
+    try {
+      expect(await visit({}, 'fr')).toEqual({ status: 404 });
+    } finally {
+      session.customer = { id: 'c1', firstName: 'Test', email: 'test@example.test' };
+    }
+  });
+});
 
 describe('the product listing page', () => {
   it('rejects or ignores invalid params without throwing', async () => {

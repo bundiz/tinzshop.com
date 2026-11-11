@@ -125,6 +125,7 @@
       "welcome": {
         "label": "Your account",
         "hello": "Hello",
+        "helloName": "Hello, {name}",
         "text": "Welcome to Tinzshop",
         "signIn": "Sign in",
         "signUp": "Create an account",
@@ -434,6 +435,89 @@
         "inStock": "In stock"
       },
       "empty": "No products match these filters"
+    },
+    "auth": {
+      "signIn": {
+        "title": "Sign in",
+        "description": "Use your email and password",
+        "switchLink": "Create an account",
+        "submit": "Sign in",
+        "forgot": "Forgot password?",
+        "reset": "Your password is changed. Sign in with the new one.",
+        "googleFailed": "Google sign-in did not work. Try again, or use your email and password."
+      },
+      "register": {
+        "title": "Create an account",
+        "description": "Create an account to browse products and order",
+        "switchLink": "Sign in",
+        "submit": "Create account"
+      },
+      "verify": {
+        "title": "Verify your email",
+        "description": "We sent a 6-digit code to {email}",
+        "submit": "Verify",
+        "resend": "Send the code again",
+        "resent": "A new code is on its way to your email",
+        "confirmed": "Your email is verified. You can sign in now.",
+        "resetInstead": "Got a password-reset email instead? Set a new password"
+      },
+      "forgot": {
+        "title": "Forgot password",
+        "description": "Set a new password with a code sent by email",
+        "switchLink": "Back to sign in",
+        "emailIntro": "Enter your email. If an account exists, we will send a 6-digit code.",
+        "codeIntro": "Enter the 6-digit code from your email, then choose a new password.",
+        "submit": "Send code",
+        "resetSubmit": "Set new password"
+      },
+      "notice": {
+        "expired": "This step timed out. Please start again."
+      },
+      "field": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "password": "Password",
+        "passwordConfirm": "Confirm password",
+        "code": "6-digit code",
+        "newPassword": "New password",
+        "newPasswordConfirm": "Confirm new password"
+      },
+      "google": {
+        "label": "Sign in with Google",
+        "or": "or"
+      },
+      "pending": "Working…",
+      "password": {
+        "rulesLabel": "Your password needs",
+        "rule": {
+          "length": "At least 8 characters",
+          "number": "At least 1 number",
+          "lowercase": "At least 1 lowercase letter",
+          "uppercase": "At least 1 uppercase letter",
+          "special": "At least 1 special character, such as ! @ #"
+        }
+      },
+      "error": {
+        "rateLimited": "Too many attempts. Please wait a moment and try again.",
+        "invalidCredentials": "The email or password is incorrect",
+        "codeInvalid": "The code is incorrect",
+        "codeExpired": "The code has expired. Please ask for a new one.",
+        "passwordPolicy": "The password does not meet the rules yet",
+        "accountConflict": "You cannot sign in with this account. Please try another way.",
+        "unavailable": "Something went wrong on our side. Please try again.",
+        "nameRequired": "Please enter your name",
+        "nameTooLong": "The name is too long",
+        "emailInvalid": "The email format is not valid",
+        "passwordMismatch": "The two passwords do not match",
+        "passwordRequired": "Please enter your password",
+        "codeFormat": "Enter the 6-digit code"
+      },
+      "menu": {
+        "label": "{name}'s account",
+        "hello": "Hello",
+        "signOut": "Sign out"
+      }
     }
   }
 }

@@ -12,6 +12,8 @@ vi.mock('@/server/composition-root', () => ({
   getProductDetailReader: () => async (productId: string) => (productId === KNOWN_ID ? DETAIL : null),
   getLandingCatalogueReader: () => async () => ({ bestSellers: [], bundles: [], preOrders: [] }),
 }));
+const session = vi.hoisted(() => ({ customer: { id: 'c1', firstName: 'Test', email: 'test@example.test' } as { id: string; firstName: string; email: string } | null }));
+vi.mock('../../../_components/read-current-customer', () => ({ readCurrentCustomer: async () => session.customer }));
 vi.mock('../../../_components/read-articles-menu', () => ({ readArticlesMenu: async () => [] }));
 vi.mock('next-intl/server', () => ({
   setRequestLocale: () => {},
@@ -38,6 +40,23 @@ describe('the product page at /product/{id}/detail', () => {
     expect(await visit('00000000-0000-4000-8000-000000000000')).toBe(404);
     expect(await visit('not-a-uuid')).toBe(404);
     expect(await visit(KNOWN_ID, 'fr')).toBe(404);
+  });
+
+  it('signed-out product detail redirects with that product as returnTo', async () => {
+    session.customer = null;
+    try {
+      const digest = await ProductPage({ params: Promise.resolve({ locale: 'th', productId: KNOWN_ID }) }).then(
+        () => '',
+        (error: { digest?: string }) => error.digest ?? '',
+      );
+      expect(digest.split(';').slice(0, 3)).toEqual([
+        'NEXT_REDIRECT',
+        'replace',
+        `/th/sign-in?returnTo=${encodeURIComponent(`/product/${KNOWN_ID}/detail`)}`,
+      ]);
+    } finally {
+      session.customer = { id: 'c1', firstName: 'Test', email: 'test@example.test' };
+    }
   });
 
   it('titles a missing product as not found from the layout', async () => {

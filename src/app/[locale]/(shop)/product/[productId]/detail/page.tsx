@@ -7,6 +7,7 @@ import ProductSection from '../../../_components/ProductSection';
 import SiteFooter from '../../../_components/SiteFooter';
 import SiteHeader from '../../../_components/SiteHeader';
 import { readArticlesMenu } from '../../../_components/read-articles-menu';
+import { requireCustomer } from '../../../_components/require-customer';
 import Breadcrumb from './_components/Breadcrumb';
 import BuyActions from './_components/BuyActions';
 import Gallery from './_components/Gallery';
@@ -33,6 +34,8 @@ export default async function ProductPage({ params }: Props) {
   const { locale, productId } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  // Sign-in is required for the product pages (O-10): on the server, back to this product after.
+  const customer = await requireCustomer(locale, `/product/${encodeURIComponent(productId)}/detail`);
 
   const [product, t, catalogue, articlesMenu] = await Promise.all([
     readProduct(productId, locale),
@@ -46,7 +49,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <SiteHeader path={`/product/${product.productId}/detail`} articlesMenu={articlesMenu} />
+      <SiteHeader path={`/product/${product.productId}/detail`} articlesMenu={articlesMenu} customer={customer} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <Breadcrumb

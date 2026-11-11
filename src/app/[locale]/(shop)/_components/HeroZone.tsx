@@ -1,10 +1,12 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import Hero from './Hero';
 
 export type HeroZoneProps = {
   /** Passed to the hero's "shop now" button. */
   shopNowTarget: string | null;
+  /** The signed-in customer: the welcome panel greets them instead of offering sign-in and register. */
+  customer?: { firstName: string } | null;
 };
 
 const RAIL_CATEGORIES: { key: 'switch' | 'ps5' | 'gadgets' | 'preOrder'; icon: IconName }[] = [
@@ -34,7 +36,7 @@ const QUICK_LINKS: { key: 'orders' | 'wishlist' | 'preOrders' | 'contact'; icon:
  * welcome panel. Three columns from 1100px; below that only the hero and tiles show, as designed.
  * Every rail link, tile, button and quick link is inert until its page exists (D-124).
  */
-export default function HeroZone({ shopNowTarget }: HeroZoneProps) {
+export default function HeroZone({ shopNowTarget, customer = null }: HeroZoneProps) {
   const t = useTranslations('shop.home');
 
   return (
@@ -44,7 +46,7 @@ export default function HeroZone({ shopNowTarget }: HeroZoneProps) {
         <Hero shopNowTarget={shopNowTarget} />
         <PromoTiles />
       </div>
-      <WelcomePanel />
+      <WelcomePanel customer={customer} />
     </section>
   );
 }
@@ -115,8 +117,9 @@ function PromoTiles() {
   );
 }
 
-function WelcomePanel() {
+function WelcomePanel({ customer }: { customer: { firstName: string } | null }) {
   const t = useTranslations('shop.home.welcome');
+  const locale = useLocale();
   const button =
     'inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full border px-5 text-[15px] leading-[1.3] font-bold transition-colors';
 
@@ -127,19 +130,23 @@ function WelcomePanel() {
           <Icon name="user" />
         </span>
         <div>
-          <strong className="block text-[15px]">{t('hello')}</strong>
+          <strong className="block text-[15px]">{customer === null ? t('hello') : t('helloName', { name: customer.firstName })}</strong>
           <span className="text-xs text-text-subtle">{t('text')}</span>
         </div>
       </div>
-      <div className="grid gap-2">
-        <button type="button" className={`${button} border-transparent bg-primary text-white hover:bg-primary-dark`}>
-          {t('signIn')}
-        </button>
-        <button type="button" className={`${button} border-primary bg-bg text-primary hover:bg-primary-soft`}>
-          {t('signUp')}
-        </button>
-      </div>
-      <p className="text-center text-xs leading-[1.5] text-text-subtle">{t('note')}</p>
+      {customer === null && (
+        <>
+          <div className="grid gap-2">
+            <a href={`/${locale}/sign-in`} className={`${button} border-transparent bg-primary text-white hover:bg-primary-dark`}>
+              {t('signIn')}
+            </a>
+            <a href={`/${locale}/register`} className={`${button} border-primary bg-bg text-primary hover:bg-primary-soft`}>
+              {t('signUp')}
+            </a>
+          </div>
+          <p className="text-center text-xs leading-[1.5] text-text-subtle">{t('note')}</p>
+        </>
+      )}
       <ul className="grid grid-cols-2 gap-2 border-t border-border pt-3">
         {QUICK_LINKS.map(({ key, icon }) => (
           <li key={key} className="min-w-0">

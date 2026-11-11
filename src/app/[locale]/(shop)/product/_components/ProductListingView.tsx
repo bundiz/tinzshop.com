@@ -37,6 +37,8 @@ export type ProductListingViewProps = {
   listing: StorefrontListing;
   /** The header's "บทความ" menu (`readArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
+  /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
+  customer?: { firstName: string } | null;
 };
 
 /** The design's tab icons: เครื่องเกม and แผ่นเกม both use the disc. */
@@ -79,7 +81,7 @@ const PILL =
  * active-filter chips, the card grid or list, and pagination. Links keep every other filter; the client
  * controls rewrite the URL. No ratings (O-6).
  */
-export default function ProductListingView({ listing, articlesMenu }: ProductListingViewProps) {
+export default function ProductListingView({ listing, articlesMenu, customer = null }: ProductListingViewProps) {
   const t = useTranslations('shop.listing');
   const tShop = useTranslations('shop');
   const locale = useLocale();
@@ -181,7 +183,7 @@ export default function ProductListingView({ listing, articlesMenu }: ProductLis
 
   return (
     <>
-      <SiteHeader path={`/product${listingQuery(active)}`} activeNav={listingNav(active)} articlesMenu={articlesMenu} />
+      <SiteHeader path={`/product${listingQuery(active)}`} activeNav={listingNav(active)} articlesMenu={articlesMenu} customer={customer} />
       <main className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">

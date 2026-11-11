@@ -41,6 +41,26 @@ export async function readRequestContext(options: { now?: Date; signOut?: boolea
   };
 }
 
+/**
+ * The email in `tinzshop_pending`, for a Server Component that shows it (verify, reset, the sign-in prefill).
+ * Read only: a Server Component cannot set cookies (D-174). Auth config is read only when the cookie is there.
+ */
+export async function readPendingEmail(now: Date = new Date()): Promise<string | null> {
+  const sealed = (await cookies()).get(PENDING_COOKIE)?.value;
+  if (sealed === undefined || sealed === '') return null;
+  try {
+    return openPending(sealed, getAuthConfig().sessionTokenEncryptionKey, now);
+  } catch {
+    // A configuration fault reads as "no pending email": the page sends the visitor back to the first step.
+    return null;
+  }
+}
+
+/** The raw `tinzshop_session` cookie value, or undefined. */
+export async function readSessionToken(): Promise<string | undefined> {
+  return (await cookies()).get(SESSION_COOKIE)?.value;
+}
+
 /** Applies the cookie changes a controller asked for. Only Server Actions and route handlers may call this (D-174). */
 export async function applyCookieChanges(changes: AuthCookieChanges | undefined, now: Date): Promise<void> {
   if (changes === undefined) return;

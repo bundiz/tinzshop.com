@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
 import { listingHref, NAV_CATEGORY_SLUGS } from '../product/listing-url';
+import AccountMenu from './AccountMenu';
 import ArticlesMenu from './ArticlesMenu';
 import type { ArticlesMenuEntry } from './articles-menu';
 import SearchForm from './SearchForm';
@@ -18,6 +19,11 @@ export type SiteHeaderProps = {
    * the product listing the entry its filters match (`listingNav`).
    */
   activeNav?: SiteNavKey;
+  /**
+   * The signed-in customer, from `readCurrentCustomer()`. Every page that draws the header passes it: with a customer
+   * the account entry shows the first name and a sign-out menu (D-170); without one it links to sign-in.
+   */
+  customer?: { firstName: string } | null;
 };
 
 export type SiteNavKey = 'home' | (typeof NAV_CATEGORIES)[number];
@@ -47,7 +53,7 @@ const CART_COUNT = 0;
  * nav's product entries (to the product listing, plan 013), "ข่าวเกม", the utility bar's "บทความ ▾" menu
  * (D-140) and the language switch go somewhere; the rest render as designed and are inert (D-124).
  */
-export default function SiteHeader({ path, articlesMenu, activeNav }: SiteHeaderProps) {
+export default function SiteHeader({ path, articlesMenu, activeNav, customer = null }: SiteHeaderProps) {
   const t = useTranslations('shop.header');
   const tArticles = useTranslations('shop.header.articles');
   const tCategory = useTranslations('shop.category');
@@ -129,10 +135,14 @@ export default function SiteHeader({ path, articlesMenu, activeNav }: SiteHeader
           </Link>
           <SearchForm className="col-span-3 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1" />
           <nav aria-label={t('actions.label')} className="col-start-3 row-start-1 flex items-center gap-1">
-            <HeaderAction icon="user" label={t('actions.account.label')}>
-              {t('actions.account.line1')}
-              <strong className="block text-[13px]">{t('actions.account.line2')}</strong>
-            </HeaderAction>
+            {customer === null ? (
+              <HeaderAction icon="user" label={t('actions.account.label')} href={`${home}/sign-in`}>
+                {t('actions.account.line1')}
+                <strong className="block text-[13px]">{t('actions.account.line2')}</strong>
+              </HeaderAction>
+            ) : (
+              <AccountMenu firstName={customer.firstName} />
+            )}
             <HeaderAction icon="heart" label={t('actions.wishlist.label')}>
               {t('actions.wishlist.line1')}
               <strong className="block text-[13px]">{t('actions.wishlist.line2')}</strong>
@@ -179,16 +189,19 @@ function HeaderAction({
   icon,
   label,
   count,
+  href = '#',
   children,
 }: {
   icon: IconName;
   label: string;
   count?: number;
+  /** Where it goes; the entries that are not built yet stay inert at `#` (D-124). */
+  href?: string;
   children: ReactNode;
 }) {
   return (
     <a
-      href="#"
+      href={href}
       aria-label={label}
       className="relative flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-(--radius-sm) px-2 py-1 hover:bg-primary-soft hover:text-primary"
     >

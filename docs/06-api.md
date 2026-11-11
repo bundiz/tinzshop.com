@@ -217,7 +217,7 @@ Customer sign-in with Google (ADR-0003, D-154). Both are browser `GET`s that ans
 
 | Parameter | Rule |
 | :--- | :--- |
-| `returnTo` | A path on this site: it must start with `/` but not `//`, contain no `\` and no locale prefix; otherwise it becomes `/`. |
+| `returnTo` | A path on this site: it must start with `/` but not `//`, contain no `\` and no locale prefix (`th` or `en` in any letter case), and be at most 512 characters; otherwise it becomes `/`. |
 | `locale` | `th` or `en`. |
 
 It sets the sealed, HttpOnly `tinzshop_oauth` cookie (10 minutes, path `/api`) holding the `state`, the PKCE verifier, `returnTo` and `locale`, then answers `302` to Cognito's authorize endpoint with `identity_provider=Google`, so the customer goes straight to Google.
@@ -270,6 +270,8 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 - **Refused email.** If a correct sign-in belongs to a Cognito user whose email another customer holds, the just-issued refresh token is revoked before the refusal.
 
 The controller's state also carries `notice?: messageKey` (`shop.auth.verify.resent`) and `step?: 'reset'` for pages that stay on one route. Redirect targets are locale-less (`/register/verify`, `/sign-in?confirmed=1`, `/sign-in?reset=1`); the action adds the locale from the `locale` form field.
+
+**Page query parameters (plan 014 Task 9).** The pages read these and show a message, because a redirect carries no form state: `/sign-in?returnTo=` (passed through `safeReturnTo` into the form and the Google link), `?confirmed=1`, `?reset=1` and `?error=google`; `/register?expired=1` and `/forgot-password?expired=1`; and `/forgot-password?step=reset`, which opens the code and new-password step for the email in the pending cookie. The product pages redirect a visitor who is not signed in to `/{locale}/sign-in?returnTo={path and query, URL-encoded}` (307).
 
 The adapter reports Cognito failures as a `CognitoError` with one of `username_exists`, `code_mismatch`, `code_expired`, `already_confirmed`, `not_authorized`, `user_not_confirmed`, `invalid_password`, `limit_exceeded` or `unavailable`. These are internal: the controller maps each to a message key, and `username_exists` and `already_confirmed` never reach the screen as such (D-160).
 
