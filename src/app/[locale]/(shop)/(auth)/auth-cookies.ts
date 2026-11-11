@@ -1,12 +1,16 @@
 import { cookies, headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 import { getAuthConfig } from '@/server/config';
+import type { GoogleOutcome } from '@/server/controllers/auth/google-sign-in-controller';
 import type { AuthCookieChanges, AuthRequestContext } from '@/server/controllers/auth/customer-auth-controller';
 import { resolveClientIp } from '@/server/services/auth/client-ip';
+import { OAUTH_LIFETIME_MS, openOauth, sealOauth, type OauthState } from '@/server/services/auth/oauth-state-token';
 import { openPending, PENDING_LIFETIME_MS, sealPending } from '@/server/services/auth/pending-token';
 
 export const SESSION_COOKIE = 'tinzshop_session';
 export const PENDING_COOKIE = 'tinzshop_pending';
+export const OAUTH_COOKIE = 'tinzshop_oauth';
 
 // Not exported from actions.ts: a 'use server' file may export only async functions.
 const baseOptions = () => ({
@@ -52,4 +56,36 @@ export async function applyCookieChanges(changes: AuthCookieChanges | undefined,
     });
   }
   if (changes.clearPending) jar.set(PENDING_COOKIE, '', { ...baseOptions(), maxAge: 0 });
+}
+
+/** Opens `tinzshop_oauth` from a route handler's request; null when missing, expired or tampered with. */
+export function readOauthCookie(request: Request, now: Date): OauthState | null {
+  const header = request.headers.get('cookie') ?? '';
+  const raw = header
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${OAUTH_COOKIE}=`))
+    ?.slice(OAUTH_COOKIE.length + 1);
+  if (raw === undefined) return null;
+  return openOauth(decodeURIComponent(raw), getAuthConfig().sessionTokenEncryptionKey, now);
+}
+
+/**
+ * The 302 for a Google sign-in outcome, with the cookie changes applied and `Cache-Control: no-store`.
+ * `tinzshop_oauth` is scoped to `/api`, so it is only sent to the two Google routes.
+ */
+export function googleRedirect(outcome: GoogleOutcome, now: Date): NextResponse {
+  const response = new NextResponse(null, { status: 302, headers: { Location: outcome.location, 'Cache-Control': 'no-store' } });
+  const options = { ...baseOptions(), path: '/api' };
+  if (outcome.setOauth) {
+    response.cookies.set(OAUTH_COOKIE, sealOauth(outcome.setOauth, getAuthConfig().sessionTokenEncryptionKey, now), {
+      ...options,
+      maxAge: OAUTH_LIFETIME_MS / 1000,
+    });
+  }
+  if (outcome.clearOauth) response.cookies.set(OAUTH_COOKIE, '', { ...options, maxAge: 0 });
+  if (outcome.setSession) {
+    response.cookies.set(SESSION_COOKIE, outcome.setSession.token, { ...baseOptions(), expires: outcome.setSession.expiresAt });
+  }
+  return response;
 }

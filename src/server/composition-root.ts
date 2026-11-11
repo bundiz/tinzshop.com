@@ -20,6 +20,7 @@ import {
   insertCustomerSession,
   updateSessionAccessToken,
 } from '@/server/repositories/auth/customer-session-repository';
+import type { GoogleSignInDeps } from '@/server/controllers/auth/google-sign-in-controller';
 import type { CognitoIdentity } from '@/server/services/auth/cognito-identity';
 import type { CustomerAuthDeps } from '@/server/services/auth/customer-auth-service';
 import type { CustomerSessionDeps } from '@/server/services/auth/customer-session-service';
@@ -271,5 +272,13 @@ export function getCustomerAuthDeps(): CustomerAuthDeps {
     customers: { upsertBySub: upsertCustomerBySub, findByEmail: findCustomerByEmail },
     session: getCustomerSessionDeps(),
     log: (message, fields) => console.error(message, fields),
+  };
+}
+
+/** The Google sign-in controller's dependencies (plan 014 Task 8). */
+export function getGoogleSignInDeps(): GoogleSignInDeps {
+  return {
+    auth: getCustomerAuthDeps(),
+    redirectUri: `${getAuthConfig().appUrl}/api/callbacks/cognito`,
   };
 }

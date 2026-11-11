@@ -101,11 +101,14 @@ export type AuthConfig = {
   readonly clientSecret: string;
   /** The Cognito domain's full host name, without a scheme. */
   readonly domain: string;
+  /** The site's public base URL, no trailing slash. The Cognito callback URL is built from it. */
+  readonly appUrl: string;
   readonly sessionTokenEncryptionKey: Buffer;
   readonly trustedProxyHeader: TrustedProxyHeader;
 };
 
 const authEnvSchema = z.object({
+  APP_URL: z.url(),
   COGNITO_REGION: z.string().min(1),
   COGNITO_USER_POOL_ID: z.string().min(1),
   COGNITO_CLIENT_ID: z.string().min(1),
@@ -136,6 +139,7 @@ export function parseAuthConfig(env: Readonly<Record<string, string | undefined>
     clientId: data.COGNITO_CLIENT_ID,
     clientSecret: data.COGNITO_CLIENT_SECRET,
     domain: data.COGNITO_DOMAIN,
+    appUrl: data.APP_URL.replace(/\/+$/, ''),
     sessionTokenEncryptionKey: Buffer.from(data.SESSION_TOKEN_ENCRYPTION_KEY, 'base64'),
     trustedProxyHeader: data.TRUSTED_PROXY_HEADER,
   };

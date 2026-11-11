@@ -40,7 +40,7 @@ Open `.env` and fill in these lines. Leave the other lines empty. **Never commit
 
 | Variable | What to put |
 | :--- | :--- |
-| `APP_URL` | `http://localhost:3000`, or the port you run on (the job scripts call this address) |
+| `APP_URL` | `http://localhost:3000`, or the port you run on (the job scripts call this address, and the Google sign-in callback URL is built from it) |
 | `DATABASE_URL` | keep the default `postgresql://postgres@127.0.0.1:5434/tinzshop` |
 | `TEST_DATABASE_URL` | keep the default `postgresql://postgres@127.0.0.1:5434/tinzshop_test` |
 | `JOB_SECRET` | output of `openssl rand -base64 32` |

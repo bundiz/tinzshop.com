@@ -227,10 +227,10 @@ It sets the sealed, HttpOnly `tinzshop_oauth` cookie (10 minutes, path `/api`) h
 | Status | `Location` | When |
 | :--- | :--- | :--- |
 | `302` | `/{locale}{returnTo}` | Success; the session cookie is set. |
-| `302` | Cognito's authorize endpoint | The first Google sign-in after account linking fails once inside Cognito; the callback retries the authorize step **once** (`retried` in the cookie). The exact error is confirmed in plan 014 Task 2. |
+| `302` | Cognito's authorize endpoint | The first Google sign-in after account linking fails once inside Cognito; the callback retries the authorize step **once** (`retried` in the cookie). The error is recognised by `error_description` containing `Already found an entry for username` (case-insensitive); that text is unverified until the manual Google test (D-180). |
 | `302` | `/{locale}/sign-in?error=google` | Any other failure: `state` mismatch (no token exchange is made), a refused or failed code exchange, an invalid ID token, or an email held by another `sub` (logged by hash only). |
 
-The code and the tokens are never in a response body or a log.
+The callback URL registered on the app client is `{APP_URL}/api/callbacks/cognito`. `tinzshop_oauth` older than 10 minutes, missing or tampered with is the `?error=google` redirect in `th`. An unexpected exception is logged by its name and also ends in that redirect, never a `500` (D-180). The code and the tokens are never in a response body or a log.
 
 ### Customer auth Server Actions (plan 014)
 

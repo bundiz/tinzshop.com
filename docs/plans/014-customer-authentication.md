@@ -296,14 +296,14 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
   
   Any failure answers 302 to `/{locale}/sign-in?error=google`. Every response has `Cache-Control: no-store`.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `state mismatch is refused without a token exchange`
   - `the linking error retries once, then shows the error`
   - `success sets the session cookie and redirects to returnTo`
   - `a missing last name from Google is accepted`
   - `an email held by another sub fails and logs the hash only`
-- [ ] **Implement** to pass.
-- [ ] **Commit:** `feat: add sign-in with Google through Cognito`
+- [x] **Implement** to pass.
+- [x] **Commit:** `feat: add sign-in with Google through Cognito`
 
 ### Task 9: Pages, header and product gating
 

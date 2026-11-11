@@ -5,6 +5,7 @@ import { parseAuthConfig } from './config';
 
 const key = randomBytes(32).toString('base64');
 const valid = {
+  APP_URL: 'http://localhost:3000/',
   COGNITO_REGION: 'ap-southeast-1',
   COGNITO_USER_POOL_ID: 'ap-southeast-1_AbCdEf123',
   COGNITO_CLIENT_ID: 'client-id-123',
@@ -19,6 +20,7 @@ describe('parseAuthConfig', () => {
     expect(config.trustedProxyHeader).toBe('x-forwarded-for');
     expect(config.sessionTokenEncryptionKey.length).toBe(32);
     expect(config.domain).toBe(valid.COGNITO_DOMAIN);
+    expect(config.appUrl).toBe('http://localhost:3000');
   });
 
   it('accepts cf-connecting-ip and treats an empty header as unset', () => {

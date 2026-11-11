@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import type { Result, DomainError } from '@/server/services/shared/result';
 
-import { isCognitoError, type CognitoFailureCode, type CognitoIdentity } from './cognito-identity';
+import { isCognitoError, type CognitoFailureCode, type CognitoIdentity, type CognitoTokens } from './cognito-identity';
 import {
   endAllCustomerSessions,
   endCustomerSession,
@@ -162,13 +162,17 @@ async function endSessionsFor(deps: CustomerAuthDeps, email: string): Promise<vo
   if (existing !== null) await endAllCustomerSessions(deps.session, existing.id);
 }
 
-/** Signs in with a password the request holds, and starts the session.  */
-async function signInAndStart(
+/**
+ * Turns Cognito tokens into an upserted customer and a started session. Password sign-in and Google
+ * sign-in both end here. When another `sub` holds the email, no session is started and the refresh
+ * token is revoked so no live token is left behind; the log carries the email hash only.
+ */
+export async function startSessionFromTokens(
   deps: CustomerAuthDeps,
   cognito: CognitoIdentity,
-  input: { email: string; password: string; now: Date },
+  input: { tokens: CognitoTokens; now: Date },
 ): Promise<SignedIn | 'email_taken'> {
-  const tokens = await cognito.signInWithPassword({ email: input.email, password: input.password });
+  const { tokens } = input;
   const identity = await cognito.verifyIdToken(tokens.idToken);
   // Cognito stores native emails lowercased (we lowercase them); lowercase anyway before the upsert.
   const identityEmail = normaliseEmail(identity.email);
@@ -179,12 +183,22 @@ async function signInAndStart(
     lastName: identity.familyName,
   });
   if (!upsert.ok) {
-    // No session will use these tokens, so do not leave a live refresh token behind.
+    deps.log?.('sign-in refused: email held by another account', { emailHash: emailHash(identityEmail), code: 'email_taken' });
     await quietly(deps, 'revoke after refused sign-in', identityEmail, () => cognito.revokeRefreshToken(tokens.refreshToken));
     return 'email_taken';
   }
   const session = await startCustomerSession(deps.session, { customerId: upsert.customer.id, tokens, now: input.now });
   return { customer: { id: upsert.customer.id, firstName: upsert.customer.firstName }, session };
+}
+
+/** Signs in with a password the request holds, and starts the session.  */
+async function signInAndStart(
+  deps: CustomerAuthDeps,
+  cognito: CognitoIdentity,
+  input: { email: string; password: string; now: Date },
+): Promise<SignedIn | 'email_taken'> {
+  const tokens = await cognito.signInWithPassword({ email: input.email, password: input.password });
+  return startSessionFromTokens(deps, cognito, { tokens, now: input.now });
 }
 
 const accountConflict = () =>
