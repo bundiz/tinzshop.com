@@ -110,18 +110,21 @@ function codeFailure(e: unknown): { ok: false; error: DomainError } {
  * Registers. Always continues to the verify step, whoever owns the email (O-9): a taken email starts
  * a password reset, a never-confirmed one gets its sign-up code again, and any failure of those
  * follow-up steps is logged by code and changes nothing the caller can see.
+ *
+ * `createdHere` is true only when this `SignUp` made a new account (Q-061, D-186). It goes into the sealed
+ * pending cookie, never onto the page, so the answer still looks the same whoever owns the email.
  */
 export async function register(
   deps: CustomerAuthDeps,
   input: Base & { email: string; password: string; firstName: string; lastName: string },
-): Promise<Result<{ next: 'verify' }>> {
+): Promise<Result<{ next: 'verify'; createdHere: boolean }>> {
   const gated = await gate(deps, 'register', input);
   if ('refusal' in gated) return gated.refusal;
   const { email } = gated;
   const cognito = deps.getCognito();
   try {
     await cognito.signUp({ email, password: input.password, firstName: input.firstName, lastName: input.lastName });
-    return { ok: true, data: { next: 'verify' } };
+    return { ok: true, data: { next: 'verify', createdHere: true } };
   } catch (e) {
     const code = codeOf(e);
     if (code === 'invalid_password') return invalidPassword();
@@ -136,25 +139,33 @@ export async function register(
   if (resetFailure !== null && resetFailure !== 'limit_exceeded') {
     await quietly(deps, 'register resend', email, () => cognito.resendConfirmationCode({ email }));
   }
-  return { ok: true, data: { next: 'verify' } };
+  return { ok: true, data: { next: 'verify', createdHere: false } };
 }
 
 /**
  * Confirms the sign-up code. A confirmed account answers exactly like a wrong code (Q-060, D-179), so
  * a stranger cannot learn that an email has an account.
+ *
+ * After a correct code (Q-061, D-186): an account this browser created (`createdHere`) goes to sign-in. Any
+ * other account may carry a password somebody else chose, so a second code is sent (`ForgotPassword`, which
+ * works now the email is verified) and the customer sets their own password with it; that reset ends every
+ * session. A failed second code still goes to the reset step, which offers to send a new one.
  */
 export async function confirmRegistration(
   deps: CustomerAuthDeps,
-  input: Base & { email: string; code: string },
-): Promise<Result<{ next: 'sign_in' }>> {
+  input: Base & { email: string; code: string; createdHere: boolean },
+): Promise<Result<{ next: 'sign_in' } | { next: 'set_password' }>> {
   const gated = await gate(deps, 'verify', input);
   if ('refusal' in gated) return gated.refusal;
+  const cognito = deps.getCognito();
   try {
-    await deps.getCognito().confirmSignUp({ email: gated.email, code: input.code });
-    return { ok: true, data: { next: 'sign_in' } };
+    await cognito.confirmSignUp({ email: gated.email, code: input.code });
   } catch (e) {
     return codeFailure(e);
   }
+  if (input.createdHere) return { ok: true, data: { next: 'sign_in' } };
+  await quietly(deps, 'second code after verify', gated.email, () => cognito.forgotPassword({ email: gated.email }));
+  return { ok: true, data: { next: 'set_password' } };
 }
 
 async function endSessionsFor(deps: CustomerAuthDeps, email: string): Promise<void> {
@@ -166,11 +177,14 @@ async function endSessionsFor(deps: CustomerAuthDeps, email: string): Promise<vo
  * Turns Cognito tokens into an upserted customer and a started session. Password sign-in and Google
  * sign-in both end here. When another `sub` holds the email, no session is started and the refresh
  * token is revoked so no live token is left behind; the log carries the email hash only.
+ *
+ * `previousToken` is the session cookie the browser already held: that session is ended (row deleted,
+ * refresh token revoked) before the new one starts, so a sign-in never leaves an orphaned row.
  */
 export async function startSessionFromTokens(
   deps: CustomerAuthDeps,
   cognito: CognitoIdentity,
-  input: { tokens: CognitoTokens; now: Date },
+  input: { tokens: CognitoTokens; now: Date; previousToken?: string | undefined },
 ): Promise<SignedIn | 'email_taken'> {
   const { tokens } = input;
   const identity = await cognito.verifyIdToken(tokens.idToken);
@@ -187,6 +201,9 @@ export async function startSessionFromTokens(
     await quietly(deps, 'revoke after refused sign-in', identityEmail, () => cognito.revokeRefreshToken(tokens.refreshToken));
     return 'email_taken';
   }
+  if (input.previousToken !== undefined && input.previousToken !== '') {
+    await endCustomerSession(deps.session, input.previousToken);
+  }
   const session = await startCustomerSession(deps.session, { customerId: upsert.customer.id, tokens, now: input.now });
   return { customer: { id: upsert.customer.id, firstName: upsert.customer.firstName }, session };
 }
@@ -195,10 +212,10 @@ export async function startSessionFromTokens(
 async function signInAndStart(
   deps: CustomerAuthDeps,
   cognito: CognitoIdentity,
-  input: { email: string; password: string; now: Date },
+  input: { email: string; password: string; now: Date; previousToken?: string | undefined },
 ): Promise<SignedIn | 'email_taken'> {
   const tokens = await cognito.signInWithPassword({ email: input.email, password: input.password });
-  return startSessionFromTokens(deps, cognito, { tokens, now: input.now });
+  return startSessionFromTokens(deps, cognito, { tokens, now: input.now, previousToken: input.previousToken });
 }
 
 const accountConflict = () =>
@@ -217,17 +234,20 @@ export async function resendCode(deps: CustomerAuthDeps, input: Base & { email: 
   return { ok: true, data: { next: 'verify' } };
 }
 
-/** Email and password sign-in. A wrong password and an unknown email give the same answer. */
+/**
+ * Email and password sign-in. A wrong password and an unknown email give the same answer. `previousToken` is
+ * the session cookie already in the browser, ended before the new session starts.
+ */
 export async function signIn(
   deps: CustomerAuthDeps,
-  input: Base & { email: string; password: string },
-): Promise<Result<({ next: 'done' } & SignedIn) | { next: 'verify' }>> {
+  input: Base & { email: string; password: string; previousToken?: string | undefined },
+): Promise<Result<({ next: 'done' } & SignedIn) | { next: 'verify'; createdHere: true }>> {
   const gated = await gate(deps, 'sign_in', input);
   if ('refusal' in gated) return gated.refusal;
   const { email } = gated;
   const cognito = deps.getCognito();
   try {
-    const signedIn = await signInAndStart(deps, cognito, { email, password: input.password, now: input.now });
+    const signedIn = await signInAndStart(deps, cognito, { email, password: input.password, now: input.now, previousToken: input.previousToken });
     if (signedIn === 'email_taken') return accountConflict();
     return { ok: true, data: { next: 'done', ...signedIn } };
   } catch (e) {
@@ -236,7 +256,9 @@ export async function signIn(
       // The resend counts against the resend limit like any other; over it, the customer still goes to verify.
       const allowed = await checkAuthRateLimit(deps.rateLimit, 'resend', { ip: input.ip, email, now: input.now });
       if (allowed.ok) await quietly(deps, 'sign-in resend', email, () => cognito.resendConfirmationCode({ email }));
-      return { ok: true, data: { next: 'verify' } };
+      // Cognito answers "not confirmed" only once the password is right, so this browser holds the account's
+      // password: the verify step may go straight to sign-in (Q-061, D-186).
+      return { ok: true, data: { next: 'verify', createdHere: true } };
     }
     if (code === 'not_authorized') {
       return error('auth.invalid_credentials', 'Email or password is incorrect', 'shop.auth.error.invalidCredentials');

@@ -12,9 +12,10 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('@/server/config', () => ({ getAuthConfig: () => getAuthConfig() }));
 
+import { encryptSecret } from '@/lib/secret-box';
 import { openPending, sealPending } from '@/server/services/auth/pending-token';
 
-import { applyCookieChanges, PENDING_COOKIE, readRequestContext, SESSION_COOKIE } from './auth-cookies';
+import { applyCookieChanges, PENDING_COOKIE, readRequestContext, readSessionCookie, SESSION_COOKIE } from './auth-cookies';
 
 const NOW = new Date('2026-11-10T00:00:00Z');
 
@@ -32,7 +33,7 @@ describe('auth cookies', () => {
   });
 
   it('seals the pending email for an hour and the context opens it again', async () => {
-    await applyCookieChanges({ setPending: { email: 'Ann@Example.com' } }, NOW);
+    await applyCookieChanges({ setPending: { email: 'Ann@Example.com', createdHere: false } }, NOW);
     const [name, sealed, options] = set.mock.calls[0] as [string, string, Record<string, unknown>];
     expect(name).toBe(PENDING_COOKIE);
     expect(sealed).not.toContain('ann@example.com');
@@ -51,14 +52,41 @@ describe('auth cookies', () => {
   it('the pending cookie carries a safe returnTo into the context', async () => {
     for (const [returnTo, expected] of [['/product/abc/detail', '/product/abc/detail'], ['//evil.test', '/']] as const) {
       set.mockClear();
-      await applyCookieChanges({ setPending: { email: 'a@example.com', returnTo } }, NOW);
+      await applyCookieChanges({ setPending: { email: 'a@example.com', returnTo, createdHere: false } }, NOW);
       jar.set(PENDING_COOKIE, (set.mock.calls[0] as [string, string])[1]);
       expect((await readRequestContext({ now: NOW })).pendingReturnTo).toBe(expected);
     }
   });
 
+  it('the pending cookie carries the created-here flag into the context (Q-061)', async () => {
+    for (const createdHere of [true, false]) {
+      set.mockClear();
+      await applyCookieChanges({ setPending: { email: 'a@example.com', createdHere } }, NOW);
+      jar.set(PENDING_COOKIE, (set.mock.calls[0] as [string, string])[1]);
+      expect((await readRequestContext({ now: NOW })).pendingCreatedHere).toBe(createdHere);
+    }
+  });
+
+  it('an old pending cookie without the flag is treated as not created here', async () => {
+    jar.set(PENDING_COOKIE, encryptSecret(JSON.stringify({ email: 'a@example.com', at: NOW.getTime() }), key));
+    const ctx = await readRequestContext({ now: NOW });
+    expect(ctx.pendingEmail).toBe('a@example.com');
+    expect(ctx.pendingCreatedHere).toBe(false);
+  });
+
+  it('a route handler reads the session cookie from the request', () => {
+    const request = new Request('https://shop.example.test/api/callbacks/cognito', {
+      headers: { cookie: `tinzshop_oauth=x; ${SESSION_COOKIE}=old-token; other=1` },
+    });
+    expect(readSessionCookie(request)).toBe('old-token');
+    expect(readSessionCookie(new Request('https://shop.example.test/'))).toBeUndefined();
+  });
+
   it('a tampered pending cookie opens as null', async () => {
-    jar.set(PENDING_COOKIE, `${sealPending('a@example.com', key, NOW)}x`);
+    // Change one character of the auth tag: an appended character can be dropped by base64 decoding and change nothing.
+    const [version, iv, tag, data] = sealPending('a@example.com', key, NOW).split('.') as [string, string, string, string];
+    const flipped = `${tag[0] === 'A' ? 'B' : 'A'}${tag.slice(1)}`;
+    jar.set(PENDING_COOKIE, [version, iv, flipped, data].join('.'));
     expect((await readRequestContext({ now: NOW })).pendingEmail).toBeNull();
   });
 

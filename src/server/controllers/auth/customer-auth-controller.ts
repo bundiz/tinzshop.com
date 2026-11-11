@@ -49,7 +49,8 @@ function echo(fields: Record<string, string>): { values?: Record<string, string>
 export type AuthCookieChanges = {
   setSession?: { token: string; expiresAt: Date };
   clearSession?: true;
-  setPending?: { email: string; returnTo?: string };
+  /** `createdHere` is required so every step that writes the pending cookie decides it (Q-061, D-186). */
+  setPending?: { email: string; returnTo?: string; createdHere: boolean };
   clearPending?: true;
 };
 
@@ -62,6 +63,8 @@ export type AuthRequestContext = {
   pendingEmail: string | null;
   /** The page to return to after sign-in, from `tinzshop_pending`; "/" or absent when there is none. */
   pendingReturnTo?: string;
+  /** Whether this browser created the pending account (Q-061, D-186); absent reads as false. */
+  pendingCreatedHere?: boolean;
   /** The raw `tinzshop_session` cookie value, if any. */
   sessionToken?: string;
 };
@@ -129,7 +132,13 @@ export async function handleRegister(deps: CustomerAuthDeps, formData: FormData,
   if (!result.ok) return failure(result.error, {}, fields);
   return {
     state: { redirectTo: '/register/verify' },
-    cookies: { setPending: { email: parsed.data.email.toLowerCase(), returnTo: safeReturnTo(fields.returnTo ?? null) } },
+    cookies: {
+      setPending: {
+        email: parsed.data.email.toLowerCase(),
+        returnTo: safeReturnTo(fields.returnTo ?? null),
+        createdHere: result.data.createdHere,
+      },
+    },
   };
 }
 
@@ -145,14 +154,26 @@ function returnToQuery(returnTo: string | undefined): string {
   return safe === '/' ? '' : `&returnTo=${encodeURIComponent(safe)}`;
 }
 
-/** The 6-digit code step. Every failure is the same wrong-code answer, whoever owns the email (Q-060). */
+/**
+ * The 6-digit code step. Every failure is the same wrong-code answer, whoever owns the email (Q-060). After a
+ * correct code, an account created in this browser goes to sign-in; any other goes to the reset step with a
+ * second code, so a password chosen by somebody else never survives (Q-061, D-186). Either way the pending
+ * cookie is left as it is: sign-in prefills its email, and the reset step reads the email and `returnTo`.
+ */
 export async function handleVerify(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
   if (ctx.pendingEmail === null) return pendingGone('/register');
   const parsed = codeOnlySchema.safeParse(fieldsOf(formData));
   if (!parsed.success) return invalid(parsed.error);
-  const result = await confirmRegistration(deps, { email: ctx.pendingEmail, code: parsed.data.code, ip: ctx.ip, now: ctx.now });
+  const result = await confirmRegistration(deps, {
+    email: ctx.pendingEmail,
+    code: parsed.data.code,
+    createdHere: ctx.pendingCreatedHere === true,
+    ip: ctx.ip,
+    now: ctx.now,
+  });
   if (!result.ok) return failure(result.error);
-  // R1 (D-173): no auto sign-in. The pending cookie stays so the sign-in page can prefill the email.
+  if (result.data.next === 'set_password') return { state: { redirectTo: `${PASSWORD_RESET_CODE_PATH}&setPassword=1` } };
+  // R1 (D-173): no auto sign-in.
   return { state: { redirectTo: `/sign-in?confirmed=1${returnToQuery(ctx.pendingReturnTo)}` } };
 }
 
@@ -167,12 +188,18 @@ export async function handleSignIn(deps: CustomerAuthDeps, formData: FormData, c
   const fields = fieldsOf(formData);
   const parsed = signInSchema.safeParse(fields);
   if (!parsed.success) return invalid(parsed.error, fields);
-  const result = await signIn(deps, { ...parsed.data, ip: ctx.ip, now: ctx.now });
+  const result = await signIn(deps, { ...parsed.data, ip: ctx.ip, now: ctx.now, previousToken: ctx.sessionToken });
   if (!result.ok) return failure(result.error, {}, fields);
   if (result.data.next === 'verify') {
     return {
       state: { redirectTo: '/register/verify' },
-      cookies: { setPending: { email: parsed.data.email.toLowerCase(), returnTo: safeReturnTo(fields.returnTo ?? null) } },
+      cookies: {
+        setPending: {
+          email: parsed.data.email.toLowerCase(),
+          returnTo: safeReturnTo(fields.returnTo ?? null),
+          createdHere: result.data.createdHere,
+        },
+      },
     };
   }
   return {
@@ -192,10 +219,33 @@ export async function handleForgotPassword(
   const result = await requestPasswordReset(deps, { email: parsed.data.email, ip: ctx.ip, now: ctx.now });
   if (!result.ok) return failure(result.error, {}, fields);
   // A redirect, not a client-side swap: the cookie is set in this response, so the code step survives a reload.
+  // `returnTo` comes from the form (the sign-in page's link passes it on), else from the cookie already there.
   return {
     state: { redirectTo: PASSWORD_RESET_CODE_PATH },
-    cookies: { setPending: { email: parsed.data.email.toLowerCase(), returnTo: safeReturnTo(ctx.pendingReturnTo ?? null) } },
+    cookies: {
+      setPending: {
+        email: parsed.data.email.toLowerCase(),
+        returnTo: safeReturnTo(fields.returnTo ?? ctx.pendingReturnTo ?? null),
+        createdHere: false,
+      },
+    },
   };
+}
+
+/**
+ * "Send a new code" on the reset step: a new reset code for the email in the pending cookie, so an expired code or
+ * a failed second code (Q-061) is never a dead end. The same answer whatever Cognito says, under the
+ * `forgot_password` limit; the pending cookie is left as it is.
+ */
+export async function handleResendResetCode(
+  deps: CustomerAuthDeps,
+  _formData: FormData,
+  ctx: AuthRequestContext,
+): Promise<AuthActionOutcome> {
+  if (ctx.pendingEmail === null) return pendingGone('/forgot-password');
+  const result = await requestPasswordReset(deps, { email: ctx.pendingEmail, ip: ctx.ip, now: ctx.now });
+  if (!result.ok) return failure(result.error);
+  return { state: { notice: 'shop.auth.forgot.resent' } };
 }
 
 export async function handleResetPassword(

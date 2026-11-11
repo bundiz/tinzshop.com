@@ -349,6 +349,13 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 - [x] **`14`:** the Lambda deploy steps link to `infra/cognito/pre-sign-up/README.md`.
 - [x] **Commit:** `docs: add Cognito to the local setup guide`
 
+### Final review fixes (2026-11-11)
+
+A whole-branch review after Task 10 asked for these; each was built test first.
+
+- [x] **Q-061, "second code" (D-186).** The pending cookie carries `createdHere`, true only after this browser's successful `SignUp` or an unconfirmed password sign-in. After a correct verify code, any other account gets a second code and goes to `/forgot-password?step=reset&setPassword=1`, so a password a stranger set on an unconfirmed account never survives. The flag is sealed as 1 or 0, so the cookie is the same length either way. Tests: `verify on an account created in this browser goes to sign-in`, `verify on an account not created here asks for a password with a second code`, `the created-here flag is set only by a successful sign-up or an unconfirmed password sign-in`, `an old pending cookie without the flag is treated as not created here`.
+- [x] **No dead ends, no orphaned sessions (D-187).** The reset step has "Send a new code"; "Forgot password?" on the sign-in page carries `returnTo`; a sign-in over an older session cookie ends that session first, on both the password and the Google path.
+
 ---
 
 ## Manual test checklist
@@ -362,6 +369,9 @@ These are run by a person against the dev pool. Never tick a box for a check nob
 - [ ] Sign in with Google with a new Gmail: an account is created without a last name.
 - [ ] Wrong password and unknown email show the same message. Repeating it 11 times in 15 minutes shows the rate-limit message.
 - [ ] Q-060: register an email that already has an account, then enter a wrong code such as 000000 on the verify page: you see the same wrong-code message as for any wrong code. Click "Got a password-reset email instead?", enter the emailed code and a new password: you can then sign in, and an earlier signed-in browser is signed out.
+- [ ] Q-061: in browser A, register an address you can read with password P1 and do not verify. In browser B (a private window), register the same address with password P2: the page looks the same as any registration. Enter the code from the email: you land on the reset step with the message that a new code was sent, and a second email arrives. Set password P3 with it: P3 signs in, and P1 and P2 do not.
+- [ ] Q-061: in a fresh browser, sign in to an unconfirmed account with the **wrong** password: the answer is "email or password is incorrect", not the verify page (the created-here flag relies on Cognito answering "not confirmed" only for the right password). With the right password you land on verify, and after the code you go straight to sign-in.
+- [ ] On the reset step, let a code expire (or use an old one), then press "Send a new code": a new code arrives and works. From a product page, sign-in → "Forgot password?" → reset ends back on that product after signing in.
 - [ ] Sign in with an unconfirmed account: you land on verify and a fresh code arrives; the resend button counts against its own limit.
 - [ ] Forgot password works, and an earlier signed-in browser is signed out afterwards.
 - [ ] Wait more than 60 minutes, then click around: there's no sign-in prompt, and `customer_session.access_token_expires_at` moved forward.

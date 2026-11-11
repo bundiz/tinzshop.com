@@ -7,6 +7,7 @@ import {
   handleForgotPassword,
   handleRegister,
   handleResendCode,
+  handleResendResetCode,
   handleResetPassword,
   handleSignIn,
   handleSignOut,
@@ -58,6 +59,10 @@ export async function forgotPasswordAction(_previous: AuthFormState, formData: F
 
 export async function resetPasswordAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
   return run(formData, (ctx) => handleResetPassword(getCustomerAuthDeps(), formData, ctx));
+}
+
+export async function resendResetCodeAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  return run(formData, (ctx) => handleResendResetCode(getCustomerAuthDeps(), formData, ctx));
 }
 
 export async function signOutAction(formData: FormData): Promise<void> {

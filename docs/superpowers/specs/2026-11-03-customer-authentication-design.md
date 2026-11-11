@@ -115,7 +115,17 @@ All forms are Server Actions, which carry CSRF protection (06). Every Cognito ca
 - **The real owner** gets a reset code by email; the bilingual template says what it is for. The verify page always shows the link "Got a password-reset email instead? Set a new password" (`/forgot-password?step=reset`). It opens the reset-code step for the email in the pending cookie, with the code and a new password. No new code is sent. `ConfirmForgotPassword` finishes it, every session of that account ends, and the customer signs in on the sign-in page. This costs the owner one extra click and one sign-in.
 - **Neither person** can get a different answer before entering a valid code. The reset step also gives one answer (a wrong code) for a wrong code, an unconfirmed account and an unknown user.
 
-**The email has an account that was never confirmed:** the code is resent and the page goes to verify. The password stays the one from the first attempt.
+**The email has an account that was never confirmed:** the code is resent and the page goes to verify. The password is still the one from the first attempt, which may have been somebody else's, so the verify step must not simply confirm it (Q-061, below).
+
+**Who created the account (Q-061, D-186).** A stranger can register a victim's email with the stranger's own password and never confirm it. When the victim registers, `SignUp` says the user exists, `ForgotPassword` fails because the email is unverified, and the sign-up code is resent; confirming it would hand the victim an account whose password the stranger chose, which a later Google sign-in would then keep. This is the takeover the pre sign-up Lambda prevents for Google (D-168). So the sealed pending cookie carries `createdHere`:
+- **true** only when this browser's `SignUp` succeeded (a new account), or a password sign-in proved the password and Cognito answered "not confirmed";
+- **false** for every other way the cookie is set (register on a taken email, forgot password) and for an older cookie that has no such field. Resending a code does not touch the cookie.
+
+After a **correct** code:
+- `createdHere` true: sign-in, as before (`?confirmed=1`, with `returnTo`; R1, D-173).
+- `createdHere` false: the service quietly calls `ForgotPassword` for that email (it works now, because the code just verified the email) and the page goes to the reset step, `/forgot-password?step=reset&setPassword=1`, which tells the customer to finish by setting their password with the new code just emailed. `ConfirmForgotPassword` replaces the password and ends every session, which removes whatever the stranger set. A failed `ForgotPassword` still goes to the reset step, whose "Send a new code" button asks again. `returnTo` stays in the pending cookie, so the reset still ends on the page the customer came from.
+
+**Invariant:** every answer before a correct code is the same whoever created the account (D-160, D-179). The flag lives only inside the sealed cookie, written as 1 or 0 so the cookie is the same length either way; only a correct code, which proves the mailbox, can lead to the different redirect. Until the real owner finishes the reset, the account still has the password set at sign-up; the reset is what removes it.
 
 ### 6.2 Sign in with email and password
 1. `/{locale}/sign-in`: `InitiateAuth` with `USER_PASSWORD_AUTH`.

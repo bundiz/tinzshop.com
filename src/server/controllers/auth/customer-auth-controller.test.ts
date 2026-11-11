@@ -7,6 +7,7 @@ import {
   handleForgotPassword,
   handleRegister,
   handleResendCode,
+  handleResendResetCode,
   handleResetPassword,
   handleSignIn,
   handleSignOut,
@@ -96,7 +97,7 @@ describe('register', () => {
   it('success goes to verify and keeps the lowercased email in the pending cookie', async () => {
     const t = build();
     const out = await handleRegister(t.deps, form(good), ctx());
-    expect(out).toMatchObject({ state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: 'ann@example.com', returnTo: '/' } } });
+    expect(out).toMatchObject({ state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: 'ann@example.com', returnTo: '/', createdHere: true } } });
     expect(t.cognito.signUp).toHaveBeenCalledWith({ email: 'ann@example.com', password: 'Passw0rd!', firstName: 'Ann', lastName: 'Lee' });
   });
 
@@ -116,10 +117,39 @@ describe('verify', () => {
     expect(t.getCognito).not.toHaveBeenCalled();
   });
 
-  it('success goes to sign-in without a session', async () => {
+  it('verify on an account created in this browser goes to sign-in', async () => {
+    const t = build();
+    const out = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com', pendingCreatedHere: true }));
+    // No session and no cookie change: the pending cookie stays so sign-in can prefill the email (R1, D-173).
+    expect(out).toEqual({ state: { redirectTo: '/sign-in?confirmed=1' } });
+    expect(t.cognito.forgotPassword).not.toHaveBeenCalled();
+  });
+
+  it('verify on an account not created here asks for a password with a second code', async () => {
+    const t = build();
+    const out = await handleVerify(
+      t.deps,
+      form({ code: '123456' }),
+      ctx({ pendingEmail: 'ann@example.com', pendingCreatedHere: false, pendingReturnTo: '/product/abc/detail' }),
+    );
+    // The pending cookie is left as it is, so the reset step has the email and returnTo still reaches sign-in.
+    expect(out).toEqual({ state: { redirectTo: `${PASSWORD_RESET_CODE_PATH}&setPassword=1` } });
+    expect(t.cognito.confirmSignUp).toHaveBeenCalledWith({ email: 'ann@example.com', code: '123456' });
+    expect(t.cognito.forgotPassword).toHaveBeenCalledWith({ email: 'ann@example.com' });
+  });
+
+  it('an old pending cookie without the flag is treated as not created here', async () => {
     const t = build();
     const out = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com' }));
-    expect(out).toEqual({ state: { redirectTo: '/sign-in?confirmed=1' } });
+    expect(out.state.redirectTo).toBe(`${PASSWORD_RESET_CODE_PATH}&setPassword=1`);
+  });
+
+  it('a wrong code answers the same whether or not the account was created here', async () => {
+    const { CognitoError } = await import('@/server/adapters/cognito/errors');
+    const wrong = () => build({ cognito: { confirmSignUp: vi.fn(async () => { throw new CognitoError('code_mismatch'); }) } });
+    const here = await handleVerify(wrong().deps, form({ code: '000000' }), ctx({ pendingEmail: 'ann@example.com', pendingCreatedHere: true }));
+    const elsewhere = await handleVerify(wrong().deps, form({ code: '000000' }), ctx({ pendingEmail: 'ann@example.com', pendingCreatedHere: false }));
+    expect(here).toEqual(elsewhere);
   });
 
   it('without the pending cookie it sends the customer back to register', async () => {
@@ -173,8 +203,20 @@ describe('sign-in, resend, reset and sign-out', () => {
     const out = await handleSignIn(t.deps, form({ email: 'Ann@Example.com', password: 'x', returnTo: '/product/abc/detail' }), ctx());
     expect(out).toEqual({
       state: { redirectTo: '/register/verify' },
-      cookies: { setPending: { email: 'ann@example.com', returnTo: '/product/abc/detail' } },
+      cookies: { setPending: { email: 'ann@example.com', returnTo: '/product/abc/detail', createdHere: true } },
     });
+  });
+
+  it('signing in while an older session cookie is present deletes that session', async () => {
+    const t = build();
+    const deleted: string[] = [];
+    t.deps.session.sessions.delete = async (h) => {
+      deleted.push(h);
+    };
+    const out = await handleSignIn(t.deps, form({ email: 'ann@example.com', password: 'x' }), ctx({ sessionToken: 'old-cookie' }));
+    const { createHash } = await import('node:crypto');
+    expect(deleted).toEqual([createHash('sha256').update('old-cookie').digest('hex')]);
+    expect(out.cookies?.setSession?.token).not.toBe('old-cookie');
   });
 
   it('a wrong password is the invalidCredentials form error', async () => {
@@ -196,8 +238,18 @@ describe('sign-in, resend, reset and sign-out', () => {
     // A redirect, so the code step survives a reload and shows without JavaScript (the cookie is set in the same response).
     expect(out).toEqual({
       state: { redirectTo: PASSWORD_RESET_CODE_PATH },
-      cookies: { setPending: { email: 'ann@example.com', returnTo: '/' } },
+      cookies: { setPending: { email: 'ann@example.com', returnTo: '/', createdHere: false } },
     });
+  });
+
+  it('forgot password keeps the returnTo the sign-in page passed on, else the one already pending', async () => {
+    const t = build();
+    const fromLink = await handleForgotPassword(t.deps, form({ email: 'ann@example.com', returnTo: '/product/abc/detail' }), ctx());
+    expect(fromLink.cookies?.setPending?.returnTo).toBe('/product/abc/detail');
+    const unsafe = await handleForgotPassword(t.deps, form({ email: 'ann@example.com', returnTo: '//evil.test' }), ctx({ pendingReturnTo: '/product' }));
+    expect(unsafe.cookies?.setPending?.returnTo).toBe('/');
+    const pending = await handleForgotPassword(t.deps, form({ email: 'ann@example.com' }), ctx({ pendingReturnTo: '/product' }));
+    expect(pending.cookies?.setPending?.returnTo).toBe('/product');
   });
 
   it('forgot password rejects a malformed email before Cognito', async () => {
@@ -274,8 +326,12 @@ describe('returnTo through registration', () => {
   it('register with a returnTo keeps it in the pending cookie, and verify carries it to sign-in', async () => {
     const t = build();
     const registered = await handleRegister(t.deps, form({ ...good, returnTo: '/product/abc/detail' }), ctx());
-    expect(registered.cookies?.setPending).toEqual({ email: 'ann@example.com', returnTo: '/product/abc/detail' });
-    const verified = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '/product/abc/detail' }));
+    expect(registered.cookies?.setPending).toEqual({ email: 'ann@example.com', returnTo: '/product/abc/detail', createdHere: true });
+    const verified = await handleVerify(
+      t.deps,
+      form({ code: '123456' }),
+      ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '/product/abc/detail', pendingCreatedHere: true }),
+    );
     expect(verified.state.redirectTo).toBe(`/sign-in?confirmed=1&returnTo=${encodeURIComponent('/product/abc/detail')}`);
   });
 
@@ -283,7 +339,11 @@ describe('returnTo through registration', () => {
     const t = build();
     const registered = await handleRegister(t.deps, form({ ...good, returnTo: '//evil.test' }), ctx());
     expect(registered.cookies?.setPending?.returnTo).toBe('/');
-    const verified = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '//evil.test' }));
+    const verified = await handleVerify(
+      t.deps,
+      form({ code: '123456' }),
+      ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '//evil.test', pendingCreatedHere: true }),
+    );
     expect(verified.state.redirectTo).toBe('/sign-in?confirmed=1');
   });
 
@@ -325,5 +385,87 @@ describe('echoing values back to the form', () => {
   it('echoes the email when forgot password is refused', async () => {
     const out = await handleForgotPassword(build({ count: 99 }).deps, form({ email: 'Ann@Example.com' }), ctx());
     expect(out.state.values).toEqual({ email: 'Ann@Example.com' });
+  });
+});
+
+describe('the created-here flag (Q-061, D-186)', () => {
+  it('the created-here flag is set only by a successful sign-up or an unconfirmed password sign-in', async () => {
+    const { CognitoError } = await import('@/server/adapters/cognito/errors');
+    const throwing = (code: 'username_exists' | 'user_not_confirmed' | 'not_authorized') =>
+      vi.fn(async () => {
+        throw new CognitoError(code);
+      });
+
+    const signedUp = await handleRegister(build().deps, form(good), ctx());
+    expect(signedUp.cookies?.setPending?.createdHere).toBe(true);
+
+    const taken = await handleRegister(build({ cognito: { signUp: throwing('username_exists') } }).deps, form(good), ctx());
+    expect(taken.cookies?.setPending?.createdHere).toBe(false);
+    // The visible answer is the same for both.
+    expect(taken.state).toEqual(signedUp.state);
+
+    const unconfirmed = await handleSignIn(
+      build({ cognito: { signInWithPassword: throwing('user_not_confirmed') } }).deps,
+      form({ email: 'ann@example.com', password: 'x' }),
+      ctx(),
+    );
+    expect(unconfirmed.cookies?.setPending?.createdHere).toBe(true);
+
+    const wrongPassword = await handleSignIn(
+      build({ cognito: { signInWithPassword: throwing('not_authorized') } }).deps,
+      form({ email: 'ann@example.com', password: 'x' }),
+      ctx(),
+    );
+    expect(wrongPassword.cookies).toBeUndefined();
+
+    const forgot = await handleForgotPassword(build().deps, form({ email: 'ann@example.com' }), ctx({ pendingCreatedHere: true }));
+    expect(forgot.cookies?.setPending?.createdHere).toBe(false);
+
+    // Resending touches no cookie, so it can never raise the flag.
+    const resent = await handleResendCode(build().deps, form({}), ctx({ pendingEmail: 'ann@example.com', pendingCreatedHere: false }));
+    expect(resent.cookies).toBeUndefined();
+    const resentReset = await handleResendResetCode(build().deps, form({}), ctx({ pendingEmail: 'ann@example.com', pendingCreatedHere: false }));
+    expect(resentReset.cookies).toBeUndefined();
+  });
+});
+
+describe('send a new code from the reset step', () => {
+  it('sends a reset code to the pending email and answers with a notice', async () => {
+    const t = build();
+    const out = await handleResendResetCode(t.deps, form({}), ctx({ pendingEmail: 'ann@example.com' }));
+    expect(out).toEqual({ state: { notice: 'shop.auth.forgot.resent' } });
+    expect(t.cognito.forgotPassword).toHaveBeenCalledWith({ email: 'ann@example.com' });
+  });
+
+  it('answers the same when Cognito refuses, so it reveals nothing', async () => {
+    const { CognitoError } = await import('@/server/adapters/cognito/errors');
+    for (const code of ['not_authorized', 'user_not_confirmed', 'limit_exceeded', 'unavailable'] as const) {
+      const t = build({ cognito: { forgotPassword: vi.fn(async () => { throw new CognitoError(code); }) } });
+      expect(await handleResendResetCode(t.deps, form({}), ctx({ pendingEmail: 'ann@example.com' })), code).toEqual({
+        state: { notice: 'shop.auth.forgot.resent' },
+      });
+    }
+  });
+
+  it('counts against the forgot_password limit', async () => {
+    const hits: string[] = [];
+    const t = build({ count: 99 });
+    t.deps.rateLimit = {
+      hitRateLimit: async (k) => {
+        hits.push(k);
+        return 99;
+      },
+    };
+    const out = await handleResendResetCode(t.deps, form({}), ctx({ pendingEmail: 'ann@example.com' }));
+    expect(out.state.formError).toBe('shop.auth.error.rateLimited');
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.every((h) => h.startsWith('forgot_password:'))).toBe(true);
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('without the pending cookie it goes back to the email step', async () => {
+    const t = build();
+    expect((await handleResendResetCode(t.deps, form({}), ctx())).state).toEqual({ redirectTo: '/forgot-password?expired=1' });
+    expect(t.getCognito).not.toHaveBeenCalled();
   });
 });

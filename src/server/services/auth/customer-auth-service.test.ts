@@ -98,19 +98,19 @@ const reg = { ...base, email: 'Ann@Example.com', password: 'Passw0rd!', firstNam
 describe('register', () => {
   it('register with a new email signs up and goes to verify', async () => {
     const t = build();
-    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: true } });
     expect(t.calls.map((c) => c.fn)).toEqual(['signUp']);
   });
 
   it('register with a taken email shows the same verify step and starts a reset', async () => {
     const t = build({ cognito: { signUp: fail('username_exists') } });
-    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: false } });
     expect(t.calls.map((c) => c.fn)).toEqual(['signUp', 'forgotPassword']);
   });
 
   it('register with a never-confirmed email resends the sign-up code', async () => {
     const t = build({ cognito: { signUp: fail('username_exists'), forgotPassword: fail('user_not_confirmed') } });
-    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: false } });
     expect(t.calls.map((c) => c.fn)).toEqual(['signUp', 'forgotPassword', 'resendConfirmationCode']);
   });
 
@@ -118,7 +118,7 @@ describe('register', () => {
     'register answers the same when the reset step fails with %s',
     async (code) => {
       const t = build({ cognito: { signUp: fail('username_exists'), forgotPassword: fail(code) } });
-      expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+      expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: false } });
       const logged = JSON.stringify(t.state.logs);
       expect(logged).not.toContain('example.com');
     },
@@ -128,14 +128,14 @@ describe('register', () => {
     'register resends the sign-up code when the reset fails with %s',
     async (code) => {
       const t = build({ cognito: { signUp: fail('username_exists'), forgotPassword: fail(code) } });
-      expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+      expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: false } });
       expect(t.calls.map((c) => c.fn)).toEqual(['signUp', 'forgotPassword', 'resendConfirmationCode']);
     },
   );
 
   it('register does not resend when the reset is throttled', async () => {
     const t = build({ cognito: { signUp: fail('username_exists'), forgotPassword: fail('limit_exceeded') } });
-    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: false } });
     expect(t.calls.map((c) => c.fn)).toEqual(['signUp', 'forgotPassword']);
   });
 
@@ -143,7 +143,7 @@ describe('register', () => {
     const t = build({
       cognito: { signUp: fail('username_exists'), forgotPassword: fail('user_not_confirmed'), resendConfirmationCode: fail('unavailable') },
     });
-    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify', createdHere: false } });
   });
 
   it('a mixed-case email reaches Cognito lowercased', async () => {
@@ -175,7 +175,7 @@ describe('non-Cognito errors surface (D-022)', () => {
     await expect(register(build({ cognito: { signUp: fail('username_exists'), forgotPassword: bug } }).deps, reg)).rejects.toThrow('boom');
   });
   it('confirmRegistration and confirmPasswordReset rethrow a bug', async () => {
-    await expect(confirmRegistration(build({ cognito: { confirmSignUp: bug } }).deps, { ...base, email: 'a@example.com', code: '123456' })).rejects.toThrow('boom');
+    await expect(confirmRegistration(build({ cognito: { confirmSignUp: bug } }).deps, { ...base, email: 'a@example.com', code: '123456', createdHere: true })).rejects.toThrow('boom');
     const pw = { ...base, email: 'a@example.com', code: '123456', newPassword: 'N3wpass!x' };
     await expect(confirmPasswordReset(build({ cognito: { confirmForgotPassword: bug } }).deps, pw)).rejects.toThrow('boom');
   });
@@ -188,12 +188,38 @@ describe('non-Cognito errors surface (D-022)', () => {
 });
 
 describe('confirmRegistration', () => {
-  const input = { ...base, email: 'Ann@Example.com', code: '123456' };
+  const input = { ...base, email: 'Ann@Example.com', code: '123456', createdHere: true };
 
-  it('a correct code goes to sign-in without signing in', async () => {
+  it('verify on an account created in this browser goes to sign-in', async () => {
     const t = build();
     expect(await confirmRegistration(t.deps, input)).toEqual({ ok: true, data: { next: 'sign_in' } });
     expect(t.calls.map((c) => c.fn)).toEqual(['confirmSignUp']);
+  });
+
+  it('verify on an account not created here asks for a password with a second code', async () => {
+    const t = build();
+    expect(await confirmRegistration(t.deps, { ...input, createdHere: false })).toEqual({ ok: true, data: { next: 'set_password' } });
+    // The code proved the mailbox, so the email is verified and ForgotPassword now sends a second code (Q-061).
+    expect(t.calls).toEqual([
+      { fn: 'confirmSignUp', input: { email: 'ann@example.com', code: '123456' } },
+      { fn: 'forgotPassword', input: { email: 'ann@example.com' } },
+    ]);
+  });
+
+  it('a failed second code still asks for a password, and logs the code without the email', async () => {
+    const t = build({ cognito: { forgotPassword: fail('limit_exceeded') } });
+    expect(await confirmRegistration(t.deps, { ...input, createdHere: false })).toEqual({ ok: true, data: { next: 'set_password' } });
+    expect(JSON.stringify(t.state.logs)).toContain('limit_exceeded');
+    expect(JSON.stringify(t.state.logs)).not.toContain('example.com');
+  });
+
+  it('before a valid code the answer does not depend on where the account was created', async () => {
+    for (const code of ['code_mismatch', 'already_confirmed', 'code_expired', 'not_authorized'] as const) {
+      const here = build({ cognito: { confirmSignUp: fail(code) } });
+      const elsewhere = build({ cognito: { confirmSignUp: fail(code) } });
+      expect(await confirmRegistration(here.deps, input)).toEqual(await confirmRegistration(elsewhere.deps, { ...input, createdHere: false }));
+      expect(elsewhere.calls.map((c) => c.fn)).toEqual(['confirmSignUp']);
+    }
   });
 
   it('verify with any code on a confirmed account answers like a wrong code', async () => {
@@ -273,7 +299,7 @@ describe('signIn', () => {
 
   it('unconfirmed sign-in goes to verify', async () => {
     const t = build({ cognito: { signInWithPassword: fail('user_not_confirmed') } });
-    expect(await signIn(t.deps, input)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await signIn(t.deps, input)).toEqual({ ok: true, data: { next: 'verify', createdHere: true } });
     expect(t.calls.map((c) => c.fn)).toEqual(['signInWithPassword', 'resendConfirmationCode']);
   });
 
@@ -302,8 +328,28 @@ describe('signIn', () => {
 
   it('the unconfirmed sign-in does not resend once the resend limit is hit, but still goes to verify', async () => {
     const t = build({ cognito: { signInWithPassword: fail('user_not_confirmed') }, limitFor: (k) => (k.startsWith('resend:') ? 99 : 1) });
-    expect(await signIn(t.deps, input)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(await signIn(t.deps, input)).toEqual({ ok: true, data: { next: 'verify', createdHere: true } });
     expect(t.calls.map((c) => c.fn)).toEqual(['signInWithPassword']);
+  });
+
+  it('signing in while an older session cookie is present ends that session first', async () => {
+    const t = build();
+    const order: string[] = [];
+    t.deps.session.sessions.delete = async (h) => {
+      order.push(`delete:${h}`);
+    };
+    t.deps.session.sessions.insert = async () => {
+      order.push('insert');
+    };
+    const result = await signIn(t.deps, { ...input, previousToken: 'old-cookie' });
+    expect(result).toMatchObject({ ok: true, data: { next: 'done' } });
+    expect(order).toEqual([`delete:${sha('old-cookie')}`, 'insert']);
+  });
+
+  it('a refused sign-in leaves an older session alone', async () => {
+    const t = build({ upsertEmailTaken: true });
+    await signIn(t.deps, { ...input, previousToken: 'old-cookie' });
+    expect(t.state.deleted).toEqual([]);
   });
 
   it('Cognito unavailable asks to try again', async () => {
@@ -376,7 +422,7 @@ describe('password reset', () => {
 describe('rate limits', () => {
   it.each([
     ['register', (d: CustomerAuthDeps) => register(d, reg)],
-    ['verify', (d: CustomerAuthDeps) => confirmRegistration(d, { ...base, email: 'a@example.com', code: '123456' })],
+    ['verify', (d: CustomerAuthDeps) => confirmRegistration(d, { ...base, email: 'a@example.com', code: '123456', createdHere: false })],
     ['verify', (d: CustomerAuthDeps) => confirmPasswordReset(d, { ...base, email: 'a@example.com', code: '123456', newPassword: 'N3wpass!x' })],
     ['resend', (d: CustomerAuthDeps) => resendCode(d, { ...base, email: 'a@example.com' })],
     ['sign_in', (d: CustomerAuthDeps) => signIn(d, { ...base, email: 'a@example.com', password: 'x' })],

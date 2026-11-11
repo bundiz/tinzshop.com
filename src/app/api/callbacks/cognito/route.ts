@@ -1,4 +1,4 @@
-import { googleRedirect, readOauthCookie } from '@/app/[locale]/(shop)/(auth)/auth-cookies';
+import { googleRedirect, readOauthCookie, readSessionCookie } from '@/app/[locale]/(shop)/(auth)/auth-cookies';
 import { getGoogleSignInDeps } from '@/server/composition-root';
 import { handleGoogleCallback } from '@/server/controllers/auth/google-sign-in-controller';
 
@@ -13,6 +13,7 @@ export async function GET(request: Request): Promise<Response> {
       error: params.get('error'),
       errorDescription: params.get('error_description'),
       oauth: readOauthCookie(request, now),
+      sessionToken: readSessionCookie(request),
       now,
     });
     return googleRedirect(outcome, now);

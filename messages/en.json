@@ -468,7 +468,10 @@
         "emailIntro": "Enter your email. If an account exists, we will send a 6-digit code.",
         "codeIntro": "Enter the 6-digit code from your email, then choose a new password.",
         "submit": "Send code",
-        "resetSubmit": "Set new password"
+        "resetSubmit": "Set new password",
+        "resend": "Send a new code",
+        "resent": "If this email has an account, a new code is on its way.",
+        "setPassword": "Your email is verified. To finish, set your password with the new 6-digit code we just emailed you."
       },
       "notice": {
         "expired": "This step timed out. Please start again."

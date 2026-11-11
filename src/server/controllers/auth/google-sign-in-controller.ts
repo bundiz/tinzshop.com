@@ -38,6 +38,8 @@ export type GoogleCallbackInput = {
   errorDescription: string | null;
   /** The opened `tinzshop_oauth` cookie, or null when it is missing, expired or tampered with. */
   oauth: OauthState | null;
+  /** The `tinzshop_session` cookie the browser already holds, if any: that session ends before the new one starts. */
+  sessionToken?: string | undefined;
   now: Date;
 };
 
@@ -120,7 +122,7 @@ export async function handleGoogleCallback(deps: GoogleSignInDeps, input: Google
       codeVerifier: oauth.codeVerifier,
       redirectUri: deps.redirectUri,
     });
-    const signedIn = await startSessionFromTokens(deps.auth, cognito, { tokens, now: input.now });
+    const signedIn = await startSessionFromTokens(deps.auth, cognito, { tokens, now: input.now, previousToken: input.sessionToken });
     if (signedIn === 'email_taken') return failure(locale); // already logged by hash
     return {
       location: `/${locale}${safeReturnTo(oauth.returnTo)}`,

@@ -21,7 +21,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
-| **RESOLVED** | 42 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
+| **RESOLVED** | 43 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
 | **UNRESOLVED** | 12 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
@@ -555,6 +555,13 @@ Not a question. The client source (`reference/client-summary-th.md`) does not me
 - **Question:** The verify step treated "this account is already confirmed" as the sign that the emailed code was a reset code, and then asked for a new password (spec §6.1, O-9). `ConfirmSignUp` reports that status before it checks the code, so a stranger who registers a victim's email and types any 6 digits (such as 000000) would be shown the choose-a-password step and learn the email has an account. Should the step stay as the spec said, or give one answer for every code?
 - **Answer:** The project owner chose "same answer" (2026-11-11). The verify step answers a confirmed account exactly like a wrong code. The verify page always shows the link "Got a password-reset email instead? Set a new password", which leads to the reset-code step for the email in the pending cookie, without sending a new code.
 - **Effect:** No account-existence leak at verify. The owner of an existing account takes one extra click. Recorded as D-179; spec §6.1 and `06-api.md` updated.
+- **Ask:** project owner
+
+### Q-061: Can a stranger keep an account they registered with someone else's email?
+- **Status:** RESOLVED — 2026-11-11
+- **Question:** A stranger registers a victim's email with the stranger's own password and never confirms it. When the victim later registers, `SignUp` says the user exists, `ForgotPassword` fails because the email is not verified, so the app resends the sign-up code. The victim enters it and so confirms the stranger's account, with the stranger's password; a later Google sign-in links to it and keeps it. The pre sign-up Lambda's protection (D-168) exists for exactly this, and this path reopened it. How should the verify step close it?
+- **Answer:** The project owner chose "second code" (2026-11-11). The pending cookie records whether this browser created the account: true only when this browser's `SignUp` succeeded, or when a password sign-in proved the password and Cognito answered that the account is not confirmed; every other way of reaching verify leaves it false, and an older cookie without the record reads as false. After a correct code, an account created here goes to sign-in as before. Any other account is sent a second code (`ForgotPassword`, which works now the email is verified) and the customer is taken to the reset step to set their own password with it; that reset ends every session.
+- **Effect:** A password somebody else chose never survives the real owner's verification. Every answer before a correct code is unchanged (D-160, D-179), so nothing is revealed. A customer who verifies in a browser that did not create the account sets a password once more. Recorded as D-186; spec §6.1 and `06-api.md` updated.
 - **Ask:** project owner
 
 ---

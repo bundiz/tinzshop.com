@@ -171,3 +171,20 @@ describe('GET /api/callbacks/cognito', () => {
     expect(log).toHaveBeenCalledWith(expect.any(String), { code: 'TypeError' });
   });
 });
+
+describe('a Google sign-in over an older session', () => {
+  it('ends the older session before starting the new one', async () => {
+    const { deps } = build();
+    const order: string[] = [];
+    deps.auth.session.sessions.delete = async () => {
+      order.push('delete');
+    };
+    deps.auth.session.sessions.insert = async () => {
+      order.push('insert');
+    };
+    const out = await handleGoogleCallback(deps, callback({ sessionToken: 'old-cookie' }));
+    expect(out.setSession).toBeDefined();
+    expect(order).toEqual(['delete', 'insert']);
+  });
+});
+

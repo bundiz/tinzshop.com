@@ -39,6 +39,7 @@ export async function readRequestContext(options: { now?: Date; signOut?: boolea
     now,
     pendingEmail: pending?.email ?? null,
     pendingReturnTo: pending?.returnTo ?? '/',
+    pendingCreatedHere: pending?.createdHere ?? false,
     ...withSession,
   };
 }
@@ -74,7 +75,8 @@ export async function applyCookieChanges(changes: AuthCookieChanges | undefined,
   }
   if (changes.clearSession) jar.set(SESSION_COOKIE, '', { ...baseOptions(), maxAge: 0 });
   if (changes.setPending) {
-    jar.set(PENDING_COOKIE, sealPending(changes.setPending.email, getAuthConfig().sessionTokenEncryptionKey, now, changes.setPending.returnTo), {
+    const { email, returnTo, createdHere } = changes.setPending;
+    jar.set(PENDING_COOKIE, sealPending(email, getAuthConfig().sessionTokenEncryptionKey, now, returnTo, createdHere), {
       ...baseOptions(),
       maxAge: PENDING_LIFETIME_MS / 1000,
     });
@@ -82,16 +84,28 @@ export async function applyCookieChanges(changes: AuthCookieChanges | undefined,
   if (changes.clearPending) jar.set(PENDING_COOKIE, '', { ...baseOptions(), maxAge: 0 });
 }
 
-/** Opens `tinzshop_oauth` from a route handler's request; null when missing, expired or tampered with. */
-export function readOauthCookie(request: Request, now: Date): OauthState | null {
+/** One cookie's raw value from a route handler's request, or undefined. */
+function requestCookie(request: Request, name: string): string | undefined {
   const header = request.headers.get('cookie') ?? '';
   const raw = header
     .split(';')
     .map((part) => part.trim())
-    .find((part) => part.startsWith(`${OAUTH_COOKIE}=`))
-    ?.slice(OAUTH_COOKIE.length + 1);
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+  return raw === undefined ? undefined : decodeURIComponent(raw);
+}
+
+/** Opens `tinzshop_oauth` from a route handler's request; null when missing, expired or tampered with. */
+export function readOauthCookie(request: Request, now: Date): OauthState | null {
+  const raw = requestCookie(request, OAUTH_COOKIE);
   if (raw === undefined) return null;
-  return openOauth(decodeURIComponent(raw), getAuthConfig().sessionTokenEncryptionKey, now);
+  return openOauth(raw, getAuthConfig().sessionTokenEncryptionKey, now);
+}
+
+/** The raw `tinzshop_session` value from a route handler's request, so a Google sign-in can end the older session. */
+export function readSessionCookie(request: Request): string | undefined {
+  const value = requestCookie(request, SESSION_COOKIE);
+  return value === '' ? undefined : value;
 }
 
 /**

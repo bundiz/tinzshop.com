@@ -68,7 +68,7 @@ export default async function SignInPage({ params, searchParams }: Props) {
               labelKey: 'field.password',
               type: 'password',
               autoComplete: 'current-password',
-              labelLink: { href: `/${locale}/forgot-password`, labelKey: 'signIn.forgot' },
+              labelLink: { href: `/${locale}/forgot-password${withReturn}`, labelKey: 'signIn.forgot' },
             },
           ]}
         />

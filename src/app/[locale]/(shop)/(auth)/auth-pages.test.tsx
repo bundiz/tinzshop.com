@@ -29,6 +29,7 @@ vi.mock('./actions', () => {
     resendCodeAction: action,
     forgotPasswordAction: action,
     resetPasswordAction: action,
+    resendResetCodeAction: action,
     signOutAction: action,
   };
 });
@@ -99,6 +100,8 @@ describe('the sign-in page', () => {
     expect(page).toContain(`name="returnTo" value="${path}"`);
     expect(page).toContain(`href="/th/register?returnTo=${encodeURIComponent(path)}"`);
     expect(page).toContain(`returnTo=${encodeURIComponent(path)}&amp;locale=th`);
+    // "Forgot password?" keeps it too, so a reset still ends on the product.
+    expect(page).toContain(`href="/th/forgot-password?returnTo=${encodeURIComponent(path)}"`);
     for (const bad of ['//evil.test', 'https://evil.test', '/TH/product']) {
       expect(await signIn({ returnTo: bad }), bad).toContain('name="returnTo" value="/"');
     }
@@ -234,5 +237,31 @@ describe('the forgot-password page', () => {
 
   it('explains a timed-out reset step', async () => {
     expect(await forgot({ expired: '1' })).toContain(th.shop.auth.notice.expired);
+  });
+
+  it('the reset step offers to send a new code, so an expired code is never a dead end', async () => {
+    request.pendingEmail = 'pending@example.test';
+    const page = await forgot({ step: 'reset' });
+    expect(page).toContain(th.shop.auth.forgot.resend);
+    expect([...page.matchAll(/<form\b[^>]*>/g)].filter((m) => !m[0].includes('role="search"'))).toHaveLength(2);
+    expect(en.shop.auth.forgot.resend).toBe('Send a new code');
+    // The email step has no such button.
+    request.pendingEmail = null;
+    expect(await forgot()).not.toContain(th.shop.auth.forgot.resend);
+  });
+
+  it('after verifying an account not created here it says a new code was sent to set the password (Q-061)', async () => {
+    request.pendingEmail = 'pending@example.test';
+    const page = await forgot({ step: 'reset', setPassword: '1' });
+    expect(page).toContain(th.shop.auth.forgot.setPassword);
+    expect(await forgot({ step: 'reset' })).not.toContain(th.shop.auth.forgot.setPassword);
+    expect(th.shop.auth.forgot.setPassword).toMatch(/[\u0E00-\u0E7F]/);
+  });
+
+  it('the email step sends the returnTo it was given', async () => {
+    const page = await forgot({ returnTo: '/product/abc/detail' });
+    expect(page).toContain('name="returnTo" value="/product/abc/detail"');
+    expect(cardHeader(page)).toContain(`href="/th/sign-in?returnTo=${encodeURIComponent('/product/abc/detail')}"`);
+    expect(await forgot({ returnTo: '//evil.test' })).not.toContain('name="returnTo"');
   });
 });

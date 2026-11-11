@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { PASSWORD_RULES } from '@/server/services/auth/password-policy';
+import { safeReturnTo } from '@/server/services/auth/return-to';
 import { readArticlesMenu } from '../../_components/read-articles-menu';
 import { readCurrentCustomer } from '../../_components/read-current-customer';
 import { readPendingEmail } from '../auth-cookies';
-import { forgotPasswordAction, resetPasswordAction } from '../actions';
+import { forgotPasswordAction, resendResetCodeAction, resetPasswordAction } from '../actions';
 import { firstParam, startAuthPage, type AuthSearchParams } from '../auth-page';
 import AuthCard from '../_components/AuthCard';
 import AuthForm from '../_components/AuthForm';
@@ -28,12 +29,16 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>): Promi
  * `/{locale}/forgot-password` (plan 014): the email step, then the code and a new password. The email step's action
  * redirects to `?step=reset`, so the code step survives a reload and needs no client-side swap (the pending cookie is
  * set in the same response). `?step=reset` is also where the verify page's link goes (Q-060, D-179) and sends no new
- * code; with no pending email it shows the email step.
+ * code; with no pending email it shows the email step. The code step has "Send a new code", so an expired code is
+ * never a dead end, and `&setPassword=1` (a verify on an account not created in this browser, Q-061, D-186) explains
+ * that a second code was sent to set the password. `?returnTo=` from the sign-in page's link is sent with the email.
  */
 export default async function ForgotPasswordPage({ params, searchParams }: Props) {
   const locale = await startAuthPage(params);
   const query = await searchParams;
   const pendingEmail = firstParam(query.step) === 'reset' ? await readPendingEmail() : null;
+  const returnTo = safeReturnTo(firstParam(query.returnTo));
+  const withReturn = returnTo === '/' ? '' : `?returnTo=${encodeURIComponent(returnTo)}`;
   const [t, articlesMenu, customer] = await Promise.all([
     getTranslations({ locale, namespace: 'shop.auth' }),
     readArticlesMenu(locale),
@@ -41,17 +46,22 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
   ]);
 
   const resetForm = (
-    <AuthForm
-      action={resetPasswordAction}
-      submitKey="forgot.resetSubmit"
-      introKey="forgot.codeIntro"
-      passwordRuleKeys={PASSWORD_RULES.map((rule) => rule.messageKey)}
-      fields={[
-        { name: 'code', labelKey: 'field.code', type: 'text', autoComplete: 'one-time-code', inputMode: 'numeric', maxLength: 6 },
-        { name: 'password', labelKey: 'field.newPassword', type: 'password', autoComplete: 'new-password', showPasswordRules: true },
-        { name: 'passwordConfirm', labelKey: 'field.newPasswordConfirm', type: 'password', autoComplete: 'new-password' },
-      ]}
-    />
+    <>
+      <AuthForm
+        action={resetPasswordAction}
+        submitKey="forgot.resetSubmit"
+        introKey="forgot.codeIntro"
+        passwordRuleKeys={PASSWORD_RULES.map((rule) => rule.messageKey)}
+        fields={[
+          { name: 'code', labelKey: 'field.code', type: 'text', autoComplete: 'one-time-code', inputMode: 'numeric', maxLength: 6 },
+          { name: 'password', labelKey: 'field.newPassword', type: 'password', autoComplete: 'new-password', showPasswordRules: true },
+          { name: 'passwordConfirm', labelKey: 'field.newPasswordConfirm', type: 'password', autoComplete: 'new-password' },
+        ]}
+      />
+      <div className="mt-3">
+        <AuthForm action={resendResetCodeAction} submitKey="forgot.resend" variant="secondary" fields={[]} />
+      </div>
+    </>
   );
 
   return (
@@ -63,10 +73,13 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
       <AuthCard
         title={t('forgot.title')}
         description={t('forgot.description')}
-        switchHref={`/${locale}/sign-in`}
+        switchHref={`/${locale}/sign-in${withReturn}`}
         switchLabel={t('forgot.switchLink')}
       >
         {firstParam(query.expired) === '1' && <AuthNotice tone="info">{t('notice.expired')}</AuthNotice>}
+        {pendingEmail !== null && firstParam(query.setPassword) === '1' && (
+          <AuthNotice tone="info">{t('forgot.setPassword')}</AuthNotice>
+        )}
         {pendingEmail !== null ? (
           resetForm
         ) : (
@@ -74,6 +87,7 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
             action={forgotPasswordAction}
             submitKey="forgot.submit"
             introKey="forgot.emailIntro"
+            hidden={returnTo === '/' ? undefined : { returnTo }}
             fields={[{ name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email', maxLength: 254 }]}
           />
         )}
