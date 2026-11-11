@@ -94,7 +94,7 @@ Names are copied from Cognito **once**, when the row is created. After that our 
 - `created_at`
 
 **`auth_rate_limit`** is the per-source counter (§7).
-- `key`: for example `sign-in:{ip}`. It holds an IP address, which is personal data, so rows are deleted when their window ends.
+- `key`: `{action}:ip:{ip}` or `{action}:email:{sha256 of the lowercased email}`, with `{action}` one of `sign_in`, `register`, `verify`, `resend`, `forgot_password`; for example `sign_in:ip:{ip}` and `sign_in:email:{sha256}`. It holds an IP address, which is personal data, so rows are deleted when their window ends.
 - `window_start`, `count`
 - primary key (`key`, `window_start`)
 
@@ -108,7 +108,7 @@ All forms are Server Actions, which carry CSRF protection (06). Every Cognito ca
 1. `/{locale}/register` takes first name, last name, email, password and password again. Mismatched passwords are caught on the form.
 2. `SignUp` sends the email and password, with `given_name` and `family_name` as attributes, and Cognito emails a 6-digit code.
 3. `/{locale}/register/verify` takes the code (`ConfirmSignUp`) and has a "resend code" button (`ResendConfirmationCode`, rate-limited).
-4. Once confirmed, the customer is signed in straight away, without retyping: the action signs in with the password it still holds for that request (§6.2, step 2 onward).
+4. Once confirmed, the customer is signed in straight away, without retyping: the action signs in with the password it still holds for that request (§6.2, step 2 onward). **Replaced by D-173 (plan 014 ruling R1):** the code arrives in a later request, which holds no password, so a correct code goes to sign-in with the email filled in; and since Q-061 (D-186) only an account created in this browser does, the rest go to the reset step with a second code (below).
 
 **The email already has an account (O-9, changed by Q-060 and D-179):** `SignUp` answers `UsernameExistsException`. The action then calls `ForgotPassword` for that email, throws away the typed password, and shows **the same verify page** a new registration gets. So:
 - **The stranger** sees exactly what a new registrant sees, and learns nothing. Whatever code they type, `ConfirmSignUp` fails and the page says the code is wrong. A confirmed account (`already_confirmed`) is answered exactly like a wrong code (`code_mismatch`): the same message, the same state and the same cookies.
@@ -147,9 +147,9 @@ After a **correct** code:
 4. Because a normal user always exists, a later password registration with the same email is caught by Cognito's own duplicate check (§6.1). One email is one Cognito user, one `sub` and one `customer` row.
 
 ### 6.4 Every request: session and silent refresh
-1. A shared server helper reads the cookie, hashes it, and loads `customer_session` together with its `customer`. There's no row, or `expires_at` has passed? Then the visitor is signed out and the cookie is cleared.
+1. A shared server helper reads the cookie, hashes it, and loads `customer_session` together with its `customer`. There's no row, or `expires_at` has passed? Then the visitor is signed out (an expired row is deleted). A Server Component cannot set cookies, so the cookie itself stays, matching no row, until a sign-in overwrites it, a sign-out clears it, or it expires with the session (D-174).
 2. `access_token_expires_at` has passed? The helper refreshes (`InitiateAuth` with `REFRESH_TOKEN_AUTH`) and stores the new sealed access token and expiry.
-   - **Refresh fails** (the user was disabled or deleted, signed out everywhere, or the 7 days ran out): delete the row, and the visitor is signed out.
+   - **Refresh fails** (the user was disabled or deleted, signed out everywhere, or the 7 days ran out): delete the row, and the visitor is signed out. As built, only a definite rejection deletes the row; when Cognito is unreachable or throttling, the row is kept, the visitor is signed out for that request only, and the failure is logged (§7).
    - **Two requests refresh at once:** that's harmless, because rotation is off and the refresh token doesn't change.
 3. So a change made in Cognito reaches the site within 60 minutes, and a sign-out made on the site takes effect at once.
 

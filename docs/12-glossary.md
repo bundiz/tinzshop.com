@@ -260,7 +260,7 @@ Plan 014 (ADR-0003, D-152 to D-175).
 
 | English | Thai | Definition | Identifier |
 | :--- | :--- | :--- | :--- |
-| Customer session | เซสชันของลูกค้า | Our own session for a signed-in customer (plan 014): a row in `customer_session` found by the SHA-256 of the `tinzshop_session` cookie, holding the Cognito tokens sealed. It lasts 7 days from sign-in and can be ended at once. Not the same as a Cognito token. See D-158, D-167. | `customer_session` |
+| Customer session | เซสชันของลูกค้า | Our own session for a signed-in customer (plan 014): a row in `customer_session` found by the SHA-256 of the `tinzshop_session` cookie, holding the Cognito tokens sealed. It lasts 7 days from sign-in and can be ended at once. Not the same as a Cognito token. See D-176, D-167. | `customer_session` |
 | User pool | กลุ่มผู้ใช้ (Cognito user pool) | The Amazon Cognito directory that holds customers' email, password and Google link. One customer pool; staff get a second pool in plan 002 (D-159). Set up by hand from the checklist in `14-integrations.md`. | `user_pool` |
 | Account linking | การเชื่อมบัญชี | Making a Google sign-in and a password registration with the same email one Cognito user, one `sub` and one `customer` row (O-3, D-154). Done by the pre sign-up trigger. | `account_linking` |
 | Access token, ID token and refresh token | โทเค็นเข้าถึง โทเค็นระบุตัวตน และโทเค็นรีเฟรช | The three Cognito tokens. Access and ID tokens last 60 minutes; the refresh token lasts 7 days from sign-in and is not rotated (D-176). They are stored sealed in `customer_session` and never reach the browser's JavaScript. The code reads `exp` from the tokens and does not hard-code a lifetime. | `access_token`, `id_token`, `refresh_token` |

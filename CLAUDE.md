@@ -11,8 +11,8 @@ source for what it must do is `docs/reference/client-summary-th.md`.
 catalogue mirror), plan 011's code (the landing page and product page) and
 plan 012's code (the news tables, the import from the old WordPress site and
 the news pages) and plan 013's code (the product listing page and a mock
-category assignment). Plan 014 (customer authentication with Amazon Cognito) is
-documented and its code is being built. No other application code exists yet.**
+category assignment) and plan 014's code (customer authentication with Amazon
+Cognito; its manual checks are still to be run). No other application code exists yet.**
 
 **The stack is decided.** Next.js (App Router), TypeScript, PostgreSQL and
 Prisma, as one route-grouped application, with the commerce domain written
@@ -50,7 +50,8 @@ project owner's decisions of 2026-10-29
 project owner's request of 2026-10-29. Plan 014 is on the project owner's
 decisions of 2026-11-03 and approval of 2026-11-04
 (`docs/superpowers/specs/2026-11-03-customer-authentication-design.md`, §2); its
-Cognito dev-pool checks (Task 2) must pass before Tasks 6 to 8 are built. Build only what
+Cognito dev-pool checks 3 to 7 (Task 2) were moved to the plan's manual test checklist
+on 2026-11-11. Build only what
 plans 010, 011, 012, 013 and 014 describe — do not scaffold the rest of the application to
 get ahead of the other plans. K-Payment is the
 **sole** payment method (bank transfer and standalone PromptPay are removed),

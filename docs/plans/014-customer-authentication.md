@@ -56,7 +56,7 @@
 
 1. **Two tabs, one refresh.** Two requests arrive with an expired access token at the same moment. Both succeed and the session stays valid; neither request deletes it. Pinned in Task 4.
 2. **Cognito unreachable during a refresh.** The session row is **kept** and the visitor is treated as signed out for that request only. Only a definite rejection (`not_authorized`) deletes the row. Pinned in Task 4.
-3. **The same email in mixed case** (`Somchai@Gmail.com` vs `somchai@gmail.com`). It is one customer, one rate-limit key, and one upsert. Pinned in Tasks 3 and 5.
+3. **The same email in mixed case** (`Somchai@Example.com` vs `somchai@example.com`). It is one customer, one rate-limit key, and one upsert. Pinned in Tasks 3 and 5.
 4. **A hostile `returnTo`:** `//evil.com`, `/\evil.com`, `https://evil.com`, `/th/product`. Each lands on a safe same-site path. Pinned in Task 4.
 5. **A signed-in customer whose session expired mid-browse** opens a product page. They are sent to sign-in with `returnTo`, and land back on that product. Pinned in Task 9.
 
@@ -66,7 +66,7 @@
   - **Ordinary verify:** it redirects to sign-in, with the email filled in and the message `shop.auth.verify.confirmed`.
   - **O-9 reset path:** the customer follows the verify page's link to the reset-code step, sets a new password there and signs in afterwards (Q-060, D-179).
   - If check 7 in Task 2 shows Cognito can sign in from the confirmation itself, Task 7 uses that instead. Cost if wrong: one extra password entry.
-- **R2, Server Components cannot set cookies.** The session read never writes the cookie. A dead session is treated as signed out and its cookie is cleared by the next Server Action or route handler. Cost: none to the visitor.
+- **R2, Server Components cannot set cookies.** The session read never writes the cookie. A dead session is treated as signed out and its row is deleted; its cookie stays in the browser, matching no row, until a sign-in overwrites it, a sign-out clears it, or it expires with the session. Cost: none to the visitor.
 - **R3, module name.** `auth` is the module folder in every layer. The planned `access/` folder (04) stays for permission evaluation.
 
 ---
@@ -356,6 +356,7 @@ A whole-branch review after Task 10 asked for these; each was built test first.
 - [x] **Q-061, "second code" (D-186).** The pending cookie carries `createdHere`, true only after this browser's successful `SignUp` or an unconfirmed password sign-in. After a correct verify code, any other account gets a second code and goes to `/forgot-password?step=reset&setPassword=1`, so a password a stranger set on an unconfirmed account never survives. The flag is sealed as 1 or 0, so the cookie is the same length either way. Tests: `verify on an account created in this browser goes to sign-in`, `verify on an account not created here asks for a password with a second code`, `the created-here flag is set only by a successful sign-up or an unconfirmed password sign-in`, `an old pending cookie without the flag is treated as not created here`.
 - [x] **Sign-in logging (spec §7).** A started session logs `{ customerId }` (password and Google), a failed password sign-in (`not_authorized`, `user_not_confirmed`) logs `{ emailHash, code }`, and a refresh that meets `unavailable` or `limit_exceeded` logs `{ customerId, code }` (the Task 4 minor). Tests assert the calls and that no raw email appears.
 - [x] **No dead ends, no orphaned sessions (D-187).** The reset step has "Send a new code"; "Forgot password?" on the sign-in page carries `returnTo`; a sign-in over an older session cookie ends that session first, on both the password and the Google path.
+- [x] **Docs aligned with the code.** R2 and D-174 now say what the code does (a dead session's cookie stays until a sign-in overwrites it, a sign-out clears it, or it expires); spec §6.1 step 4 points at D-173; the rate-limit key format in `05` and spec §5 is `{action}:ip:{ip}` / `{action}:email:{sha256}` with the action names the code uses; the Task 2 checks 4 and 5 are on the manual checklist; register's timing difference is recorded as accepted (D-188); example addresses use `example.com`; `.env.example` leaves `COGNITO_REGION` blank.
 
 ---
 
@@ -374,6 +375,8 @@ These are run by a person against the dev pool. Never tick a box for a check nob
 - [ ] Q-061: in a fresh browser, sign in to an unconfirmed account with the **wrong** password: the answer is "email or password is incorrect", not the verify page (the created-here flag relies on Cognito answering "not confirmed" only for the right password). With the right password you land on verify, and after the code you go straight to sign-in.
 - [ ] On the reset step, let a code expire (or use an old one), then press "Send a new code": a new code arrives and works. From a product page, sign-in → "Forgot password?" → reset ends back on that product after signing in.
 - [ ] Sign in with an unconfirmed account: you land on verify and a fresh code arrives; the resend button counts against its own limit.
+- [ ] Task 2 check 4: an account created by a first Google sign-in (the Lambda's `AdminCreateUser` + permanent `AdminSetUserPassword`) can use "Forgot password?": the code arrives, a new password is set, and that password then signs in.
+- [ ] Task 2 check 5: register an email, do not verify, then register the same email again: the verify page looks the same, and a fresh sign-up code arrives (the second registration reached `UsernameExistsException` and `ResendConfirmationCode` worked).
 - [ ] Forgot password works, and an earlier signed-in browser is signed out afterwards.
 - [ ] Wait more than 60 minutes, then click around: there's no sign-in prompt, and `customer_session.access_token_expires_at` moved forward.
 - [ ] Sign out: the cookie is gone, and the back button doesn't show a signed-in page.

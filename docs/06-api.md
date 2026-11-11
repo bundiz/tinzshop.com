@@ -211,7 +211,7 @@ shop could replace ours and the sync would mirror its catalogue (D-104).
 
 ### `GET /api/auth/google` and `GET /api/callbacks/cognito` (plan 014)
 
-Customer sign-in with Google (ADR-0003, D-154). Both are browser `GET`s that answer **302**, never a body, and every response is `Cache-Control: no-store`. They live outside the locale segment (fixed URLs); the locale travels in a query parameter and in the `tinzshop_oauth` cookie. Neither takes a signature or a session.
+Customer sign-in with Google (ADR-0003, D-152). Both are browser `GET`s that answer **302**, never a body, and every response is `Cache-Control: no-store`. They live outside the locale segment (fixed URLs); the locale travels in a query parameter and in the `tinzshop_oauth` cookie. Neither takes a signature or a session.
 
 **`GET /api/auth/google?returnTo&locale`** starts the sign-in.
 

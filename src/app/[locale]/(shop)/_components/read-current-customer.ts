@@ -5,7 +5,8 @@ import type { CurrentCustomer } from '@/server/services/auth/customer-session-se
 
 /**
  * The signed-in customer for this request, or null. Read once per request however many components ask. It never
- * writes a cookie (D-174): a dead session is simply signed out, and the next Server Action clears its cookie.
+ * writes a cookie (D-174): a dead session is simply signed out, and its cookie, which matches no row, stays until a
+ * sign-in overwrites it, a sign-out clears it, or it expires with the session.
  *
  * A failing read never breaks the page, because the header is on every shop page. It counts as signed out, and
  * only the error's name is logged, never its message, which can carry connection details.

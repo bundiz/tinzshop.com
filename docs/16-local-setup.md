@@ -89,7 +89,7 @@ npm run dev -- -p 3002      # if port 3000 is taken; then set APP_URL=http://loc
 
 The pages are empty until you feed data (step 6).
 
-**Product pages need a signed-in customer** (D-161). Signed out, `/th/product` and every product page send you to sign-in; the home page and news stay open. Register a dev account at http://localhost:3000/th/register with an inbox you can read (a Gmail `+` alias such as `you+tz1@gmail.com` works), enter the 6-digit code from the email, then sign in. Passwords need at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character (D-177). The dev pool's built-in sender allows only a few dozen emails a day across the whole team.
+**Product pages need a signed-in customer** (D-161). Signed out, `/th/product` and every product page send you to sign-in; the home page and news stay open. Register a dev account at http://localhost:3000/th/register with an address you can read (a `+` alias such as `name+tz1@example.com` works on many providers), enter the 6-digit code from the email, then sign in. Passwords need at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character (D-177). The dev pool's built-in sender allows only a few dozen emails a day across the whole team.
 
 ## 6. Feed the data
 
