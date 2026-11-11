@@ -28,14 +28,28 @@ export type AuthFormState = {
   redirectTo?: string;
   /** A message key for a non-error confirmation. */
   notice?: string;
-  /** Which step the page shows next when it stays on the same route. */
-  step?: 'reset';
+  /**
+   * The non-secret fields as submitted (`email`, `firstName`, `lastName`), so a failed attempt keeps what the
+   * customer typed. Never a password or a code.
+   */
+  values?: Record<string, string>;
 };
+
+/** The only fields ever echoed back to a form. */
+const ECHOED_FIELDS = ['email', 'firstName', 'lastName'] as const;
+
+function echo(fields: Record<string, string>): { values?: Record<string, string> } {
+  const values: Record<string, string> = {};
+  for (const name of ECHOED_FIELDS) {
+    if (fields[name] !== undefined) values[name] = fields[name];
+  }
+  return Object.keys(values).length === 0 ? {} : { values };
+}
 
 export type AuthCookieChanges = {
   setSession?: { token: string; expiresAt: Date };
   clearSession?: true;
-  setPending?: { email: string };
+  setPending?: { email: string; returnTo?: string };
   clearPending?: true;
 };
 
@@ -46,6 +60,8 @@ export type AuthRequestContext = {
   now: Date;
   /** The email opened from `tinzshop_pending`, or null. */
   pendingEmail: string | null;
+  /** The page to return to after sign-in, from `tinzshop_pending`; "/" or absent when there is none. */
+  pendingReturnTo?: string;
   /** The raw `tinzshop_session` cookie value, if any. */
   sessionToken?: string;
 };
@@ -81,16 +97,17 @@ function fieldsOf(formData: FormData): Record<string, string> {
   return fields;
 }
 
-function invalid(error: z.ZodError): AuthActionOutcome {
+function invalid(error: z.ZodError, fields: Record<string, string> = {}): AuthActionOutcome {
   const fieldErrors: Record<string, string> = {};
   for (const issue of error.issues) {
     const field = String(issue.path[0] ?? 'form');
     fieldErrors[field] ??= issue.message;
   }
-  return { state: { fieldErrors } };
+  return { state: { fieldErrors, ...echo(fields) } };
 }
 
-function failure(error: DomainError, extra: AuthFormState = {}): AuthActionOutcome {
+function failure(error: DomainError, extra: AuthFormState = {}, fields: Record<string, string> = {}): AuthActionOutcome {
+  extra = { ...extra, ...echo(fields) };
   const field = (error.details as { field?: unknown } | undefined)?.field;
   if (typeof field === 'string') return { state: { ...extra, fieldErrors: { [field]: error.messageKey } } };
   return { state: { ...extra, formError: error.messageKey } };
@@ -105,11 +122,15 @@ function pendingGone(path: string): AuthActionOutcome {
 }
 
 export async function handleRegister(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
-  const parsed = registerSchema.safeParse(fieldsOf(formData));
-  if (!parsed.success) return invalid(parsed.error);
+  const fields = fieldsOf(formData);
+  const parsed = registerSchema.safeParse(fields);
+  if (!parsed.success) return invalid(parsed.error, fields);
   const result = await register(deps, { ...parsed.data, ip: ctx.ip, now: ctx.now });
-  if (!result.ok) return failure(result.error);
-  return { state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: parsed.data.email.toLowerCase() } } };
+  if (!result.ok) return failure(result.error, {}, fields);
+  return {
+    state: { redirectTo: '/register/verify' },
+    cookies: { setPending: { email: parsed.data.email.toLowerCase(), returnTo: safeReturnTo(fields.returnTo ?? null) } },
+  };
 }
 
 /**
@@ -117,6 +138,12 @@ export async function handleRegister(deps: CustomerAuthDeps, formData: FormData,
  * It shows the code and new-password fields for the email in the pending cookie, and sends no new code.
  */
 export const PASSWORD_RESET_CODE_PATH = '/forgot-password?step=reset';
+
+/** `&returnTo=…` for a safe, non-trivial path from the pending cookie, else nothing. Checked again here, not trusted. */
+function returnToQuery(returnTo: string | undefined): string {
+  const safe = safeReturnTo(returnTo ?? null);
+  return safe === '/' ? '' : `&returnTo=${encodeURIComponent(safe)}`;
+}
 
 /** The 6-digit code step. Every failure is the same wrong-code answer, whoever owns the email (Q-060). */
 export async function handleVerify(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
@@ -126,7 +153,7 @@ export async function handleVerify(deps: CustomerAuthDeps, formData: FormData, c
   const result = await confirmRegistration(deps, { email: ctx.pendingEmail, code: parsed.data.code, ip: ctx.ip, now: ctx.now });
   if (!result.ok) return failure(result.error);
   // R1 (D-173): no auto sign-in. The pending cookie stays so the sign-in page can prefill the email.
-  return { state: { redirectTo: '/sign-in?confirmed=1' } };
+  return { state: { redirectTo: `/sign-in?confirmed=1${returnToQuery(ctx.pendingReturnTo)}` } };
 }
 
 export async function handleResendCode(deps: CustomerAuthDeps, _formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
@@ -139,11 +166,14 @@ export async function handleResendCode(deps: CustomerAuthDeps, _formData: FormDa
 export async function handleSignIn(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
   const fields = fieldsOf(formData);
   const parsed = signInSchema.safeParse(fields);
-  if (!parsed.success) return invalid(parsed.error);
+  if (!parsed.success) return invalid(parsed.error, fields);
   const result = await signIn(deps, { ...parsed.data, ip: ctx.ip, now: ctx.now });
-  if (!result.ok) return failure(result.error);
+  if (!result.ok) return failure(result.error, {}, fields);
   if (result.data.next === 'verify') {
-    return { state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: parsed.data.email.toLowerCase() } } };
+    return {
+      state: { redirectTo: '/register/verify' },
+      cookies: { setPending: { email: parsed.data.email.toLowerCase(), returnTo: safeReturnTo(fields.returnTo ?? null) } },
+    };
   }
   return {
     state: { redirectTo: safeReturnTo(fields.returnTo ?? null) },
@@ -156,11 +186,16 @@ export async function handleForgotPassword(
   formData: FormData,
   ctx: AuthRequestContext,
 ): Promise<AuthActionOutcome> {
-  const parsed = emailOnlySchema.safeParse(fieldsOf(formData));
-  if (!parsed.success) return invalid(parsed.error);
+  const fields = fieldsOf(formData);
+  const parsed = emailOnlySchema.safeParse(fields);
+  if (!parsed.success) return invalid(parsed.error, fields);
   const result = await requestPasswordReset(deps, { email: parsed.data.email, ip: ctx.ip, now: ctx.now });
-  if (!result.ok) return failure(result.error);
-  return { state: { step: 'reset' }, cookies: { setPending: { email: parsed.data.email.toLowerCase() } } };
+  if (!result.ok) return failure(result.error, {}, fields);
+  // A redirect, not a client-side swap: the cookie is set in this response, so the code step survives a reload.
+  return {
+    state: { redirectTo: PASSWORD_RESET_CODE_PATH },
+    cookies: { setPending: { email: parsed.data.email.toLowerCase(), returnTo: safeReturnTo(ctx.pendingReturnTo ?? null) } },
+  };
 }
 
 export async function handleResetPassword(
@@ -171,8 +206,7 @@ export async function handleResetPassword(
   if (ctx.pendingEmail === null) return pendingGone('/forgot-password');
   const parsed = codeAndPasswordSchema.safeParse(fieldsOf(formData));
   if (!parsed.success) {
-    const outcome = invalid(parsed.error);
-    return { state: { ...outcome.state, step: 'reset' } };
+    return invalid(parsed.error);
   }
   const result = await confirmPasswordReset(deps, {
     email: ctx.pendingEmail,
@@ -181,8 +215,8 @@ export async function handleResetPassword(
     ip: ctx.ip,
     now: ctx.now,
   });
-  if (!result.ok) return failure(result.error, { step: 'reset' });
-  return { state: { redirectTo: '/sign-in?reset=1' } };
+  if (!result.ok) return failure(result.error);
+  return { state: { redirectTo: `/sign-in?reset=1${returnToQuery(ctx.pendingReturnTo)}` } };
 }
 
 export async function handleSignOut(deps: CustomerAuthDeps, ctx: AuthRequestContext): Promise<AuthActionOutcome> {

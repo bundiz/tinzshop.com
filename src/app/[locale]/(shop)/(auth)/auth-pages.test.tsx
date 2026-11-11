@@ -125,6 +125,26 @@ describe('the sign-in page', () => {
     expect(await redirectOf(() => register())).toBe('/th');
   });
 
+  it('every auth form has a server action, so it works before hydration and puts nothing in the URL', async () => {
+    request.pendingEmail = 'pending@example.test';
+    const pages = [await signIn(), await register(), await verify(), await forgot(), await forgot({ step: 'reset' })];
+    for (const page of pages) {
+      const forms = [...page.matchAll(/<form\b[^>]*>/g)].map((m) => m[0]).filter((tag) => !tag.includes('role="search"'));
+      expect(forms.length).toBeGreaterThan(0);
+      for (const tag of forms) {
+        expect(tag).toMatch(/\baction=/);
+        expect(tag).not.toMatch(/method="get"/i);
+      }
+    }
+  });
+
+  it('keeps returnTo on the language switch', async () => {
+    const path = '/product/abc/detail';
+    const page = await signIn({ returnTo: path });
+    expect(page).toContain(`href="/en/sign-in?returnTo=${encodeURIComponent(path)}"`);
+    expect(await register({ returnTo: path })).toContain(`href="/en/register?returnTo=${encodeURIComponent(path)}"`);
+  });
+
   it('answers an unknown locale with a 404', async () => {
     await expect(SignInPage({ params: params('fr'), searchParams: Promise.resolve({}) })).rejects.toMatchObject({
       digest: expect.stringContaining('404'),
@@ -149,6 +169,11 @@ describe('the register page', () => {
     expect(page).not.toContain('forgot-password');
   });
 
+  it('sends returnTo with the registration, as a hidden field', async () => {
+    expect(await register({ returnTo: '/product/abc/detail' })).toContain('name="returnTo" value="/product/abc/detail"');
+    expect(await register({ returnTo: '//evil.test' })).toContain('name="returnTo" value="/"');
+  });
+
   it('explains a timed-out verify step', async () => {
     expect(await register({ expired: '1' })).toContain(th.shop.auth.notice.expired);
     expect(await register()).not.toContain(th.shop.auth.notice.expired);
@@ -166,6 +191,13 @@ describe('the verify page', () => {
     expect(page).toContain(`href="/th${PASSWORD_RESET_CODE_PATH}"`);
     expect(page).toContain('ได้รับอีเมลรีเซ็ตรหัสผ่านแทน? ตั้งรหัสผ่านใหม่');
     expect(en.shop.auth.verify.resetInstead).toBe('Got a password-reset email instead? Set a new password');
+  });
+
+  it('shows the signed-in customer\'s name in the header', async () => {
+    request.pendingEmail = 'pending@example.test';
+    request.customer = { id: 'c1', firstName: 'Tester', email: 'test@example.test' };
+    expect(await verify()).toContain('Tester');
+    expect(await forgot()).toContain('Tester');
   });
 
   it('sends a visitor with no pending email back to register with a notice', async () => {

@@ -48,6 +48,15 @@ describe('auth cookies', () => {
     expect(set).toHaveBeenCalledWith(PENDING_COOKIE, '', expect.objectContaining({ maxAge: 0, path: '/' }));
   });
 
+  it('the pending cookie carries a safe returnTo into the context', async () => {
+    for (const [returnTo, expected] of [['/product/abc/detail', '/product/abc/detail'], ['//evil.test', '/']] as const) {
+      set.mockClear();
+      await applyCookieChanges({ setPending: { email: 'a@example.com', returnTo } }, NOW);
+      jar.set(PENDING_COOKIE, (set.mock.calls[0] as [string, string])[1]);
+      expect((await readRequestContext({ now: NOW })).pendingReturnTo).toBe(expected);
+    }
+  });
+
   it('a tampered pending cookie opens as null', async () => {
     jar.set(PENDING_COOKIE, `${sealPending('a@example.com', key, NOW)}x`);
     expect((await readRequestContext({ now: NOW })).pendingEmail).toBeNull();

@@ -1,4 +1,5 @@
-import { createTranslator } from 'next-intl';
+import { createTranslator, NextIntlClientProvider } from 'next-intl';
+import { renderToStaticMarkup } from 'react-dom/server';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import th from '../../../../messages/th.json';
@@ -8,8 +9,21 @@ import th from '../../../../messages/th.json';
  * product pages ask for sign-in. Nobody is signed in in this file.
  */
 
+const CARD = vi.hoisted(() => ({
+  productId: '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60',
+  name: 'Astro Bot',
+  imageUrl: null,
+  priceSatang: 129000n,
+  originalPriceSatang: null,
+  isPriceRange: false,
+  stockStatus: 'in_stock',
+  isKit: false,
+  isPreOrder: false,
+  releaseDate: null,
+}));
+
 vi.mock('@/server/composition-root', () => ({
-  getLandingCatalogueReader: () => async () => ({ bestSellers: [], bundles: [], preOrders: [] }),
+  getLandingCatalogueReader: () => async () => ({ bestSellers: [CARD], bundles: [], preOrders: [] }),
   getLatestNewsReader: () => async () => [],
 }));
 vi.mock('./_components/read-articles-menu', () => ({ readArticlesMenu: async () => [] }));
@@ -43,7 +57,15 @@ describe('signed-out visitors', () => {
   });
 
   it('the home page stays public and keeps showing its products (D-161)', async () => {
-    const page = (await HomePage({ params: Promise.resolve({ locale: 'th' }) })) as ReactElement;
-    expect(page).toBeTruthy();
+    const page = await HomePage({ params: Promise.resolve({ locale: 'th' }) });
+    const html = renderToStaticMarkup(
+      <NextIntlClientProvider locale="th" messages={th} timeZone="Asia/Bangkok">
+        {page}
+      </NextIntlClientProvider>,
+    );
+    // The product is drawn and links to its page; sign-in is asked for there, not here.
+    expect(html).toContain('Astro Bot');
+    expect(html).toContain(`href="/th/product/${CARD.productId}/detail"`);
+    expect(html).toContain('href="/th/sign-in"');
   });
 });

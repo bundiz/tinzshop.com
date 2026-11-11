@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { startTransition, useActionState, useEffect, useRef, type FormEvent, type HTMLInputAutoCompleteAttribute, type ReactNode } from 'react';
+import { useActionState, useEffect, useRef, type HTMLInputAutoCompleteAttribute } from 'react';
 import type { AuthFormState } from '@/server/controllers/auth/customer-auth-controller';
 import AuthField from './AuthField';
 
@@ -36,8 +36,6 @@ export type AuthFormProps = {
   passwordRuleKeys?: string[];
   /** The primary button fills the card; the secondary is an outline button for a lesser action such as resend. */
   variant?: 'primary' | 'secondary';
-  /** Shown instead of this form once the action answers with `step: 'reset'` (forgot password: email, then code). */
-  resetStep?: ReactNode;
 };
 
 const KEY_PREFIX = 'shop.auth.';
@@ -48,7 +46,10 @@ export function firstInvalidField(fields: { name: string }[], fieldErrors: Recor
 }
 
 /**
- * An auth form wired to a Server Action with `useActionState`: field errors beside their inputs, the form-wide
+ * An auth form wired to a Server Action with `useActionState` as a real `<form action>`, so it works before the page
+ * has hydrated and a password or code can never end up in the URL. React 19 resets the inputs after an action; the
+ * controller echoes the non-secret fields (`state.values`) and they re-seed the inputs, while passwords and codes
+ * come back empty (D-181): field errors beside their inputs, the form-wide
  * error and notices in one polite live region, and a pending state on the button. Every message arrives as a
  * `shop.auth.*` key from the controller and is translated here, so Cognito's text is never shown (D-032).
  */
@@ -61,7 +62,6 @@ export default function AuthForm({
   introValues,
   passwordRuleKeys = [],
   variant = 'primary',
-  resetStep,
 }: AuthFormProps) {
   const t = useTranslations('shop.auth');
   const locale = useLocale();
@@ -75,21 +75,10 @@ export default function AuthForm({
     return t.has(relative) ? t(relative) : t('error.unavailable');
   };
 
-  // The form is submitted from code, not as a `<form action>`, so React does not reset the inputs afterwards:
-  // a mistyped password must not also wipe the name and email the customer typed.
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (isPending) return;
-    const data = new FormData(event.currentTarget);
-    startTransition(() => formAction(data));
-  };
-
   const invalid = firstInvalidField(fields, state.fieldErrors);
   useEffect(() => {
     if (invalid !== null) formRef.current?.querySelector<HTMLInputElement>(`[name="${invalid}"]`)?.focus();
   }, [invalid, state]);
-
-  if (state.step === 'reset' && resetStep !== undefined) return <>{resetStep}</>;
 
   const note = message(state.formError) ?? message(state.notice);
   const buttonStyle =
@@ -98,24 +87,34 @@ export default function AuthForm({
       : 'border-primary bg-bg text-primary hover:bg-primary-soft';
 
   return (
-    <form ref={formRef} onSubmit={submit} noValidate className="grid gap-4">
+    <form ref={formRef} action={formAction} noValidate className="grid gap-4">
       <input type="hidden" name="locale" value={locale} />
       {Object.entries(hidden ?? {}).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
       {introKey !== undefined && <p className="text-sm text-text-muted">{t(introKey, introValues)}</p>}
-      <div role="status" aria-live="polite" className={note === undefined ? 'hidden' : state.formError ? 'rounded-(--radius-sm) border border-danger/40 bg-danger/5 px-3 py-2 text-sm text-danger' : 'rounded-(--radius-sm) border border-primary/30 bg-primary-soft px-3 py-2 text-sm'}>
-        {note}
+      {/* Always in the page, so a screen reader is already watching it when the message arrives; empty, it takes no room. */}
+      <div role="status" aria-live="polite" className={note === undefined ? 'sr-only' : undefined}>
+        {note !== undefined && (
+          <p
+            className={`rounded-(--radius-sm) border px-3 py-2 text-sm ${
+              state.formError ? 'border-danger/40 bg-danger/5 text-danger' : 'border-primary/30 bg-primary-soft'
+            }`}
+          >
+            {note}
+          </p>
+        )}
       </div>
       {fields.map((field) => (
         <AuthField
-          key={field.name}
+          // A new echoed value remounts the input, so React's reset after the action shows what was typed, not a blank.
+          key={`${field.name}:${state.values?.[field.name] ?? ''}`}
           name={field.name}
           label={t(field.labelKey)}
           type={field.type}
           autoComplete={field.autoComplete}
           inputMode={field.inputMode}
-          defaultValue={field.defaultValue}
+          defaultValue={state.values?.[field.name] ?? field.defaultValue}
           maxLength={field.maxLength}
           error={message(state.fieldErrors?.[field.name])}
           labelAction={

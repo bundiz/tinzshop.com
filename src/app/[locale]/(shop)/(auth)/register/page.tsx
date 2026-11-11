@@ -38,7 +38,7 @@ export default async function RegisterPage({ params, searchParams }: Props) {
   const withReturn = returnTo === '/' ? '' : `?returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
-    <AuthShell path="/register" articlesMenu={articlesMenu}>
+    <AuthShell path={`/register${withReturn}`} articlesMenu={articlesMenu}>
       <AuthCard
         title={t('register.title')}
         description={t('register.description')}
@@ -49,6 +49,7 @@ export default async function RegisterPage({ params, searchParams }: Props) {
         <AuthForm
           action={registerAction}
           submitKey="register.submit"
+          hidden={{ returnTo }}
           passwordRuleKeys={PASSWORD_RULES.map((rule) => rule.messageKey)}
           fields={[
             { name: 'firstName', labelKey: 'field.firstName', type: 'text', autoComplete: 'given-name', maxLength: 100 },

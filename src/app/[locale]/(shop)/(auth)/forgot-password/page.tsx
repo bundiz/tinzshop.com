@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { PASSWORD_RULES } from '@/server/services/auth/password-policy';
 import { readArticlesMenu } from '../../_components/read-articles-menu';
+import { readCurrentCustomer } from '../../_components/read-current-customer';
 import { readPendingEmail } from '../auth-cookies';
 import { forgotPasswordAction, resetPasswordAction } from '../actions';
 import { firstParam, startAuthPage, type AuthSearchParams } from '../auth-page';
@@ -24,15 +25,20 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>): Promi
 }
 
 /**
- * `/{locale}/forgot-password` (plan 014): the email step, then the code and a new password. `?step=reset` opens the
- * second step straight away for the email in the pending cookie, which is where the verify page's link goes
- * (Q-060, D-179) and sends no new code; with no pending email it shows the email step.
+ * `/{locale}/forgot-password` (plan 014): the email step, then the code and a new password. The email step's action
+ * redirects to `?step=reset`, so the code step survives a reload and needs no client-side swap (the pending cookie is
+ * set in the same response). `?step=reset` is also where the verify page's link goes (Q-060, D-179) and sends no new
+ * code; with no pending email it shows the email step.
  */
 export default async function ForgotPasswordPage({ params, searchParams }: Props) {
   const locale = await startAuthPage(params);
   const query = await searchParams;
   const pendingEmail = firstParam(query.step) === 'reset' ? await readPendingEmail() : null;
-  const [t, articlesMenu] = await Promise.all([getTranslations({ locale, namespace: 'shop.auth' }), readArticlesMenu(locale)]);
+  const [t, articlesMenu, customer] = await Promise.all([
+    getTranslations({ locale, namespace: 'shop.auth' }),
+    readArticlesMenu(locale),
+    readCurrentCustomer(),
+  ]);
 
   const resetForm = (
     <AuthForm
@@ -49,7 +55,11 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
   );
 
   return (
-    <AuthShell path="/forgot-password" articlesMenu={articlesMenu}>
+    <AuthShell
+      path={`/forgot-password${pendingEmail !== null ? '?step=reset' : ''}`}
+      articlesMenu={articlesMenu}
+      customer={customer}
+    >
       <AuthCard
         title={t('forgot.title')}
         description={t('forgot.description')}
@@ -64,7 +74,6 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
             action={forgotPasswordAction}
             submitKey="forgot.submit"
             introKey="forgot.emailIntro"
-            resetStep={resetForm}
             fields={[{ name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email', maxLength: 254 }]}
           />
         )}

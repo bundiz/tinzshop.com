@@ -58,6 +58,17 @@ describe('AccountMenu', () => {
     expect(document.activeElement).toBe(toggle());
   });
 
+  it('closes on Escape when focus is elsewhere on the page', () => {
+    act(() => toggle().click());
+    act(() => document.getElementById('elsewhere')!.focus());
+    // A mouse click does not move focus into the menu, so it is still open while focus is elsewhere.
+    expect(panel().hidden).toBe(false);
+    act(() => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(panel().hidden).toBe(true);
+  });
+
   it('closes on a press outside, and stays open on a press inside', () => {
     act(() => toggle().click());
     act(() => {

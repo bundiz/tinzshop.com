@@ -334,7 +334,7 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 - [x] **Commit:** `feat: add the sign-in and register pages and require sign-in for products`
 
 **Built (Task 9).** Notes for the next reader:
-- The pages are `sign-in`, `register`, `register/verify` and `forgot-password` under `(auth)/`, with the parts `AuthCard`, `AuthField`, `AuthForm` (client), `GoogleButton`, `AuthNotice` and `AuthShell` in `(auth)/_components/`. `AuthForm` submits from code (`startTransition` around the action) rather than as `<form action>`, so React does not wipe the typed name and email after an error (D-181).
+- The pages are `sign-in`, `register`, `register/verify` and `forgot-password` under `(auth)/`, with the parts `AuthCard`, `AuthField`, `AuthForm` (client), `GoogleButton`, `AuthNotice` and `AuthShell` in `(auth)/_components/`. `AuthForm` is a real `<form action>`; the controller echoes the non-secret fields so React's post-action reset does not wipe them (D-182). The pending cookie carries `returnTo` (D-183) and forgot password redirects to the code step (D-184).
 - The header gets the customer from `readCurrentCustomer()` (`(shop)/_components/read-current-customer.ts`, one read per request, never writes a cookie). The gate is `requireCustomer()` in `require-customer.ts`. Every page that draws `SiteHeader` passes the customer: home, both product pages, the news pages and the not-found screens.
 - Redirect notices the pages show: sign-in `?confirmed=1` (with the email prefilled from the pending cookie), `?reset=1`, `?error=google`; register and forgot-password `?expired=1`.
 - `safeReturnTo` now rejects a locale prefix in any letter case and a path over 512 characters (the Task 4 finding).

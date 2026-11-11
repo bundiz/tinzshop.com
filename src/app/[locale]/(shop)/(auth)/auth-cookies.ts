@@ -6,7 +6,7 @@ import type { GoogleOutcome } from '@/server/controllers/auth/google-sign-in-con
 import type { AuthCookieChanges, AuthRequestContext } from '@/server/controllers/auth/customer-auth-controller';
 import { resolveClientIp } from '@/server/services/auth/client-ip';
 import { OAUTH_LIFETIME_MS, openOauth, sealOauth, type OauthState } from '@/server/services/auth/oauth-state-token';
-import { openPending, PENDING_LIFETIME_MS, sealPending } from '@/server/services/auth/pending-token';
+import { openPendingState, PENDING_LIFETIME_MS, sealPending } from '@/server/services/auth/pending-token';
 
 export const SESSION_COOKIE = 'tinzshop_session';
 export const PENDING_COOKIE = 'tinzshop_pending';
@@ -33,10 +33,12 @@ export async function readRequestContext(options: { now?: Date; signOut?: boolea
   if (options.signOut) return { ip: null, now, pendingEmail: null, ...withSession };
   const config = getAuthConfig();
   const sealed = jar.get(PENDING_COOKIE)?.value;
+  const pending = openPendingState(sealed, config.sessionTokenEncryptionKey, now);
   return {
     ip: resolveClientIp(await headers(), config.trustedProxyHeader),
     now,
-    pendingEmail: openPending(sealed, config.sessionTokenEncryptionKey, now),
+    pendingEmail: pending?.email ?? null,
+    pendingReturnTo: pending?.returnTo ?? '/',
     ...withSession,
   };
 }
@@ -49,9 +51,11 @@ export async function readPendingEmail(now: Date = new Date()): Promise<string |
   const sealed = (await cookies()).get(PENDING_COOKIE)?.value;
   if (sealed === undefined || sealed === '') return null;
   try {
-    return openPending(sealed, getAuthConfig().sessionTokenEncryptionKey, now);
-  } catch {
+    return openPendingState(sealed, getAuthConfig().sessionTokenEncryptionKey, now)?.email ?? null;
+  } catch (error) {
     // A configuration fault reads as "no pending email": the page sends the visitor back to the first step.
+    // Only the error's name is logged, never a value.
+    console.error(`pending cookie read failed: ${error instanceof Error ? error.name : 'unknown'}`);
     return null;
   }
 }
@@ -70,7 +74,7 @@ export async function applyCookieChanges(changes: AuthCookieChanges | undefined,
   }
   if (changes.clearSession) jar.set(SESSION_COOKIE, '', { ...baseOptions(), maxAge: 0 });
   if (changes.setPending) {
-    jar.set(PENDING_COOKIE, sealPending(changes.setPending.email, getAuthConfig().sessionTokenEncryptionKey, now), {
+    jar.set(PENDING_COOKIE, sealPending(changes.setPending.email, getAuthConfig().sessionTokenEncryptionKey, now, changes.setPending.returnTo), {
       ...baseOptions(),
       maxAge: PENDING_LIFETIME_MS / 1000,
     });

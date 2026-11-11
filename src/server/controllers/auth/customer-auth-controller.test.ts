@@ -96,7 +96,7 @@ describe('register', () => {
   it('success goes to verify and keeps the lowercased email in the pending cookie', async () => {
     const t = build();
     const out = await handleRegister(t.deps, form(good), ctx());
-    expect(out).toEqual({ state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: 'ann@example.com' } } });
+    expect(out).toMatchObject({ state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: 'ann@example.com', returnTo: '/' } } });
     expect(t.cognito.signUp).toHaveBeenCalledWith({ email: 'ann@example.com', password: 'Passw0rd!', firstName: 'Ann', lastName: 'Lee' });
   });
 
@@ -170,15 +170,18 @@ describe('sign-in, resend, reset and sign-out', () => {
   it('an unconfirmed sign-in goes to verify with the email pending', async () => {
     const { CognitoError } = await import('@/server/adapters/cognito/errors');
     const t = build({ cognito: { signInWithPassword: vi.fn(async () => { throw new CognitoError('user_not_confirmed'); }) } });
-    const out = await handleSignIn(t.deps, form({ email: 'Ann@Example.com', password: 'x' }), ctx());
-    expect(out).toEqual({ state: { redirectTo: '/register/verify' }, cookies: { setPending: { email: 'ann@example.com' } } });
+    const out = await handleSignIn(t.deps, form({ email: 'Ann@Example.com', password: 'x', returnTo: '/product/abc/detail' }), ctx());
+    expect(out).toEqual({
+      state: { redirectTo: '/register/verify' },
+      cookies: { setPending: { email: 'ann@example.com', returnTo: '/product/abc/detail' } },
+    });
   });
 
   it('a wrong password is the invalidCredentials form error', async () => {
     const { CognitoError } = await import('@/server/adapters/cognito/errors');
     const t = build({ cognito: { signInWithPassword: vi.fn(async () => { throw new CognitoError('not_authorized'); }) } });
     const out = await handleSignIn(t.deps, form({ email: 'ann@example.com', password: 'x' }), ctx());
-    expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials' });
+    expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'ann@example.com' } });
   });
 
   it('resend gives a notice', async () => {
@@ -190,7 +193,11 @@ describe('sign-in, resend, reset and sign-out', () => {
   it('forgot password moves to the reset step with the email pending', async () => {
     const t = build();
     const out = await handleForgotPassword(t.deps, form({ email: 'Ann@Example.com' }), ctx());
-    expect(out).toEqual({ state: { step: 'reset' }, cookies: { setPending: { email: 'ann@example.com' } } });
+    // A redirect, so the code step survives a reload and shows without JavaScript (the cookie is set in the same response).
+    expect(out).toEqual({
+      state: { redirectTo: PASSWORD_RESET_CODE_PATH },
+      cookies: { setPending: { email: 'ann@example.com', returnTo: '/' } },
+    });
   });
 
   it('forgot password rejects a malformed email before Cognito', async () => {
@@ -260,5 +267,63 @@ describe('sign-in, resend, reset and sign-out', () => {
   it('sign-out clears the cookie even with no session', async () => {
     const t = build();
     expect(await handleSignOut(t.deps, ctx())).toEqual({ state: { redirectTo: '/' }, cookies: { clearSession: true } });
+  });
+});
+
+describe('returnTo through registration', () => {
+  it('register with a returnTo keeps it in the pending cookie, and verify carries it to sign-in', async () => {
+    const t = build();
+    const registered = await handleRegister(t.deps, form({ ...good, returnTo: '/product/abc/detail' }), ctx());
+    expect(registered.cookies?.setPending).toEqual({ email: 'ann@example.com', returnTo: '/product/abc/detail' });
+    const verified = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '/product/abc/detail' }));
+    expect(verified.state.redirectTo).toBe(`/sign-in?confirmed=1&returnTo=${encodeURIComponent('/product/abc/detail')}`);
+  });
+
+  it('an unsafe returnTo is dropped when writing and when reading', async () => {
+    const t = build();
+    const registered = await handleRegister(t.deps, form({ ...good, returnTo: '//evil.test' }), ctx());
+    expect(registered.cookies?.setPending?.returnTo).toBe('/');
+    const verified = await handleVerify(t.deps, form({ code: '123456' }), ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '//evil.test' }));
+    expect(verified.state.redirectTo).toBe('/sign-in?confirmed=1');
+  });
+
+  it('a password reset also carries it to sign-in', async () => {
+    const t = build();
+    const out = await handleResetPassword(
+      t.deps,
+      form({ code: '123456', password: 'Passw0rd!', passwordConfirm: 'Passw0rd!' }),
+      ctx({ pendingEmail: 'ann@example.com', pendingReturnTo: '/product' }),
+    );
+    expect(out.state.redirectTo).toBe(`/sign-in?reset=1&returnTo=${encodeURIComponent('/product')}`);
+  });
+});
+
+describe('echoing values back to the form', () => {
+  it('echoes the non-secret fields on an error, and never a password or code', async () => {
+    const t = build({ count: 99 });
+    const secrets = ['Passw0rd!', 'Sup3rSecret!x', '654321'];
+    const outcomes = [
+      await handleRegister(t.deps, form({ ...good, password: secrets[0]!, passwordConfirm: secrets[0]! }), ctx()),
+      await handleRegister(build().deps, form({ ...good, password: 'weak', passwordConfirm: secrets[1]! }), ctx()),
+      await handleSignIn(t.deps, form({ email: 'ann@example.com', password: secrets[1]! }), ctx()),
+      await handleSignIn(build().deps, form({ email: 'ann@example.com', password: '' }), ctx()),
+      await handleVerify(build().deps, form({ code: secrets[2]! }), ctx({ pendingEmail: 'ann@example.com' })),
+      await handleVerify(build().deps, form({ code: '65' }), ctx({ pendingEmail: 'ann@example.com' })),
+      await handleResetPassword(build().deps, form({ code: secrets[2]!, password: secrets[1]!, passwordConfirm: 'nope' }), ctx({ pendingEmail: 'ann@example.com' })),
+    ];
+    for (const outcome of outcomes) {
+      const text = JSON.stringify(outcome.state);
+      for (const secret of secrets) expect(text).not.toContain(secret);
+    }
+    expect(outcomes[0]!.state.values).toEqual({ firstName: ' Ann ', lastName: 'Lee', email: 'Ann@Example.com' });
+    expect(outcomes[2]!.state.values).toEqual({ email: 'ann@example.com' });
+    expect(outcomes[4]!.state.values).toBeUndefined();
+    expect(outcomes[6]!.state.values).toBeUndefined();
+    expect(Object.keys(outcomes[1]!.state.values ?? {}).sort()).toEqual(['email', 'firstName', 'lastName']);
+  });
+
+  it('echoes the email when forgot password is refused', async () => {
+    const out = await handleForgotPassword(build({ count: 99 }).deps, form({ email: 'Ann@Example.com' }), ctx());
+    expect(out.state.values).toEqual({ email: 'Ann@Example.com' });
   });
 });

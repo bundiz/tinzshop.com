@@ -47,7 +47,7 @@ export default async function SignInPage({ params, searchParams }: Props) {
   const withReturn = returnTo === '/' ? '' : `?returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
-    <AuthShell path="/sign-in" articlesMenu={articlesMenu}>
+    <AuthShell path={`/sign-in${withReturn}`} articlesMenu={articlesMenu}>
       <AuthCard
         title={t('signIn.title')}
         description={t('signIn.description')}

@@ -70,8 +70,8 @@ describe('AuthForm', () => {
     });
   });
 
-  it('shows a field error beside its input, linked with aria-describedby, and keeps what was typed', async () => {
-    mount(async () => ({ fieldErrors: { password: 'shop.auth.error.passwordRequired' } }));
+  it('shows a field error beside its input, linked with aria-describedby, and keeps the echoed email', async () => {
+    mount(async () => ({ fieldErrors: { password: 'shop.auth.error.passwordRequired' }, values: { email: 'a@example.test' } }));
     type(field('email'), 'a@example.test');
     await submit();
     const password = field('password');
@@ -113,11 +113,37 @@ describe('AuthForm', () => {
     expect(button.textContent).toBe(th.shop.auth.signIn.submit);
   });
 
-  it('replaces itself with the reset step when the action answers step "reset"', async () => {
-    mount(async () => ({ step: 'reset' }), { resetStep: <p id="next">next</p> });
+  it('re-seeds the email and names after an error, and leaves password fields empty', async () => {
+    mount(async () => ({ fieldErrors: { password: 'shop.auth.error.passwordRequired' }, values: { email: 'kept@example.test', firstName: 'Kept' } }), {
+      fields: [
+        { name: 'firstName', labelKey: 'field.firstName', type: 'text', autoComplete: 'given-name' },
+        ...FIELDS,
+      ],
+    });
+    type(field('firstName'), 'Typed');
+    type(field('email'), 'typed@example.test');
+    type(field('password'), 'secret');
     await submit();
-    expect(container.querySelector('#next')).not.toBeNull();
-    expect(container.querySelector('form')).toBeNull();
+    expect(field('email').value).toBe('kept@example.test');
+    expect(field('firstName').value).toBe('Kept');
+    expect(field('password').value).toBe('');
+  });
+
+  it('keeps the page-given default (the pending email) until the server answers with values', () => {
+    mount(async () => ({}), { fields: [{ ...FIELDS[0]!, defaultValue: 'pending@example.test' }, FIELDS[1]!] });
+    expect(field('email').value).toBe('pending@example.test');
+  });
+
+  it('always renders the live region, with no display:none, empty or not', async () => {
+    mount(async () => ({ formError: 'shop.auth.error.invalidCredentials' }));
+    const region = () => container.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(region()).not.toBeNull();
+    expect(region().hasAttribute('hidden')).toBe(false);
+    expect(region().className).not.toMatch(/(^|\s)hidden(\s|$)/);
+    const before = region();
+    await submit();
+    expect(region()).toBe(before);
+    expect(region().textContent).toBe(th.shop.auth.error.invalidCredentials);
   });
 });
 

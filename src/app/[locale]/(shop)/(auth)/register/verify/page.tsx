@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PASSWORD_RESET_CODE_PATH } from '@/server/controllers/auth/customer-auth-controller';
 import { readArticlesMenu } from '../../../_components/read-articles-menu';
+import { readCurrentCustomer } from '../../../_components/read-current-customer';
 import { readPendingEmail } from '../../auth-cookies';
 import { resendCodeAction, verifyAction } from '../../actions';
 import { startAuthPage } from '../../auth-page';
@@ -30,10 +31,14 @@ export default async function VerifyPage({ params }: Props) {
   const locale = await startAuthPage(params);
   const email = await readPendingEmail();
   if (email === null) redirect(`/${locale}/register?expired=1`);
-  const [t, articlesMenu] = await Promise.all([getTranslations({ locale, namespace: 'shop.auth' }), readArticlesMenu(locale)]);
+  const [t, articlesMenu, customer] = await Promise.all([
+    getTranslations({ locale, namespace: 'shop.auth' }),
+    readArticlesMenu(locale),
+    readCurrentCustomer(),
+  ]);
 
   return (
-    <AuthShell path="/register/verify" articlesMenu={articlesMenu}>
+    <AuthShell path="/register/verify" articlesMenu={articlesMenu} customer={customer}>
       <AuthCard
         title={t('verify.title')}
         description={t('verify.description', { email })}
