@@ -261,7 +261,7 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 
 The controller validates `FormData` with Zod: names 1 to 100 characters after trimming, an email, a password matching the pool policy (D-177: at least 8 characters, with at least one number, one lowercase letter, one uppercase letter and one special character, using Cognito's documented set of special characters), the two passwords equal, and a code of 6 digits. It returns `{ fieldErrors?, formError?: messageKey, redirectTo? }` for `useActionState`.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `register with a taken email shows the same verify step and starts a reset` (O-9)
   - `register with a never-confirmed email resends the sign-up code`
   - `verify with a reset code on a confirmed account asks for a new password`
@@ -272,8 +272,10 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
   - `sign-in upserts the customer by sub with lowercased email`
   - `mismatched passwords are a field error and never reach Cognito`
   - `rate-limited action returns rateLimited before calling Cognito`
-- [ ] **Implement** to pass. The actions set and clear the cookies (session and pending).
-- [ ] **Commit:** `feat: add customer registration, verification, sign-in and reset`
+- [x] **Implement** to pass. The actions set and clear the cookies (session and pending).
+- [x] **Commit:** `feat: add customer registration, verification, sign-in and reset`
+- **Built notes (Task 7):** the O-9 `choose_password` step relies on ConfirmSignUp answering `already_confirmed` for a reset code on a confirmed account; Task 2 checks 3 to 7 were not run, so this and the other Cognito answers Task 7 assumes are on the manual checklist. Forgot-password and the follow-up steps of register and resend answer identically whatever Cognito returns (D-178).
+
 
 ### Task 8: Google sign-in routes
 

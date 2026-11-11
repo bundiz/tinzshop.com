@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getDatabaseUrl } from '@/server/config';
 import { hitRateLimit } from '@/server/repositories/auth/auth-rate-limit-repository';
-import { upsertCustomerBySub } from '@/server/repositories/auth/customer-repository';
+import { findCustomerByEmail, upsertCustomerBySub } from '@/server/repositories/auth/customer-repository';
 import {
   deleteCustomerSessions,
   findCustomerSession,
@@ -30,6 +30,12 @@ async function makeCustomer(sub: string, email: string) {
 }
 
 describe('customer repository', () => {
+  it('finds a customer by email in any case, and null for an unknown one', async () => {
+    const made = await makeCustomer('s-find', 'find@example.com');
+    expect((await findCustomerByEmail(' Find@Example.com '))?.id).toBe(made.id);
+    expect(await findCustomerByEmail('nobody@example.com')).toBeNull();
+  });
+
   it('upsert creates once and keeps names on a second sign-in', async () => {
     const first = await upsertCustomerBySub({ sub: 's-1', email: 'a@example.com', firstName: 'Ann', lastName: 'Lee' });
     const second = await upsertCustomerBySub({ sub: 's-1', email: 'new@example.com', firstName: 'Other', lastName: null });

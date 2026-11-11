@@ -247,12 +247,21 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 | `confirmPasswordReset` | Code plus new password; ends **all** of the customer's sessions. | Back to sign-in. |
 | `signOut` | Deletes the session row, revokes the refresh token, clears the cookie. | Redirect home. |
 
-**Error codes and message keys** (from the plan; plan 014 Task 7 completes the field-by-field mapping here):
+**Error codes and message keys.** The service returns `Result<…>` (`{ ok: false, error: { code, message, messageKey, details? } }`); a `details.field` makes the controller put the key under `fieldErrors[field]`, otherwise it is the `formError`.
 
 | Code | `messageKey` | When |
 | :--- | :--- | :--- |
 | `auth.rate_limited` | `shop.auth.error.rateLimited` | A limit in D-169 is exceeded; returned before Cognito is called. |
-| (none; a form error) | `shop.auth.error.invalidCredentials` | A wrong password or an unknown email. The same message for both (no enumeration). |
+| `auth.invalid_credentials` | `shop.auth.error.invalidCredentials` | A wrong password or an unknown email. The same message for both (no enumeration). |
+| `auth.invalid_code` | `shop.auth.error.codeInvalid` (field `code`) | A wrong code, or an unknown email. |
+| `auth.code_expired` | `shop.auth.error.codeExpired` (field `code`) | The code has expired. |
+| `auth.invalid_password` | `shop.auth.error.passwordPolicy` (field `password`) | The pool refused the password; the form checks the same five rules first (D-177). |
+| `auth.account_conflict` | `shop.auth.error.accountConflict` | A correct sign-in whose email another account already holds. |
+| `auth.unavailable` | `shop.auth.error.unavailable` | Cognito could not be reached. Never returned by `register` after a taken email, `resendCode` or `requestPasswordReset`, which always give their normal answer. |
+| (validation) | `shop.auth.error.nameRequired`, `nameTooLong`, `emailInvalid`, `passwordMismatch` (field `passwordConfirm`), `passwordRequired`, `codeFormat` | Zod checks in the controller, before the service. |
+| (controller) | `shop.auth.error.pendingExpired` | The pending cookie is missing or over an hour old; the customer is sent back to the first step with `?expired=1`. |
+
+The controller's state also carries `notice?: messageKey` (`shop.auth.verify.resent`) and `step?: 'choose_password' | 'reset'` for pages that stay on one route. Redirect targets are locale-less (`/register/verify`, `/sign-in?confirmed=1`, `/sign-in?reset=1`); the action adds the locale from the `locale` form field.
 
 The adapter reports Cognito failures as a `CognitoError` with one of `username_exists`, `code_mismatch`, `code_expired`, `already_confirmed`, `not_authorized`, `user_not_confirmed`, `invalid_password`, `limit_exceeded` or `unavailable`. These are internal: the controller maps each to a message key, and `username_exists` and `already_confirmed` never reach the screen as such (D-160).
 

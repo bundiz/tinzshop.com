@@ -69,3 +69,11 @@ export async function upsertCustomerBySub(input: UpsertCustomerInput): Promise<U
     }
   }
 }
+
+/** The customer row for this email (lowercased here), or null when the person never signed in on the site. */
+export async function findCustomerByEmail(email: string): Promise<CustomerRecord | null> {
+  return getPrisma().customer.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { id: true, cognitoSub: true, email: true, firstName: true, lastName: true },
+  });
+}
