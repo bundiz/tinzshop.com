@@ -351,6 +351,8 @@ These are run by a person against the dev pool. Never tick a box for a check nob
 - [ ] Sign in with Google using that same email: it's the same account (one `customer` row), with no visible error, even on the first link.
 - [ ] Sign in with Google with a new Gmail: an account is created without a last name.
 - [ ] Wrong password and unknown email show the same message. Repeating it 11 times in 15 minutes shows the rate-limit message.
+- [ ] Q-060: register a victim-style email that already has an account, then enter a wrong code such as 000000 on the verify page. Note whether the choose-a-password step appears (it would reveal the account exists) or a wrong-code error; report the result under Q-060 and Task 2 check 6.
+- [ ] Sign in with an unconfirmed account: you land on verify and a fresh code arrives; the resend button counts against its own limit.
 - [ ] Forgot password works, and an earlier signed-in browser is signed out afterwards.
 - [ ] Wait more than 60 minutes, then click around: there's no sign-in prompt, and `customer_session.access_token_expires_at` moved forward.
 - [ ] Sign out: the cookie is gone, and the back button doesn't show a signed-in page.

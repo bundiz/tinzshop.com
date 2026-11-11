@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import type { Result, DomainError } from '@/server/services/shared/result';
 
-import type { CognitoIdentity } from './cognito-identity';
+import { isCognitoError, type CognitoFailureCode, type CognitoIdentity } from './cognito-identity';
 import {
   endAllCustomerSessions,
   endCustomerSession,
@@ -60,12 +60,10 @@ function emailHash(email: string): string {
   return createHash('sha256').update(email).digest('hex');
 }
 
-function codeOf(e: unknown): string {
-  if (e instanceof Error && e.name === 'CognitoError') {
-    const code = (e as { code?: unknown }).code;
-    if (typeof code === 'string') return code;
-  }
-  return 'unexpected';
+/** The Cognito failure code. A non-Cognito error is a bug: it is rethrown with its stack (D-022). */
+function codeOf(e: unknown): CognitoFailureCode {
+  if (isCognitoError(e)) return e.code;
+  throw e;
 }
 
 /** Counts the attempt first, on the lowercased email. Returns the email to use, or the refusal. */
@@ -134,7 +132,8 @@ export async function register(
     }
   }
   const resetFailure = await quietly(deps, 'register reset', email, () => cognito.forgotPassword({ email }));
-  if (resetFailure === 'user_not_confirmed') {
+  // A never-confirmed account may answer ForgotPassword in several ways, so any failure but a throttle resends.
+  if (resetFailure !== null && resetFailure !== 'limit_exceeded') {
     await quietly(deps, 'register resend', email, () => cognito.resendConfirmationCode({ email }));
   }
   return { ok: true, data: { next: 'verify' } };
@@ -177,7 +176,11 @@ async function signInAndStart(
     firstName: identity.givenName ?? identityEmail.split('@')[0] ?? identityEmail,
     lastName: identity.familyName,
   });
-  if (!upsert.ok) return 'email_taken';
+  if (!upsert.ok) {
+    // No session will use these tokens, so do not leave a live refresh token behind.
+    await quietly(deps, 'revoke after refused sign-in', identityEmail, () => cognito.revokeRefreshToken(tokens.refreshToken));
+    return 'email_taken';
+  }
   const session = await startCustomerSession(deps.session, { customerId: upsert.customer.id, tokens, now: input.now });
   return { customer: { id: upsert.customer.id, firstName: upsert.customer.firstName }, session };
 }
@@ -239,7 +242,9 @@ export async function signIn(
   } catch (e) {
     const code = codeOf(e);
     if (code === 'user_not_confirmed') {
-      await quietly(deps, 'sign-in resend', email, () => cognito.resendConfirmationCode({ email }));
+      // The resend counts against the resend limit like any other; over it, the customer still goes to verify.
+      const allowed = await checkAuthRateLimit(deps.rateLimit, 'resend', { ip: input.ip, email, now: input.now });
+      if (allowed.ok) await quietly(deps, 'sign-in resend', email, () => cognito.resendConfirmationCode({ email }));
       return { ok: true, data: { next: 'verify' } };
     }
     if (code === 'not_authorized') {

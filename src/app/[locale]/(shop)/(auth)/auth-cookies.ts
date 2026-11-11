@@ -16,18 +16,24 @@ const baseOptions = () => ({
   path: '/',
 });
 
-/** Reads what the controller needs from the request. Reads Cognito-side config only for the pending cookie. */
-export async function readRequestContext(): Promise<AuthRequestContext> {
+/**
+ * Reads what the controller needs from the request. Auth config is read only when needed: for the
+ * client IP (every rate-limited action) and to open a pending cookie that is present. A sign-out
+ * needs neither, so a config fault cannot stop a customer leaving.
+ */
+export async function readRequestContext(options: { now?: Date; signOut?: boolean } = {}): Promise<AuthRequestContext> {
   const jar = await cookies();
-  const now = new Date();
-  const sealed = jar.get(PENDING_COOKIE)?.value;
+  const now = options.now ?? new Date();
   const sessionToken = jar.get(SESSION_COOKIE)?.value;
+  const withSession = sessionToken !== undefined ? { sessionToken } : {};
+  if (options.signOut) return { ip: null, now, pendingEmail: null, ...withSession };
   const config = getAuthConfig();
+  const sealed = jar.get(PENDING_COOKIE)?.value;
   return {
     ip: resolveClientIp(await headers(), config.trustedProxyHeader),
     now,
     pendingEmail: openPending(sealed, config.sessionTokenEncryptionKey, now),
-    ...(sessionToken !== undefined ? { sessionToken } : {}),
+    ...withSession,
   };
 }
 

@@ -1,5 +1,40 @@
 /** What the auth services need from Cognito. `src/server/adapters/cognito/` implements it. */
 
+export type CognitoFailureCode =
+  | 'username_exists'
+  | 'code_mismatch'
+  | 'code_expired'
+  | 'already_confirmed'
+  | 'not_authorized'
+  | 'user_not_confirmed'
+  | 'invalid_password'
+  | 'limit_exceeded'
+  | 'unavailable';
+
+const FAILURE_CODES: ReadonlySet<string> = new Set<CognitoFailureCode>([
+  'username_exists',
+  'code_mismatch',
+  'code_expired',
+  'already_confirmed',
+  'not_authorized',
+  'user_not_confirmed',
+  'invalid_password',
+  'limit_exceeded',
+  'unavailable',
+]);
+
+/**
+ * True for the error the Cognito adapter throws (`CognitoError`), recognised by name and code so
+ * services never import the adapter. Anything else is a bug and must propagate (D-022).
+ */
+export function isCognitoError(error: unknown): error is Error & { code: CognitoFailureCode } {
+  return (
+    error instanceof Error &&
+    error.name === 'CognitoError' &&
+    FAILURE_CODES.has((error as { code?: unknown }).code as string)
+  );
+}
+
 export type CognitoTokens = {
   accessToken: string;
   idToken: string;

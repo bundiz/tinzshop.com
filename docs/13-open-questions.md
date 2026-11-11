@@ -550,6 +550,13 @@ Not a question. The client source (`reference/client-summary-th.md`) does not me
 - **Effect:** It affects the handover, not the build. Until it is answered, the dev pool runs in the project owner's account. The free tier covers 10,000 monthly active users (O-1); Amazon SES emails cost a little. The production sender also needs DNS records on tinzshop.com, whose control is Q-053.
 - **Ask:** client, via the project owner
 
+### Q-060: Should a wrong code on a confirmed account reveal that the account exists?
+- **Status:** UNRESOLVED (asked 2026-11-11)
+- **Question:** The verify step treats "this account is already confirmed" as the sign that the emailed code was a reset code, and then asks for a new password (spec §6.1, O-9). `ConfirmSignUp` reports that status before it checks the code, so a stranger who registers a victim's email and types any 6 digits (such as 000000) is shown the choose-a-password step and learns the email has an account. That is the leak O-9 was meant to prevent. Should the step stay as the spec says, or should it only appear after a valid code, for example by sending every verify through a check of the reset code first?
+- **Answer:** None yet.
+- **Effect:** Plan 014 Task 7 follows the spec as written. The leak is limited by the verify rate limit (5 per hour per email and per IP, D-169) and shows only whether an account exists, never its data. Whether Cognito checks the code before the account status is unverified until Task 2 check 6 is run against the dev pool; if it checks the code first, the leak does not exist.
+- **Ask:** project owner
+
 ---
 
 ## Residual items — not new questions, but not fully closed either

@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createCognitoIdentity } from '@/server/adapters/cognito/client';
 import { CognitoError, type CognitoErrorCode } from '@/server/adapters/cognito/errors';
 import type { CognitoIdentity } from './cognito-identity';
 import {
@@ -23,7 +24,7 @@ const TOKENS = { accessToken: 'A', idToken: 'I', refreshToken: 'R', accessExpire
 
 type Overrides = Partial<{ [K in keyof CognitoIdentity]: (...args: never[]) => unknown }>;
 
-function build(opts: { cognito?: Overrides; rateLimitCount?: number; upsertEmailTaken?: boolean; existingCustomerId?: string | null } = {}) {
+function build(opts: { cognito?: Overrides; rateLimitCount?: number; limitFor?: (key: string) => number; upsertEmailTaken?: boolean; existingCustomerId?: string | null } = {}) {
   const calls: Array<{ fn: string; input: unknown }> = [];
   const record = (fn: string, impl?: (input: never) => unknown) =>
     vi.fn(async (input: never) => {
@@ -38,7 +39,7 @@ function build(opts: { cognito?: Overrides; rateLimitCount?: number; upsertEmail
     signInWithPassword: record('signInWithPassword', o.signInWithPassword ?? (() => TOKENS)),
     forgotPassword: record('forgotPassword', o.forgotPassword),
     confirmForgotPassword: record('confirmForgotPassword', o.confirmForgotPassword),
-    revokeRefreshToken: record('revokeRefreshToken'),
+    revokeRefreshToken: record('revokeRefreshToken', o.revokeRefreshToken),
     refresh: record('refresh'),
     verifyIdToken: record(
       'verifyIdToken',
@@ -54,7 +55,7 @@ function build(opts: { cognito?: Overrides; rateLimitCount?: number; upsertEmail
     rateLimit: {
       hitRateLimit: async (k) => {
         hits.push(k);
-        return opts.rateLimitCount ?? 1;
+        return opts.limitFor ? opts.limitFor(k) : (opts.rateLimitCount ?? 1);
       },
     },
     customers: {
@@ -124,6 +125,21 @@ describe('register', () => {
     },
   );
 
+  it.each(['unavailable', 'not_authorized', 'invalid_password', 'code_mismatch'] as const)(
+    'register resends the sign-up code when the reset fails with %s',
+    async (code) => {
+      const t = build({ cognito: { signUp: fail('username_exists'), forgotPassword: fail(code) } });
+      expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+      expect(t.calls.map((c) => c.fn)).toEqual(['signUp', 'forgotPassword', 'resendConfirmationCode']);
+    },
+  );
+
+  it('register does not resend when the reset is throttled', async () => {
+    const t = build({ cognito: { signUp: fail('username_exists'), forgotPassword: fail('limit_exceeded') } });
+    expect(await register(t.deps, reg)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(t.calls.map((c) => c.fn)).toEqual(['signUp', 'forgotPassword']);
+  });
+
   it('register answers the same when resending for a never-confirmed account fails', async () => {
     const t = build({
       cognito: { signUp: fail('username_exists'), forgotPassword: fail('user_not_confirmed'), resendConfirmationCode: fail('unavailable') },
@@ -148,6 +164,29 @@ describe('register', () => {
   it('register when Cognito is unavailable asks to try again', async () => {
     const t = build({ cognito: { signUp: fail('unavailable') } });
     expect(await register(t.deps, reg)).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.unavailable' } });
+  });
+});
+
+describe('non-Cognito errors surface (D-022)', () => {
+  const bug = () => {
+    throw new TypeError('boom');
+  };
+  it('register rethrows a bug from signUp and from the follow-up steps', async () => {
+    await expect(register(build({ cognito: { signUp: bug } }).deps, reg)).rejects.toThrow('boom');
+    await expect(register(build({ cognito: { signUp: fail('username_exists'), forgotPassword: bug } }).deps, reg)).rejects.toThrow('boom');
+  });
+  it('confirmRegistration, completePasswordChoice and confirmPasswordReset rethrow a bug', async () => {
+    await expect(confirmRegistration(build({ cognito: { confirmSignUp: bug } }).deps, { ...base, email: 'a@example.com', code: '123456' })).rejects.toThrow('boom');
+    const pw = { ...base, email: 'a@example.com', code: '123456', newPassword: 'N3wpass!x' };
+    await expect(completePasswordChoice(build({ cognito: { confirmForgotPassword: bug } }).deps, pw)).rejects.toThrow('boom');
+    await expect(completePasswordChoice(build({ cognito: { signInWithPassword: bug } }).deps, pw)).rejects.toThrow('boom');
+    await expect(confirmPasswordReset(build({ cognito: { confirmForgotPassword: bug } }).deps, pw)).rejects.toThrow('boom');
+  });
+  it('signIn, resendCode and requestPasswordReset rethrow a bug', async () => {
+    await expect(signIn(build({ cognito: { signInWithPassword: bug } }).deps, { ...base, email: 'a@example.com', password: 'x' })).rejects.toThrow('boom');
+    await expect(signIn(build({ cognito: { verifyIdToken: bug } }).deps, { ...base, email: 'a@example.com', password: 'x' })).rejects.toThrow('boom');
+    await expect(resendCode(build({ cognito: { resendConfirmationCode: bug } }).deps, { ...base, email: 'a@example.com' })).rejects.toThrow('boom');
+    await expect(requestPasswordReset(build({ cognito: { forgotPassword: bug } }).deps, { ...base, email: 'a@example.com' })).rejects.toThrow('boom');
   });
 });
 
@@ -234,10 +273,21 @@ describe('signIn', () => {
   });
 
   it('wrong password and unknown email give the same error', async () => {
-    const wrong = build({ cognito: { signInWithPassword: fail('not_authorized') } });
-    const unknown = build({ cognito: { signInWithPassword: fail('not_authorized') } });
-    const a = await signIn(wrong.deps, input);
-    const b = await signIn(unknown.deps, { ...input, email: 'nobody@example.com' });
+    // Two different Cognito exceptions, mapped by the real adapter, as the pool answers them.
+    const viaAdapter = (exceptionName: string) => {
+      const identity = createCognitoIdentity(
+        { region: 'r', userPoolId: 'p', clientId: 'c', clientSecret: 's', domain: 'd.example.com' },
+        {
+          send: async () => {
+            throw Object.assign(new Error('x'), { name: exceptionName });
+          },
+        },
+      );
+      const t = build();
+      return { ...t.deps, getCognito: () => identity } satisfies CustomerAuthDeps;
+    };
+    const a = await signIn(viaAdapter('NotAuthorizedException'), input);
+    const b = await signIn(viaAdapter('UserNotFoundException'), { ...input, email: 'nobody@example.com' });
     expect(a).toEqual(b);
     expect(a).toMatchObject({ ok: false, error: { code: 'auth.invalid_credentials', messageKey: 'shop.auth.error.invalidCredentials' } });
   });
@@ -252,6 +302,29 @@ describe('signIn', () => {
     const t = build({ upsertEmailTaken: true });
     expect(await signIn(t.deps, input)).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.accountConflict' } });
     expect(t.state.inserted).toHaveLength(0);
+  });
+
+  it('a refused email revokes the refresh token it just received', async () => {
+    const t = build({ upsertEmailTaken: true });
+    await signIn(t.deps, input);
+    expect(t.calls.filter((c) => c.fn === 'revokeRefreshToken')).toEqual([{ fn: 'revokeRefreshToken', input: 'R' }]);
+  });
+
+  it('a failed revoke does not change the answer', async () => {
+    const t = build({ upsertEmailTaken: true, cognito: { revokeRefreshToken: fail('unavailable') } });
+    expect(await signIn(t.deps, input)).toMatchObject({ ok: false, error: { messageKey: 'shop.auth.error.accountConflict' } });
+  });
+
+  it('the unconfirmed sign-in resend passes the resend rate limit', async () => {
+    const t = build({ cognito: { signInWithPassword: fail('user_not_confirmed') } });
+    await signIn(t.deps, input);
+    expect(t.hits.some((h) => h.startsWith('resend:email:'))).toBe(true);
+  });
+
+  it('the unconfirmed sign-in does not resend once the resend limit is hit, but still goes to verify', async () => {
+    const t = build({ cognito: { signInWithPassword: fail('user_not_confirmed') }, limitFor: (k) => (k.startsWith('resend:') ? 99 : 1) });
+    expect(await signIn(t.deps, input)).toEqual({ ok: true, data: { next: 'verify' } });
+    expect(t.calls.map((c) => c.fn)).toEqual(['signInWithPassword']);
   });
 
   it('Cognito unavailable asks to try again', async () => {

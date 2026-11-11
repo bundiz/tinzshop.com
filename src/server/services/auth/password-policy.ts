@@ -10,6 +10,8 @@ const SPECIAL_CHARACTER = /[\^$*.[\]{}()?\-"!@#%&/\\,><':;|_~`+=]/;
 const INNER_SPACE = /(?<=\S) (?=\S)/;
 
 export const PASSWORD_MIN_LENGTH = 8;
+/** Cognito's maximum password length. */
+export const PASSWORD_MAX_LENGTH = 256;
 
 export type PasswordRuleId = 'length' | 'number' | 'lowercase' | 'uppercase' | 'special';
 
@@ -26,6 +28,6 @@ export function failedPasswordRules(password: string): PasswordRuleId[] {
   return PASSWORD_RULES.filter((rule) => !rule.test(password)).map((rule) => rule.id);
 }
 
-export const passwordSchema = z.string().refine((password) => failedPasswordRules(password).length === 0, {
+export const passwordSchema = z.string().max(PASSWORD_MAX_LENGTH, 'shop.auth.error.passwordPolicy').refine((password) => failedPasswordRules(password).length === 0, {
   message: 'shop.auth.error.passwordPolicy',
 });

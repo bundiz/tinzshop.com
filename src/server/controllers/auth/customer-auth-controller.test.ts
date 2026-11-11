@@ -125,7 +125,7 @@ describe('verify', () => {
   it('without the pending cookie it sends the customer back to register', async () => {
     const t = build();
     const out = await handleVerify(t.deps, form({ code: '123456' }), ctx());
-    expect(out.state).toEqual({ formError: 'shop.auth.error.pendingExpired', redirectTo: '/register?expired=1' });
+    expect(out.state).toEqual({ redirectTo: '/register?expired=1' });
   });
 
   it('a confirmed account switches to the choose-a-password step', async () => {
@@ -214,6 +214,54 @@ describe('sign-in, resend, reset and sign-out', () => {
       ctx({ pendingEmail: 'ann@example.com' }),
     );
     expect(out.state).toEqual({ redirectTo: '/sign-in?reset=1' });
+  });
+
+  it('sign-in with an unsafe returnTo lands on a safe path', async () => {
+    for (const returnTo of ['//evil.example', '/\\evil.example', 'https://evil.example', '/th/product']) {
+      const out = await handleSignIn(build().deps, form({ email: 'ann@example.com', password: 'x', returnTo }), ctx());
+      expect(out.state.redirectTo).toBe('/');
+    }
+  });
+
+  it('choose-password, reset and resend without a pending cookie go back to the first step', async () => {
+    const t = build();
+    const f = form({ code: '123456', password: 'N3wpass!x', passwordConfirm: 'N3wpass!x' });
+    expect((await handleChoosePassword(t.deps, f, ctx())).state).toEqual({ redirectTo: '/register?expired=1' });
+    expect((await handleResetPassword(t.deps, f, ctx())).state).toEqual({ redirectTo: '/forgot-password?expired=1' });
+    expect((await handleResendCode(t.deps, f, ctx())).state).toEqual({ redirectTo: '/register?expired=1' });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('a password over 256 characters is refused before Cognito', async () => {
+    const t = build();
+    const long = `Aa1!${'x'.repeat(253)}`;
+    const out = await handleRegister(t.deps, form({ ...good, password: long, passwordConfirm: long }), ctx());
+    expect(out.state.fieldErrors).toEqual({ password: 'shop.auth.error.passwordPolicy' });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('sign-out with a token ends that session and clears the cookie', async () => {
+    const deleted: string[] = [];
+    const t = build();
+    t.deps.session.sessions.delete = async (h) => {
+      deleted.push(h);
+    };
+    const out = await handleSignOut(t.deps, ctx({ sessionToken: 'cookie-value' }));
+    expect(deleted).toHaveLength(1);
+    expect(out).toEqual({ state: { redirectTo: '/' }, cookies: { clearSession: true } });
+  });
+
+  it('sign-out still clears the cookie when ending the session fails, and logs without the token', async () => {
+    const t = build();
+    const logs: unknown[] = [];
+    t.deps.log = (m, f) => logs.push({ m, f });
+    t.deps.session.sessions.find = async () => {
+      throw new Error('db down');
+    };
+    const out = await handleSignOut(t.deps, ctx({ sessionToken: 'cookie-value' }));
+    expect(out.cookies).toEqual({ clearSession: true });
+    expect(JSON.stringify(logs)).not.toContain('cookie-value');
+    expect(logs).toHaveLength(1);
   });
 
   it('sign-out clears the cookie even with no session', async () => {

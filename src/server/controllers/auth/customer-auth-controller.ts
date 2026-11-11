@@ -97,9 +97,12 @@ function failure(error: DomainError, extra: AuthFormState = {}): AuthActionOutco
   return { state: { ...extra, formError: error.messageKey } };
 }
 
-/** The pending cookie is missing or over an hour old: back to the first step, which explains with `?expired=1`. */
+/**
+ * The pending cookie is missing or over an hour old: back to the first step, which explains with
+ * `?expired=1`. There is no formError because the action redirects and a redirect carries no state.
+ */
 function pendingGone(path: string): AuthActionOutcome {
-  return { state: { formError: 'shop.auth.error.pendingExpired', redirectTo: `${path}?expired=1` } };
+  return { state: { redirectTo: `${path}?expired=1` } };
 }
 
 export async function handleRegister(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
@@ -203,6 +206,13 @@ export async function handleResetPassword(
 }
 
 export async function handleSignOut(deps: CustomerAuthDeps, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
-  if (ctx.sessionToken !== undefined && ctx.sessionToken !== '') await signOut(deps, { token: ctx.sessionToken });
+  if (ctx.sessionToken !== undefined && ctx.sessionToken !== '') {
+    try {
+      await signOut(deps, { token: ctx.sessionToken });
+    } catch {
+      // The customer asked to leave, so the cookie goes whatever happened to the row. Nothing from the error is logged.
+      deps.log?.('sign-out failed to end the session', {});
+    }
+  }
   return { state: { redirectTo: '/' }, cookies: { clearSession: true } };
 }

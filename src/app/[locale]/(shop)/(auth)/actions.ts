@@ -66,7 +66,7 @@ export async function resetPasswordAction(_previous: AuthFormState, formData: Fo
 }
 
 export async function signOutAction(formData: FormData): Promise<void> {
-  const ctx = await readRequestContext();
+  const ctx = await readRequestContext({ signOut: true });
   const outcome = await handleSignOut(getCustomerAuthDeps(), ctx);
   await applyCookieChanges(outcome.cookies, ctx.now);
   redirect(`/${localeOf(formData)}`);
