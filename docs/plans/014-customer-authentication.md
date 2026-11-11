@@ -117,11 +117,11 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 
 - [x] 1. Cognito is offered in `ap-southeast-7`: **yes.** The dev pool is in `ap-southeast-7` on the Lite tier (2026-11-11).
 - [x] 2. The Lite tier allows the Google provider, the pre sign-up trigger and 60 min / 7 day tokens: **yes.** The console offers Google under *Add identity provider* and *Pre sign-up trigger* under *Add Lambda trigger*; refresh is set to 7 days, and a real sign-in through the Cognito login page returned an access and an ID token with 60-minute lifetimes, a refresh token and scopes `openid profile email` (2026-11-11).
-- [ ] 3. The first Google sign-in after the trigger links the user fails once. Error text in the callback: ______
-- [ ] 4. A user made by `AdminCreateUser` + `AdminSetUserPassword` (permanent) can use `ForgotPassword`: ______
-- [ ] 5. Registering again with an unconfirmed email gives `UsernameExistsException`, and `ResendConfirmationCode` works: ______
-- [ ] 6. `ConfirmSignUp` with a reset code on a confirmed account gives an error distinct from `CodeMismatchException`: ______
-- [ ] 7. Cognito can sign in straight from `ConfirmSignUp` on this tier (ruling R1): ______
+- [ ] 3. The first Google sign-in after the trigger links the user fails once. Error text in the callback: **Not run** (owner, 2026-11-11): moved to the manual test checklist on our own pages; the code handles either answer.
+- [ ] 4. A user made by `AdminCreateUser` + `AdminSetUserPassword` (permanent) can use `ForgotPassword`: **Not run** (owner, 2026-11-11): moved to the manual test checklist on our own pages; the code handles either answer.
+- [ ] 5. Registering again with an unconfirmed email gives `UsernameExistsException`, and `ResendConfirmationCode` works: **Not run** (owner, 2026-11-11): moved to the manual test checklist on our own pages; the code handles either answer.
+- [ ] 6. `ConfirmSignUp` with a reset code on a confirmed account gives an error distinct from `CodeMismatchException`: **Not run** (owner, 2026-11-11): moved to the manual test checklist on our own pages; the code handles either answer.
+- [ ] 7. Cognito can sign in straight from `ConfirmSignUp` on this tier (ruling R1): **Not run** (owner, 2026-11-11): moved to the manual test checklist on our own pages; the code handles either answer.
 - [ ] **Commit** the answers: `docs: record the Cognito dev pool checks for plan 014`
 
 ### Task 3: Tables and repositories
