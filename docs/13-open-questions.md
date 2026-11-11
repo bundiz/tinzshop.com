@@ -21,7 +21,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
-| **RESOLVED** | 42 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
+| **RESOLVED** | 42 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
 | **UNRESOLVED** | 12 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
@@ -551,7 +551,7 @@ Not a question. The client source (`reference/client-summary-th.md`) does not me
 - **Ask:** client, via the project owner
 
 ### Q-060: Should a wrong code on a confirmed account reveal that the account exists?
-- **Status:** RESOLVED (2026-11-11)
+- **Status:** RESOLVED — 2026-11-11
 - **Question:** The verify step treated "this account is already confirmed" as the sign that the emailed code was a reset code, and then asked for a new password (spec §6.1, O-9). `ConfirmSignUp` reports that status before it checks the code, so a stranger who registers a victim's email and types any 6 digits (such as 000000) would be shown the choose-a-password step and learn the email has an account. Should the step stay as the spec said, or give one answer for every code?
 - **Answer:** The project owner chose "same answer" (2026-11-11). The verify step answers a confirmed account exactly like a wrong code. The verify page always shows the link "Got a password-reset email instead? Set a new password", which leads to the reset-code step for the email in the pending cookie, without sending a new code.
 - **Effect:** No account-existence leak at verify. The owner of an existing account takes one extra click. Recorded as D-179; spec §6.1 and `06-api.md` updated.

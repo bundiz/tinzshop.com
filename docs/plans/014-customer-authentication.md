@@ -250,7 +250,7 @@ The owner creates the dev pool from the `14` checklist, with a Google client. Th
 **Produces:** these service functions, each returning `Result<…>` (06):
 - `register`, which always returns `{ next: 'verify' }`:
   - **O-9:** on `username_exists` it calls `forgotPassword`.
-  - **Never-confirmed account:** if `forgotPassword` answers `user_not_confirmed`, it calls `resendConfirmationCode` instead (§6.1).
+  - **Never-confirmed account:** if `forgotPassword` fails for any reason except a throttle (`limit_exceeded`), it calls `resendConfirmationCode` instead, quietly (§6.1; Cognito may answer a never-confirmed account in several ways).
 - `confirmRegistration`, which returns `{ next: 'sign_in' }`; an `already_confirmed` account answers exactly like a wrong code (Q-060, D-179)
 - `resendCode`
 - `signIn`
@@ -348,7 +348,8 @@ The controller validates `FormData` with Zod: names 1 to 100 characters after tr
 These are run by a person against the dev pool. Never tick a box for a check nobody performed.
 
 - [ ] Register with a new email: the code arrives (bilingual), verifying works, and you can sign in. The header shows the first name.
-- [ ] Register again with that same email: the page looks identical, and a reset code arrives. Entering it asks for a new password, then you're signed in.
+- [ ] Register again with that same email: the page looks identical, and a reset code arrives. Entering it on the verify page says the code is wrong, exactly like any wrong code (D-179). The link "Got a password-reset email instead? Set a new password" opens the reset step; that code plus a new password works, and every earlier signed-in browser is signed out.
+- [ ] On the forgot-password reset step, a wrong code for an existing email and any code for an unknown email show the same message (check that Cognito's expired-code answer does not tell them apart).
 - [ ] Sign in with Google using that same email: it's the same account (one `customer` row), with no visible error, even on the first link.
 - [ ] Sign in with Google with a new Gmail: an account is created without a last name.
 - [ ] Wrong password and unknown email show the same message. Repeating it 11 times in 15 minutes shows the rate-limit message.
