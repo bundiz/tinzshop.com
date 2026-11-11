@@ -49,7 +49,7 @@ export function firstInvalidField(fields: { name: string }[], fieldErrors: Recor
  * An auth form wired to a Server Action with `useActionState` as a real `<form action>`, so it works before the page
  * has hydrated and a password or code can never end up in the URL. React 19 resets the inputs after an action; the
  * controller echoes the non-secret fields (`state.values`) and they re-seed the inputs, while passwords and codes
- * come back empty (D-181): field errors beside their inputs, the form-wide
+ * come back empty (D-182): field errors beside their inputs, the form-wide
  * error and notices in one polite live region, and a pending state on the button. Every message arrives as a
  * `shop.auth.*` key from the controller and is translated here, so Cognito's text is never shown (D-032).
  */
