@@ -72,6 +72,8 @@ tinzshop.com/
 ├── public/
 ├── src/
 │   ├── app/
+│   │   ├── _fonts/               ← the storefront's self-hosted fonts: woff2 files, fonts.ts (four next/font/local
+│   │   │                           families) and each family's licence file (plan 015, D-192)
 │   │   ├── api/                  ← route handlers for outside callers (Shopee callback, scheduler, webhooks).
 │   │   │                           OUTSIDE the locale segment: fixed URLs. Thin — each calls a controller
 │   │   └── [locale]/             ← every page route is under a locale segment (D-031)
@@ -81,8 +83,9 @@ tinzshop.com/
 │   ├── i18n/                     ← next-intl routing and request config, and the catalogue key-parity test (plan 011)
 │   ├── proxy.ts                  ← next-intl locale routing (Next 16's name for middleware); skips /api, /_next and files
 │   ├── components/
-│   │   ├── ui/                   ← tier 1: primitives, no domain knowledge
-│   │   └── domain/               ← tier 2: shared domain components
+│   │   ├── ui/                   ← tier 1: primitives, no domain knowledge. Includes button-class.ts
+│   │   │                           (buttonClass), Breadcrumbs.tsx and use-modal-dialog.ts (plan 015)
+│   │   └── domain/               ← tier 2: shared domain components. Includes platform-tone.ts (plan 015)
 │   ├── server/                   ← layered controller → service → repository (D-101)
 │   │   │                           Each layer is split into the same module folders (D-116): catalogue/,
 │   │   │                           channel/, … and shared/ for helpers several modules use. A unit test
@@ -147,6 +150,17 @@ tinzshop.com/
 **Before creating any file, search the repository for the concept first.** This
 is `09-coding-guidelines.md` Rule 5 and it is the rule most likely to be
 skipped and most expensive when it is.
+
+## Fonts
+
+The storefront uses two families (plan 015, D-192):
+
+| Family | Designer | Used for |
+| :--- | :--- | :--- |
+| Anuphan | Cadson Demak | Headings |
+| IBM Plex Sans Thai | IBM | Body text |
+
+Both are published under the **SIL Open Font License 1.1**, which allows self-hosting and embedding. They are self-hosted with `next/font/local`, so no page makes a request to Google Fonts or any other font host at runtime. Each family is two `localFont` calls in `src/app/_fonts/fonts.ts`, a Thai subset and a Latin subset, each with the `unicode-range` of the mockup's stylesheet, so a page downloads only the subsets its text uses; the four CSS variables they set on `<html>` feed `--font-head` and `--font-body` in `globals.css`. The woff2 files came from the mockup's `tinzshop-redesign/assets/fonts/`, and each family's licence text is committed beside them in `src/app/_fonts/`. A change of family or source is a new `D-0NN` row.
 
 ## Naming
 
