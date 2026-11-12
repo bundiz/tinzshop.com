@@ -80,4 +80,14 @@ describe('ProductCard', () => {
     expect(html).toContain('ชุดโปรโมชั่น');
     expect(html).toContain('พรีออเดอร์');
   });
+
+  it('keeps the list layout title clear of the heart, and the grid title unpadded', () => {
+    const list = renderToStaticMarkup(
+      <NextIntlClientProvider locale="th" messages={th} timeZone="Asia/Bangkok">
+        <ProductCard card={card} layout="list" />
+      </NextIntlClientProvider>,
+    );
+    expect(list).toMatch(/<h3 class="pr-12 /);
+    expect(renderTh(card)).not.toContain('pr-12');
+  });
 });

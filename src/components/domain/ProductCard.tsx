@@ -62,7 +62,7 @@ export default function ProductCard({ card, layout = 'grid' }: ProductCardProps)
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-1 pt-3.5 pb-1">
-        <h3 className="line-clamp-2 min-h-[2.9em] font-body text-[15px] leading-[1.45] font-semibold [overflow-wrap:anywhere] sm:text-base">
+        <h3 className={`${isList ? 'pr-12 ' : ''}line-clamp-2 min-h-[2.9em] font-body text-[15px] leading-[1.45] font-semibold [overflow-wrap:anywhere] sm:text-base`}>
           <Link
             href={`/${locale}/product/${card.productId}/detail`}
             className="after:absolute after:inset-0 after:z-[2] after:rounded-[inherit] after:content-[''] focus-visible:outline-none"
