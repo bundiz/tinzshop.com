@@ -675,12 +675,12 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 
 **Files:** `src/app/[locale]/(shop)/news/_components/NewsListView.tsx`, `NewsTabs.tsx`, `NewsTabsScroller.tsx`, `NewsFeature.tsx`, `NewsGrid.tsx`, `NewsCard.tsx`, `NewsCardSection.tsx`, `NewsSidebar.tsx`, `Pagination.tsx`, `news-components.test.tsx`; `news/[slug]/_components/NewsArticleView.tsx`, `ArticleBody.tsx`, `news-article.test.tsx`; `news/not-found.tsx`; `messages/*.json`.
 
-- [ ] **Failing tests** (`news-components.test.tsx`, `news-article.test.tsx`):
+- [x] **Failing tests** (`news-components.test.tsx`, `news-article.test.tsx`):
   - The tab, scroller, pagination, card and feature tests stay; update any class or aspect assertion (the card image is now 16:9).
   - Add `the sidebar's pre-order button links to the listing with pre_order=1`.
   - Add `every news tag uses the neutral tone`.
   - `lists the categories with counts, marks the active one, and shows no popularity ranking` stays.
-- [ ] **Build** (`_build.mjs` L601–622; style.css L301–311, L544–567):
+- [x] **Build** (`_build.mjs` L601–622; style.css L301–311, L544–567):
   - `Breadcrumbs`; the head `.lhead` with `h1`, the subtitle and the tabs drawn as chips (current: brand fill) inside the existing scroller (its arrow buttons stay 44px).
   - Feature (`.nfeat`): one column, `[1.5fr_1fr]` from `lg`; the big card `rounded-xl min-h-[340px] p-[22px] sm:min-h-[420px] sm:p-8`, the dark wash `linear-gradient(transparent 30%, rgba(8,14,26,.88))`, white text; the side cards `rounded-xl`. A card without an image keeps a `navy` or `navy-2` ground with the `artNews` art at 35% opacity.
   - Layout: one column, `[1fr_320px] gap-7` from `lg`.
@@ -688,10 +688,10 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - Sidebar: sticky from `lg`; the categories `panel`; the pre-order panel `bg-navy text-on-navy border-0` with `buttonClass({ variant: 'buy', block: true })` linking to `listingHref(locale, { preOrder: true })`.
   - Pager as the class map.
   - Article page: the same `Breadcrumbs`, the reading `panel`, `font-head` title, the tokens in `ArticleBody`'s descendant styles (links `text-brand`, tables `border-line`), related news as `.ncard`s.
-- [ ] **Messages:**
+- [x] **Messages:**
   - Change `shop.news.subtitle` to "ข่าวเกมใหม่ ข่าวสินค้า และประกาศจากร้าน".
   - Nothing else; the sidebar keeps `shop.news.sidebar.preOrder*` (R14).
-- [ ] **Commit:** `feat: restyle the news pages to the redesign`
+- [x] **Commit:** `feat: restyle the news pages to the redesign`
 
 ### Task 8: Sign-in pages
 

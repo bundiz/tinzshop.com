@@ -1,48 +1,49 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import ImagePlaceholder from '@/components/domain/ImagePlaceholder';
+import ProductBadge from '@/components/domain/ProductBadge';
 import type { NewsCardData } from '@/server/services/news/news-read-service';
 import { newsArticlePath } from '../news-routes';
 
 export type NewsCardProps = {
   card: NewsCardData;
-  /** The design varies the placeholder tint from card to card. */
-  tone?: 'default' | 'warm' | 'cool' | 'deep';
-  /** The list pages show two lines of excerpt; the landing page and related articles do not (`design/index.html`). */
+  /** The list pages show the excerpt; the landing page and related articles do not (`design/index.html`). */
   showExcerpt?: boolean;
 };
 
 /**
- * The design's `.news-card`: image (or the placeholder), category tag, title, two lines of excerpt and the
- * date. Image beside the text on narrow screens, above it from `md`. Title and excerpt are plain text.
+ * The mockup's `.ncard` (plan 015): a 16:9 image (or the neutral placeholder), the category tag, title, excerpt
+ * and date, the whole card one link. The tag is always the neutral tone, since mapping news categories to
+ * platforms would hard-code slugs (R14). Title and excerpt are plain text.
  */
-export default function NewsCard({ card, tone = 'default', showExcerpt = true }: NewsCardProps) {
+export default function NewsCard({ card, showExcerpt = true }: NewsCardProps) {
   const t = useTranslations('shop.news');
   const locale = useLocale();
 
   return (
     <Link
       href={newsArticlePath(locale, card.slug)}
-      className="group grid grid-cols-[120px_1fr] items-start gap-3 md:grid-cols-1"
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-line bg-surface transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-2"
     >
       {card.featuredImageUrl === null ? (
-        <ImagePlaceholder label={t('imagePlaceholderAlt')} tone={tone} className="aspect-[4/3]! rounded-(--radius-sm)" />
+        <ImagePlaceholder label={t('imagePlaceholderAlt')} art="news" className="aspect-video!" />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element -- old-site URL, no image pipeline yet (D-127)
-        <img
-          src={card.featuredImageUrl}
-          alt=""
-          loading="lazy"
-          className="aspect-[4/3] w-full rounded-(--radius-sm) bg-bg-subtle object-cover"
-        />
+        <img src={card.featuredImageUrl} alt="" loading="lazy" className="aspect-video w-full bg-sunk object-cover" />
       )}
-      <div className="min-w-0">
-        {card.categoryName !== null && <p className="text-xs font-bold text-primary">{card.categoryName}</p>}
-        <h3 className="text-[15px] leading-[1.55] [overflow-wrap:anywhere] group-hover:text-primary">{card.title}</h3>
-        {showExcerpt && card.excerpt !== '' && (
-          <p className="mt-1 line-clamp-2 text-[13px] leading-[1.6] text-text-muted">{card.excerpt}</p>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-5 pt-[18px] pb-5">
+        {card.categoryName !== null && (
+          <span className="self-start">
+            <ProductBadge tone="other">{card.categoryName}</ProductBadge>
+          </span>
         )}
-        <time dateTime={card.publishedAt.toISOString()} className="text-xs text-text-subtle">
+        <h3 className="font-body text-lg leading-[1.45] font-semibold [overflow-wrap:anywhere] group-hover:text-brand">
+          {card.title}
+        </h3>
+        {showExcerpt && card.excerpt !== '' && (
+          <p className="line-clamp-2 text-[15px] text-ink-2">{card.excerpt}</p>
+        )}
+        <time dateTime={card.publishedAt.toISOString()} className="mt-auto pt-1.5 text-sm text-muted">
           {t('date', { date: card.publishedAt })}
         </time>
       </div>

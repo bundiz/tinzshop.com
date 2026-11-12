@@ -1,6 +1,5 @@
 import { useLocale, useTranslations } from 'next-intl';
-import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import type { NewsListPage } from '@/server/services/news/news-read-service';
 import SiteFooter from '../../_components/SiteFooter';
 import type { ArticlesMenuEntry } from '../../_components/articles-menu';
@@ -24,7 +23,7 @@ export type NewsListViewProps = {
 const FEATURE_COUNT = 3;
 
 /**
- * The news list and category pages, laid out as `design/news.html`: breadcrumb, title, category tabs, the
+ * The news list and category pages, laid out as the redesign's news page (plan 015): breadcrumb, title, category tabs, the
  * feature block (page 1 only), the "ข่าวล่าสุด" grid and pagination beside the sidebar, inside the site header
  * and footer.
  */
@@ -36,50 +35,40 @@ export default function NewsListView({ list, articlesMenu, customer = null }: Ne
   const pathWithoutLocale = basePath.slice(locale.length + 1) + (list.page > 1 ? `?page=${list.page}` : '');
   const feature = list.page === 1 ? list.items.slice(0, FEATURE_COUNT) : [];
   const grid = list.page === 1 ? list.items.slice(FEATURE_COUNT) : list.items;
-  const chevron = <Icon name="chevRight" className="size-4" />;
 
   return (
     <>
       <SiteHeader path={pathWithoutLocale} activeNav="news" articlesMenu={articlesMenu} customer={customer} />
-      <main id="main" className="pt-4 pb-10">
-        <div className="mx-auto max-w-[1280px] px-4 md:px-6">
-          <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">
-            <ol className="flex flex-wrap items-center gap-1">
-              <li className="flex items-center gap-1">
-                <Link href={`/${locale}`} className="hover:text-primary">
-                  {t('breadcrumb.home')}
-                </Link>
-                {chevron}
-              </li>
-              {list.activeCategoryName === null ? (
-                <li aria-current="page" className="text-text">
-                  {t('title')}
-                </li>
-              ) : (
-                <>
-                  <li className="flex items-center gap-1">
-                    <Link href={newsListPath(locale)} className="hover:text-primary">
-                      {t('title')}
-                    </Link>
-                    {chevron}
-                  </li>
-                  <li aria-current="page" className="min-w-0 text-text [overflow-wrap:anywhere]">
-                    {list.activeCategoryName}
-                  </li>
-                </>
-              )}
-            </ol>
-          </nav>
+      <main id="main" className="pb-10 sm:pb-16">
+        <div className="wrap">
+          <Breadcrumbs
+            label={t('breadcrumb.label')}
+            items={
+              list.activeCategoryName === null
+                ? [{ label: t('breadcrumb.home'), href: `/${locale}` }, { label: t('title') }]
+                : [
+                    { label: t('breadcrumb.home'), href: `/${locale}` },
+                    { label: t('title'), href: newsListPath(locale) },
+                    { label: list.activeCategoryName },
+                  ]
+            }
+          />
 
-          <div className="mb-3.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 className="text-2xl [overflow-wrap:anywhere]">{list.activeCategoryName ?? t('title')}</h1>
-            <span className="text-sm text-text-subtle">{t('subtitle')}</span>
+          <div className="flex flex-col gap-4 pt-3 pb-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-[clamp(28px,3vw,40px)] font-bold [overflow-wrap:anywhere]">
+                {list.activeCategoryName ?? t('title')}
+              </h1>
+              <p className="mt-1 text-muted">{t('subtitle')}</p>
+            </div>
+            <div className="min-w-0 lg:max-w-[60%]">
+              <NewsTabs categories={list.categories} activeCategorySlug={category} />
+            </div>
           </div>
 
-          <NewsTabs categories={list.categories} activeCategorySlug={category} />
           <NewsFeature cards={feature} />
 
-          <div className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid grid-cols-1 items-start gap-7 py-[clamp(24px,3vw,28px)] lg:grid-cols-[minmax(0,1fr)_320px]">
             <NewsGrid
               cards={grid}
               // Page 1 with every article in the feature block has an empty grid but is not empty.

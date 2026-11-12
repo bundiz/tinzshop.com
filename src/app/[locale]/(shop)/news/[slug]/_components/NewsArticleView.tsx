@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
+import ProductBadge from '@/components/domain/ProductBadge';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import SiteFooter from '../../../_components/SiteFooter';
 import type { ArticlesMenuEntry } from '../../../_components/articles-menu';
@@ -20,7 +21,7 @@ export type NewsArticleViewProps = {
 /**
  * One news article in the site header and footer (spec 2026-10-29 §6, D-138): breadcrumb, category labels,
  * title, byline and date, the featured image (eager, D-123), the stored body in a reading column, and
- * "ข่าวที่เกี่ยวข้อง". There is no design file for it; it follows the site's panels and type.
+ * "ข่าวที่เกี่ยวข้อง". It follows the redesign's panel and type (plan 015).
  */
 export default function NewsArticleView({ article, articlesMenu, customer = null }: NewsArticleViewProps) {
   const t = useTranslations('shop.news');
@@ -30,29 +31,18 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
   return (
     <>
       <SiteHeader path={newsArticlePath(locale, article.slug).slice(locale.length + 1)} activeNav="news" articlesMenu={articlesMenu} customer={customer} />
-      <main id="main" className="pt-4 pb-10">
-        <div className="mx-auto max-w-[1280px] px-4 md:px-6">
-          <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">
-            <ol className="flex flex-wrap items-center gap-1">
-              <li className="flex items-center gap-1">
-                <Link href={`/${locale}`} className="hover:text-primary">
-                  {t('breadcrumb.home')}
-                </Link>
-                <Icon name="chevRight" className="size-4" />
-              </li>
-              <li className="flex items-center gap-1">
-                <Link href={newsListPath(locale)} className="hover:text-primary">
-                  {t('title')}
-                </Link>
-                <Icon name="chevRight" className="size-4" />
-              </li>
-              <li aria-current="page" className="min-w-0 text-text [overflow-wrap:anywhere]">
-                {article.title}
-              </li>
-            </ol>
-          </nav>
+      <main id="main" className="pb-10 sm:pb-16">
+        <div className="wrap">
+          <Breadcrumbs
+            label={t('breadcrumb.label')}
+            items={[
+              { label: t('breadcrumb.home'), href: `/${locale}` },
+              { label: t('title'), href: newsListPath(locale) },
+              { label: article.title },
+            ]}
+          />
 
-          <article aria-labelledby="article-title" className="rounded-(--radius) bg-bg p-4 md:p-8">
+          <article aria-labelledby="article-title" className="mt-3 rounded-lg border border-line bg-surface p-[18px] sm:p-8">
             <div className="mx-auto max-w-[760px]">
               {article.categories.length > 0 && (
                 <ul aria-label={t('article.categoriesLabel')} className="mb-2 flex flex-wrap gap-1.5">
@@ -60,18 +50,18 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
                     <li key={category.slug}>
                       <Link
                         href={newsCategoryPath(locale, category.slug)}
-                        className="inline-flex min-h-7 items-center rounded-full bg-primary-soft px-2.5 text-xs font-bold text-primary hover:bg-primary hover:text-white"
+                        className="inline-flex min-h-11 items-center sm:min-h-0"
                       >
-                        {category.name}
+                        <ProductBadge tone="other">{category.name}</ProductBadge>
                       </Link>
                     </li>
                   ))}
                 </ul>
               )}
-              <h1 id="article-title" className="text-2xl leading-[1.45] [overflow-wrap:anywhere] md:text-[28px]">
+              <h1 id="article-title" className="font-head text-[clamp(24px,3vw,32px)] leading-[1.35] font-bold [overflow-wrap:anywhere]">
                 {article.title}
               </h1>
-              <p className="mt-2 flex flex-wrap items-center gap-x-2 text-[13px] text-text-subtle">
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-muted">
                 <span>{byline}</span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={article.publishedAt.toISOString()}>{t('date', { date: article.publishedAt })}</time>
@@ -82,7 +72,7 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
                   src={article.featuredImageUrl}
                   alt=""
                   loading="eager"
-                  className="mt-4 h-auto w-full rounded-(--radius-sm) bg-bg-subtle"
+                  className="mt-4 h-auto w-full rounded-md bg-sunk"
                 />
               )}
               <div className="mt-2">

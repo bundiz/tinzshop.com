@@ -12,11 +12,11 @@ export type NewsTabsProps = {
 };
 
 const TAB =
-  "flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm hover:border-primary hover:bg-primary-soft hover:text-primary";
-const ACTIVE = "border-primary bg-primary-soft text-primary";
-const IDLE = "border-border bg-bg";
+  "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border-[1.5px] px-4 text-[14.5px] font-medium sm:min-h-10";
+const ACTIVE = "border-brand bg-brand text-white";
+const IDLE = "border-line-2 bg-surface hover:border-ink";
 
-/** The design's `.subcats` pills: "all" plus each category with its article count; the current one is marked. */
+/** The mockup's `.chip`s: "all" plus each category with its article count; the current one is marked. */
 export default function NewsTabs({
   categories,
   activeCategorySlug,
@@ -39,14 +39,14 @@ export default function NewsTabs({
       >
         {label}
         {count !== undefined && (
-          <span className="text-xs text-text-subtle">{count}</span>
+          <span className={`text-xs ${isActive ? "text-white/80" : "text-muted"}`}>{count}</span>
         )}
       </Link>
     </li>
   );
 
   return (
-    <nav aria-label={t("label")} className="mb-3">
+    <nav aria-label={t("label")} className="min-w-0">
       <NewsTabsScroller prevLabel={t("scrollPrev")} nextLabel={t("scrollNext")}>
         <ul className="flex gap-2">
           {tab(
