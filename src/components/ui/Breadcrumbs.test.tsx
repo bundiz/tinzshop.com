@@ -14,6 +14,12 @@ describe('Breadcrumbs', () => {
     expect(html).toMatch(/^<nav aria-label="Where you are"/);
   });
 
+  it('is an ordered list with one item per crumb', () => {
+    expect(html).toMatch(/<nav[^>]*><ol[^>]*>/);
+    expect(html.match(/<li[ >]/g)).toHaveLength(3);
+    expect(html).toMatch(/<li[^>]*><svg[^>]*aria-hidden="true"/);
+  });
+
   it('links the items that have an href', () => {
     expect(html).toMatch(/<a[^>]*href="\/th"[^>]*>Home<\/a>/);
     expect(html).toMatch(/<a[^>]*href="\/th\/product\?category=playstation-5"[^>]*>PlayStation 5<\/a>/);

@@ -35,7 +35,7 @@ export default function ProductHeading({ name, isKit, isPreOrder, releaseDate, p
           {isKit && <ProductBadge tone="bundle">{t('badge.bundle')}</ProductBadge>}
           {isPreOrder && <ProductBadge tone="preOrder">{t('badge.preOrder')}</ProductBadge>}
           {isPreOrder && releaseDate !== null && (
-            <span className="text-xs font-semibold text-accent-press">{t('releaseDate', { date: releaseDate })}</span>
+            <span className="text-xs font-semibold text-warn">{t('releaseDate', { date: releaseDate })}</span>
           )}
         </p>
       )}

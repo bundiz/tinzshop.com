@@ -211,7 +211,7 @@ On a product page, a customer can select option values such as colour or capacit
 
 > **Plan 014 (D-152 to D-175), an early slice of this phase.** On the project owner's request of 2026-11-03, customer registration and sign-in (email and password, or Google, through Amazon Cognito) are built ahead of ordering — `plans/014-customer-authentication.md`. It delivers the register and sign-in part of REQ-011 only; order history and invoices stay open. It applies REQ-053 / D-061: the all-products page and product pages now require sign-in (D-161). Staff sign-in (REQ-032) stays with plan 002.
 
-> **Plan 015 (D-190 to D-201), a restyle within this phase.** On the project owner's request of 2026-11-12, the storefront pages that exist (the shell, home, the product listing, the product page, the news pages and the four sign-in pages) are restyled to the owner's new design in `tinzshop-redesign/` — `plans/015-storefront-redesign.md`. It delivers no requirement and changes no behaviour: sign-in still gates the product pages, stock is still shown as in stock or out of stock only, and the only server change is the landing page's section limits (10 best sellers, 5 kits).
+> **Plan 015 (D-190 to D-203), a restyle within this phase.** On the project owner's request of 2026-11-12, the storefront pages that exist (the shell, home, the product listing, the product page, the news pages and the four sign-in pages) are restyled to the owner's new design in `tinzshop-redesign/` — `plans/015-storefront-redesign.md`. It delivers no requirement and changes no behaviour: sign-in still gates the product pages, stock is still shown as in stock or out of stock only, and the only server change is the landing page's section limits (10 best sellers, 5 kits).
 
 ### Ordering
 

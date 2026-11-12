@@ -40,6 +40,7 @@ describe('ProductHeading', () => {
     const html = render({ isPreOrder: true, releaseDate: new Date('2026-12-01') });
     expect(html).toContain(th.shop.product.badge.preOrder);
     expect(html).toContain('วางจำหน่าย');
+    expect(html).toMatch(/text-warn[^>]*>[^<]*วางจำหน่าย/);
     expect(render({ isPreOrder: false, releaseDate: new Date('2026-12-01') })).not.toContain('วางจำหน่าย');
   });
 

@@ -49,6 +49,9 @@ export default async function ProductPage({ params }: Props) {
   // Related products: the best sellers, without this one, until categories exist to relate by (D-124).
   const related = catalogue.bestSellers.filter((card) => card.productId !== product.productId).slice(0, RELATED_LIMIT);
 
+  // VariantPicker draws the phone buy bar only when there is a variant to buy (default, else first).
+  const hasBuyBar = (product.variants.find((v) => v.variantId === product.defaultVariantId) ?? product.variants[0]) !== undefined;
+
   return (
     <>
       <SiteHeader path={`/product/${product.productId}/detail`} articlesMenu={articlesMenu} customer={customer} />
@@ -106,7 +109,7 @@ export default async function ProductPage({ params }: Props) {
       </main>
       <SiteFooter />
       {/* Room for the phone buy bar (VariantPicker), so the footer's last row scrolls fully above it. */}
-      <div aria-hidden="true" data-buy-bar-spacer="" className="h-[84px] sm:hidden" />
+      {hasBuyBar && <div aria-hidden="true" data-buy-bar-spacer="" className="h-[84px] sm:hidden" />}
     </>
   );
 }

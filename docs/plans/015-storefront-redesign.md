@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Not started — opened 2026-11-12 on the project owner's request of 2026-11-12
+- **Status:** Built and in review (2026-11-12); manual checks not yet run — opened 2026-11-12 on the project owner's request of 2026-11-12
 - **Phase:** 3 (storefront), an early slice like plans 011 to 014
 - **Requirements touched:**
   - REQ-007 (Thai and English) and REQ-009 (mobile-first): every restyled page, in both languages, from 360px up.
@@ -207,7 +207,7 @@ Mockup class → Tailwind, used by every task. Values are the mockup's.
 
 ## Review Focus
 
-1. **Nothing made up reaches the screen.** Search the rendered pages for: a cart count other than 0, a star, a review count, "เหลือน้อย" or any stock word but มีสินค้า / สินค้าหมด, "สั่งจากตัวแทน", a free-shipping threshold, "สัปดาห์นี้", "ซื้อคู่กันบ่อย", "ถูกกว่าซื้อแยก", "คุ้มกว่า", "Switch 2", "เครื่องประกันร้าน", "เลขพัสดุ", a LINE handle, "(รอข้อมูลจากร้าน)", "(เบอร์ร้าน)". Pinned by tests in Tasks 3, 4 and 9.
+1. **Nothing made up reaches the screen.** Search the rendered pages for: a cart count other than 0, a star, a review count, "เหลือน้อย" or any stock word but มีสินค้า / สินค้าหมด, the สั่งจากตัวแทน stock state and filter, a free-shipping threshold, "สัปดาห์นี้", "ซื้อคู่กันบ่อย", "ถูกกว่าซื้อแยก", "คุ้มกว่า", "Switch 2", "เครื่องประกันร้าน", "เลขพัสดุ", a LINE handle, "(รอข้อมูลจากร้าน)", "(เบอร์ร้าน)". Pinned by tests in Tasks 3, 4 and 9.
 2. **The listing's filter sheet on a phone.** With the sheet open, ticking a checkbox navigates and the sheet stays open with focus on that checkbox; typing a price and pressing Enter keeps focus in the input (D-148 M4); Escape closes and returns focus to "ตัวกรอง"; widening the window past 1024px closes it and drops the dialog role. Pinned in Task 5.
 3. **The sign-in forms still work before hydration and never put a secret in a URL,** now with the show/hide password button: it is `type="button"`, never submits, survives React's post-action reset (the field returns to hidden), and the live rule ticks (D-189) still read the typed value. Pinned in Task 8.
 4. **The phone buy bar shows the chosen variant's price,** and changes with the picker; it never shows a price the picker does not (D-121, D-123). Pinned in Task 6.
@@ -615,7 +615,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 **Files:** `src/app/[locale]/(shop)/product/[productId]/detail/page.tsx` (+ test), `_components/Breadcrumb.tsx` (+ test), `Gallery.tsx` (+ test), `ProductHeading.tsx` (+ test), `VariantPicker.tsx` (+ test), `BuyActions.tsx` (+ test), `ServicePanel.tsx`, `ProductTabs.tsx` (+ test), `not-found.tsx`, `messages/*.json`.
 
 **Interfaces:**
-- `ProductHeadingProps = { name: string; isKit: boolean; isPreOrder: boolean; releaseDate: string | null; platform: ProductDetailCategory | null; productType: ProductDetailCategory | null }`. It owns the platform tag and the badges; the page's inline pre-order badge moves into it.
+- `ProductHeadingProps = { name: string; isKit: boolean; isPreOrder: boolean; releaseDate: Date | null; platform: ProductDetailCategory | null; productType: ProductDetailCategory | null }`. It owns the platform tag and the badges; the page's inline pre-order badge moves into it.
 - `VariantPicker` props are unchanged; it renders the price box, the option groups and the phone buy bar.
 - `RELATED_LIMIT = 5`.
 
@@ -796,7 +796,7 @@ Tasks 1 to 9 are built. The manual test checklist above is still to be run by a 
 - **Top bar at 360px.** The message wrapped "ส่งทั่ว / ประเทศไทย" over two lines. It now uses the mockup's 13px below `sm` (style.css L627) and fits on one line (the bar is 44px). In English "Delivery across Thailand" still takes two lines at 360px, inside the same 44px bar.
 - **Header row at 360px.** Menu button, logo and the three actions measure 326 of 328px and sit on one row; the search drops to its own row as designed. No overflow; nothing changed.
 - **Automated look, not the person's visual pass.** With the dev server and headless Chrome, `/th`, `/en`, `/th/news`, `/en/news`, an article, `/th/sign-in`, `/en/sign-in`, `/th/register`, `/th/register/verify` and `/th/forgot-password` were captured at 1440, 390 and 360px. No page scrolls sideways at any of those widths (the only boxes past the edge are the news tabs, inside their own scroller). Fonts load from `/_next/static/media/` only. Not checked: the listing and the product pages (they need a signed-in customer), the verify card itself (without a pending sign-up `/register/verify` returns to register with the "step expired" notice), and the 1180, 1024 and 860px widths. The visual-pass box above stays open for a person.
-- **Seen and left as designed.** The cart count badge overlaps the first letter of the small "ตะกร้า" label at 1440px, exactly as in the mockup (`.badge-count` at `left: 26px`). On the news feature block at phone widths the card's text sits over the upper part of the image, where the gradient is light; with the old site's text-heavy cover images the title is hard to read. Both are for the person doing the visual pass to judge. Review Focus 1 lists "สั่งจากตัวแทน" among the words to search for; the consult band's text, as Task 4 gives it, reads "…หรือของที่ต้องสั่งจากตัวแทน" (asking about items the shop orders from a distributor), not a stock state, so it stays and the guard test does not list that phrase.
+- **Seen and left as designed.** The cart count badge overlaps the first letter of the small "ตะกร้า" label at 1440px, exactly as in the mockup (`.badge-count` at `left: 26px`). On the news feature block at phone widths the card's text sits over the upper part of the image, where the gradient is light; with the old site's text-heavy cover images the title is hard to read. Both are for the person doing the visual pass to judge. Review Focus 1 lists the สั่งจากตัวแทน stock state and filter among the things to search for; the consult band's text, as Task 4 gives it, reads "…หรือของที่ต้องสั่งจากตัวแทน" (asking about items the shop orders from a distributor), not a stock state, so it stays and the guard test does not list that phrase.
 - **Recorded.** `shop.home.consult.line` (Task 4's LINE button) in Task 4's key list; the white sale price on navy and `StockBadge`'s `onDark` as D-202, in 07 and in the glossary.
 - **Runs.** `tsc --noEmit`, `vitest run` (86 files, 883 tests) and `next build` pass. There is no ESLint config, so no lint run. The integration tests were not run: this task changes no server code. The "Run everything" box stays open for the integration run.
 

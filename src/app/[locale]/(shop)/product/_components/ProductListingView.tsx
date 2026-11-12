@@ -79,8 +79,10 @@ export function listingNav(active: StorefrontListingParams): SiteNavKey | undefi
   return undefined;
 }
 
-const CHIP =
-  'inline-flex min-h-11 items-center gap-1.5 rounded-full border-[1.5px] px-4 text-[14.5px] font-medium sm:min-h-10';
+const CHIP_BASE = 'inline-flex items-center gap-1.5 rounded-full border-[1.5px] font-medium';
+const CHIP = `${CHIP_BASE} min-h-11 px-4 text-[14.5px] sm:min-h-10`;
+/** The active-filter chip: smaller than the preset chip, so it shares only the base. */
+export const CHIP_ACTIVE_FILTER = `${CHIP_BASE} min-h-11 px-3 text-sm sm:min-h-9`;
 const CHIP_OFF = 'border-line-2 bg-surface hover:border-ink';
 const CHIP_ON = 'border-brand bg-brand text-white';
 
@@ -102,9 +104,8 @@ export default function ProductListingView({ listing, articlesMenu, customer = n
   const chosenKinds = selectedKinds(facets.types, active.types);
   const kindLabel = (kind: ProductTypeKey) => t(`type.${kind}`);
 
-  // The head's and the ทั้งหมด tile's count: the platform's, or every platform's.
-  const allCount =
-    activeCategory?.count ?? facets.categories.reduce((sum, category) => sum + category.count, 0);
+  // The head's count is the toolbar's (D-203): products with no category are in no facet, so a facet sum would drift.
+  const allCount = listing.total;
   const title = activeCategory?.name ?? t('title');
   const description =
     activeCategory === null
@@ -121,12 +122,13 @@ export default function ProductListingView({ listing, articlesMenu, customer = n
   const from = listing.total === 0 ? 0 : (listing.page - 1) * pageSize + 1;
   const to = Math.min(listing.page * pageSize, listing.total);
 
-  const tabs: { key: string; label: string; art: ProductArt; count: number; href: string; isActive: boolean }[] = [
+  const tabs: { key: string; label: string; art: ProductArt; count: number | null; href: string; isActive: boolean }[] = [
     {
       key: 'all',
       label: t('tabs.all'),
       art: 'console',
-      count: allCount,
+      // Only the active tile can state a count that is true: kind-narrowed facets would shrink it (D-148, D-203).
+      count: active.types.length === 0 && !active.kit ? listing.total : null,
       href: change({ types: [], kit: false }),
       isActive: active.types.length === 0 && !active.kit,
     },
@@ -237,7 +239,9 @@ export default function ProductListingView({ listing, articlesMenu, customer = n
               >
                 <ImagePlaceholder tone={tone} art={tab.art} className="w-16 rounded-[10px]" />
                 <span>{tab.label}</span>
-                <small className="-mt-1.5 text-[12.5px] font-normal text-muted">{t('tabs.count', { count: tab.count })}</small>
+                {tab.count !== null && (
+                  <small className="-mt-1.5 text-[12.5px] font-normal text-muted">{t('tabs.count', { count: tab.count })}</small>
+                )}
               </Link>
             ))}
           </nav>
@@ -385,7 +389,8 @@ export default function ProductListingView({ listing, articlesMenu, customer = n
                         key={chip.key}
                         href={chip.href}
                         aria-label={t('active.remove', { name: chip.label })}
-                        className={`${CHIP} ${CHIP_ON} min-h-11 px-3 text-sm sm:min-h-9`}
+                        data-active-filter=""
+                        className={`${CHIP_ACTIVE_FILTER} ${CHIP_ON}`}
                       >
                         {chip.label}
                         <Icon name="x" className="size-4" />

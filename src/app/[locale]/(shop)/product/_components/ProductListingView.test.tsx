@@ -82,7 +82,7 @@ describe('ProductListingView', () => {
     const html = decode(render(listing({ category: 'playstation-5', types: ['playstation-5-game'] })));
     const strip = tabs(html);
     expect(text(strip)).toBe(
-      'ทั้งหมด248 รายการเครื่องเกม18 รายการแผ่นเกม142 รายการจอย27 รายการอุปกรณ์เสริม49 รายการชุดโปรโมชั่น12 รายการ',
+      'ทั้งหมดเครื่องเกม18 รายการแผ่นเกม142 รายการจอย27 รายการอุปกรณ์เสริม49 รายการชุดโปรโมชั่น12 รายการ',
     );
     expect(strip.match(/aria-current="page"/g)).toHaveLength(1);
     expect(strip).toMatch(/href="\/th\/product\?category=playstation-5&type=playstation-5-game"[^>]*aria-current="page"|aria-current="page"[^>]*href="\/th\/product\?category=playstation-5&type=playstation-5-game"/);
@@ -99,10 +99,12 @@ describe('ProductListingView', () => {
     const html = render(
       listing({}, { facets: { categories: [], types: [], inStock: 0, kit: 0, preOrder: 0 }, total: 8, totalPages: 1 }),
     );
-    expect(text(tabs(html))).toBe('ทั้งหมด0 รายการชุดโปรโมชั่น0 รายการ');
+    expect(text(tabs(html))).toBe('ทั้งหมด8 รายการชุดโปรโมชั่น0 รายการ');
     expect(tabs(html)).toMatch(/^<a [^>]*aria-current="page"[\s\S]*?<span>ทั้งหมด</);
     expect(html).toMatch(/<h1[^>]*>สินค้าทั้งหมด<\/h1>/);
     expect(text(html)).toContain('แสดง 1–8 จาก 8 รายการ');
+    // The head agrees with the toolbar even when no product has a category (D-203).
+    expect(text(html)).toContain('ทุกแพลตฟอร์ม · 8 รายการ');
     expect(html).not.toContain(`aria-label="${th.shop.news.pagination.label}"`);
   });
 
@@ -194,7 +196,7 @@ describe('ProductListingView', () => {
   });
 
   it('the head shows the description with the count', () => {
-    expect(text(render(listing()))).toContain('เครื่องเกม แผ่นเกม จอย และอุปกรณ์เสริมทุกแพลตฟอร์ม · 682 รายการ');
+    expect(text(render(listing()))).toContain('เครื่องเกม แผ่นเกม จอย และอุปกรณ์เสริมทุกแพลตฟอร์ม · 248 รายการ');
     expect(text(render(listing({ category: 'playstation-5' })))).toContain('สำหรับ PlayStation 5 · 248 รายการ');
   });
 
@@ -211,6 +213,22 @@ describe('ProductListingView', () => {
     // The art follows the active platform's tone.
     expect(strip).toContain('#D8E6FA');
     expect(tabs(render(listing({ category: 'nintendo-switch' })))).toContain('#F8D9DF');
+  });
+
+  it('shows a count on ทั้งหมด only while it is the active tile (D-203)', () => {
+    const all = (html: string) => text(tabs(html)).startsWith('ทั้งหมด248 รายการ');
+    expect(all(render(listing()))).toBe(true);
+    expect(all(render(listing({ types: ['playstation-5-game'] })))).toBe(false);
+    expect(all(render(listing({ kit: true })))).toBe(false);
+  });
+
+  it('the active-filter chip carries no conflicting size utilities', () => {
+    const html = render(listing({ inStock: true }));
+    const chip = html.match(/<a [^>]*data-active-filter=""[^>]*>/)?.[0] ?? '';
+    expect(chip).toContain('min-h-11');
+    expect(chip).toContain('px-3');
+    expect(chip).toContain('sm:min-h-9');
+    expect(chip).not.toMatch(/px-4|text-\[14\.5px\]|sm:min-h-10/);
   });
 
   it('renders in English from the same keys', () => {

@@ -115,10 +115,23 @@ describe('the product page at /product/{id}/detail', () => {
     }
   });
 
-  it('leaves room under the footer, below sm, for the phone buy bar', async () => {
-    const page = await ProductPage({ params: Promise.resolve({ locale: 'th', productId: KNOWN_ID }) });
-    const spacer = findElement(page, (props) => props['data-buy-bar-spacer'] === '');
-    expect(spacer?.className).toBe('h-[84px] sm:hidden');
+  it('leaves room under the footer, below sm, for the phone buy bar, only when there is one', async () => {
+    const spacerOf = async () =>
+      findElement(
+        await ProductPage({ params: Promise.resolve({ locale: 'th', productId: KNOWN_ID }) }),
+        (props) => props['data-buy-bar-spacer'] === '',
+      );
+    // No variant: VariantPicker draws no buy bar, so there is no spacer.
+    expect(await spacerOf()).toBeUndefined();
+    const original = DETAIL.variants;
+    (DETAIL as { variants: unknown }).variants = [{ variantId: 'v1' }];
+    (DETAIL as { defaultVariantId: string }).defaultVariantId = 'v1';
+    try {
+      expect((await spacerOf())?.className).toBe('h-[84px] sm:hidden');
+    } finally {
+      (DETAIL as { variants: unknown }).variants = original;
+      (DETAIL as { defaultVariantId: string }).defaultVariantId = '';
+    }
   });
 
   it('titles a missing product as not found from the layout', async () => {
