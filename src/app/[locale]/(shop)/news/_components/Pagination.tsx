@@ -33,9 +33,9 @@ function pageHref(basePath: string, page: number): string {
   return page === 1 ? basePath : `${basePath}?page=${page}`;
 }
 
-const BOX =
-  'grid h-11 min-w-11 place-items-center rounded-(--radius-sm) border px-2 text-sm font-semibold';
-const LINK = `${BOX} border-border bg-bg hover:border-primary hover:text-primary`;
+// The mockup's `.pager` (plan 015): 44px boxes, the current page in the brand blue.
+const BOX = 'grid h-11 min-w-11 place-items-center rounded-sm border-[1.5px] px-2 text-sm font-medium';
+const LINK = `${BOX} border-line bg-surface hover:border-ink`;
 
 /** The design's `.pagination`: previous, numbered pages with gaps, next. Not rendered for a single page. */
 export default function Pagination({ basePath, page, totalPages, hrefFor }: PaginationProps) {
@@ -45,7 +45,7 @@ export default function Pagination({ basePath, page, totalPages, hrefFor }: Pagi
 
   const step = (target: number, label: string, icon: 'chevLeft' | 'chevRight') =>
     target < 1 || target > totalPages ? (
-      <span aria-disabled="true" aria-label={label} className={`${BOX} border-border bg-bg text-text-subtle opacity-50`}>
+      <span aria-disabled="true" aria-label={label} className={`${BOX} border-line bg-surface text-muted opacity-50`}>
         <Icon name={icon} className="size-4" />
       </span>
     ) : (
@@ -55,7 +55,7 @@ export default function Pagination({ basePath, page, totalPages, hrefFor }: Pagi
     );
 
   return (
-    <nav aria-label={t('label')} className="mt-6 flex flex-wrap justify-center gap-1.5">
+    <nav aria-label={t('label')} className="mt-9 flex flex-wrap justify-center gap-1.5">
       {step(page - 1, t('previous'), 'chevLeft')}
       {pageItems(page, totalPages).map((item, index) =>
         item === 'gap' ? (
@@ -63,7 +63,7 @@ export default function Pagination({ basePath, page, totalPages, hrefFor }: Pagi
             …
           </span>
         ) : item === page ? (
-          <span key={item} aria-current="page" className={`${BOX} border-primary bg-primary text-white`}>
+          <span key={item} aria-current="page" className={`${BOX} border-brand bg-brand text-white`}>
             {item}
           </span>
         ) : (

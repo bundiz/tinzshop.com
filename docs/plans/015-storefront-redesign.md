@@ -573,7 +573,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 - `ListingFilterPanel` gains `count: number` (for "แสดง {count} รายการ").
 - The URL contract (D-145) does not change.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `ProductListingView.test.tsx`:
     - `has the ตัวกรอง disclosure for narrow screens, closed at first` becomes `has the ตัวกรอง button for narrow screens, controlling the closed filter sheet`
     - add `the presets link to max=1999, min=2000&max=9999 and min=10000`
@@ -587,7 +587,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - `the price input keeps focus after Enter inside the sheet`
     - `widening past lg closes the sheet and drops the dialog role`
     - `แสดง N รายการ closes the sheet`
-- [ ] **Build** (`_build.mjs` L334–362; style.css L343–382, L570–665):
+- [x] **Build** (`_build.mjs` L334–362; style.css L343–382, L570–665):
   - `wrap`, `Breadcrumbs` (home › category or สินค้าทั้งหมด).
   - Head: `.lhead` (`flex flex-wrap items-end justify-between gap-4 pt-3 pb-5`, `h1` `text-[clamp(28px,3vw,40px)]`, `p` `mt-1 text-muted`).
   - Type tiles (`.subcat`): a 2 / 3 / 6-column grid (`sm` 3, `lg` 6), `rounded-md border-[1.5px] border-line bg-surface`, the 64px art, the label and "{count} รายการ"; current `border-ink shadow-[inset_0_0_0_1px_var(--color-ink)]`, `aria-current="page"` as now. Art: ทั้งหมด `artConsole`, เครื่องเกม `artConsole`, แผ่นเกม `artDisc`, จอย `artPad`, อุปกรณ์เสริม `artHead`, ชุดโปรโมชั่น `artBox`, toned by the active platform (`platformTone`).
@@ -596,7 +596,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - Toolbar: the count, then "ตัวกรอง" (`line`, `lg:hidden`), the sort `select`, and the grid/list switch (`hidden sm:flex`).
   - Active filters: "ตัวกรองที่ใช้:", chips (current style, `min-h-11 sm:min-h-9`) with an `x`, and "ล้างทั้งหมด".
   - Grid `g-4`, or the list view as now. Pager as the class map.
-- [ ] **Messages:**
+- [x] **Messages:**
   - Change:
     - `shop.listing.toolbar.count` "แสดง <b>{from, number}–{to, number}</b> จาก <b>{total, number}</b> รายการ"
     - `shop.listing.active.label` "ตัวกรองที่ใช้:"
@@ -608,7 +608,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - `shop.listing.filters.close` "ปิดตัวกรอง", `shop.listing.filters.apply` "แสดง {count, number} รายการ"
     - `shop.listing.filters.preset.under2000` "ต่ำกว่า ฿2,000", `from2000` "฿2,000–10,000", `over10000` "มากกว่า ฿10,000"
   - Remove: the four old preset keys.
-- [ ] **Commit:** `feat: restyle the product listing to the redesign`
+- [x] **Commit:** `feat: restyle the product listing to the redesign`
 
 ### Task 6: Product page
 

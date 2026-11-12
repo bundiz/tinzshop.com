@@ -373,11 +373,12 @@
         "home": "หน้าแรก"
       },
       "title": "สินค้าทั้งหมด",
-      "description": "เครื่องเกม แผ่นเกม จอย และอุปกรณ์เสริมทุกแพลตฟอร์ม",
-      "categoryDescription": "{types}สำหรับ {name}",
+      "description": "เครื่องเกม แผ่นเกม จอย และอุปกรณ์เสริมทุกแพลตฟอร์ม · {count, number} รายการ",
+      "categoryDescription": "{types}สำหรับ {name} · {count, number} รายการ",
       "tabs": {
         "label": "ประเภทสินค้า",
-        "all": "ทั้งหมด"
+        "all": "ทั้งหมด",
+        "count": "{count, number} รายการ"
       },
       "type": {
         "console": "เครื่องเกม",
@@ -397,18 +398,19 @@
         "minPlaceholder": "ต่ำสุด",
         "maxPlaceholder": "สูงสุด",
         "preset": {
-          "under1000": "ต่ำกว่า ฿1,000",
-          "from1000": "฿1,000–5,000",
-          "from5000": "฿5,000–20,000",
-          "over20000": "มากกว่า ฿20,000"
+          "under2000": "ต่ำกว่า ฿2,000",
+          "from2000": "฿2,000–10,000",
+          "over10000": "มากกว่า ฿10,000"
         },
         "types": "ประเภทสินค้า",
         "status": "สถานะสินค้า",
-        "inStock": "แสดงเฉพาะที่มีสินค้า",
-        "preOrderOnly": "พรีออเดอร์"
+        "inStock": "มีสินค้า",
+        "preOrderOnly": "พรีออเดอร์",
+        "close": "ปิดตัวกรอง",
+        "apply": "แสดง {count, number} รายการ"
       },
       "toolbar": {
-        "count": "พบ <strong>{count, number}</strong> รายการ",
+        "count": "แสดง <b>{from, number}–{to, number}</b> จาก <b>{total, number}</b> รายการ",
         "sortLabel": "เรียงตาม",
         "sort": {
           "recommended": "เรียงตาม: แนะนำ",
@@ -422,7 +424,7 @@
         "list": "มุมมองรายการ"
       },
       "active": {
-        "label": "ตัวกรอง:",
+        "label": "ตัวกรองที่ใช้:",
         "remove": "ลบตัวกรอง {name}",
         "clear": "ล้างทั้งหมด",
         "price": "฿{min, number} – ฿{max, number}",

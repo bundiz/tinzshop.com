@@ -373,11 +373,12 @@
         "home": "Home"
       },
       "title": "All products",
-      "description": "Consoles, games, controllers and accessories for every platform",
-      "categoryDescription": "{types} for {name}",
+      "description": "Consoles, games, controllers and accessories for every platform · {count, number} items",
+      "categoryDescription": "{types} for {name} · {count, number} items",
       "tabs": {
         "label": "Product types",
-        "all": "All"
+        "all": "All",
+        "count": "{count, number} items"
       },
       "type": {
         "console": "Consoles",
@@ -397,18 +398,19 @@
         "minPlaceholder": "Min",
         "maxPlaceholder": "Max",
         "preset": {
-          "under1000": "Under ฿1,000",
-          "from1000": "฿1,000–5,000",
-          "from5000": "฿5,000–20,000",
-          "over20000": "Over ฿20,000"
+          "under2000": "Under ฿2,000",
+          "from2000": "฿2,000–10,000",
+          "over10000": "Over ฿10,000"
         },
         "types": "Product type",
         "status": "Availability",
-        "inStock": "In stock only",
-        "preOrderOnly": "Pre-orders"
+        "inStock": "In stock",
+        "preOrderOnly": "Pre-orders",
+        "close": "Close filters",
+        "apply": "Show {count, number} items"
       },
       "toolbar": {
-        "count": "<strong>{count, number}</strong> items found",
+        "count": "Showing <b>{from, number}–{to, number}</b> of <b>{total, number}</b> items",
         "sortLabel": "Sort by",
         "sort": {
           "recommended": "Sort: Recommended",
@@ -422,7 +424,7 @@
         "list": "List view"
       },
       "active": {
-        "label": "Filters:",
+        "label": "Active filters:",
         "remove": "Remove filter {name}",
         "clear": "Clear all",
         "price": "฿{min, number} – ฿{max, number}",
