@@ -51,6 +51,13 @@ describe('SiteFooter', () => {
     expect([...english.matchAll(/<li class="inline-flex h-8[^>]*>([^<]+)<\/li>/g)]).toHaveLength(5);
   });
 
+  it('keeps the logo link at least 44px tall below sm, with a ring from a token class', () => {
+    const html = render('th', new Date('2026-10-28T05:00:00Z'));
+    expect(html).toMatch(/<a aria-label="Tinzshop หน้าแรก" class="inline-flex min-h-11 [^"]*" href="\/th">/);
+    expect(html).toContain('ring-2 ring-white');
+    expect(html).not.toContain('rgba(');
+  });
+
   it('shows no phone number, email, opening hours or placeholder text', () => {
     for (const locale of ['th', 'en'] as const) {
       const html = render(locale, new Date('2026-10-28T05:00:00Z'));

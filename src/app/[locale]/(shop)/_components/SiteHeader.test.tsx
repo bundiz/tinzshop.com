@@ -68,6 +68,10 @@ describe('SiteHeader', () => {
     expect(form).not.toContain('method=');
   });
 
+  it('keeps the logo link at least 44px tall below sm', () => {
+    expect(render('th')).toMatch(/<a aria-label="Tinzshop หน้าแรก" class="flex min-h-11 [^"]*" href="\/th">/);
+  });
+
   it('the skip link is the first link and targets #main', () => {
     const html = render('th');
     expect(html.match(/<a [^>]*>/)?.[0]).toContain('href="#main"');

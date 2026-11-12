@@ -173,7 +173,7 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
             otherLocaleHref={localePath(otherLocale, path)}
             otherLocaleName={t(LANGUAGE_NAME_KEY[otherLocale])}
           />
-          <Link href={home} aria-label={t('logo.label')} className="flex flex-none items-center gap-2.5">
+          <Link href={home} aria-label={t('logo.label')} className="flex min-h-11 flex-none items-center gap-2.5">
             <img src="/logo-mark.png" alt="" width={40} height={40} className="size-10 flex-none rounded-full" />
             <span className="font-head text-[22px] leading-none font-bold tracking-[-.02em] text-navy">{t('logo.word')}</span>
           </Link>

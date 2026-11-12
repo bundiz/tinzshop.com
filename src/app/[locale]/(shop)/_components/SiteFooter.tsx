@@ -29,13 +29,13 @@ export default function SiteFooter() {
     <footer className="mt-[clamp(48px,6vw,80px)] bg-navy text-[15px] text-on-navy-2">
       <div className="wrap grid grid-cols-1 gap-8 pt-14 pb-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="sm:col-span-2 lg:col-span-1">
-          <Link href={`/${locale}`} aria-label={t('header.logo.label')} className="inline-flex items-center gap-2.5">
+          <Link href={`/${locale}`} aria-label={t('header.logo.label')} className="inline-flex min-h-11 items-center gap-2.5">
             <img
               src="/logo-mark.png"
               alt=""
               width={40}
               height={40}
-              className="size-10 flex-none rounded-full shadow-[0_0_0_2px_rgba(255,255,255,.9)]"
+              className="size-10 flex-none rounded-full ring-2 ring-white"
             />
             <span className="font-head text-[22px] leading-none font-bold tracking-[-.02em] text-white">{t('header.logo.word')}</span>
           </Link>

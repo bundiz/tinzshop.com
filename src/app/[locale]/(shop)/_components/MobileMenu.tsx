@@ -81,7 +81,7 @@ export default function MobileMenu({ navItems, signedIn, otherLocaleHref, otherL
       }`}
     >
       <div className="mb-3 flex items-center justify-between">
-        <Link href={`/${locale}`} aria-label={t('logo.label')} onClick={close} className="flex flex-none items-center gap-2.5">
+        <Link href={`/${locale}`} aria-label={t('logo.label')} onClick={close} className="flex min-h-11 flex-none items-center gap-2.5">
           <img src="/logo-mark.png" alt="" width={40} height={40} className="size-10 flex-none rounded-full" />
           <span className="font-head text-[22px] leading-none font-bold tracking-[-.02em] text-navy">{t('logo.word')}</span>
         </Link>
