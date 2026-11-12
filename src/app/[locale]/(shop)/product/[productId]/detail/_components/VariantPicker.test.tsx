@@ -140,4 +140,23 @@ describe('VariantPicker', () => {
     ];
     expect(selectValue(types, set, { size: 's', colour: 'a' }, 'size', 'l')).toEqual({ size: 'l', colour: 'd' });
   });
+
+  it('the price box carries the K-Payment and VAT line', () => {
+    const html = render(<VariantPicker optionTypes={optionTypes} variants={variants} defaultVariantId="v-2tb-black" />);
+    expect(html).toContain(th.shop.product.vatNote);
+    expect(th.shop.product.vatNote).toContain('K-Payment');
+    expect(th.shop.product.vatNote).toContain('VAT');
+  });
+
+  it('draws the phone buy bar below sm, with the chosen price and an inert buy-now', () => {
+    const html = render(<VariantPicker optionTypes={optionTypes} variants={variants} defaultVariantId="v-2tb-black" />);
+    const bar = /<div data-buy-bar=""[^>]*>.*$/s.exec(html)?.[0] ?? '';
+    expect(bar).toContain('fixed inset-x-0 bottom-0');
+    expect(bar).toContain('sm:hidden');
+    expect(bar).toContain('฿4,590');
+    expect(bar).not.toContain('฿4,990');
+    expect(bar).toContain('2TB · Black');
+    expect(bar).toContain(`<button type="button"`);
+    expect(bar).toContain(th.shop.product.buyNow);
+  });
 });

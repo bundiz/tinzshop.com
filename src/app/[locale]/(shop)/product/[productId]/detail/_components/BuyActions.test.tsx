@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import th from '../../../../../../../../messages/th.json';
 import BuyActions from './BuyActions';
-import ServicePanel from './ServicePanel';
 
 function render(node: React.ReactNode): string {
   return renderToStaticMarkup(
@@ -24,14 +23,13 @@ describe('BuyActions', () => {
     expect(html).toContain(th.shop.product.addToCart);
     expect(html).toContain(th.shop.product.buyNow);
   });
-});
 
-describe('ServicePanel', () => {
-  it('shows the K-Payment block with its three chips', () => {
-    const html = render(<ServicePanel />);
-    expect(html).toContain(th.shop.product.service.payment.title);
-    for (const chip of ['card', 'instalment', 'promptPay'] as const) {
-      expect(html).toContain(th.shop.product.service.payment[chip]);
-    }
+  it('shows no wishlist, share or K-Payment chips', () => {
+    const html = render(<BuyActions />);
+    expect(html).not.toContain('href="#"');
+    expect(html).not.toContain('เพิ่มในรายการที่ชอบ');
+    expect(html).not.toContain('แชร์');
+    expect(html).not.toContain('K-Payment');
+    expect(html).not.toContain('PromptPay');
   });
 });

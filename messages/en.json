@@ -176,43 +176,17 @@
         "image": "Product image {index} of {total}",
         "thumbnail": "Image {index}"
       },
-      "vatNote": "Price includes VAT · Instalments through K-Payment",
+      "vatNote": "Pay by credit card through K-Payment, choosing instalments at payment · Price includes VAT",
       "option": {
         "selected": "{name}: <strong>{value}</strong>",
         "soldOut": "{value} (out of stock)"
-      },
-      "service": {
-        "label": "Services",
-        "title": "Services from Tinzshop",
-        "shipping": {
-          "title": "Delivery across Thailand",
-          "text": "Shipping is priced by product size",
-          "rateLink": "See shipping rates"
-        },
-        "taxInvoice": {
-          "title": "Abbreviated tax invoice",
-          "text": "Issued automatically with every order. For a full tax invoice, give us your taxpayer details"
-        },
-        "store": {
-          "title": "The Tinzshop store",
-          "text": "Our shop in Saphan Lek, serving customers for over 20 years"
-        },
-        "contact": {
-          "title": "A question about this product?",
-          "link": "Contact the shop"
-        },
-        "payment": {
-          "title": "Pay with K-Payment",
-          "card": "Credit/debit card",
-          "instalment": "Instalments",
-          "promptPay": "PromptPay QR"
-        }
       },
       "tabs": {
         "label": "Product information",
         "description": "Description",
         "spec": "Specifications",
-        "reviews": "Reviews"
+        "reviews": "Customer reviews",
+        "shipping": "Shipping and warranty"
       },
       "spec": {
         "brand": "Brand",
@@ -232,10 +206,8 @@
         "title": "{name} | Tinzshop"
       },
       "wishlist": {
-        "add": "Add to wishlist",
         "addNamed": "Add {name} to wishlist"
       },
-      "share": "Share",
       "quantity": {
         "label": "Quantity",
         "decrease": "Decrease quantity",
@@ -245,10 +217,43 @@
       "addToCartNamed": "Add {name} to cart",
       "buyNow": "Buy now",
       "reviews": {
-        "empty": "No reviews yet"
+        "empty": "No reviews yet",
+        "write": "Write a review"
       },
       "related": {
         "title": "Related products"
+      },
+      "platformTag": "{platform} · {type}",
+      "assure": {
+        "shipping": {
+          "title": "Delivery by product size",
+          "text": "Large items such as consoles ship free"
+        },
+        "warranty": {
+          "title": "Warranty help available",
+          "text": "Send a request from your order; staff will contact you"
+        },
+        "invoice": {
+          "title": "Automatic tax invoice",
+          "text": "Download the PDF from your order history"
+        },
+        "cancel": {
+          "title": "Cancel before it ships",
+          "text": "Send a cancellation request from the order page"
+        }
+      },
+      "ask": {
+        "title": "A question before you buy?",
+        "text": "Ask staff who actually play games, on LINE",
+        "button": "Ask on LINE"
+      },
+      "shippingTab": {
+        "shippingTitle": "Shipping",
+        "shippingText": "Priced by product size: small items such as game discs, medium ones such as controllers, and large ones such as consoles ship free. The total is shown before you pay.",
+        "warrantyTitle": "Warranty",
+        "warrantyText": "Send a return, warranty or claim request on the <link>warranty and claims contact</link> page. Staff will contact you and tell you the distributor's service channel.",
+        "cancelTitle": "Cancellation",
+        "cancelText": "Send a cancellation request from your account any time before the shop ships the order."
       }
     },
     "footer": {

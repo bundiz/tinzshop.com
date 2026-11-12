@@ -619,7 +619,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 - `VariantPicker` props are unchanged; it renders the price box, the option groups and the phone buy bar.
 - `RELATED_LIMIT = 5`.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `ProductHeading`:
     - `shows the platform tag "{platform} · {type}" in the platform's tone, and none without a platform`
     - the kit test stays
@@ -636,7 +636,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - add `has a fourth tab, การจัดส่งและรับประกัน, with no tracking-number promise and an inert warranty link`
     - add `the reviews tab has an inert เขียนรีวิว and no scores`
   - `page.test.tsx`: the gating and 404 tests stay; add `related products are 5, titled สินค้าที่เกี่ยวข้อง`.
-- [ ] **Build** (`_build.mjs` L372–441; style.css L383–456):
+- [x] **Build** (`_build.mjs` L372–441; style.css L383–456):
   - `Breadcrumb` renders `Breadcrumbs` (its D-151 logic unchanged).
   - `.pdp`: one column, `[minmax(0,1.15fr)_minmax(0,1fr)] gap-10` from `lg`.
   - Gallery: sticky at `top-[140px]` from `lg`; stage `rounded-xl border border-line bg-surface p-4`, image `rounded-[14px]`; the 5-column thumbnails `rounded-md border-2`, current `border-ink`.
@@ -650,7 +650,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - Tabs: `mt-14`, the list `border-b border-line`, tabs `min-h-[52px] px-[18px] font-semibold text-muted`, selected `text-ink border-b-[2.5px] border-accent`; prose `max-w-[760px] text-ink-2`, `h3` `text-[21px] text-ink`; the spec table as `.spec`. Arrow keys still move between the four tabs.
   - Related products: `ProductSection id="related" columns={5}` with "ดูทั้งหมด".
   - Phone buy bar: `fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-line bg-white px-[clamp(16px,3.2vw,32px)] py-2.5 shadow-[0_-8px_24px_-12px_rgba(0,0,0,.15)] sm:hidden`, and the page's `main` gets `pb-[84px] sm:pb-10`.
-- [ ] **Messages:**
+- [x] **Messages:**
   - Change:
     - `shop.product.vatNote` "ผ่อนบัตรเครดิตผ่าน K-Payment เลือกจำนวนงวดตอนชำระเงิน · ราคารวม VAT แล้ว"
     - `shop.product.tabs.reviews` "รีวิวจากลูกค้า"
@@ -669,7 +669,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
       - `cancelTitle` "การยกเลิก", `cancelText` "ส่งคำขอยกเลิกได้จากบัญชีของคุณ ตราบใดที่ร้านยังไม่ส่งของ"
     - `shop.product.reviews.write` "เขียนรีวิว"
   - Remove: `shop.product.service.*`, `shop.product.share`.
-- [ ] **Commit:** `feat: restyle the product page to the redesign`
+- [x] **Commit:** `feat: restyle the product page to the redesign`
 
 ### Task 7: News pages
 

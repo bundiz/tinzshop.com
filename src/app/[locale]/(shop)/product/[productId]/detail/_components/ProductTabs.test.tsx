@@ -38,4 +38,21 @@ describe('ProductTabs', () => {
     expect(html).toContain(th.shop.product.reviews.empty);
     expect(html).not.toContain('★');
   });
+
+  it('has a fourth tab, การจัดส่งและรับประกัน, with no tracking-number promise and an inert warranty link', () => {
+    const html = render(<ProductTabs description="d" brandName="NoBrand" shippingSizeTier="large" />);
+    expect(html.match(/role="tab"/g)).toHaveLength(4);
+    expect(html).toContain(`>${th.shop.product.tabs.shipping}</button>`);
+    expect(th.shop.product.tabs.shipping).toBe('การจัดส่งและรับประกัน');
+    expect(html).toContain(th.shop.product.shippingTab.shippingTitle);
+    expect(html).toContain(th.shop.product.shippingTab.cancelText);
+    expect(html).toMatch(/<a href="#"[^>]*>ติดต่อเรื่องประกัน \/ เคลม<\/a>/);
+    expect(html).not.toContain('เลขพัสดุ');
+  });
+
+  it('the reviews tab has an inert เขียนรีวิว and no scores', () => {
+    const html = render(<ProductTabs description="" brandName={null} shippingSizeTier={null} />);
+    expect(html).toMatch(/<a href="#"[^>]*>เขียนรีวิว<\/a>/);
+    expect(html).not.toMatch(/★|คะแนน|\d+ รีวิว/);
+  });
 });

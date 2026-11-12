@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
 import PriceDisplay from '@/components/domain/PriceDisplay';
 import StockBadge from '@/components/domain/StockBadge';
+import { buttonClass } from '@/components/ui/button-class';
+import Icon from '@/components/ui/Icon';
 import type { ProductDetail, ProductDetailVariant } from '@/server/services/catalogue/product-detail-service';
 
 export type VariantPickerProps = {
@@ -33,19 +35,22 @@ export default function VariantPicker({ optionTypes, variants, defaultVariantId 
   return (
     <>
       {chosen !== undefined && (
-        <div className="mt-3.5 rounded-(--radius) bg-[linear-gradient(90deg,#fff4dc_0%,#fffaf0_100%)] px-4 py-3.5">
+        <div className="mt-5 rounded-lg border border-line bg-surface p-5">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <PriceDisplay satang={chosen.priceSatang} original={chosen.originalPriceSatang} size="buyBox" />
             <StockBadge status={chosen.stockStatus} />
           </div>
-          <p className="mt-1 text-xs text-text-muted">{t('vatNote')}</p>
+          <p className="mt-2.5 flex items-center gap-2.5 text-[15px] text-ink-2">
+            <Icon name="card" className="size-5 flex-none" />
+            <span>{t('vatNote')}</span>
+          </p>
         </div>
       )}
       {optionTypes.map((type) => {
         const current = type.values.find((value) => value.id === selection[type.id]);
         return (
-          <fieldset key={type.id} className="mt-4 min-w-0 border-0 p-0">
-            <legend className="mb-2 p-0 text-sm text-text-muted [&_strong]:text-text">
+          <fieldset key={type.id} className="mt-[22px] min-w-0 border-0 p-0">
+            <legend className="mb-2.5 p-0 font-semibold [&_strong]:font-normal [&_strong]:text-muted">
               {current !== undefined
                 ? t.rich('option.selected', {
                     name: type.name,
@@ -54,7 +59,7 @@ export default function VariantPicker({ optionTypes, variants, defaultVariantId 
                   })
                 : type.name}
             </legend>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {type.values.map((value) => {
                 const variant = variantForPick(variants, optionTypes, selection, type.id, value.id);
                 const inputId = `${idPrefix}-${value.id}`;
@@ -72,7 +77,7 @@ export default function VariantPicker({ optionTypes, variants, defaultVariantId 
                     />
                     <label
                       htmlFor={inputId}
-                      className="inline-flex min-h-11 cursor-pointer items-center rounded-(--radius-sm) border-[1.5px] border-border bg-bg px-3.5 text-sm [overflow-wrap:anywhere] hover:border-[#9ebdf0] peer-checked:border-primary peer-checked:bg-primary-soft peer-checked:font-semibold peer-checked:text-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary peer-disabled:cursor-not-allowed peer-disabled:bg-bg-subtle peer-disabled:text-text-subtle peer-disabled:line-through"
+                      className="inline-flex min-h-12 cursor-pointer items-center rounded-sm border-[1.5px] border-line-2 bg-surface px-4 font-medium transition-[border-color,box-shadow] duration-[180ms] [overflow-wrap:anywhere] hover:border-ink-2 peer-checked:border-ink peer-checked:shadow-[inset_0_0_0_1px_var(--color-ink)] peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ps peer-disabled:cursor-not-allowed peer-disabled:border-dashed peer-disabled:text-muted"
                     >
                       {variant?.stockStatus === 'out_of_stock' ? t('option.soldOut', { value: value.value }) : value.value}
                     </label>
@@ -83,8 +88,30 @@ export default function VariantPicker({ optionTypes, variants, defaultVariantId 
           </fieldset>
         );
       })}
+      {chosen !== undefined && (
+        <div
+          data-buy-bar=""
+          className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-line bg-white px-[clamp(16px,3.2vw,32px)] py-2.5 shadow-[0_-8px_24px_-12px_rgba(0,0,0,.15)] sm:hidden"
+        >
+          <div className="min-w-0">
+            <small className="block text-[12.5px] text-muted [overflow-wrap:anywhere]">{chosenLabel(optionTypes, chosen)}</small>
+            <PriceDisplay satang={chosen.priceSatang} original={null} size="card" />
+          </div>
+          <button type="button" className={buttonClass({ variant: 'buy' })}>
+            {t('buyNow')}
+          </button>
+        </div>
+      )}
     </>
   );
+}
+
+/** The chosen variant's option values, as the buy bar's small line ("1TB · Black"). */
+function chosenLabel(optionTypes: VariantPickerProps['optionTypes'], variant: ProductDetailVariant): string {
+  return optionTypes
+    .map((type) => type.values.find((value) => variant.optionValueIds.includes(value.id))?.value)
+    .filter((value): value is string => value !== undefined)
+    .join(' · ');
 }
 
 function selectionOf(optionTypes: VariantPickerProps['optionTypes'], variant: ProductDetailVariant | undefined): Selection {

@@ -2,15 +2,34 @@ import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
+import th from '../../../../../../../messages/th.json';
 import type { ProductDetail } from '@/server/services/catalogue/product-detail-service';
 
 const KNOWN_ID = '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60';
 
-const DETAIL = { productId: KNOWN_ID, name: 'Astro Bot' } as ProductDetail;
+const DETAIL = {
+  productId: KNOWN_ID,
+  name: 'Astro Bot',
+  platformCategory: null,
+  productType: null,
+  imageUrls: [],
+  optionTypes: [],
+  variants: [],
+  defaultVariantId: '',
+  description: '',
+  brandName: null,
+  shippingSizeTier: null,
+  isKit: false,
+  isPreOrder: false,
+  releaseDate: null,
+} as unknown as ProductDetail;
+
+const card = (n: number) => ({ productId: `card-${n}` });
+const catalogue = vi.hoisted(() => ({ bestSellers: [] as { productId: string }[] }));
 
 vi.mock('@/server/composition-root', () => ({
   getProductDetailReader: () => async (productId: string) => (productId === KNOWN_ID ? DETAIL : null),
-  getLandingCatalogueReader: () => async () => ({ bestSellers: [], bundles: [], preOrders: [] }),
+  getLandingCatalogueReader: () => async () => ({ bestSellers: catalogue.bestSellers, bundles: [], preOrders: [] }),
 }));
 const session = vi.hoisted(() => ({ customer: { id: 'c1', firstName: 'Test', email: 'test@example.test' } as { id: string; firstName: string; email: string } | null }));
 vi.mock('../../../_components/read-current-customer', () => ({ readCurrentCustomer: async () => session.customer }));
@@ -22,6 +41,21 @@ vi.mock('next-intl/server', () => ({
 
 const { default: ProductPage } = await import('./page');
 const { generateMetadata } = await import('./layout');
+
+/** The props of the first element in a rendered tree that satisfies `match`. */
+function findElement(node: unknown, match: (props: Record<string, unknown>) => boolean): Record<string, unknown> | undefined {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findElement(child, match);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  if (typeof node !== 'object' || node === null || !('props' in node)) return undefined;
+  const props = (node as { props: Record<string, unknown> }).props;
+  if (match(props)) return props;
+  return findElement(props.children, match);
+}
 
 /** What the page answers: 200 with an element, or 404 from `notFound()`; any other error fails the test. */
 async function visit(productId: string, locale = 'th'): Promise<200 | 404> {
@@ -56,6 +90,28 @@ describe('the product page at /product/{id}/detail', () => {
       ]);
     } finally {
       session.customer = { id: 'c1', firstName: 'Test', email: 'test@example.test' };
+    }
+  });
+
+  it('related products are 5, titled สินค้าที่เกี่ยวข้อง', async () => {
+    catalogue.bestSellers = [card(1), card(2), card(3), card(4), card(5), card(6), card(7), { productId: KNOWN_ID }];
+    try {
+      const page = await ProductPage({ params: Promise.resolve({ locale: 'th', productId: KNOWN_ID }) });
+      const section = findElement(page, (props) => props.id === 'related');
+      expect(section).toBeDefined();
+      expect((section!.cards as { productId: string }[]).map((c) => c.productId)).toEqual([
+        'card-1',
+        'card-2',
+        'card-3',
+        'card-4',
+        'card-5',
+      ]);
+      expect(section!.columns).toBe(5);
+      expect(section!.titleKey).toBe('product.related.title');
+      expect(th.shop.product.related.title).toBe('สินค้าที่เกี่ยวข้อง');
+      expect(section!.moreHref).toBe('/th/product?sort=best_selling');
+    } finally {
+      catalogue.bestSellers = [];
     }
   });
 
