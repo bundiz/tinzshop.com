@@ -35,12 +35,49 @@ const SHADOWS: Record<string, string> = {
 
 const BREAKPOINTS: Record<string, string> = { sm: '40rem', md: '53.75rem', lg: '64rem', xl: '73.75rem' };
 
-function sourceFiles(dir: string): string[] {
+function sourceFiles(dir: string, extensions: string[] = ['.tsx']): string[] {
   return readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
-    if (statSync(path).isDirectory()) return sourceFiles(path);
-    return path.endsWith('.tsx') ? [path] : [];
+    if (statSync(path).isDirectory()) return sourceFiles(path, extensions);
+    return extensions.some((extension) => path.endsWith(extension)) ? [path] : [];
   });
+}
+
+// Plan 015, Global Constraints > Retired tokens: the old design's names, removed in Task 9.
+const RETIRED_COLOURS = [
+  'primary', 'primary-dark', 'primary-deep', 'primary-soft', 'accent-dark', 'danger', 'success', 'success-soft',
+  'text', 'text-muted', 'text-subtle', 'bg', 'bg-subtle', 'border',
+];
+const RETIRED_PROPERTIES = [
+  ...RETIRED_COLOURS.map((name) => `--color-${name}`),
+  '--font-sans', '--radius', '--shadow-card', '--shadow-hover', '--breakpoint-xs',
+];
+
+/** A custom property name, matched whole (so `--radius` does not match `--radius-sm`). */
+function property(name: string): RegExp {
+  return new RegExp(`${name.replace(/[-]/g, '\\-')}(?![\\w-])`);
+}
+
+const UTILITY_PREFIX =
+  '(?:bg|text|border(?:-[trblxyse])?|ring|ring-offset|outline|fill|stroke|from|via|to|divide|placeholder|decoration|accent|caret|shadow)';
+/** A utility class built on a retired colour, e.g. `bg-primary`, `hover:text-text-muted`, `border-border`. */
+const RETIRED_CLASS = new RegExp(`(?<![\\w-])${UTILITY_PREFIX}-(?:${RETIRED_COLOURS.join('|')})(?![\\w-])`);
+/** The retired radius and shadow variables used directly, and the retired `xs:` breakpoint variant. */
+const RETIRED_USE = /rounded-\(--radius|var\(--radius\)|--shadow-card|--shadow-hover|(?<![\w-])xs:/;
+
+/** Phrases the mockup carries that are not true of the shop (plan 015 Review Focus 1, R5). */
+const MADE_UP_TEXT = [
+  'Switch 2', 'สัปดาห์นี้', 'ซื้อคู่กันบ่อย', 'ถูกกว่าซื้อแยก', 'คุ้มกว่า', 'เครื่องประกันร้าน', 'เลขพัสดุ', 'รอข้อมูลจากร้าน',
+  'เบอร์ร้าน',
+];
+
+/** Every string value in a message file, with its dotted key. */
+function messageValues(node: unknown, path = ''): [string, string][] {
+  if (typeof node === 'string') return [[path, node]];
+  if (node && typeof node === 'object') {
+    return Object.entries(node).flatMap(([key, value]) => messageValues(value, path ? `${path}.${key}` : key));
+  }
+  return [];
 }
 
 describe('design tokens (globals.css)', () => {
@@ -77,6 +114,28 @@ describe('design tokens (globals.css)', () => {
     const offenders = sourceFiles(join(__dirname, '..')).filter((file) =>
       /min-\[/.test(readFileSync(file, 'utf8')),
     );
+    expect(offenders).toEqual([]);
+  });
+
+  it('no retired token remains', () => {
+    const defined = RETIRED_PROPERTIES.filter((name) => new RegExp(`${name.replace(/[-]/g, '\\-')}\\s*:`).test(css));
+    expect(defined).toEqual([]);
+
+    const offenders = sourceFiles(join(__dirname, '..'), ['.ts', '.tsx', '.css'])
+      .filter((file) => !file.includes(join('src', 'generated')) && !file.endsWith('design-tokens.test.ts'))
+      .flatMap((file) => {
+        const text = readFileSync(file, 'utf8');
+        const found = [RETIRED_CLASS, RETIRED_USE, ...RETIRED_PROPERTIES.map(property)]
+          .map((pattern) => text.match(pattern)?.[0])
+          .filter(Boolean);
+        return found.map((match) => `${file}: ${match}`);
+      });
+    expect(offenders).toEqual([]);
+  });
+
+  it('no made-up storefront text remains', () => {
+    const messages = JSON.parse(readFileSync(join(__dirname, '..', '..', 'messages', 'th.json'), 'utf8'));
+    const offenders = messageValues(messages).filter(([, value]) => MADE_UP_TEXT.some((phrase) => value.includes(phrase)));
     expect(offenders).toEqual([]);
   });
 });

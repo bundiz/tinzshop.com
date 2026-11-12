@@ -68,6 +68,10 @@ describe('SiteHeader', () => {
     expect(form).not.toContain('method=');
   });
 
+  it('sets the top bar message at 13px below sm, so "ส่งทั่วประเทศไทย" stays on one line at 360px (style.css L627)', () => {
+    expect(utilityBar(render('th'))).toMatch(/<p class="[^"]*\btext-\[13px\] sm:text-sm\b[^"]*">/);
+  });
+
   it('keeps the logo link at least 44px tall below sm', () => {
     expect(render('th')).toMatch(/<a aria-label="Tinzshop หน้าแรก" class="flex min-h-11 [^"]*" href="\/th">/);
   });

@@ -559,7 +559,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
       - `reasons.staff.title` "ถามคนที่เล่นจริง" / `.text` "พนักงานเล่นเกมเอง แนะนำรุ่นและเกมตามที่คุณใช้ ไม่ขายเกินความจำเป็น"
       - `reasons.warranty.title` "ติดต่อเรื่องประกันได้ตรง" / `.text` "ส่งเรื่องคืนสินค้า ประกัน หรือเคลมจากคำสั่งซื้อของคุณ พนักงานติดต่อกลับเอง และแจ้งช่องทางของศูนย์ผู้จำหน่าย"
       - `reasons.documents.title` "เอกสารครบ" / `.text` "ราคารวม VAT 7% ใบกำกับภาษีอย่างย่อออกให้ทุกคำสั่งซื้อ ดาวน์โหลด PDF จากประวัติการสั่งซื้อ"
-    - consult: `consult.eyebrow` "ไม่แน่ใจว่าจะเลือกรุ่นไหน", `consult.title` "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ", `consult.text` "ถามได้ทั้งเรื่องรุ่น โซนแผ่น การผ่อน หรือของที่ต้องสั่งจากตัวแทน", `consult.faq` "อ่านคำถามที่พบบ่อย", `consult.word` "LINE"
+    - consult: `consult.eyebrow` "ไม่แน่ใจว่าจะเลือกรุ่นไหน", `consult.title` "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ", `consult.text` "ถามได้ทั้งเรื่องรุ่น โซนแผ่น การผ่อน หรือของที่ต้องสั่งจากตัวแทน", `consult.line` "แชทกับร้านทาง LINE" (the LINE button, added in the build; recorded in Task 9), `consult.faq` "อ่านคำถามที่พบบ่อย", `consult.word` "LINE"
   - **Remove:** `shop.home.hero.label`, `hero.text`, `hero.shopNow`, `hero.viewAll`, `shop.home.trust.*`, `rail.*`, `promo.*`, `welcome.*`, `showcase.*`, `preOrders.*`.
 - [x] **Commit:** `feat: rebuild the home page to the redesign`
 
@@ -753,14 +753,14 @@ Built notes: `AuthShell` now owns the page `main`; `AuthCard` is a plain `sectio
 
 **Files:** `src/app/globals.css`, `src/app/design-tokens.test.ts`, `src/components/ui/Icon.tsx`, `messages/*.json`, this plan, `docs/07-frontend-components.md` (only where the build differs from Task 1's text).
 
-- [ ] **Retire the old tokens:** delete the aliases. Extend `design-tokens.test.ts`:
+- [x] **Retire the old tokens:** delete the aliases. Extend `design-tokens.test.ts`:
   - `no retired token remains`: `globals.css` defines none of the retired names, and no file under `src/` uses a class built on one (`bg-primary`, `text-text-muted`, `border-border`, `bg-bg-subtle`, `rounded-(--radius`, `xs:`, …).
   - `no made-up storefront text remains` (Review Focus 1): no value in `messages/th.json` contains "Switch 2", "สัปดาห์นี้", "ซื้อคู่กันบ่อย", "ถูกกว่าซื้อแยก", "คุ้มกว่า", "เครื่องประกันร้าน", "เลขพัสดุ", "รอข้อมูลจากร้าน" or "เบอร์ร้าน".
-- [ ] **Remove dead code:** `Icon` names with no remaining user (`gamepad`, `switch`, `cpu`, `headphones`, `keyboard`, `mouse`, `share`, and any other a grep finds unused), and message keys with no user (checked by grep, both files).
+- [x] **Remove dead code:** `Icon` names with no remaining user (`gamepad`, `switch`, `cpu`, `headphones`, `keyboard`, `mouse`, `share`, and any other a grep finds unused), and message keys with no user (checked by grep, both files).
 - [ ] **Run everything:** typecheck, lint, the unit and DOM tests, the integration tests against the dev database, and `next build`. Every existing test passes or was updated by a task above, with the reason in that task.
 - [ ] **Visual pass, by a person, in a real browser:** each page beside its mockup page at 1440, 1180, 1024, 860, 390 and 360px, in Thai and English. Record what differs and why in *Outcome*.
-- [ ] **Docs aligned:** where the build differs from Task 1's text, update `07`, the glossary and the D-rows in the same commit.
-- [ ] **Commit:** `chore: retire the old design tokens and record the redesign checks`
+- [x] **Docs aligned:** where the build differs from Task 1's text, update `07`, the glossary and the D-rows in the same commit.
+- [x] **Commit:** `chore: retire the old design tokens and record the redesign checks`
 
 ---
 
@@ -786,7 +786,19 @@ Run by a person against the dev server with the mirror loaded and a signed-in de
 
 ## Outcome
 
-Not started.
+Tasks 1 to 9 are built. The manual test checklist above is still to be run by a person; none of its boxes is ticked.
+
+**Task 9 (2026-11-12).**
+
+- **Old tokens gone.** The aliases in `globals.css` (`primary`, `primary-dark`, `primary-deep`, `primary-soft`, `accent-dark`, `danger`, `success`, `success-soft`, `text`, `text-muted`, `text-subtle`, `bg`, `bg-subtle`, `border`, `--radius`, `--shadow-card`, `--shadow-hover`) are deleted; no file under `src/` still used one, so nothing needed migrating. `design-tokens.test.ts` gains `no retired token remains` (no retired name defined in `globals.css`; no class built on a retired colour, no `rounded-(--radius`, `var(--radius)`, `--shadow-card`, `--shadow-hover` or `xs:` in any `.ts`, `.tsx` or `.css` file under `src/`, generated code aside) and `no made-up storefront text remains` (Review Focus 1's phrases in `messages/th.json`).
+- **Dead code.** `Icon` loses `gamepad`, `switch`, `disc`, `cpu`, `headphones`, `keyboard`, `mouse`, `share` and `check` (no user; the product art uses `artDisc`). A namespace-aware grep of every message key found none without a user in either file; the keys earlier tasks stopped using were already deleted by those tasks.
+- **Home spacing.** `NewsCardSection` carried its own `.sec--tight` padding inside the home page's section gap, so "ข่าวเกมล่าสุด" sat 80–128px below the consult band where every other home section sits 48–80px apart. It now has no outer spacing, like `ProductSection`; the article page wraps its related news in that padding (only when there is related news). Measured after: every gap on the home page is 80px at 1440px and 48px at 360px; the gap above the footer is the mockup's (the last section's bottom plus the footer's margin).
+- **Top bar at 360px.** The message wrapped "ส่งทั่ว / ประเทศไทย" over two lines. It now uses the mockup's 13px below `sm` (style.css L627) and fits on one line (the bar is 44px). In English "Delivery across Thailand" still takes two lines at 360px, inside the same 44px bar.
+- **Header row at 360px.** Menu button, logo and the three actions measure 326 of 328px and sit on one row; the search drops to its own row as designed. No overflow; nothing changed.
+- **Automated look, not the person's visual pass.** With the dev server and headless Chrome, `/th`, `/en`, `/th/news`, `/en/news`, an article, `/th/sign-in`, `/en/sign-in`, `/th/register`, `/th/register/verify` and `/th/forgot-password` were captured at 1440, 390 and 360px. No page scrolls sideways at any of those widths (the only boxes past the edge are the news tabs, inside their own scroller). Fonts load from `/_next/static/media/` only. Not checked: the listing and the product pages (they need a signed-in customer), the verify card itself (without a pending sign-up `/register/verify` returns to register with the "step expired" notice), and the 1180, 1024 and 860px widths. The visual-pass box above stays open for a person.
+- **Seen and left as designed.** The cart count badge overlaps the first letter of the small "ตะกร้า" label at 1440px, exactly as in the mockup (`.badge-count` at `left: 26px`). On the news feature block at phone widths the card's text sits over the upper part of the image, where the gradient is light; with the old site's text-heavy cover images the title is hard to read. Both are for the person doing the visual pass to judge. Review Focus 1 lists "สั่งจากตัวแทน" among the words to search for; the consult band's text, as Task 4 gives it, reads "…หรือของที่ต้องสั่งจากตัวแทน" (asking about items the shop orders from a distributor), not a stock state, so it stays and the guard test does not list that phrase.
+- **Recorded.** `shop.home.consult.line` (Task 4's LINE button) in Task 4's key list; the white sale price on navy and `StockBadge`'s `onDark` as D-202, in 07 and in the glossary.
+- **Runs.** `tsc --noEmit`, `vitest run` (86 files, 883 tests) and `next build` pass. There is no ESLint config, so no lint run. The integration tests were not run: this task changes no server code. The "Run everything" box stays open for the integration run.
 
 ## Not in this plan
 

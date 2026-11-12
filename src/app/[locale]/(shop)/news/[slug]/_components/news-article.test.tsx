@@ -139,6 +139,18 @@ describe('NewsCardSection on the landing page', () => {
   it('hides the section when there are no articles', () => {
     expect(render(<NewsCardSection id="news" title="x" cards={[]} moreHref="/th/news" />)).toBe('');
   });
+
+  it('has no outer spacing of its own, so the home page does not double the gap above it (plan 015 Task 9)', () => {
+    const html = render(<NewsCardSection id="news" title="x" cards={[card(1)]} moreHref="/th/news" />);
+    expect(html).toMatch(/^<section id="news" aria-labelledby="news-title">/);
+  });
+
+  it('spaces the related news on an article, and leaves no empty block when there is none', () => {
+    const withRelated = render(<NewsArticleView article={{ ...detail(), related: [card(1)] }} articlesMenu={[]} />);
+    expect(withRelated).toContain('<div class="py-[clamp(32px,4vw,48px)]"><section id="related-news"');
+    const without = render(<NewsArticleView article={{ ...detail(), related: [] }} articlesMenu={[]} />);
+    expect(without).not.toContain('py-[clamp(32px,4vw,48px)]');
+  });
 });
 
 describe('SiteHeader news link', () => {

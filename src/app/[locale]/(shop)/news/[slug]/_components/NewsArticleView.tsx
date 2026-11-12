@@ -81,7 +81,11 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
             </div>
           </article>
 
-          <NewsCardSection id="related-news" title={t('related.title')} cards={article.related} />
+          {article.related.length > 0 && (
+            <div className="py-[clamp(32px,4vw,48px)]">
+              <NewsCardSection id="related-news" title={t('related.title')} cards={article.related} />
+            </div>
+          )}
         </div>
       </main>
       <SiteFooter />

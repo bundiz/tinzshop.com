@@ -16,14 +16,6 @@ export type IconName =
   | 'calendar'
   | 'package'
   | 'chat'
-  | 'gamepad'
-  | 'switch'
-  | 'disc'
-  | 'cpu'
-  | 'headphones'
-  | 'keyboard'
-  | 'mouse'
-  | 'share'
   | 'shield'
   | 'filter'
   | 'grid'
@@ -32,7 +24,6 @@ export type IconName =
   | 'wrench'
   | 'globe'
   | 'tag'
-  | 'check'
   | 'artConsole'
   | 'artHandheld'
   | 'artPad'
@@ -126,58 +117,6 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   chat: <path d="M4.5 5.5h15v10h-8.5l-4.5 3.5v-3.5h-2Z" />,
-  gamepad: (
-    <>
-      <path d="M8.5 6.5h7a5.5 5.5 0 0 1 5.4 6.6l-.7 3.4A2.6 2.6 0 0 1 16 17.6L14.7 16H9.3L8 17.6a2.6 2.6 0 0 1-4.2-1.1l-.7-3.4A5.5 5.5 0 0 1 8.5 6.5Z" />
-      <path d="M6.5 11h3.5M8.25 9.25v3.5M15.5 10.4h.01M17.6 12.6h.01" />
-    </>
-  ),
-  switch: (
-    <>
-      <rect x="2.5" y="6" width="19" height="12" rx="3" />
-      <path d="M7 6v12M17 6v12M4.8 10h.01M19.2 14h.01" />
-    </>
-  ),
-  disc: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="2.5" />
-    </>
-  ),
-  cpu: (
-    <>
-      <rect x="6" y="6" width="12" height="12" rx="1.5" />
-      <rect x="9.5" y="9.5" width="5" height="5" />
-      <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" />
-    </>
-  ),
-  headphones: (
-    <>
-      <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
-      <rect x="3" y="14" width="4.5" height="6.5" rx="1.5" />
-      <rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5" />
-    </>
-  ),
-  keyboard: (
-    <>
-      <rect x="2.5" y="6.5" width="19" height="11" rx="2" />
-      <path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 13.5h.01M18 13.5h.01M9 14h6" />
-    </>
-  ),
-  mouse: (
-    <>
-      <rect x="6.5" y="3" width="11" height="18" rx="5.5" />
-      <path d="M12 7v3.5" />
-    </>
-  ),
-  share: (
-    <>
-      <circle cx="18" cy="5.5" r="2.5" />
-      <circle cx="6" cy="12" r="2.5" />
-      <circle cx="18" cy="18.5" r="2.5" />
-      <path d="m8.2 10.8 7.6-4M8.2 13.2l7.6 4" />
-    </>
-  ),
   shield: (
     <>
       <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8 7.5 9.5 4.3-1.5 7.5-5 7.5-9.5V6Z" />
@@ -195,7 +134,6 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   list: <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" />,
   x: <path d="M6 6l12 12M18 6 6 18" />,
-  check: <path d="m5 12 4.5 4.5L19 7" />,
   wrench: <path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 1-2-2Z" />,
   globe: (
     <>

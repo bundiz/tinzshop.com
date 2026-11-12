@@ -17,7 +17,7 @@ export type NewsCardSectionProps = {
 /**
  * A section of news cards (the home page's "ข่าวเกมล่าสุด" and an article's "ข่าวที่เกี่ยวข้อง"): the section head,
  * an optional "read all" link and a 1 / 2 / 3 column grid of cards without excerpts. A section with no cards is
- * not rendered.
+ * not rendered. Like `ProductSection` it has no outer spacing: the page that places it spaces it.
  */
 export default function NewsCardSection({ id, title, cards, moreHref }: NewsCardSectionProps) {
   const t = useTranslations('shop.news.landing');
@@ -25,7 +25,7 @@ export default function NewsCardSection({ id, title, cards, moreHref }: NewsCard
   const titleId = `${id}-title`;
 
   return (
-    <section id={id} aria-labelledby={titleId} className="py-[clamp(32px,4vw,48px)]">
+    <section id={id} aria-labelledby={titleId}>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:flex-nowrap">
         <h2 id={titleId} className="text-[clamp(24px,2.4vw,32px)] font-bold">
           {title}

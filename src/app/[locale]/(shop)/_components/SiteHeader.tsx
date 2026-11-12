@@ -101,7 +101,7 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
       </a>
       <div className="bg-navy text-sm text-on-navy-2">
         <div className="wrap flex min-h-11 items-center justify-between gap-4 md:min-h-10">
-          <p className="flex min-w-0 items-center gap-2">
+          <p className="flex min-w-0 items-center gap-2 text-[13px] sm:text-sm">
             <span aria-hidden="true" className="size-[7px] flex-none rounded-full bg-[#2bd576] shadow-[0_0_0_3px_rgba(43,213,118,.18)]" />
             <span>
               {t.rich('tagline', {
