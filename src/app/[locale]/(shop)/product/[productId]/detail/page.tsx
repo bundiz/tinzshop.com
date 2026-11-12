@@ -87,7 +87,7 @@ export default async function ProductPage({ params }: Props) {
             brandName={product.brandName}
             shippingSizeTier={product.shippingSizeTier}
           />
-          <ProductSection id="related" titleKey="product.related.title" cards={related} layout="rail" />
+          <ProductSection id="related" titleKey="product.related.title" cards={related} columns={5} />
         </div>
       </main>
       <SiteFooter />

@@ -105,6 +105,22 @@
   padding-inline: clamp(16px, 3.2vw, 32px);
 }
 
+/* The hero's one entrance, once on load (style.css `[data-enter]`); the reduced-motion rule below turns it off. */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-enter {
+  animation: enter 0.7s var(--ease-soft) both;
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

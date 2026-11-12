@@ -253,10 +253,10 @@ describe('listStorefrontCandidates (landing, sort and limit in SQL)', () => {
     await seed({ name: 'Hidden Kit', variants: [[100, 1]], sales: 999, kit: true, active: false });
 
     const candidates = await listStorefrontCandidates();
-    expect(candidates.length).toBeLessThanOrEqual(8 + 6 + 4);
+    expect(candidates.length).toBeLessThanOrEqual(10 + 5 + 4);
     const catalogue = buildLandingCatalogue(candidates, 'th');
-    expect(names(catalogue.bestSellers)).toEqual(['Plain 11', 'Plain 10', 'Plain 9', 'Plain 8', 'Plain 7', 'Plain 6', 'Plain 5', 'Plain 4']);
-    expect(names(catalogue.bundles)).toEqual(['Kit 7', 'Kit 6', 'Kit 5', 'Kit 4', 'Kit 3', 'Kit 2']);
+    expect(names(catalogue.bestSellers)).toEqual(['Plain 11', 'Plain 10', 'Plain 9', 'Plain 8', 'Plain 7', 'Plain 6', 'Plain 5', 'Plain 4', 'Plain 3', 'Plain 2']);
+    expect(names(catalogue.bundles)).toEqual(['Kit 7', 'Kit 6', 'Kit 5', 'Kit 4', 'Kit 3']);
     expect(names(catalogue.preOrders)).toEqual(['Pre 5', 'Pre 4', 'Pre 3', 'Pre 2']);
   });
 
@@ -266,10 +266,10 @@ describe('listStorefrontCandidates (landing, sort and limit in SQL)', () => {
     }
     const first = await listStorefrontCandidates();
     const catalogue = buildLandingCatalogue(first, 'th');
-    expect(catalogue.bestSellers).toHaveLength(8);
-    expect(catalogue.bundles).toHaveLength(6);
+    expect(catalogue.bestSellers).toHaveLength(10);
+    expect(catalogue.bundles).toHaveLength(5);
     expect(catalogue.preOrders).toHaveLength(4);
-    expect(first.length).toBeLessThanOrEqual(8 + 6 + 4);
+    expect(first.length).toBeLessThanOrEqual(10 + 5 + 4);
 
     const ids = (candidates: { productId: string }[]) => candidates.map((c) => c.productId).sort();
     for (let run = 0; run < 3; run++) {

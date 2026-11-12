@@ -68,4 +68,23 @@ describe('signed-out visitors', () => {
     expect(html).toContain(`href="/th/product/${CARD.productId}/detail"`);
     expect(html).toContain('href="/th/sign-in"');
   });
+
+  it('the home page has no pre-order section and no store-visit block', async () => {
+    const page = await HomePage({ params: Promise.resolve({ locale: 'th' }) });
+    const html = renderToStaticMarkup(
+      <NextIntlClientProvider locale="th" messages={th} timeZone="Asia/Bangkok">
+        {page}
+      </NextIntlClientProvider>,
+    );
+    expect(html).not.toContain('id="preOrders"');
+    expect(html).not.toContain('พรีออเดอร์ เปิดจองแล้ว');
+    expect(html).not.toContain('แวะมาดูของจริงที่หน้าร้าน');
+    expect(html).not.toContain('ดูแผนที่ร้าน');
+    // Signed out: the hero offers สมัครสมาชิก; with no kit there is no feature card, and nothing is invented.
+    expect(html).toContain(th.shop.home.hero.register);
+    expect(html).not.toContain(th.shop.home.hero.feature.tag);
+    for (const made of ['Switch 2', 'สัปดาห์นี้', 'ซื้อคู่กันบ่อย', 'ถูกกว่าซื้อแยก', 'เครื่องประกันร้าน', 'เลขพัสดุ', 'รอข้อมูลจากร้าน', 'เบอร์ร้าน']) {
+      expect(html).not.toContain(made);
+    }
+  });
 });

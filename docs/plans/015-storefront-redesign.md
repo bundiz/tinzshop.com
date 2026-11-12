@@ -490,7 +490,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 - `ProductSectionProps = { id: ProductSectionId; titleKey: string; subtitleKey?: string; cards: readonly LandingProductCard[]; moreHref?: string; moreLabelKey?: string; filterLinks?: readonly { label: string; href: string | null }[]; columns: 5 | 4 }`. `layout` and `tone` go. A `filterLinks` entry with `href: null` is the current one. `ProductSectionId` gains nothing; `preOrders` stays in the type for plan 005.
 - Landing constants: `BEST_SELLER_LIMIT = 10`, `BUNDLE_LIMIT = 5`, `PRE_ORDER_LIMIT = 4`; the SQL `LIMIT`s match. The repository's doc comment says "at most 19".
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `landing-catalogue-service.test.ts`: `toHaveLength(8)` → 10, `toHaveLength(6)` → 5; the integration tests' limits likewise.
   - `Hero`:
     - `links เลือกซื้อสินค้า to the product listing`
@@ -514,7 +514,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - the other tests stay
   - `public-pages.test.tsx`: `the home page stays public and keeps showing its products (D-161)` stays; add `the home page has no pre-order section and no store-visit block`.
   - `loading.test.tsx`: the skeleton uses the `g-5` grid.
-- [ ] **Build** (`_build.mjs` L206–328; style.css L200–311), in this order:
+- [x] **Build** (`_build.mjs` L206–328; style.css L200–311), in this order:
   1. **Hero** (style.css L201–230): a full-width `bg-navy` band with the backdrop, `wrap` grid one column, `[1.05fr_.95fr]` from `lg`, `min-h-[min(640px,calc(100svh-170px))]`, `py-11 lg:py-14`, the entrance animation (none under reduced motion).
      - `h1` `text-[clamp(34px,4.4vw,58px)] leading-[1.14] text-white`, its `em` `not-italic text-accent`.
      - The lead, the three facts with `truck`, `card`, `receipt` in `text-accent`.
@@ -528,7 +528,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   7. **`ConsultBand`** (style.css L291–300): `bg-navy rounded-2xl p-[clamp(28px,4vw,56px)]`, two columns from `lg`; the eyebrow, `h2`, text, the `lineApp lg` and `ghost lg` buttons (full width below `sm`), and the word "LINE" at `font-head text-[44px] sm:text-[clamp(44px,6.4vw,92px)]` (`aria-hidden`).
   8. **News:** `NewsCardSection` as now.
   9. The empty state (`shop.home.empty`) when there are no products, as now.
-- [ ] **Messages:**
+- [x] **Messages:**
   - **Add or replace** under `shop.home`:
     - `meta.title` "Tinzshop — เครื่องเกม แผ่นเกม และอุปกรณ์ PS5 · Nintendo Switch"
     - `meta.description` "ร้านเกมย่านสะพานเหล็กกว่า 20 ปี ขาย PS5, Nintendo Switch, แผ่นเกม จอย และ IT Gadgets ส่งทั่วไทย ชำระผ่าน K-Payment"
@@ -561,7 +561,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
       - `reasons.documents.title` "เอกสารครบ" / `.text` "ราคารวม VAT 7% ใบกำกับภาษีอย่างย่อออกให้ทุกคำสั่งซื้อ ดาวน์โหลด PDF จากประวัติการสั่งซื้อ"
     - consult: `consult.eyebrow` "ไม่แน่ใจว่าจะเลือกรุ่นไหน", `consult.title` "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ", `consult.text` "ถามได้ทั้งเรื่องรุ่น โซนแผ่น การผ่อน หรือของที่ต้องสั่งจากตัวแทน", `consult.faq` "อ่านคำถามที่พบบ่อย", `consult.word` "LINE"
   - **Remove:** `shop.home.hero.label`, `hero.text`, `hero.shopNow`, `hero.viewAll`, `shop.home.trust.*`, `rail.*`, `promo.*`, `welcome.*`, `showcase.*`, `preOrders.*`.
-- [ ] **Commit:** `feat: rebuild the home page to the redesign`
+- [x] **Commit:** `feat: rebuild the home page to the redesign`
 
 ### Task 5: Product listing
 

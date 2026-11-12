@@ -72,4 +72,17 @@ describe('PriceDisplay', () => {
       expect(html).not.toContain('<s class');
     }
   });
+
+  it('keeps the price white on navy when reduced: red fails 3:1 there, the struck original tells the sale', () => {
+    for (const size of ['feature', 'mini'] as const) {
+      const html = render(<PriceDisplay satang={299000n} original={349000n} size={size} />);
+      expect(html).not.toContain('text-sale');
+      expect(html).toContain('text-on-navy-2 line-through');
+    }
+    expect(render(<PriceDisplay satang={299000n} original={349000n} size="feature" />)).toContain('text-white');
+  });
+
+  it('leaves no stray space in a plain price class', () => {
+    expect(render(<PriceDisplay satang={299000n} />)).toContain('<span class="font-head text-lg font-bold sm:text-xl">');
+  });
 });

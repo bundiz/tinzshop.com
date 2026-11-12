@@ -66,100 +66,88 @@
     },
     "home": {
       "meta": {
-        "title": "Tinzshop — Home",
-        "description": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop"
+        "title": "Tinzshop — Games, consoles and PS5 · Nintendo Switch gear",
+        "description": "A Saphan Lek games shop for over 20 years: PS5, Nintendo Switch, game discs, controllers and IT gadgets, delivered across Thailand and paid through K-Payment"
       },
       "hero": {
-        "label": "Featured",
-        "eyebrow": "New this month",
-        "title": "Play to the max<br></br>with <em>PlayStation 5</em>",
-        "text": "Consoles, games and accessories all in one place, with instalments through K-Payment",
-        "shopNow": "Shop now",
-        "viewAll": "View all products"
-      },
-      "trust": {
-        "label": "Our services",
-        "shipping": {
-          "title": "Delivery across Thailand",
-          "text": "Shipping priced by product size"
+        "eyebrow": "A Saphan Lek shop for over 20 years · Delivery across Thailand",
+        "title": "Consoles, games and accessories for <em>PS5 · Switch</em> in one shop",
+        "lead": "Register once to see every price, order and follow your orders yourself. Not sure which model? Ask staff who really play games, on LINE, before you buy.",
+        "facts": {
+          "shipping": "Shipping by product size, free for large items",
+          "payment": "Card, instalments or PromptPay QR through K-Payment",
+          "invoice": "An abbreviated tax invoice PDF with every order"
         },
-        "payment": {
-          "title": "Pay with K-Payment",
-          "text": "Card · Instalments · PromptPay QR"
-        },
-        "store": {
-          "title": "A real store for over 20 years",
-          "text": "Our shop in Saphan Lek"
-        },
-        "taxInvoice": {
-          "title": "Automatic tax invoice",
-          "text": "Prices include VAT"
+        "shop": "Shop products",
+        "register": "Create an account",
+        "feature": {
+          "tag": "Best-selling promotion set"
         }
+      },
+      "platforms": {
+        "label": "Shop by platform",
+        "consoleGames": "Consoles · Games · Controllers",
+        "gadgets": "Keyboards · Mice",
+        "preOrder": "Reserve before release",
+        "bundles": "Console + games",
+        "saleTitle": "On sale",
+        "sale": "Special prices"
       },
       "bundles": {
-        "title": "Promotion sets",
-        "subtitle": "Consoles, games and accessories, bundled ready to play"
+        "title": "Ready-to-play promotion sets",
+        "subtitle": "Consoles, games and accessories, bundled as sets",
+        "more": "View all sets"
+      },
+      "banners": {
+        "label": "Shop by console",
+        "ps": {
+          "title": "Everything for PS5",
+          "text": "Slim consoles, both disc-drive and Digital. Zone 3 games with Thai subtitles, controllers and SSDs for more storage."
+        },
+        "switch": {
+          "title": "Everything for Switch",
+          "text": "New Asia-zone games, Pro Controllers, cases and screen protectors."
+        },
+        "casesFilm": "Cases & screen protectors"
       },
       "bestSellers": {
-        "title": "Best sellers"
+        "title": "Best sellers",
+        "filterLabel": "Filter best sellers",
+        "all": "All",
+        "ps5": "PS5",
+        "switch": "Switch",
+        "gadgets": "IT Gadgets"
       },
-      "preOrders": {
-        "title": "Pre-orders"
+      "reasons": {
+        "title": "Why gamers buy from Tinzshop",
+        "store": {
+          "title": "A real shop for over 20 years",
+          "text": "Our Saphan Lek shop has sold consoles and games for a long time. Now you can order online and we deliver across the country."
+        },
+        "staff": {
+          "title": "Ask people who play",
+          "text": "Our staff play games themselves. They recommend models and games for how you play, and never oversell."
+        },
+        "warranty": {
+          "title": "Reach us directly about warranty",
+          "text": "Send a return, warranty or claim request from your order. Staff contact you back and tell you the distributor's service channel."
+        },
+        "documents": {
+          "title": "Complete paperwork",
+          "text": "Prices include 7% VAT. An abbreviated tax invoice is issued for every order and downloadable as a PDF from your order history."
+        }
+      },
+      "consult": {
+        "eyebrow": "Not sure which model to choose?",
+        "title": "Ask the shop before you buy. We answer during opening hours",
+        "text": "Ask about models, disc zones, instalments, or items that must be ordered from the distributor.",
+        "line": "Chat with the shop on LINE",
+        "faq": "Read the frequently asked questions",
+        "word": "LINE"
       },
       "empty": "No products are on sale yet",
-      "rail": {
-        "label": "Product categories",
-        "categoriesTitle": "Product categories",
-        "popularTitle": "Popular picks",
-        "controllers": "Controllers",
-        "games": "Games",
-        "headsets": "Gaming headsets",
-        "keyboards": "Keyboards",
-        "mice": "Mice"
-      },
-      "promo": {
-        "preOrder": {
-          "kicker": "Pre-orders",
-          "title": "November's new games are open for pre-order",
-          "link": "See the list"
-        },
-        "gadgets": {
-          "kicker": "IT Gadgets",
-          "title": "Keyboards, mice and headsets for gamers",
-          "link": "Shop now"
-        }
-      },
-      "welcome": {
-        "label": "Your account",
-        "hello": "Hello",
-        "helloName": "Hello, {name}",
-        "text": "Welcome to Tinzshop",
-        "signIn": "Sign in",
-        "signUp": "Create an account",
-        "note": "Sign in to order and follow your orders",
-        "orders": "My orders",
-        "wishlist": "Wishlist",
-        "preOrders": "My pre-orders",
-        "contact": "Contact the shop"
-      },
       "section": {
         "more": "View all"
-      },
-      "showcase": {
-        "title": "Shop by category",
-        "consolesText": "Consoles, games and accessories",
-        "gadgetsText": "IT gear for gamers",
-        "preOrderText": "Reserve new games and consoles before release",
-        "tag": {
-          "consoles": "Consoles",
-          "games": "Games",
-          "controllers": "Controllers",
-          "keyboards": "Keyboards",
-          "mice": "Mice",
-          "headsets": "Headsets",
-          "newGames": "New games",
-          "newConsoles": "New consoles"
-        }
       }
     },
     "product": {

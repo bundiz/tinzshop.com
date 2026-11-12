@@ -21,9 +21,13 @@ const NOW_CLASS: Record<NonNullable<PriceDisplayProps['size']>, string> = {
   mini: 'font-body text-[13px] font-normal',
 };
 
-// On navy (the hero's feature card) the grey would not read, so the original takes the on-navy grey.
+// On navy (the hero's feature card and minis) the grey would not read, so the original takes the on-navy grey.
 const ORIGINAL_CLASS = 'text-sm text-muted line-through';
 const ORIGINAL_ON_NAVY_CLASS = 'text-sm text-on-navy-2 line-through';
+
+// The red sale price is 2.65:1 on the navy card, below the 3:1 a large heading needs, so on navy a sale is told by
+// the struck original alone and the price stays white (plan 015 Task 4).
+const onNavy = (size: NonNullable<PriceDisplayProps['size']>) => size === 'feature' || size === 'mini';
 
 /** The only component that renders a price (07 Money, dates and numbers). */
 export default function PriceDisplay({ satang, original = null, isRange = false, size = 'card' }: PriceDisplayProps) {
@@ -33,15 +37,15 @@ export default function PriceDisplay({ satang, original = null, isRange = false,
   // The sale look (red price, struck original) only when the original is above the price (D-123).
   const onSale = original !== null && original > satang;
 
-  const colour = onSale ? 'text-sale' : size === 'feature' ? 'text-white' : '';
+  const colour = onNavy(size) ? (size === 'feature' ? 'text-white' : '') : onSale ? 'text-sale' : '';
 
   return (
     <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 tabular-nums">
-      <span className={`${NOW_CLASS[size]} ${colour}`}>
+      <span className={[NOW_CLASS[size], colour].filter(Boolean).join(' ')}>
         {isRange ? t('from', { price: now }) : now}
       </span>
       {onSale && (
-        <s className={size === 'feature' ? ORIGINAL_ON_NAVY_CLASS : ORIGINAL_CLASS}>
+        <s className={onNavy(size) ? ORIGINAL_ON_NAVY_CLASS : ORIGINAL_CLASS}>
           {/* Strikethrough is not announced, so a screen reader hears what the number is. */}
           <span className="sr-only">{t('original')}</span> {formatBaht(original, locale)}
         </s>
