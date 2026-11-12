@@ -38,7 +38,7 @@ export default function BuyActions() {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
         <button type="button" className={`${action} bg-primary text-white hover:bg-primary-dark`}>
-          <Icon name="cart" className="hidden size-5 xs:block" />
+          <Icon name="cart" className="hidden size-5 sm:block" />
           {t('addToCart')}
         </button>
         <button type="button" className={`${action} bg-accent text-text hover:bg-accent-dark`}>

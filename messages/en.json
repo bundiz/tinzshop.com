@@ -166,7 +166,8 @@
       },
       "badge": {
         "bundle": "Promotion set",
-        "preOrder": "Pre-order"
+        "preOrder": "Pre-order",
+        "sale": "Sale"
       },
       "releaseDate": "Releases {date, date, medium}",
       "imagePlaceholderAlt": "No product image yet",
@@ -236,7 +237,8 @@
         "title": "{name} | Tinzshop"
       },
       "wishlist": {
-        "add": "Add to wishlist"
+        "add": "Add to wishlist",
+        "addNamed": "Add {name} to wishlist"
       },
       "share": "Share",
       "quantity": {
@@ -245,6 +247,7 @@
         "increase": "Increase quantity"
       },
       "addToCart": "Add to cart",
+      "addToCartNamed": "Add {name} to cart",
       "buyNow": "Buy now",
       "reviews": {
         "empty": "No reviews yet"

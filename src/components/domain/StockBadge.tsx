@@ -6,8 +6,8 @@ export type StockBadgeProps = {
 };
 
 const COLOUR: Record<StockBadgeProps['status'], string> = {
-  in_stock: 'text-success',
-  out_of_stock: 'text-text-subtle',
+  in_stock: 'text-ok',
+  out_of_stock: 'text-muted',
 };
 
 /** The only component that renders availability: text plus colour, so colour is never the only signal. */
@@ -16,7 +16,7 @@ export default function StockBadge({ status }: StockBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-[5px] text-xs font-semibold before:size-[7px] before:rounded-full before:bg-current before:content-[''] ${COLOUR[status]}`}
+      className={`inline-flex items-center gap-1.5 text-[13.5px] font-medium before:size-2 before:rounded-full before:bg-current before:content-[''] ${COLOUR[status]}`}
     >
       {t(status)}
     </span>

@@ -28,7 +28,19 @@ export type IconName =
   | 'filter'
   | 'grid'
   | 'list'
-  | 'x';
+  | 'x'
+  | 'wrench'
+  | 'globe'
+  | 'tag'
+  | 'check'
+  | 'artConsole'
+  | 'artHandheld'
+  | 'artPad'
+  | 'artDisc'
+  | 'artHead'
+  | 'artKey'
+  | 'artBox'
+  | 'artNews';
 
 export type IconProps = {
   name: IconName;
@@ -38,7 +50,7 @@ export type IconProps = {
   strokeWidth?: number;
 };
 
-/** The design's inline SVG icon set (`design/index.html` symbols), always decorative: `aria-hidden`. */
+/** The design's inline SVG icon set (`tinzshop-redesign/_build.mjs` symbols), always decorative: `aria-hidden`. */
 export default function Icon({ name, className = 'size-5', strokeWidth = 1.8 }: IconProps) {
   return (
     <svg
@@ -183,4 +195,72 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   list: <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" />,
   x: <path d="M6 6l12 12M18 6 6 18" />,
+  check: <path d="m5 12 4.5 4.5L19 7" />,
+  wrench: <path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 1-2-2Z" />,
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5Z" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M3.5 12.5V4.5h8l9 9-8 8Z" />
+      <circle cx="8" cy="9" r="1.3" />
+    </>
+  ),
+  // Product art (generic, not brand look-alikes); drawn large at strokeWidth 0.9 by ImagePlaceholder.
+  artConsole: (
+    <>
+      <path d="M8.5 2.5h5a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2Z" />
+      <path d="M15.5 4c2.5.8 3.5 2.6 3.5 5v8c0 2.4-1 4.2-3.5 5M9 6.5h4M11 18h.01" />
+    </>
+  ),
+  artHandheld: (
+    <>
+      <path d="M7 6h10v12H7z" />
+      <path d="M7 6H5.5A2.5 2.5 0 0 0 3 8.5v7A2.5 2.5 0 0 0 5.5 18H7M17 6h1.5A2.5 2.5 0 0 1 21 8.5v7a2.5 2.5 0 0 1-2.5 2.5H17M8.6 7.6h6.8v8.8H8.6z" />
+      <circle cx="5" cy="10" r=".7" />
+      <circle cx="19" cy="14" r=".7" />
+    </>
+  ),
+  artPad: (
+    <>
+      <path d="M8.5 6.5h7a5.5 5.5 0 0 1 5.4 6.6l-.7 3.4A2.6 2.6 0 0 1 16 17.6L14.7 16H9.3L8 17.6a2.6 2.6 0 0 1-4.2-1.1l-.7-3.4A5.5 5.5 0 0 1 8.5 6.5Z" />
+      <path d="M6.5 11h3.5M8.25 9.25v3.5M15.5 10.4h.01M17.6 12.6h.01" />
+    </>
+  ),
+  artDisc: (
+    <>
+      <rect x="5" y="2.5" width="14" height="19" rx="1.5" />
+      <path d="M5 5.5h14" />
+      <circle cx="12" cy="13" r="4.5" />
+      <circle cx="12" cy="13" r="1.2" />
+    </>
+  ),
+  artHead: (
+    <>
+      <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
+      <rect x="3" y="14" width="4.5" height="6.5" rx="1.5" />
+      <rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5" />
+    </>
+  ),
+  artKey: (
+    <>
+      <rect x="2.5" y="6.5" width="19" height="11" rx="2" />
+      <path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 13.5h.01M18 13.5h.01M9 14h6" />
+    </>
+  ),
+  artBox: (
+    <>
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z" />
+      <path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.3l8 4.5" />
+    </>
+  ),
+  artNews: (
+    <>
+      <path d="M4 10v4h3l6 4V6L7 10Z" />
+      <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" />
+    </>
+  ),
 };
