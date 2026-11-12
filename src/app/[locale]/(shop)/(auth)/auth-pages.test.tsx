@@ -62,8 +62,9 @@ async function redirectOf(run: () => Promise<unknown>): Promise<string | null> {
   }
 }
 
-/** The card's header: the title block and the other page's link at the top right. */
-const cardHeader = (page: string): string => page.match(/<header class="flex items-start[\s\S]*?<\/header>/)?.[0] ?? '';
+/** The card's header: the title and the line under it with the link to the other page. */
+const cardHeader = (page: string): string => page.match(/<header data-auth-header[\s\S]*?<\/header>/)?.[0] ?? '';
+const perksOf = (page: string): string => page.match(/<aside[^>]*data-auth-perks[\s\S]*?<\/aside>/)?.[0] ?? '';
 const signIn = async (query: Query = {}, locale: 'th' | 'en' = 'th') =>
   html(await SignInPage({ params: params(locale), searchParams: Promise.resolve(query) }), locale);
 const register = async (query: Query = {}, locale: 'th' | 'en' = 'th') =>
@@ -78,20 +79,19 @@ beforeEach(() => {
 });
 
 describe('the sign-in page', () => {
-  it('shows email and password, the forgot link on the password label row, Google, and the register link at the top right', async () => {
+  it('shows email and password, the forgot link below the password field, Google, and "ยังไม่มีบัญชี? สมัครสมาชิก" under the title', async () => {
     const page = await signIn();
     expect(page).toContain(`>${th.shop.auth.field.email}</label>`);
     expect(page.toLowerCase()).toContain('autocomplete="email"');
     expect(page.toLowerCase()).toContain('autocomplete="current-password"');
-    // "ลืมรหัสผ่าน?" is in the same row as the password label, after it.
-    expect(page).toMatch(
-      new RegExp(`<label for="auth-password"[^>]*>${th.shop.auth.field.password}</label><a [^>]*href="/th/forgot-password"[^>]*>ลืมรหัสผ่าน\\?</a>`),
-    );
+    // "ลืมรหัสผ่าน?" sits in a row after the password field, not on the label's row.
+    expect(page).toMatch(/<\/button><\/div><\/div><div[^>]*justify-end[^>]*><a [^>]*href="\/th\/forgot-password"[^>]*>ลืมรหัสผ่าน\?<\/a>/);
     expect(page).toContain('href="/api/auth/google?returnTo=%2F&amp;locale=th"');
     expect(page).toContain('<svg');
-    expect(cardHeader(page)).toContain('href="/th/register"');
-    expect(cardHeader(page)).toContain(th.shop.auth.signIn.switchLink);
-    expect(page).toContain('max-w-sm');
+    expect(cardHeader(page)).toMatch(/ยังไม่มีบัญชี\? <a [^>]*href="\/th\/register"[^>]*>สมัครสมาชิก<\/a>/);
+    expect(page).toContain('เข้าสู่ระบบด้วย Google');
+    expect(page).toContain('แสดงรหัสผ่าน');
+    expect(page).toContain('placeholder="name@example.com"');
   });
 
   it('keeps the page the customer came from, and drops a returnTo that is not a path on this site', async () => {
@@ -156,7 +156,7 @@ describe('the sign-in page', () => {
 });
 
 describe('the register page', () => {
-  it('shows the five fields with the right autocomplete, the password rules, Google, and the sign-in link at the top right', async () => {
+  it('shows the five fields with the right autocomplete, the password rules, Google, and "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" under the title', async () => {
     const page = await register();
     for (const key of ['firstName', 'lastName', 'email', 'password', 'passwordConfirm'] as const) {
       expect(page).toContain(`>${th.shop.auth.field[key]}</label>`);
@@ -168,8 +168,18 @@ describe('the register page', () => {
     for (const rule of Object.values(th.shop.auth.password.rule)) expect(page).toContain(rule);
     expect(page).toMatch(/aria-describedby="auth-password-hint"/);
     expect(page).toContain('href="/api/auth/google');
-    expect(cardHeader(page)).toContain('href="/th/sign-in"');
+    expect(cardHeader(page)).toMatch(/มีบัญชีอยู่แล้ว\? <a [^>]*href="\/th\/sign-in"[^>]*>เข้าสู่ระบบ<\/a>/);
+    expect(page).toContain('สมัครด้วย Google');
+    expect(page).toContain(th.shop.auth.field.emailHint);
+    expect(page).toMatch(/aria-describedby="auth-email-hint"/);
     expect(page).not.toContain('forgot-password');
+  });
+
+  it('register shows no terms or PDPA fine print', async () => {
+    // The card only: the site footer has its own policy links.
+    const page = (await register()).match(/<section aria-labelledby="auth-title"[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect(page).toContain('auth-password');
+    for (const text of ['เงื่อนไขการใช้บริการ', 'นโยบายความเป็นส่วนตัว', 'PDPA']) expect(page).not.toContain(text);
   });
 
   it('sends returnTo with the registration, as a hidden field', async () => {
@@ -180,6 +190,43 @@ describe('the register page', () => {
   it('explains a timed-out verify step', async () => {
     expect(await register({ expired: '1' })).toContain(th.shop.auth.notice.expired);
     expect(await register()).not.toContain(th.shop.auth.notice.expired);
+  });
+});
+
+describe('the perks panel and the breadcrumb', () => {
+  it('sign-in and register show the perks panel without the wishlist perk, the tracking number or reminders; verify and forgot password show none', async () => {
+    request.pendingEmail = 'pending@example.test';
+    const signInPerks = perksOf(await signIn());
+    const registerPerks = perksOf(await register());
+    expect(signInPerks).toContain(th.shop.auth.perks.signInTitle);
+    expect(registerPerks).toContain(th.shop.auth.perks.registerTitle);
+    for (const perks of [signInPerks, registerPerks]) {
+      expect(perks).toContain(th.shop.auth.perks.eyebrow);
+      expect(perks).toContain(th.shop.auth.perks.orders.title);
+      expect(perks).toContain(th.shop.auth.perks.invoice.title);
+      expect(perks).toContain(th.shop.auth.perks.preOrder.title);
+      expect(perks).toContain(th.shop.auth.perks.warranty.title);
+      for (const banned of ['บันทึกสินค้าที่ชอบ', 'เลขพัสดุ', 'แจ้งเตือน']) expect(perks).not.toContain(banned);
+    }
+    expect(perksOf(await verify())).toBe('');
+    expect(perksOf(await forgot())).toBe('');
+    expect(perksOf(await forgot({ step: 'reset' }))).toBe('');
+  });
+
+  it('each page has the breadcrumb', async () => {
+    request.pendingEmail = 'pending@example.test';
+    const crumb = (page: string) => page.match(/<nav aria-label="เส้นทาง"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    for (const [page, label] of [
+      [await signIn(), th.shop.auth.signIn.title],
+      [await register(), th.shop.auth.register.title],
+      [await verify(), th.shop.auth.verify.title],
+      [await forgot(), th.shop.auth.forgot.title],
+    ] as const) {
+      expect(crumb(page)).toContain('href="/th"');
+      expect(crumb(page)).toContain(th.shop.auth.breadcrumb.home);
+      expect(crumb(page)).toContain(`<span aria-current="page"`);
+      expect(crumb(page)).toContain(`>${label}</span>`);
+    }
   });
 });
 

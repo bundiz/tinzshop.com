@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { safeReturnTo } from '@/server/services/auth/return-to';
 import { readArticlesMenu } from '../../_components/read-articles-menu';
@@ -6,7 +7,7 @@ import { readCurrentCustomer } from '../../_components/read-current-customer';
 import { readPendingEmail } from '../auth-cookies';
 import { forgotPasswordAction, resendResetCodeAction, resetPasswordAction } from '../actions';
 import { firstParam, startAuthPage, type AuthSearchParams } from '../auth-page';
-import AuthCard from '../_components/AuthCard';
+import AuthCard, { AUTH_LINK_CLASS } from '../_components/AuthCard';
 import AuthForm from '../_components/AuthForm';
 import AuthNotice from '../_components/AuthNotice';
 import AuthShell from '../_components/AuthShell';
@@ -67,12 +68,17 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
       path={`/forgot-password${pendingEmail !== null ? '?step=reset' : ''}`}
       articlesMenu={articlesMenu}
       customer={customer}
+      breadcrumb={t('forgot.title')}
+      perks={null}
     >
       <AuthCard
         title={t('forgot.title')}
         description={t('forgot.description')}
-        switchHref={`/${locale}/sign-in${withReturn}`}
-        switchLabel={t('forgot.switchLink')}
+        switchPrompt={
+          <Link href={`/${locale}/sign-in${withReturn}`} className={AUTH_LINK_CLASS}>
+            {t('forgot.switchLink')}
+          </Link>
+        }
       >
         {firstParam(query.expired) === '1' && <AuthNotice tone="info">{t('notice.expired')}</AuthNotice>}
         {pendingEmail !== null && firstParam(query.setPassword) === '1' && (
@@ -86,7 +92,7 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
             submitKey="forgot.submit"
             introKey="forgot.emailIntro"
             hidden={returnTo === '/' ? undefined : { returnTo }}
-            fields={[{ name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email', maxLength: 254 }]}
+            fields={[{ name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email', maxLength: 254, placeholderKey: 'field.emailPlaceholder' }]}
           />
         )}
       </AuthCard>

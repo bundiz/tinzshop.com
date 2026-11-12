@@ -1,25 +1,28 @@
 import { useTranslations } from 'next-intl';
+import { buttonClass } from '@/components/ui/button-class';
 
 export type GoogleButtonProps = {
   locale: string;
   /** A path without the locale, already safe (`safeReturnTo`). */
   returnTo: string;
+  /** "Sign in with Google" on sign-in, "Sign up with Google" on register. */
+  labelKey: 'google.label' | 'google.register';
 };
 
 /** "Sign in with Google": a plain link to the route that starts the sign-in (plan 014 Task 8). */
-export default function GoogleButton({ locale, returnTo }: GoogleButtonProps) {
+export default function GoogleButton({ locale, returnTo, labelKey }: GoogleButtonProps) {
   const t = useTranslations('shop.auth');
   const href = `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}&locale=${locale}`;
 
   return (
     <>
-      <p aria-hidden="true" className="my-3 flex items-center gap-3 text-[13px] text-text-subtle before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+      <p aria-hidden="true" className="mt-6 mb-4 flex items-center gap-3 text-sm text-muted before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line">
         {t('google.or')}
       </p>
       {/* A plain anchor, not next/link: the route answers with a redirect to Cognito, which a client transition cannot follow. */}
       <a
         href={href}
-        className="flex min-h-11 w-full items-center justify-center gap-2.5 rounded-full border border-border bg-bg px-5 text-[15px] leading-[1.3] font-bold transition-colors hover:bg-bg-subtle"
+        className={buttonClass({ variant: 'line', block: true })}
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 flex-none">
           <path
@@ -39,7 +42,7 @@ export default function GoogleButton({ locale, returnTo }: GoogleButtonProps) {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
           />
         </svg>
-        {t('google.label')}
+        {t(labelKey)}
       </a>
     </>
   );

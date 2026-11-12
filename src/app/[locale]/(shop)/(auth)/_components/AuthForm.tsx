@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useActionState, useEffect, useRef, useState, type FormEvent, type HTMLInputAutoCompleteAttribute } from 'react';
+import { Fragment, useActionState, useEffect, useRef, useState, type FormEvent, type HTMLInputAutoCompleteAttribute } from 'react';
 import type { AuthFormState } from '@/server/controllers/auth/customer-auth-controller';
 import { PASSWORD_RULES } from '@/server/services/auth/password-policy';
+import { AUTH_LINK_CLASS } from './AuthCard';
 import AuthField from './AuthField';
+import { buttonClass } from '@/components/ui/button-class';
 
 /** One field, as plain data a Server Component can hand to this client form. Label keys are relative to `shop.auth`. */
 export type AuthFieldSpec = {
@@ -16,8 +18,14 @@ export type AuthFieldSpec = {
   inputMode?: 'numeric';
   defaultValue?: string;
   maxLength?: number;
-  /** A link on the label's row, aligned right; `labelKey` is relative to `shop.auth`. */
-  labelLink?: { href: string; labelKey: string };
+  /** Drawn beside the next `half` field from `sm` (first and last name). */
+  half?: boolean;
+  /** A placeholder, a key relative to `shop.auth`. */
+  placeholderKey?: string;
+  /** Help under the input, a key relative to `shop.auth`. */
+  hintKey?: string;
+  /** A link in a right-aligned row below the field ("ลืมรหัสผ่าน?"); `labelKey` is relative to `shop.auth`. */
+  belowLink?: { href: string; labelKey: string };
   /** Show the password rules (`PASSWORD_RULES`, D-177) under this field, each ticked green as the typed password meets it (D-189). */
   showPasswordRules?: boolean;
   /** The name of the field this one must repeat; a green tick shows beside the label once both hold the same text (D-189). */
@@ -37,6 +45,8 @@ export type AuthFormProps = {
   introValues?: Record<string, string>;
   /** The primary button fills the card; the secondary is an outline button for a lesser action such as resend. */
   variant?: 'primary' | 'secondary';
+  /** The primary button's colour: `buy` (yellow) for register, `brand` (blue) for the rest. */
+  tone?: 'brand' | 'buy';
 };
 
 const KEY_PREFIX = 'shop.auth.';
@@ -62,6 +72,7 @@ export default function AuthForm({
   introKey,
   introValues,
   variant = 'primary',
+  tone = 'brand',
 }: AuthFormProps) {
   const t = useTranslations('shop.auth');
   const locale = useLocale();
@@ -99,10 +110,76 @@ export default function AuthForm({
   }, [invalid, state]);
 
   const note = message(state.formError) ?? message(state.notice);
-  const buttonStyle =
-    variant === 'primary'
-      ? 'border-transparent bg-primary text-white hover:bg-primary-dark'
-      : 'border-primary bg-bg text-primary hover:bg-primary-soft';
+  const buttonStyle = buttonClass({ variant: variant === 'primary' ? tone : 'line', size: 'lg', block: true });
+
+  const renderField = (field: AuthFieldSpec) => {
+    const matched = confirmMatches(field);
+    return (
+      <Fragment key={field.name}>
+        <AuthField
+          // A new echoed value remounts the input, so React's reset after the action shows what was typed, not a blank.
+          key={`${field.name}:${state.values?.[field.name] ?? ''}`}
+          name={field.name}
+          label={t(field.labelKey)}
+          type={field.type}
+          autoComplete={field.autoComplete}
+          inputMode={field.inputMode}
+          defaultValue={state.values?.[field.name] ?? field.defaultValue}
+          maxLength={field.maxLength}
+          placeholder={field.placeholderKey === undefined ? undefined : t(field.placeholderKey)}
+          revealable={field.type === 'password'}
+          // A mismatch error from the last submit is stale once the two passwords match.
+          error={matched ? undefined : message(state.fieldErrors?.[field.name])}
+          labelBadge={
+            matched ? (
+              <span data-confirm-match className="mb-1.5 inline-flex items-center text-ok">
+                <CheckIcon />
+                <span className="sr-only">{t('password.confirmMatch')}</span>
+              </span>
+            ) : undefined
+          }
+          hint={
+            field.showPasswordRules ? (
+              <>
+                {field.hintKey !== undefined && <p>{t(field.hintKey)}</p>}
+                <p>{t('password.rulesLabel')}</p>
+                <ul className="mt-0.5 grid gap-0.5 text-[13px]">
+                  {PASSWORD_RULES.map((rule) => {
+                    const met = rule.test(typed[field.name] ?? '');
+                    return (
+                      <li
+                        key={rule.id}
+                        data-password-rule={rule.id}
+                        data-met={met}
+                        className={`flex items-start gap-1.5 ${met ? 'text-ok' : ''}`}
+                      >
+                        <span aria-hidden="true" className="inline-flex h-[1.4em] w-4 shrink-0 items-center justify-center">
+                          {met ? <CheckIcon /> : <span className="size-1.5 rounded-full bg-current" />}
+                        </span>
+                        <span>
+                          {message(rule.messageKey)}
+                          {met && <span className="sr-only"> {t('password.ruleMet')}</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            ) : field.hintKey !== undefined ? (
+              t(field.hintKey)
+            ) : undefined
+          }
+        />
+        {field.belowLink && (
+          <div className="-mt-2 flex min-h-11 items-center justify-end">
+            <Link href={field.belowLink.href} className={AUTH_LINK_CLASS}>
+              {t(field.belowLink.labelKey)}
+            </Link>
+          </div>
+        )}
+      </Fragment>
+    );
+  };
 
   return (
     <form
@@ -118,93 +195,45 @@ export default function AuthForm({
       {Object.entries(hidden ?? {}).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
-      {introKey !== undefined && <p className="text-sm text-text-muted">{t(introKey, introValues)}</p>}
+      {introKey !== undefined && <p className="text-ink-2">{t(introKey, introValues)}</p>}
       {/* Always in the page, so a screen reader is already watching it when the message arrives; empty, it takes no room. */}
       <div role="status" aria-live="polite" className={note === undefined ? 'sr-only' : undefined}>
         {note !== undefined && (
-          <p
-            className={`rounded-(--radius-sm) border px-3 py-2 text-sm ${
-              state.formError ? 'border-danger/40 bg-danger/5 text-danger' : 'border-primary/30 bg-primary-soft'
-            }`}
-          >
+          <p className={`rounded-md px-4 py-3.5 text-[14.5px] ${state.formError ? 'bg-sale/8 text-sale' : 'bg-page text-ink-2'}`}>
             {note}
           </p>
         )}
       </div>
-      {fields.map((field) => {
-        const matched = confirmMatches(field);
-        return (
-          <AuthField
-            // A new echoed value remounts the input, so React's reset after the action shows what was typed, not a blank.
-            key={`${field.name}:${state.values?.[field.name] ?? ''}`}
-            name={field.name}
-            label={t(field.labelKey)}
-            type={field.type}
-            autoComplete={field.autoComplete}
-            inputMode={field.inputMode}
-            defaultValue={state.values?.[field.name] ?? field.defaultValue}
-            maxLength={field.maxLength}
-            // A mismatch error from the last submit is stale once the two passwords match.
-            error={matched ? undefined : message(state.fieldErrors?.[field.name])}
-            labelBadge={
-              matched ? (
-                <span data-confirm-match className="inline-flex items-center text-success">
-                  <CheckIcon />
-                  <span className="sr-only">{t('password.confirmMatch')}</span>
-                </span>
-              ) : undefined
-            }
-            labelAction={
-              field.labelLink && (
-                <Link
-                  href={field.labelLink.href}
-                  className="inline-flex min-h-11 items-center text-[13px] font-semibold text-primary hover:text-primary-dark"
-                >
-                  {t(field.labelLink.labelKey)}
-                </Link>
-              )
-            }
-            hint={
-              field.showPasswordRules ? (
-                <>
-                  <p>{t('password.rulesLabel')}</p>
-                  <ul className="mt-0.5 grid gap-0.5">
-                    {PASSWORD_RULES.map((rule) => {
-                      const met = rule.test(typed[field.name] ?? '');
-                      return (
-                        <li
-                          key={rule.id}
-                          data-password-rule={rule.id}
-                          data-met={met}
-                          className={`flex items-start gap-1.5 ${met ? 'text-success' : ''}`}
-                        >
-                          <span aria-hidden="true" className="inline-flex h-[1.4em] w-4 shrink-0 items-center justify-center">
-                            {met ? <CheckIcon /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-                          </span>
-                          <span>
-                            {message(rule.messageKey)}
-                            {met && <span className="sr-only"> {t('password.ruleMet')}</span>}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              ) : undefined
-            }
-          />
-        );
-      })}
+      {groupHalves(fields).map((group) =>
+        group.length > 1 ? (
+          <div key={group.map((field) => field.name).join('+')} className="grid gap-4 sm:grid-cols-2">
+            {group.map(renderField)}
+          </div>
+        ) : (
+          renderField(group[0]!)
+        ),
+      )}
       <button
         type="submit"
         disabled={isPending}
         aria-busy={isPending}
-        className={`inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full border px-5 text-[15px] leading-[1.3] font-bold transition-colors disabled:cursor-wait disabled:opacity-70 ${buttonStyle}`}
+        className={`${buttonStyle} cursor-pointer disabled:cursor-wait disabled:opacity-70`}
       >
         {isPending ? t('pending') : t(submitKey)}
       </button>
     </form>
   );
+}
+
+/** Consecutive `half` fields share a row from `sm`; every other field is a group of one. */
+function groupHalves(fields: AuthFieldSpec[]): AuthFieldSpec[][] {
+  const groups: AuthFieldSpec[][] = [];
+  for (const field of fields) {
+    const last = groups[groups.length - 1];
+    if (field.half && last?.every((member) => member.half)) last.push(field);
+    else groups.push([field]);
+  }
+  return groups;
 }
 
 /** The green tick for a met password rule and a matching confirm field; decorative, the text beside it is what is read. */
@@ -213,7 +242,7 @@ function CheckIcon() {
     <svg
       aria-hidden="true"
       viewBox="0 0 16 16"
-      className="h-3.5 w-3.5"
+      className="size-3.5"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"

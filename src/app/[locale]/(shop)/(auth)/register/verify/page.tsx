@@ -8,7 +8,7 @@ import { readCurrentCustomer } from '../../../_components/read-current-customer'
 import { readPendingEmail } from '../../auth-cookies';
 import { resendCodeAction, verifyAction } from '../../actions';
 import { startAuthPage } from '../../auth-page';
-import AuthCard from '../../_components/AuthCard';
+import AuthCard, { AUTH_LINK_CLASS } from '../../_components/AuthCard';
 import AuthForm from '../../_components/AuthForm';
 import AuthShell from '../../_components/AuthShell';
 
@@ -38,12 +38,15 @@ export default async function VerifyPage({ params }: Props) {
   ]);
 
   return (
-    <AuthShell path="/register/verify" articlesMenu={articlesMenu} customer={customer}>
+    <AuthShell path="/register/verify" articlesMenu={articlesMenu} customer={customer} breadcrumb={t('verify.title')} perks={null}>
       <AuthCard
         title={t('verify.title')}
         description={t('verify.description', { email })}
-        switchHref={`/${locale}/sign-in`}
-        switchLabel={t('register.switchLink')}
+        switchPrompt={
+          <Link href={`/${locale}/sign-in`} className={AUTH_LINK_CLASS}>
+            {t('register.switchLink')}
+          </Link>
+        }
       >
         <AuthForm
           action={verifyAction}
@@ -58,7 +61,7 @@ export default async function VerifyPage({ params }: Props) {
         <p className="mt-3 text-center text-sm">
           <Link
             href={`/${locale}${PASSWORD_RESET_CODE_PATH}`}
-            className="inline-flex min-h-11 items-center font-semibold text-primary hover:text-primary-dark"
+            className={AUTH_LINK_CLASS}
           >
             {t('verify.resetInstead')}
           </Link>

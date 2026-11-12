@@ -442,18 +442,17 @@
     "auth": {
       "signIn": {
         "title": "Sign in",
-        "description": "Use your email and password",
-        "switchLink": "Create an account",
         "submit": "Sign in",
         "forgot": "Forgot password?",
         "reset": "Your password is changed. Sign in with the new one.",
-        "googleFailed": "Google sign-in did not work. Try again, or use your email and password."
+        "googleFailed": "Google sign-in did not work. Try again, or use your email and password.",
+        "switchPrompt": "No account yet? <link>Create an account</link>"
       },
       "register": {
         "title": "Create an account",
-        "description": "Create an account to browse products and order",
         "switchLink": "Sign in",
-        "submit": "Create account"
+        "submit": "Create account",
+        "switchPrompt": "Already have an account? <link>Sign in</link>"
       },
       "verify": {
         "title": "Verify your email",
@@ -487,11 +486,14 @@
         "passwordConfirm": "Confirm password",
         "code": "6-digit code",
         "newPassword": "New password",
-        "newPasswordConfirm": "Confirm new password"
+        "newPasswordConfirm": "Confirm new password",
+        "emailHint": "Used for order confirmations and tax invoices",
+        "emailPlaceholder": "name@example.com"
       },
       "google": {
         "label": "Sign in with Google",
-        "or": "or"
+        "or": "or",
+        "register": "Sign up with Google"
       },
       "pending": "Working…",
       "password": {
@@ -504,7 +506,11 @@
           "lowercase": "At least 1 lowercase letter",
           "uppercase": "At least 1 uppercase letter",
           "special": "At least 1 special character, such as ! @ #"
-        }
+        },
+        "show": "Show",
+        "hide": "Hide",
+        "showLabel": "Show password",
+        "hideLabel": "Hide password"
       },
       "error": {
         "rateLimited": "Too many attempts. Please wait a moment and try again.",
@@ -525,6 +531,30 @@
         "label": "{name}'s account",
         "signOut": "Sign out",
         "greeting": "Hello {name}"
+      },
+      "breadcrumb": {
+        "label": "Breadcrumb",
+        "home": "Home"
+      },
+      "perks": {
+        "eyebrow": "Tinzshop members",
+        "signInTitle": "Sign in to see your orders, pre-orders and tax invoices",
+        "registerTitle": "Sign up once and track every order yourself",
+        "orders": {
+          "title": "Track your orders in one place",
+          "text": "Payment status and your whole order history"
+        },
+        "invoice": {
+          "title": "Download tax invoices",
+          "text": "A PDF for every order, kept for later"
+        },
+        "preOrder": {
+          "title": "See pre-orders and the balance due"
+        },
+        "warranty": {
+          "title": "Reach us about a warranty more easily",
+          "text": "Pick the product from your order history, no need to type an order number"
+        }
       }
     },
     "contact": {

@@ -247,6 +247,71 @@ describe('AuthForm', () => {
   });
 });
 
+describe('show and hide password', () => {
+  const RULE_FIELDS: AuthFieldSpec[] = [
+    { name: 'password', labelKey: 'field.password', type: 'password', autoComplete: 'new-password', showPasswordRules: true },
+    { name: 'passwordConfirm', labelKey: 'field.passwordConfirm', type: 'password', autoComplete: 'new-password', confirmsField: 'password' },
+  ];
+  const reveal = (name: string) => container.querySelector<HTMLButtonElement>(`[aria-controls="auth-${name}"]`)!;
+  const click = (button: HTMLButtonElement) => act(() => button.click());
+  const met = () => [...container.querySelectorAll<HTMLElement>('[data-password-rule]')].filter((rule) => rule.dataset.met === 'true').length;
+
+  it('the show button reveals and hides the password, is type=button and never submits', () => {
+    const action = vi.fn<Action>(async () => ({}));
+    mount(action);
+    let submitted = false;
+    container.querySelector('form')!.addEventListener('submit', () => (submitted = true));
+    const button = reveal('password');
+    expect(button.type).toBe('button');
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(button.getAttribute('aria-label')).toBe(th.shop.auth.password.showLabel);
+    expect(button.textContent).toBe(th.shop.auth.password.show);
+    expect(field('password').type).toBe('password');
+    type(field('password'), 'secret');
+    click(button);
+    expect(field('password').type).toBe('text');
+    expect(field('password').value).toBe('secret');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe(th.shop.auth.password.hideLabel);
+    expect(button.textContent).toBe(th.shop.auth.password.hide);
+    click(button);
+    expect(field('password').type).toBe('password');
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(submitted).toBe(false);
+    expect(action).not.toHaveBeenCalled();
+    // Only password fields have one.
+    expect(reveal('email')).toBeNull();
+  });
+
+  it('after an action resets the form, the password field is hidden again and the ticks clear', async () => {
+    mount(async () => ({ formError: 'shop.auth.error.passwordPolicy' }), { fields: RULE_FIELDS });
+    type(field('password'), 'abcDEF12!');
+    type(field('passwordConfirm'), 'abcDEF12!');
+    click(reveal('password'));
+    expect(field('password').type).toBe('text');
+    expect(met()).toBe(5);
+    await submit();
+    expect(field('password').value).toBe('');
+    expect(field('password').type).toBe('password');
+    expect(reveal('password').getAttribute('aria-pressed')).toBe('false');
+    expect(met()).toBe(0);
+    expect(container.querySelector('[data-confirm-match]')).toBeNull();
+  });
+
+  it('revealing the password does not stop the rule ticks', () => {
+    mount(async () => ({}), { fields: RULE_FIELDS });
+    click(reveal('password'));
+    type(field('password'), 'abc');
+    expect(met()).toBe(1);
+    type(field('password'), 'abcDEF12!');
+    expect(met()).toBe(5);
+    type(field('passwordConfirm'), 'abcDEF12!');
+    expect(container.querySelector('[data-confirm-match]')).not.toBeNull();
+    click(reveal('password'));
+    expect(met()).toBe(5);
+  });
+});
+
 describe('firstInvalidField', () => {
   it('is the first drawn field that has an error', () => {
     expect(firstInvalidField(FIELDS, { password: 'x', email: 'y' })).toBe('email');

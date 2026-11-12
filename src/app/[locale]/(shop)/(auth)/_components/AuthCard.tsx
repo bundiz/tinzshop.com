@@ -1,42 +1,38 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export type AuthCardProps = {
   title: string;
-  description: string;
-  /** The other page's link, shown at the card's top right. */
-  switchHref: string;
-  switchLabel: string;
+  /** A plain line under the title (verify and forgot password). */
+  description?: string;
+  /** The rich line under the title with the link to the other page ("ยังไม่มีบัญชี? สมัครสมาชิก"). */
+  switchPrompt?: ReactNode;
   children: ReactNode;
 };
 
 /**
- * The centred card all four auth pages share (spec section 8): the title and a short description at the top, with
- * the link to the other page at the top right. Built with Tailwind and the design's tokens, no component library.
+ * The card all four auth pages share: the title, and under it a line that says what the page is or links to the
+ * other page (D-200). The page's `main` and the perks panel are `AuthShell`'s.
  */
-export default function AuthCard({ title, description, switchHref, switchLabel, children }: AuthCardProps) {
+export default function AuthCard({ title, description, switchPrompt, children }: AuthCardProps) {
   return (
-    <main id="main" className="px-4 py-8 md:py-12">
-      <section
-        aria-labelledby="auth-title"
-        className="mx-auto w-full max-w-sm rounded-(--radius) border border-border bg-bg p-5 shadow-card sm:p-6"
-      >
-        <header className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 id="auth-title" className="text-[22px] leading-[1.35] font-extrabold">
-              {title}
-            </h1>
-            <p className="mt-1 text-sm text-text-muted">{description}</p>
-          </div>
-          <Link
-            href={switchHref}
-            className="-mt-1 inline-flex min-h-11 flex-none items-center text-sm font-semibold text-primary hover:text-primary-dark"
-          >
-            {switchLabel}
-          </Link>
-        </header>
-        <div className="mt-4">{children}</div>
-      </section>
-    </main>
+    <section
+      aria-labelledby="auth-title"
+      className="rounded-[16px] border border-line bg-surface px-[18px] py-[22px] sm:rounded-xl sm:p-[clamp(24px,3vw,40px)]"
+    >
+      <header data-auth-header>
+        <h1 id="auth-title" className="text-[clamp(28px,2.6vw,36px)] font-bold">
+          {title}
+        </h1>
+        {description !== undefined && (
+          <p className={`mt-1.5 text-ink-2 ${switchPrompt === undefined ? 'mb-6' : ''}`}>{description}</p>
+        )}
+        {switchPrompt !== undefined && <p className="mt-1.5 mb-6 text-ink-2">{switchPrompt}</p>}
+      </header>
+      {children}
+    </section>
   );
 }
+
+/** The mockup's `.link`, for a link in the card's text. */
+export const AUTH_LINK_CLASS =
+  'inline-flex min-h-11 items-center gap-1.5 bg-[linear-gradient(currentColor,currentColor)] bg-[length:0_1.5px] bg-left-bottom bg-no-repeat font-semibold text-ink hover:bg-[length:100%_1.5px] sm:min-h-0';

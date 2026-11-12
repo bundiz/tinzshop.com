@@ -705,7 +705,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 - `AuthPerks({ variant: 'signIn' | 'register' })`.
 - Server Actions, controllers and cookies do not change.
 
-- [ ] **Failing tests:**
+- [x] **Failing tests:**
   - `auth-pages.test.tsx`:
     - `shows email and password, the forgot link on the password label row, Google, and the register link at the top right` becomes `shows email and password, the forgot link below the password field, Google, and "ยังไม่มีบัญชี? สมัครสมาชิก" under the title`.
     - `shows the five fields … and the sign-in link at the top right` becomes `… and "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" under the title`; the register email field has its hint.
@@ -717,7 +717,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - `the show button reveals and hides the password, is type=button and never submits`
     - `after an action resets the form, the password field is hidden again and the ticks clear`
     - `revealing the password does not stop the rule ticks`
-- [ ] **Build** (`_build.mjs` L627–683; style.css L703–756):
+- [x] **Build** (`_build.mjs` L627–683; style.css L703–756):
   - `wrap`, `Breadcrumbs`.
   - `.auth`: one column, `[minmax(0,560px)_minmax(0,1fr)] gap-7` from `lg`.
   - Card `rounded-[16px] border border-line bg-surface px-[18px] py-[22px] sm:rounded-xl sm:p-[clamp(24px,3vw,40px)]`, `h1` `text-[clamp(28px,2.6vw,36px)]`, the switch line `mt-1.5 mb-6 text-ink-2` with its link `.link`.
@@ -729,7 +729,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - The "หรือ" divider; Google `line block`.
   - Notices as `.note` (success `bg-ok-soft text-ok-ink`).
   - Perks (`.auth__perks`): `bg-navy rounded-xl` with its backdrop, sticky at `top-[140px]` from `lg`; the eyebrow, `h2`, the list with 44px icon squares in `text-accent`.
-- [ ] **Messages:**
+- [x] **Messages:**
   - Add:
     - `shop.auth.breadcrumb.label` "เส้นทาง", `shop.auth.breadcrumb.home` "หน้าแรก"
     - `shop.auth.signIn.switchPrompt` "ยังไม่มีบัญชี? <link>สมัครสมาชิก</link>"
@@ -745,7 +745,9 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
       - `perks.preOrder.title` "ดูพรีออเดอร์และยอดคงเหลือ" (no second line, R5)
       - `perks.warranty.title` "ติดต่อเรื่องประกันง่ายขึ้น" / `.text` "เลือกสินค้าจากประวัติการสั่งซื้อ ไม่ต้องกรอกเลขคำสั่งซื้อเอง"
   - Remove `shop.auth.signIn.description` and `shop.auth.register.description` once nothing uses them. Keep `switchLink` only if a page still uses it.
-- [ ] **Commit:** `feat: restyle the sign-in pages to the redesign`
+- [x] **Commit:** `feat: restyle the sign-in pages to the redesign`
+
+Built notes: `AuthShell` now owns the page `main`; `AuthCard` is a plain `section` and also takes a plain `description`. Verify and forgot password keep their description and show their way back to sign-in as a link under it. `AuthForm` gained `tone`, and field specs gained `half`, `hintKey`, `placeholderKey` and `belowLink` (replacing `labelLink`). `shop.auth.signIn.switchLink` was removed; `register.switchLink` and `forgot.switchLink` stay for verify and forgot password.
 
 ### Task 9: Clean-up, visual check and the manual checklist
 
