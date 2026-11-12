@@ -17,6 +17,7 @@ export type AccountMenuProps = {
  */
 export default function AccountMenu({ firstName }: AccountMenuProps) {
   const t = useTranslations('shop.auth.menu');
+  const tAccount = useTranslations('shop.header.actions.account');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -56,24 +57,24 @@ export default function AccountMenu({ firstName }: AccountMenuProps) {
         aria-controls={panelId}
         aria-label={t('label', { name: firstName })}
         onClick={() => setOpen((current) => !current)}
-        className="relative flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-(--radius-sm) px-2 py-1 hover:bg-primary-soft hover:text-primary"
+        className="relative flex min-h-12 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-sm px-2.5 text-sm leading-tight hover:bg-sunk md:px-3"
       >
         <Icon name="user" className="size-6" />
-        <span className="hidden text-left text-xs leading-[1.35] md:block">
-          {t('hello')}
-          <strong className="block max-w-[110px] truncate text-[13px]">{firstName}</strong>
+        <span className="hidden text-left md:block">
+          <small className="hidden max-w-[130px] truncate text-xs text-muted xl:block">{t('greeting', { name: firstName })}</small>
+          <strong className="block font-semibold">{tAccount('line2')}</strong>
         </span>
       </button>
       <div
         id={panelId}
         hidden={!open}
-        className="absolute top-full right-0 z-30 mt-1 w-44 rounded-(--radius-sm) border border-border bg-bg p-1 shadow-hover"
+        className="absolute top-full right-0 z-50 mt-1 w-44 rounded-md border border-line bg-surface p-1 shadow-2"
       >
         <form action={signOutAction}>
           <input type="hidden" name="locale" value={locale} />
           <button
             type="submit"
-            className="min-h-11 w-full cursor-pointer rounded-(--radius-sm) px-3 text-left text-sm font-medium hover:bg-primary-soft hover:text-primary"
+            className="min-h-11 w-full cursor-pointer rounded-sm px-3 text-left text-sm font-medium hover:bg-brand-soft hover:text-brand"
           >
             {t('signOut')}
           </button>

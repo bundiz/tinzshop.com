@@ -1,12 +1,14 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { platformTone, type PlatformTone } from '@/components/domain/platform-tone';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
 import { listingHref, NAV_CATEGORY_SLUGS } from '../product/listing-url';
 import AccountMenu from './AccountMenu';
 import ArticlesMenu from './ArticlesMenu';
 import type { ArticlesMenuEntry } from './articles-menu';
+import MobileMenu from './MobileMenu';
 import SearchForm from './SearchForm';
 
 export type SiteHeaderProps = {
@@ -16,7 +18,7 @@ export type SiteHeaderProps = {
   articlesMenu: ArticlesMenuEntry[];
   /**
    * The category-nav entry drawn as current: `home` on the landing page, `news` on every news route, and on
-   * the product listing the entry its filters match (`listingNav`).
+   * the product listing the entry its filters match (`listingNav`). `otherToys` and `sale` are never current (R5).
    */
   activeNav?: SiteNavKey;
   /**
@@ -35,23 +37,46 @@ const LANGUAGE_NAME_KEY: Record<AppLocale, 'language.thName' | 'language.enName'
   en: 'language.enName',
 };
 
-const NAV_CATEGORIES = ['switch', 'ps5', 'gadgets', 'preOrder', 'bundles', 'news'] as const;
+/** The nav after "หน้าแรก", in the design's order (plan 015, R8). */
+const NAV_CATEGORIES = ['ps5', 'switch', 'gadgets', 'preOrder', 'bundles', 'otherToys', 'sale', 'news'] as const;
 
-/** Each product entry of the nav as a product-listing link (plan 013). */
-function navHref(locale: string, key: Exclude<(typeof NAV_CATEGORIES)[number], 'news'>): string {
-  if (key === 'preOrder') return listingHref(locale, { preOrder: true });
-  if (key === 'bundles') return listingHref(locale, { kit: true });
-  return listingHref(locale, { category: NAV_CATEGORY_SLUGS[key] });
+/** The colour dot before a platform entry; literal class names so Tailwind sees them. */
+const DOT: Record<PlatformTone, string> = { ps: 'bg-ps', ns: 'bg-ns', it: 'bg-it', other: 'bg-other' };
+const DOT_TONE: Partial<Record<(typeof NAV_CATEGORIES)[number], PlatformTone>> = {
+  ps5: platformTone(NAV_CATEGORY_SLUGS.ps5),
+  switch: platformTone(NAV_CATEGORY_SLUGS.switch),
+  gadgets: platformTone(NAV_CATEGORY_SLUGS.gadgets),
+  otherToys: platformTone(null),
+};
+
+/** Each entry of the nav as a link: the product ones to the product listing (plan 013), the two not built yet inert at `#` (R5). */
+function navHref(locale: string, key: (typeof NAV_CATEGORIES)[number]): string {
+  switch (key) {
+    case 'news':
+      return `/${locale}/news`;
+    case 'otherToys':
+    case 'sale':
+      return '#';
+    case 'preOrder':
+      return listingHref(locale, { preOrder: true });
+    case 'bundles':
+      return listingHref(locale, { kit: true });
+    default:
+      return listingHref(locale, { category: NAV_CATEGORY_SLUGS[key] });
+  }
 }
 
 /** The cart count shown until a cart exists: always 0, never the design's sample figure (D-124). */
 const CART_COUNT = 0;
 
+const TOP_LINK = 'inline-flex min-h-10 items-center gap-1.5 text-on-navy hover:text-white hover:underline hover:underline-offset-[3px]';
+
 /**
- * The storefront header from the design: utility bar (tagline, help links, TH/EN switch), the logo,
- * search, account, wishlist and cart, and the category nav bar. The logo, "home", "หมวดหมู่ทั้งหมด" and the
- * nav's product entries (to the product listing, plan 013), "ข่าวเกม", the utility bar's "บทความ ▾" menu
- * (D-140) and the language switch go somewhere; the rest render as designed and are inert (D-124).
+ * The storefront header from the redesign (plan 015): the skip link, the top bar (message, the "บทความ" menu, help
+ * links, TH/EN switch), the sticky header (menu button and drawer on a phone, logo, search, account, wishlist, cart) and
+ * the category nav. The logo, "home", the nav's product entries (to the product listing, plan 013), "ข่าวเกม", the
+ * "บทความ ▾" menu (D-140), the account entry and the language switch go somewhere; the rest render as designed and
+ * are inert (D-124).
  */
 export default function SiteHeader({ path, articlesMenu, activeNav, customer = null }: SiteHeaderProps) {
   const t = useTranslations('shop.header');
@@ -59,14 +84,33 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
   const tCategory = useTranslations('shop.category');
   const locale = useLocale();
   const home = `/${locale}`;
-  const news = `/${locale}/news`;
+  const otherLocale = routing.locales.find((target) => target !== locale) ?? routing.locales[0];
+
+  const navItems = [
+    { key: 'home' as const, label: t('nav.home'), href: home },
+    ...NAV_CATEGORIES.map((key) => ({ key, label: tCategory(key), href: navHref(locale, key) })),
+  ].map((item) => ({ ...item, isCurrent: item.key !== 'otherToys' && item.key !== 'sale' && item.key === activeNav }));
 
   return (
     <>
-      <div className="bg-primary-deep text-[13px] text-[#d6e3fa]">
-        <div className="mx-auto flex min-h-9 max-w-[1280px] items-center justify-between gap-4 px-4 md:px-6">
-          <p className="min-w-0 truncate">{t('tagline')}</p>
-          <div className="flex flex-none items-center gap-[18px]">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-70 focus:rounded-sm focus:bg-navy focus:px-4 focus:py-3 focus:text-white"
+      >
+        {t('skip')}
+      </a>
+      <div className="bg-navy text-sm text-on-navy-2">
+        <div className="wrap flex min-h-11 items-center justify-between gap-4 md:min-h-10">
+          <p className="flex min-w-0 items-center gap-2">
+            <span aria-hidden="true" className="size-[7px] flex-none rounded-full bg-[#2bd576] shadow-[0_0_0_3px_rgba(43,213,118,.18)]" />
+            <span>
+              {t.rich('tagline', {
+                b: (chunks) => <b className="font-semibold text-white">{chunks}</b>,
+                rest: (chunks) => <span className="hidden sm:inline">{chunks}</span>,
+              })}
+            </span>
+          </p>
+          <div className="flex flex-none items-center gap-5">
             {/* Outside the help links, which are hidden on a phone, so it works there by tap; first in the cluster, so its
                 submenu has room to open to the right on a desktop. */}
             <ArticlesMenu
@@ -78,26 +122,24 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
                 children: entry.children.map((child) => ({ label: child.name, href: child.href })),
               }))}
             />
-            <nav aria-label={t('links.label')} className="hidden sm:block">
-              <ul className="flex items-center gap-[18px]">
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t('links.trackOrder')}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t('links.help')}
-                  </a>
-                </li>
+            <nav aria-label={t('links.label')} className="hidden md:block">
+              <ul className="flex items-center gap-5">
+                <TopLink icon="package">{t('links.myOrders')}</TopLink>
+                <TopLink icon="wrench">{t('links.warranty')}</TopLink>
+                <TopLink icon="chat">{t('links.line')}</TopLink>
               </ul>
             </nav>
-            <nav aria-label={t('language.label')}>
-              <ul className="inline-flex overflow-hidden rounded-full border border-white/25 text-xs font-semibold">
-                {routing.locales.map((target) => (
-                  <li key={target}>
+            <nav aria-label={t('language.label')} className="flex items-center gap-1.5">
+              <Icon name="globe" className="size-4" />
+              <ul className="flex items-center">
+                {routing.locales.map((target, index) => (
+                  <li key={target} className={index > 0 ? "before:text-on-navy-2 before:content-['·']" : undefined}>
                     {target === locale ? (
-                      <span aria-current="true" lang={target} className="block bg-accent px-2.5 py-px text-text">
+                      <span
+                        aria-current="true"
+                        lang={target}
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center font-semibold text-white md:min-h-10 md:min-w-0 md:px-2"
+                      >
                         {t(`language.${target}`)}
                       </span>
                     ) : (
@@ -106,8 +148,7 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
                         hrefLang={target}
                         lang={target}
                         aria-label={t(LANGUAGE_NAME_KEY[target])}
-                        // The hit area grows past the small pill to a 44px tap target (07 Responsive).
-                        className="relative block px-2.5 py-px after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] hover:text-white"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center text-on-navy hover:text-white hover:underline hover:underline-offset-[3px] md:min-h-10 md:min-w-0 md:px-2"
                       >
                         {t(`language.${target}`)}
                       </Link>
@@ -119,70 +160,78 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
           </div>
         </div>
       </div>
-      <header className="sticky top-0 z-20 border-b border-border bg-bg">
-        <div className="mx-auto grid max-w-[1280px] grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2.5 px-4 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-7 md:px-6 md:py-4">
-          <Link href={home} aria-label={t('logo.label')} className="col-start-1 row-start-1 flex items-center gap-2.5">
-            <img src="/logo-mark.png" alt="" width={40} height={40} className="size-10" />
-            <span>
-              <span className="block text-[22px] leading-none font-extrabold tracking-[-0.02em] text-primary">
-                {t('logo.wordLead')}
-                <b className="text-accent">{t('logo.wordTail')}</b>
-              </span>
-              <span className="mt-[3px] hidden text-[11px] leading-[1.3] text-text-subtle md:block">
-                {t('logo.sub')}
-              </span>
-            </span>
+      <header className="sticky top-0 z-40 border-b border-line bg-white/96 backdrop-blur-[8px] backdrop-saturate-[1.4]">
+        <div className="wrap flex flex-wrap items-center gap-x-2 gap-y-2 pt-2.5 pb-3 md:min-h-[76px] md:flex-nowrap md:gap-6 md:py-0">
+          <MobileMenu
+            navItems={navItems.map((item) => ({
+              label: item.label,
+              href: item.href,
+              isCurrent: item.isCurrent,
+              isSale: item.key === 'sale',
+            }))}
+            signedIn={customer !== null}
+            otherLocaleHref={localePath(otherLocale, path)}
+            otherLocaleName={t(LANGUAGE_NAME_KEY[otherLocale])}
+          />
+          <Link href={home} aria-label={t('logo.label')} className="flex flex-none items-center gap-2.5">
+            <img src="/logo-mark.png" alt="" width={40} height={40} className="size-10 flex-none rounded-full" />
+            <span className="font-head text-[22px] leading-none font-bold tracking-[-.02em] text-navy">{t('logo.word')}</span>
           </Link>
-          <SearchForm className="col-span-3 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1" />
-          <nav aria-label={t('actions.label')} className="col-start-3 row-start-1 flex items-center gap-1">
+          <SearchForm className="order-last basis-full md:order-none md:basis-auto md:flex-1" />
+          <nav aria-label={t('actions.label')} className="ml-auto flex items-center md:ml-0 md:gap-1">
             {customer === null ? (
               <HeaderAction icon="user" label={t('actions.account.label')} href={`${home}/sign-in`}>
-                {t('actions.account.line1')}
-                <strong className="block text-[13px]">{t('actions.account.line2')}</strong>
+                <small>{t('actions.account.line1')}</small>
+                <strong>{t('actions.account.line2')}</strong>
               </HeaderAction>
             ) : (
               <AccountMenu firstName={customer.firstName} />
             )}
             <HeaderAction icon="heart" label={t('actions.wishlist.label')}>
-              {t('actions.wishlist.line1')}
-              <strong className="block text-[13px]">{t('actions.wishlist.line2')}</strong>
+              <small>{t('actions.wishlist.line1')}</small>
+              <strong>{t('actions.wishlist.line2')}</strong>
             </HeaderAction>
-            <HeaderAction
-              icon="cart"
-              label={t('actions.cart.label', { count: CART_COUNT })}
-              count={CART_COUNT}
-            >
-              {t('actions.cart.line1')}
-              <strong className="block text-[13px]">{t('actions.cart.line2', { count: CART_COUNT })}</strong>
+            <HeaderAction icon="cart" label={t('actions.cart.label', { count: CART_COUNT })} count={CART_COUNT}>
+              <small>{t('actions.cart.line1')}</small>
+              <strong>{t('actions.cart.line2', { count: CART_COUNT })}</strong>
             </HeaderAction>
           </nav>
         </div>
+        <nav aria-label={t('nav.label')} className="hidden border-t border-line md:block">
+          <ul className="wrap flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {navItems.map((item) => (
+              <li key={item.key}>
+                <NavLink
+                  href={item.href}
+                  isActive={item.isCurrent}
+                  isSale={item.key === 'sale'}
+                  dot={DOT_TONE[item.key as (typeof NAV_CATEGORIES)[number]]}
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </header>
-      <nav aria-label={t('nav.label')} className="border-b border-border bg-bg">
-        <div className="mx-auto flex max-w-[1280px] items-center gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:px-6 [&::-webkit-scrollbar]:hidden">
-          <Link
-            href={listingHref(locale)}
-            className="mr-2 flex min-h-9 items-center gap-1.5 rounded-(--radius-sm) border-b-2 border-transparent bg-primary px-3 text-sm font-semibold whitespace-nowrap text-white hover:bg-primary-dark"
-          >
-            <Icon name="menu" className="size-4" />
-            {t('nav.all')}
-          </Link>
-          <NavLink href={home} isActive={activeNav === 'home'}>
-            {t('nav.home')}
-          </NavLink>
-          {NAV_CATEGORIES.map((key) => (
-            <NavLink key={key} href={key === 'news' ? news : navHref(locale, key)} isActive={activeNav === key}>
-              {tCategory(key)}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
     </>
   );
 }
 
 function localePath(locale: string, path: string): string {
   return path === '/' ? `/${locale}` : `/${locale}${path}`;
+}
+
+/** An inert top-bar link: it looks as designed and goes nowhere (D-124). */
+function TopLink({ icon, children }: { icon: IconName; children: string }) {
+  return (
+    <li>
+      <a href="#" className={TOP_LINK}>
+        <Icon name={icon} className="size-4" />
+        {children}
+      </a>
+    </li>
+  );
 }
 
 function HeaderAction({
@@ -197,33 +246,51 @@ function HeaderAction({
   count?: number;
   /** Where it goes; the entries that are not built yet stay inert at `#` (D-124). */
   href?: string;
+  /** The small line, then the strong line. */
   children: ReactNode;
 }) {
   return (
     <a
       href={href}
       aria-label={label}
-      className="relative flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-(--radius-sm) px-2 py-1 hover:bg-primary-soft hover:text-primary"
+      className="relative flex min-h-12 min-w-11 items-center justify-center gap-2 rounded-sm px-2.5 text-sm leading-tight transition-colors duration-[180ms] hover:bg-sunk md:px-3"
     >
       <Icon name={icon} className="size-6" />
       {count !== undefined && (
-        <span className="absolute top-0.5 left-5 h-[18px] min-w-[18px] rounded-full bg-danger px-[5px] text-center text-[11px] leading-[18px] font-bold text-white">
+        <span className="absolute top-[5px] left-[26px] h-5 min-w-5 rounded-[10px] bg-accent px-[5px] text-center font-body text-xs leading-5 font-bold text-ink">
           {count}
         </span>
       )}
-      <span className="hidden text-xs leading-[1.35] md:block">{children}</span>
+      <span className="hidden md:block [&>small]:hidden [&>small]:text-xs [&>small]:text-muted xl:[&>small]:block [&>strong]:block [&>strong]:font-semibold">
+        {children}
+      </span>
     </a>
   );
 }
 
-function NavLink({ href, isActive, children }: { href: string; isActive: boolean; children: ReactNode }) {
-  const tone = isActive ? 'border-primary text-primary' : 'border-transparent hover:text-primary';
+function NavLink({
+  href,
+  isActive,
+  isSale,
+  dot,
+  children,
+}: {
+  href: string;
+  isActive: boolean;
+  isSale: boolean;
+  dot?: PlatformTone;
+  children: ReactNode;
+}) {
+  const tone = isActive
+    ? 'border-accent font-semibold text-ink'
+    : `border-transparent font-medium hover:text-brand ${isSale ? 'text-sale' : 'text-ink-2'}`;
   return (
     <Link
       href={href}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex min-h-11 items-center gap-1.5 border-b-2 px-3 text-sm font-medium whitespace-nowrap ${tone}`}
+      className={`flex min-h-12 items-center gap-2 border-b-2 px-3.5 text-[15px] whitespace-nowrap transition-colors duration-[180ms] ${tone}`}
     >
+      {dot !== undefined && <span aria-hidden="true" className={`size-[9px] flex-none rounded-[3px] ${DOT[dot]}`} />}
       {children}
     </Link>
   );

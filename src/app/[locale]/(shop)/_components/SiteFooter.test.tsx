@@ -38,11 +38,33 @@ describe('SiteFooter', () => {
     expect(html).toContain(`href="#">${th.shop.footer.aboutUs.story}<`);
   });
 
-  it('renders the design\'s link columns and payment badge', () => {
+  it('renders the three columns, the LINE link, and the five payment chips', () => {
     const html = render('th', new Date('2026-10-28T05:00:00Z'));
-    for (const title of [th.shop.footer.shopping.title, th.shop.footer.help.title, th.shop.footer.aboutUs.title, th.shop.footer.policy.title]) {
-      expect(html).toContain(title);
+    const headings = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map((match) => match[1]);
+    expect(headings).toEqual([th.shop.footer.help.title, th.shop.footer.aboutUs.title, th.shop.footer.contact.title]);
+    expect(html).not.toContain('<h4');
+    expect(html).toMatch(new RegExp(`<a[^>]*href="#"[^>]*>${th.shop.footer.contact.line}</a>`));
+    expect(html).toContain(`aria-label="${th.shop.footer.contact.line}"`);
+    const chips = [...html.matchAll(/<li class="inline-flex h-8[^>]*>([^<]+)<\/li>/g)].map((match) => match[1]);
+    expect(chips).toEqual(['ชำระผ่าน K-Payment', 'บัตรเครดิต / เดบิต', 'ผ่อนชำระ', 'PromptPay QR', 'DBD Registered']);
+    const english = render('en', new Date('2026-10-28T05:00:00Z'));
+    expect([...english.matchAll(/<li class="inline-flex h-8[^>]*>([^<]+)<\/li>/g)]).toHaveLength(5);
+  });
+
+  it('shows no phone number, email, opening hours or placeholder text', () => {
+    for (const locale of ['th', 'en'] as const) {
+      const html = render(locale, new Date('2026-10-28T05:00:00Z'));
+      const text = html.replace(/<[^>]*>/g, ' ');
+      expect(text).not.toMatch(/\d{2,3}[- ]?\d{3}[- ]?\d{4}/);
+      expect(text).not.toMatch(/@/);
+      expect(text).not.toContain('เบอร์ร้าน');
+      expect(text).not.toContain('รอข้อมูลจากร้าน');
+      expect(text).not.toContain('เวลาทำการ');
+      expect(text).not.toContain('อีเมลร้าน');
+      expect(text).not.toContain('โทร');
+      expect(text.toLowerCase()).not.toContain('opening hours');
+      expect(text.toLowerCase()).not.toContain('phone');
+      expect(text.toLowerCase()).not.toContain('email');
     }
-    expect(html).toContain(th.shop.footer.payBadge.title);
   });
 });

@@ -1,5 +1,6 @@
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
+import { buttonClass } from '@/components/ui/button-class';
 import type { ArticlesMenuEntry } from './articles-menu';
 import SiteFooter from './SiteFooter';
 import SiteHeader from './SiteHeader';
@@ -21,14 +22,11 @@ export default function NotFoundPanel({ title, text, backHome, articlesMenu, cus
   return (
     <>
       <SiteHeader path="/" articlesMenu={articlesMenu} customer={customer} />
-      <main className="mx-auto max-w-[1280px] px-4 pt-4 pb-10 md:px-6">
-        <section className="rounded-(--radius) bg-bg p-8 text-center">
+      <main id="main" className="wrap pt-4 pb-10">
+        <section className="rounded-lg border border-line bg-surface p-[18px] text-center sm:p-8">
           <h1 className="text-[22px]">{title}</h1>
-          <p className="mt-2 text-text-muted">{text}</p>
-          <Link
-            href={`/${locale}`}
-            className="mt-5 inline-flex min-h-11 items-center rounded-(--radius-sm) bg-primary px-5 font-semibold text-white hover:bg-primary-dark"
-          >
+          <p className="mt-2 text-muted">{text}</p>
+          <Link href={`/${locale}`} className={`${buttonClass({ variant: 'brand' })} mt-5`}>
             {backHome}
           </Link>
         </section>

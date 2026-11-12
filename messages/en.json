@@ -1,12 +1,10 @@
 {
   "shop": {
     "header": {
-      "tagline": "A game and IT shop for over 20 years, from our Saphan Lek store to online · Delivery across Thailand",
+      "tagline": "<b>Delivery across Thailand</b> <rest>Shipping by item size · free on large items</rest>",
       "logo": {
         "label": "Tinzshop home",
-        "wordLead": "Tinz",
-        "wordTail": "shop",
-        "sub": "Games · Consoles · IT Gadgets"
+        "word": "Tinzshop"
       },
       "language": {
         "label": "Language",
@@ -17,8 +15,9 @@
       },
       "links": {
         "label": "Help links",
-        "trackOrder": "Track an order",
-        "help": "Help"
+        "myOrders": "My orders",
+        "warranty": "Warranty / claims",
+        "line": "Store LINE"
       },
       "articles": {
         "label": "Articles",
@@ -29,8 +28,7 @@
       },
       "search": {
         "label": "Search products",
-        "scope": "All categories",
-        "placeholder": "Search games, consoles or IT gear",
+        "placeholder": "Search games, consoles, accessories",
         "submit": "Search"
       },
       "actions": {
@@ -53,8 +51,17 @@
       },
       "nav": {
         "label": "Main categories",
-        "all": "All categories",
         "home": "Home"
+      },
+      "skip": "Skip to main content",
+      "menu": {
+        "open": "Open menu",
+        "close": "Close menu",
+        "label": "Menu"
+      },
+      "drawer": {
+        "warranty": "Returns, warranty or claims",
+        "account": "Sign in / Register"
       }
     },
     "home": {
@@ -257,39 +264,35 @@
       }
     },
     "footer": {
-      "about": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop",
+      "about": "Games, consoles and IT equipment. Our shop near Saphan Lek has served customers for over 20 years, and now you can order online anywhere in Thailand",
       "copyright": "© {year} Tinzshop",
-      "shopping": {
-        "title": "Shopping"
-      },
       "help": {
         "title": "Help",
-        "howToOrder": "How to order",
-        "payment": "Payment",
-        "shipping": "Delivery",
-        "trackOrder": "Track an order"
+        "howToOrder": "How to order and pay",
+        "shipping": "Shipping fees",
+        "myOrders": "My orders",
+        "warranty": "Returns, warranty and claims",
+        "cancellation": "Cancelling an order"
       },
       "aboutUs": {
         "title": "About us",
         "story": "The Tinzshop story",
         "news": "Game news",
-        "contact": "Contact us"
+        "warrantyPolicy": "Warranty and returns policy",
+        "privacy": "Privacy policy (PDPA)",
+        "terms": "Terms of service"
       },
-      "policy": {
-        "title": "Policies",
-        "privacy": "Privacy policy",
-        "terms": "Terms of use",
-        "claims": "Product claims"
+      "contact": {
+        "title": "Contact the shop",
+        "line": "Store LINE"
       },
-      "payBadge": {
-        "mark": "K",
-        "title": "Pay with K-Payment",
-        "text": "Credit/debit card · Instalments · PromptPay QR"
-      },
-      "dbdBadge": {
-        "mark": "DBD",
-        "title": "Registered for e-commerce",
-        "text": "DBD mark"
+      "pay": {
+        "label": "Payment methods",
+        "kpayment": "Pay with K-Payment",
+        "card": "Credit / debit card",
+        "instalment": "Instalments",
+        "promptPay": "PromptPay QR",
+        "dbd": "DBD Registered"
       }
     },
     "error": {
@@ -314,7 +317,9 @@
       "gadgets": "IT Gadgets",
       "preOrder": "Pre-orders",
       "bundles": "Promotion sets",
-      "news": "Game news"
+      "news": "Game news",
+      "otherToys": "Other consoles · Toys",
+      "sale": "Sale"
     },
     "news": {
       "meta": {
@@ -523,9 +528,12 @@
       },
       "menu": {
         "label": "{name}'s account",
-        "hello": "Hello",
-        "signOut": "Sign out"
+        "signOut": "Sign out",
+        "greeting": "Hello {name}"
       }
+    },
+    "contact": {
+      "lineChat": "Chat with the shop on LINE"
     }
   }
 }

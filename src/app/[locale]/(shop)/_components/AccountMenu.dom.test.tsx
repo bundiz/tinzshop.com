@@ -47,6 +47,12 @@ describe('AccountMenu', () => {
     expect(panel().hidden).toBe(true);
   });
 
+  it('the button shows สวัสดี คุณ{name} and บัญชีของฉัน', () => {
+    expect(toggle().textContent).toContain('สวัสดี คุณTester');
+    expect(toggle().textContent).toContain('บัญชีของฉัน');
+    expect(toggle().getAttribute('aria-label')).toBe('บัญชีของ Tester');
+  });
+
   it('closes on Escape and gives focus back to the button', () => {
     act(() => toggle().click());
     const signOut = panel().querySelector<HTMLButtonElement>('button[type="submit"]')!;

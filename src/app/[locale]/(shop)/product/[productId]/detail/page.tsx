@@ -50,7 +50,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <>
       <SiteHeader path={`/product/${product.productId}/detail`} articlesMenu={articlesMenu} customer={customer} />
-      <main className="pt-4 pb-10">
+      <main id="main" className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <Breadcrumb
             productName={product.name}

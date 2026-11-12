@@ -408,7 +408,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - `MobileMenuProps = { navItems: readonly { label: string; href: string; isCurrent: boolean }[]; signedIn: boolean; otherLocaleHref: string; otherLocaleName: string }`.
   - `SiteHeaderProps` unchanged (`path`, `articlesMenu`, `activeNav`, `customer`). `SiteNavKey` gains `otherToys` and `sale`, which are never current (their links are `#`, R5).
 
-- [ ] **Failing tests** (`SiteHeader.test.tsx` updated; the rest new):
+- [x] **Failing tests** (`SiteHeader.test.tsx` updated; the rest new):
   - `the skip link is the first link and targets #main`
   - `the top bar keeps the articles menu and the language switch outside the links hidden below md` (replaces `shows the menu outside the help links…`)
   - `the top bar's LINE link is inert and shows no handle`
@@ -426,7 +426,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - `shows no phone number, email, opening hours or placeholder text` (new)
     - the year tests and `links "ข่าวเกม" to the news list…` stay
   - `AccountMenu.dom.test.tsx`: existing behaviour tests stay; update any class or text assertion; add `the button shows สวัสดี คุณ{name} and บัญชีของฉัน`.
-- [ ] **Build:**
+- [x] **Build:**
   - **Top bar** (style.css L84–92): `bg-navy text-on-navy-2 text-sm`, `wrap` row `min-h-11 md:min-h-10`, the dot, the message (rich: the bold part always, the rest `hidden sm:inline`), then a right-hand group: `ArticlesMenu`, the links (`hidden md:flex`, each `inline-flex min-h-10 items-center gap-1.5` with `package`, `wrench`, `chat` at 16px), and the language switch with `globe` (R6).
   - **Header** (style.css L93–114): sticky, `bg-white/96 backdrop-blur-[8px] backdrop-saturate-[1.4] border-b border-line`.
     - Row `min-h-[76px] gap-6`; below `md` it wraps: menu button, logo, actions, then search full width.
@@ -446,7 +446,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - Bottom: `border-t border-white/8`, the `wrap` row `flex flex-wrap justify-between gap-4 py-5`. The five chips `h-8 rounded-[6px] bg-white/7 px-3 text-[13px] font-medium text-on-navy`, `flex flex-wrap gap-2`; the copyright `© {year} Tinzshop` on its own row below `sm` (R16).
   - **`NotFoundPanel` and `error.tsx`:** the new tokens, a `panel`, and `buttonClass({ variant: 'brand' })` for the action.
   - **Main:** add `id="main"` to every storefront `<main>`.
-- [ ] **Messages:**
+- [x] **Messages:**
   - **Add:**
     - `shop.header.skip` "ข้ามไปเนื้อหาหลัก"
     - `shop.header.links.myOrders` "คำสั่งซื้อของฉัน"
@@ -474,7 +474,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - **Remove:**
     - `shop.header.logo.wordLead`, `wordTail`, `sub`, `shop.header.search.scope`, `shop.header.links.trackOrder`, `help`, `shop.header.nav.all`
     - `shop.footer.shopping.*`, `shop.footer.policy.*`, `shop.footer.payBadge.*`, `shop.footer.dbdBadge.*`, `shop.footer.help.payment`, `trackOrder`, `shop.footer.aboutUs.contact`
-- [ ] **Commit:** `feat: restyle the storefront shell to the redesign`
+- [x] **Commit:** `feat: restyle the storefront shell to the redesign`
 
 ### Task 4: Home
 

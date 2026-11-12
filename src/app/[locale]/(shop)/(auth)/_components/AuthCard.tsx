@@ -16,7 +16,7 @@ export type AuthCardProps = {
  */
 export default function AuthCard({ title, description, switchHref, switchLabel, children }: AuthCardProps) {
   return (
-    <main className="px-4 py-8 md:py-12">
+    <main id="main" className="px-4 py-8 md:py-12">
       <section
         aria-labelledby="auth-title"
         className="mx-auto w-full max-w-sm rounded-(--radius) border border-border bg-bg p-5 shadow-card sm:p-6"

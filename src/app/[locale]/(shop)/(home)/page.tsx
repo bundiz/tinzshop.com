@@ -53,7 +53,7 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <SiteHeader path="/" activeNav="home" articlesMenu={articlesMenu} customer={customer} />
-      <main className="pt-4 pb-10">
+      <main id="main" className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <HeroZone shopNowTarget={catalogue.bestSellers.length > 0 ? BEST_SELLERS : null} customer={customer} />
           <TrustStrip />

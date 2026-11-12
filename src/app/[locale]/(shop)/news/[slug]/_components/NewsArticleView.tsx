@@ -30,7 +30,7 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
   return (
     <>
       <SiteHeader path={newsArticlePath(locale, article.slug).slice(locale.length + 1)} activeNav="news" articlesMenu={articlesMenu} customer={customer} />
-      <main className="pt-4 pb-10">
+      <main id="main" className="pt-4 pb-10">
         <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <nav aria-label={t('breadcrumb.label')} className="py-3 text-[13px] text-text-subtle">
             <ol className="flex flex-wrap items-center gap-1">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { buttonClass } from '@/components/ui/button-class';
 
 export type ShopErrorProps = {
   /** The thrown value. Never shown: a server error's message is replaced in production, and may carry details. */
@@ -14,14 +15,14 @@ export default function ShopError({ retry }: ShopErrorProps) {
   const t = useTranslations('shop.error');
 
   return (
-    <main className="mx-auto max-w-[1280px] px-4 py-10 md:px-6">
-      <section role="alert" className="rounded-(--radius) bg-bg p-8 text-center">
+    <main id="main" className="wrap py-10">
+      <section role="alert" className="rounded-lg border border-line bg-surface p-[18px] text-center sm:p-8">
         <h1 className="text-[19px]">{t('title')}</h1>
-        <p className="mt-2 text-text-muted">{t('text')}</p>
+        <p className="mt-2 text-muted">{t('text')}</p>
         <button
           type="button"
           onClick={() => retry()}
-          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-[15px] leading-[1.3] font-bold text-white transition-colors hover:bg-primary-dark"
+          className={`${buttonClass({ variant: 'brand' })} mt-5`}
         >
           {t('retry')}
         </button>

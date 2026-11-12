@@ -11,7 +11,7 @@ export default function ShopLoading() {
   const t = useTranslations('shop.loading');
 
   return (
-    <main aria-busy="true" className="mx-auto max-w-[1280px] px-4 pt-4 pb-10 md:px-6">
+    <main id="main" aria-busy="true" className="mx-auto max-w-[1280px] px-4 pt-4 pb-10 md:px-6">
       <p role="status" className="sr-only">
         {t('label')}
       </p>
