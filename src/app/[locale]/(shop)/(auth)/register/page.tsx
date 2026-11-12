@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { PASSWORD_RULES } from '@/server/services/auth/password-policy';
 import { safeReturnTo } from '@/server/services/auth/return-to';
 import { readArticlesMenu } from '../../_components/read-articles-menu';
 import { redirectSignedInHome } from '../../_components/require-customer';
@@ -50,13 +49,12 @@ export default async function RegisterPage({ params, searchParams }: Props) {
           action={registerAction}
           submitKey="register.submit"
           hidden={{ returnTo }}
-          passwordRuleKeys={PASSWORD_RULES.map((rule) => rule.messageKey)}
           fields={[
             { name: 'firstName', labelKey: 'field.firstName', type: 'text', autoComplete: 'given-name', maxLength: 100 },
             { name: 'lastName', labelKey: 'field.lastName', type: 'text', autoComplete: 'family-name', maxLength: 100 },
             { name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email', maxLength: 254 },
             { name: 'password', labelKey: 'field.password', type: 'password', autoComplete: 'new-password', showPasswordRules: true },
-            { name: 'passwordConfirm', labelKey: 'field.passwordConfirm', type: 'password', autoComplete: 'new-password' },
+            { name: 'passwordConfirm', labelKey: 'field.passwordConfirm', type: 'password', autoComplete: 'new-password', confirmsField: 'password' },
           ]}
         />
         <GoogleButton locale={locale} returnTo={returnTo} />

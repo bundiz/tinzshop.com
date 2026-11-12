@@ -493,6 +493,8 @@
       "pending": "Working…",
       "password": {
         "rulesLabel": "Your password needs",
+        "ruleMet": "(met)",
+        "confirmMatch": "(passwords match)",
         "rule": {
           "length": "At least 8 characters",
           "number": "At least 1 number",

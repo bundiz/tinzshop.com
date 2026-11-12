@@ -12,6 +12,8 @@ export type AuthFieldProps = {
   error?: string;
   /** Shown on the label's row, aligned right ("ลืมรหัสผ่าน?"). */
   labelAction?: ReactNode;
+  /** Shown right after the label text, such as the green tick on a matching confirm field. */
+  labelBadge?: ReactNode;
   /** Help under the input, such as the password rules; tied to the input by `aria-describedby`. */
   hint?: ReactNode;
 };
@@ -27,19 +29,30 @@ export default function AuthField({
   maxLength,
   error,
   labelAction,
+  labelBadge,
   hint,
 }: AuthFieldProps) {
   const id = `auth-${name}`;
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
   const describedBy = [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ');
+  const labelElement = (
+    <label htmlFor={id} className="text-sm font-semibold">
+      {label}
+    </label>
+  );
 
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={id} className="text-sm font-semibold">
-          {label}
-        </label>
+        {labelBadge ? (
+          <span className="flex items-center gap-1.5">
+            {labelElement}
+            {labelBadge}
+          </span>
+        ) : (
+          labelElement
+        )}
         {labelAction}
       </div>
       <input

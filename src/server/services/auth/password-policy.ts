@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * The customer password policy (D-177), written once. The pool enforces it (Cognito's answer stays
- * the final judge); the register, reset and choose-password forms show these five rules.
+ * the final judge); the register and reset forms show these five rules and tick each one green as it is met (D-189).
  */
 
 /** Cognito's documented special characters. A space also counts when it is not leading or trailing. */

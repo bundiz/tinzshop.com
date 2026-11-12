@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { PASSWORD_RULES } from '@/server/services/auth/password-policy';
 import { safeReturnTo } from '@/server/services/auth/return-to';
 import { readArticlesMenu } from '../../_components/read-articles-menu';
 import { readCurrentCustomer } from '../../_components/read-current-customer';
@@ -51,11 +50,10 @@ export default async function ForgotPasswordPage({ params, searchParams }: Props
         action={resetPasswordAction}
         submitKey="forgot.resetSubmit"
         introKey="forgot.codeIntro"
-        passwordRuleKeys={PASSWORD_RULES.map((rule) => rule.messageKey)}
         fields={[
           { name: 'code', labelKey: 'field.code', type: 'text', autoComplete: 'one-time-code', inputMode: 'numeric', maxLength: 6 },
           { name: 'password', labelKey: 'field.newPassword', type: 'password', autoComplete: 'new-password', showPasswordRules: true },
-          { name: 'passwordConfirm', labelKey: 'field.newPasswordConfirm', type: 'password', autoComplete: 'new-password' },
+          { name: 'passwordConfirm', labelKey: 'field.newPasswordConfirm', type: 'password', autoComplete: 'new-password', confirmsField: 'password' },
         ]}
       />
       <div className="mt-3">
