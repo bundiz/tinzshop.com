@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 43 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 12 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 14 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -563,6 +563,24 @@ Not a question. The client source (`reference/client-summary-th.md`) does not me
 - **Answer:** The project owner chose "second code" (2026-11-11). The pending cookie records whether this browser created the account: true only when this browser's `SignUp` succeeded, or when a password sign-in proved the password and Cognito answered that the account is not confirmed; every other way of reaching verify leaves it false, and an older cookie without the record reads as false. After a correct code, an account created here goes to sign-in as before. Any other account is sent a second code (`ForgotPassword`, which works now the email is verified) and the customer is taken to the reset step to set their own password with it; that reset ends every session.
 - **Effect:** A password somebody else chose never survives the real owner's verification. Every answer before a correct code is unchanged (D-160, D-179), so nothing is revealed. A customer who verifies in a browser that did not create the account, or who submitted register again for the same email in the same browser, sets a password once more. Until that reset is finished, the password chosen at sign-up still works; an abandoned reset leaves it in place (spec §6.1). Recorded as D-186; spec §6.1 and `06-api.md` updated.
 - **Ask:** project owner
+
+---
+
+## Blocking Phase 3 — storefront redesign (plan 015)
+
+### Q-062: Does the redesign's category menu change the category tree?
+- **Status:** UNRESOLVED — raised 2026-11-12 by plan 015
+- **Question:** The `tinzshop-redesign/` mockup names its menu entries differently from the category tree the shop uses (D-143, D-149). (1) It calls the Nintendo platform "Nintendo Switch 2" and "Switch 2", but the tree's platform is `nintendo-switch` ("Nintendo Switch"), and the keyword categoriser puts every Switch and Nintendo product in it, Switch 1 items included; the mockup itself labels a GuliKit controller "Nintendo Switch · จอย". (2) It has the entries "เครื่องเกมอื่น ๆ · ของเล่น" (other consoles and toys) and "สินค้าลดราคา" / "ลดราคา" (sale items), for which there is no category and no listing filter. (3) Its Switch banner lists "เคส & ฟิล์ม" (cases and screen film) as a product type, which the tree does not have. Should the tree gain a Switch 2 platform or be renamed, gain an other-consoles-and-toys platform, a sale listing and a cases type, or should the menu follow the tree?
+- **Answer:** None yet.
+- **Effect:** Until answered, plan 015 shows the tree's own names ("Nintendo Switch", or "Switch" where the mockup abbreviates, wherever the mockup writes "Nintendo Switch 2" or "Switch 2"), renders the other-consoles, sale and cases entries inert as designed (D-124), and adds no category, type or filter. A sale listing would be a new listing param (D-145).
+- **Ask:** project owner
+
+### Q-063: May the storefront say that kits cost less, that Switch consoles carry a shop warranty, and that pre-order customers get reminders?
+- **Status:** UNRESOLVED — raised 2026-11-12 by plan 015
+- **Question:** The mockup's copy states three things that no source document or decision states. (1) A kit costs less than buying its items separately: the ชุดโปรโมชั่น subtitle "ราคาถูกกว่าซื้อแยก", the hero card's "คุ้มกว่าซื้อแยก ฿790" and the tile "เครื่อง + เกม คุ้มกว่า". A kit's components and their prices are not known (Q-058), and Shopee's original price is not the sum of the parts. (2) Switch consoles carry the shop's own warranty ("เครื่องประกันร้าน"), while returns and warranty are handled case by case (Q-035, Q-038). (3) Pre-order customers are reminded before the release date and the balance due date ("แจ้งเตือนก่อนวันวางจำหน่ายและวันชำระส่วนที่เหลือ"), which neither REQ-041 nor the pre-order requirement states. Are these true, and does the shop want them said?
+- **Answer:** None yet.
+- **Effect:** Until answered, plan 015 leaves these phrases out and keeps the rest of each block. Each is one message key to add back.
+- **Ask:** project owner (the client for 2 and 3)
 
 ---
 

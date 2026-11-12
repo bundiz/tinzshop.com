@@ -62,7 +62,7 @@
   const vEl = $('#variants');
   if (vEl) {
     const V = JSON.parse(vEl.textContent);
-    const ST = { in: ['stock-in', 'มีสินค้า · ส่งได้วันนี้'], low: ['stock-low', 'เหลือน้อย · ส่งได้วันนี้'], out: ['stock-out', 'สินค้าหมดชั่วคราว'] };
+    const ST = { in: ['stock-in', 'มีสินค้า'], low: ['stock-in', 'มีสินค้า'], out: ['stock-out', 'สินค้าหมด'] };
     const update = () => {
       const ed = $('input[name=ed]:checked'), co = $('input[name=co]:checked');
       let v = V[`${ed.value}|${co.value}`];
@@ -107,18 +107,15 @@
       qr: 'ระบบจะแสดง QR PromptPay ในหน้า K-Payment สแกนจ่ายภายใน 15 นาที แล้วสถานะจะอัปเดตเอง',
     };
     const upd = () => {
-      const ship = $('input[name=ship]:checked').value, pay = $('input[name=pay]:checked').value;
-      const shipFee = ship === 'same' ? 150 : 0;
-      $('[data-ship]').textContent = shipFee ? baht(shipFee) : 'ฟรี'; $('[data-ship]').className = shipFee ? 'num' : 'free';
-      $('[data-ship]').previousElementSibling.textContent = 'ค่าจัดส่ง · ' + ({ std: 'มาตรฐาน', same: 'ด่วนภายในวัน', pick: 'รับที่ร้าน' })[ship];
-      $('[data-fee]').textContent = pay === 'bank' || pay === 'qr' ? 'ไม่มี' : 'แสดงในหน้า K-Payment';
-      $('[data-grand]').textContent = baht(SUB + shipFee); $$('.mobile-pay b').forEach(b => b.textContent = baht(SUB + shipFee));
+      const pay = $('input[name=pay]:checked').value;
       $('[data-pay-note] span').innerHTML = NOTES[pay];
-      $('[data-submit]').textContent = pay === 'bank' ? 'ยืนยันคำสั่งซื้อ' : 'ไปชำระเงินที่ K-Payment';
+      $('[data-submit]').textContent = 'ไปชำระเงินที่ K-Payment';
     };
     co.addEventListener('change', upd); upd();
     $('[data-submit-proxy]')?.addEventListener('click', () => co.requestSubmit());
   }
+
+  const RULES = [/^.{8,}$/, /[0-9]/, /[a-z]/, /[A-Z]/, /[\^$*.[\]{}()?\-"!@#%&/\\,><':;|_~`+=]|\S \S/].map(re => ({ test: v => re.test(v) }));
 
   /* simple required-field validation for mockup forms */
   const setErr = (i, msg) => { const f = i.closest('.field'); if (!f) return; const err = $('.err', f); f.classList.toggle('is-bad', !!msg); err.hidden = !msg; err.textContent = msg || ''; i.setAttribute('aria-invalid', !!msg); };
@@ -131,8 +128,8 @@
       else if (i.type === 'email' && !/^\S+@\S+\.\S+$/.test(i.value)) msg = 'รูปแบบอีเมลไม่ถูกต้อง';
       else if (i.type === 'tel' && i.value.replace(/\D/g, '').length < 9) msg = 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ';
       else if (i.id === 'lotp' && !/^\d{6}$/.test(i.value)) msg = 'รหัส OTP ต้องเป็นตัวเลข 6 หลัก';
-      else if (i.id === 'rpass' && (i.value.length < 8 || !/\d/.test(i.value))) msg = 'รหัสผ่านอย่างน้อย 8 ตัวอักษร และมีตัวเลข';
-      else if (i.id === 'rpass2' && i.value !== $('#rpass').value) msg = 'รหัสผ่านไม่ตรงกัน';
+      else if (i.id === 'rpass' && RULES.some(r => !r.test(i.value))) msg = 'รหัสผ่านยังไม่ครบตามเงื่อนไข';
+      else if (i.id === 'rpass2' && i.value !== $('#rpass').value) msg = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน';
       setErr(i, msg); if (msg) { ok = false; first ||= i; }
     });
     first?.focus(); return ok;
@@ -168,13 +165,13 @@
     tick(); const iv = setInterval(tick, 1000);
   });
 
-  /* password strength */
-  const rp = $('#rpass');
-  rp?.addEventListener('input', () => {
-    const v = rp.value; let sc = 0;
-    if (v.length >= 8) sc++; if (/\d/.test(v)) sc++; if (/[A-Z]/.test(v) && /[a-z]/.test(v)) sc++; if (/[^A-Za-z0-9]/.test(v) || v.length >= 12) sc++;
-    const m = $('[data-meter]'), L = ['', 'อ่อน', 'พอใช้', 'ดี', 'แข็งแรง'], C = ['', 'var(--sale)', '#D97706', '#16A34A', 'var(--ok)'];
-    m.style.width = sc * 25 + '%'; m.style.background = C[sc];
-    $('[data-meter-lbl]').textContent = v ? `ความปลอดภัยของรหัสผ่าน: ${L[sc] || 'อ่อน'}` : 'อย่างน้อย 8 ตัวอักษร มีตัวเลขอย่างน้อย 1 ตัว';
-  });
+  /* password rules tick green as they are met; the confirm label ticks when both match */
+  const rp = $('#rpass'), rp2 = $('#rpass2');
+  const live = () => {
+    $$('[data-rule]').forEach(li => li.classList.toggle('is-met', RULES[+li.dataset.rule].test(rp.value)));
+    const lbl = $('label[for=rpass2]'), on = rp2.value !== '' && rp2.value === rp.value;
+    lbl?.classList.toggle('is-match', on);
+    if (on) setErr(rp2, '');
+  };
+  rp?.addEventListener('input', live); rp2?.addEventListener('input', live);
 })();
