@@ -52,7 +52,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <>
       <SiteHeader path={`/product/${product.productId}/detail`} articlesMenu={articlesMenu} customer={customer} />
-      <main id="main" className="pb-[84px] sm:pb-10">
+      <main id="main" className="sm:pb-10">
         <div className="wrap">
           <Breadcrumbs
             label={t('breadcrumb.label')}
@@ -105,6 +105,8 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </main>
       <SiteFooter />
+      {/* Room for the phone buy bar (VariantPicker), so the footer's last row scrolls fully above it. */}
+      <div aria-hidden="true" data-buy-bar-spacer="" className="h-[84px] sm:hidden" />
     </>
   );
 }

@@ -649,7 +649,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
     - the ask block (`mt-3 flex items-center justify-between gap-3 rounded-md bg-line-app-soft px-4 py-3.5`, `buttonClass({ variant: 'lineApp' })`)
   - Tabs: `mt-14`, the list `border-b border-line`, tabs `min-h-[52px] px-[18px] font-semibold text-muted`, selected `text-ink border-b-[2.5px] border-accent`; prose `max-w-[760px] text-ink-2`, `h3` `text-[21px] text-ink`; the spec table as `.spec`. Arrow keys still move between the four tabs.
   - Related products: `ProductSection id="related" columns={5}` with "ดูทั้งหมด".
-  - Phone buy bar: `fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-line bg-white px-[clamp(16px,3.2vw,32px)] py-2.5 shadow-[0_-8px_24px_-12px_rgba(0,0,0,.15)] sm:hidden`, and the page's `main` gets `pb-[84px] sm:pb-10`.
+  - Phone buy bar: `fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-line bg-white px-[clamp(16px,3.2vw,32px)] py-2.5 shadow-[0_-8px_24px_-12px_rgba(0,0,0,.15)] sm:hidden`, and the page ends with a `h-[84px] sm:hidden` spacer after the footer, so the footer's last row scrolls fully above the bar (`main` keeps `sm:pb-10`; a `pb-[84px]` on `main` would not clear the footer).
 - [x] **Messages:**
   - Change:
     - `shop.product.vatNote` "ผ่อนบัตรเครดิตผ่าน K-Payment เลือกจำนวนงวดตอนชำระเงิน · ราคารวม VAT แล้ว"

@@ -115,6 +115,12 @@ describe('the product page at /product/{id}/detail', () => {
     }
   });
 
+  it('leaves room under the footer, below sm, for the phone buy bar', async () => {
+    const page = await ProductPage({ params: Promise.resolve({ locale: 'th', productId: KNOWN_ID }) });
+    const spacer = findElement(page, (props) => props['data-buy-bar-spacer'] === '');
+    expect(spacer?.className).toBe('h-[84px] sm:hidden');
+  });
+
   it('titles a missing product as not found from the layout', async () => {
     const meta = (productId: string) =>
       generateMetadata({ params: Promise.resolve({ locale: 'th', productId }) });
