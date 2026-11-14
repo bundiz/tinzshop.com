@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Fragment, useActionState, useEffect, useRef, useState, type FormEvent, type HTMLInputAutoCompleteAttribute } from 'react';
 import type { AuthFormState } from '@/server/controllers/auth/customer-auth-controller';
-import { PASSWORD_RULES } from '@/server/services/auth/password-policy';
+import { failedPasswordRules, PASSWORD_RULES } from '@/server/services/auth/password-policy';
 import { AUTH_LINK_CLASS } from './AuthCard';
 import AuthField from './AuthField';
 import { buttonClass } from '@/components/ui/button-class';
@@ -60,7 +60,8 @@ export function firstInvalidField(fields: { name: string }[], fieldErrors: Recor
  * An auth form wired to a Server Action with `useActionState` as a real `<form action>`, so it works before the page
  * has hydrated and a password or code can never end up in the URL. React 19 resets the inputs after an action; the
  * controller echoes the non-secret fields (`state.values`) and they re-seed the inputs, while passwords and codes
- * come back empty (D-182): field errors beside their inputs, the form-wide
+ * come back empty (D-182). A password that breaks the rules or a confirm field that does not match is caught here
+ * before sending, so those never cost the customer what they typed (D-204): field errors beside their inputs, the form-wide
  * error and notices in one polite live region, and a pending state on the button. Every message arrives as a
  * `shop.auth.*` key from the controller and is translated here, so Cognito's text is never shown (D-032).
  */
@@ -89,9 +90,54 @@ export default function AuthForm({
       ...(field.confirmsField !== undefined ? [field.name, field.confirmsField] : []),
     ]),
   );
+  /**
+   * Errors this browser found before sending (D-204): a password that breaks the rules, or a confirm field that does
+   * not repeat it. The form is then not sent, so React's post-action reset never empties the passwords; the server
+   * still checks both, for a browser without JavaScript.
+   */
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  /**
+   * The fields edited since the server last answered, tied to that answer: a field error the server gave is stale
+   * once its field is changed, so it is hidden until the next answer (D-207). A new answer starts the list afresh.
+   */
+  const [edited, setEdited] = useState<{ answer: AuthFormState; names: string[] }>({ answer: state, names: [] });
+  const editedSinceAnswer = (name: string): boolean => edited.answer === state && edited.names.includes(name);
   const trackTyped = (event: FormEvent<HTMLFormElement>) => {
     const { name, value } = event.target as HTMLInputElement;
     if (watched.has(name)) setTyped((previous) => ({ ...previous, [name]: value }));
+    if (state.fieldErrors?.[name] !== undefined && !editedSinceAnswer(name)) {
+      setEdited((previous) => ({ answer: state, names: previous.answer === state ? [...previous.names, name] : [name] }));
+    }
+    if (clientErrors[name] !== undefined) {
+      setClientErrors((previous) => {
+        const next = { ...previous };
+        delete next[name];
+        return next;
+      });
+    }
+  };
+  const checkBeforeSending = (event: FormEvent<HTMLFormElement>) => {
+    const data = new FormData(event.currentTarget);
+    const valueOf = (name: string) => {
+      const value = data.get(name);
+      return typeof value === 'string' ? value : '';
+    };
+    const errors: Record<string, string> = {};
+    for (const field of fields) {
+      const value = valueOf(field.name);
+      // An empty password is left to the server, which asks for it; there is nothing typed to keep.
+      if (field.showPasswordRules && value !== '' && failedPasswordRules(value).length > 0) {
+        errors[field.name] = 'shop.auth.error.passwordPolicy';
+      }
+      if (field.confirmsField !== undefined && valueOf(field.confirmsField) !== '' && value !== valueOf(field.confirmsField)) {
+        errors[field.name] = 'shop.auth.error.passwordMismatch';
+      }
+    }
+    setClientErrors(errors);
+    const first = firstInvalidField(fields, errors);
+    if (first === null) return;
+    event.preventDefault();
+    formRef.current?.querySelector<HTMLInputElement>(`[name="${first}"]`)?.focus();
   };
   /** A confirm field matches when it is not empty and holds exactly what the field it repeats holds. */
   const confirmMatches = (field: AuthFieldSpec): boolean =>
@@ -128,8 +174,13 @@ export default function AuthForm({
           maxLength={field.maxLength}
           placeholder={field.placeholderKey === undefined ? undefined : t(field.placeholderKey)}
           revealable={field.type === 'password'}
-          // A mismatch error from the last submit is stale once the two passwords match.
-          error={matched ? undefined : message(state.fieldErrors?.[field.name])}
+          // A mismatch error from the last submit is stale once the two passwords match, and a server error once its
+          // field is edited (D-207).
+          error={
+            matched
+              ? undefined
+              : message(clientErrors[field.name] ?? (editedSinceAnswer(field.name) ? undefined : state.fieldErrors?.[field.name]))
+          }
           labelBadge={
             matched ? (
               <span data-confirm-match className="mb-1.5 inline-flex items-center text-ok">
@@ -188,8 +239,12 @@ export default function AuthForm({
       noValidate
       className="grid gap-4"
       onInput={trackTyped}
+      onSubmit={checkBeforeSending}
       // React 19 resets the form after an action, which empties the passwords; the ticks follow them.
-      onReset={() => setTyped({})}
+      onReset={() => {
+        setTyped({});
+        setClientErrors({});
+      }}
     >
       <input type="hidden" name="locale" value={locale} />
       {Object.entries(hidden ?? {}).map(([name, value]) => (

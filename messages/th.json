@@ -487,7 +487,6 @@
         "code": "รหัส 6 หลัก",
         "newPassword": "รหัสผ่านใหม่",
         "newPasswordConfirm": "ยืนยันรหัสผ่านใหม่",
-        "emailHint": "ใช้รับอีเมลยืนยันคำสั่งซื้อและใบกำกับภาษี",
         "emailPlaceholder": "name@example.com"
       },
       "google": {
@@ -523,6 +522,7 @@
         "nameRequired": "กรุณากรอกชื่อ",
         "nameTooLong": "ชื่อยาวเกินไป",
         "emailInvalid": "รูปแบบอีเมลไม่ถูกต้อง",
+        "emailExists": "อีเมลนี้ถูกใช้แล้ว",
         "passwordMismatch": "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
         "passwordRequired": "กรุณากรอกรหัสผ่าน",
         "codeFormat": "กรอกรหัส 6 หลัก"

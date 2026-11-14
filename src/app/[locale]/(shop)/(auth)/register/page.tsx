@@ -64,7 +64,6 @@ export default async function RegisterPage({ params, searchParams }: Props) {
               type: 'email',
               autoComplete: 'email',
               maxLength: 254,
-              hintKey: 'field.emailHint',
               placeholderKey: 'field.emailPlaceholder',
             },
             { name: 'password', labelKey: 'field.password', type: 'password', autoComplete: 'new-password', showPasswordRules: true },

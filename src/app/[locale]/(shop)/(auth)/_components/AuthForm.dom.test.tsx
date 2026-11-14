@@ -82,6 +82,21 @@ describe('AuthForm', () => {
     expect(field('email').value).toBe('a@example.test');
   });
 
+  it('hides a field error from the server once that field is edited, and shows it again if the next answer repeats it (D-207)', async () => {
+    mount(async () => ({ fieldErrors: { email: 'shop.auth.error.emailInvalid' }, values: { email: 'typo@example' } }));
+    type(field('email'), 'typo@example');
+    await submit();
+    const errorText = () => container.querySelector(`#${field('email').getAttribute('aria-describedby')}`)?.textContent ?? '';
+    expect(errorText()).toBe(th.shop.auth.error.emailInvalid);
+    type(field('password'), 'secret');
+    expect(errorText()).toBe(th.shop.auth.error.emailInvalid);
+    type(field('email'), 'typo@example.test');
+    expect(errorText()).toBe('');
+    expect(field('email').getAttribute('aria-invalid')).not.toBe('true');
+    await submit();
+    expect(errorText()).toBe(th.shop.auth.error.emailInvalid);
+  });
+
   it('puts the form error in a polite live region, in our words', async () => {
     mount(async () => ({ formError: 'shop.auth.error.invalidCredentials' }));
     await submit();
@@ -309,6 +324,75 @@ describe('show and hide password', () => {
     expect(container.querySelector('[data-confirm-match]')).not.toBeNull();
     click(reveal('password'));
     expect(met()).toBe(5);
+  });
+});
+
+describe('checks the browser can make before sending (D-204)', () => {
+  const REGISTER_FIELDS: AuthFieldSpec[] = [
+    { name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email' },
+    { name: 'password', labelKey: 'field.password', type: 'password', autoComplete: 'new-password', showPasswordRules: true },
+    { name: 'passwordConfirm', labelKey: 'field.passwordConfirm', type: 'password', autoComplete: 'new-password', confirmsField: 'password' },
+  ];
+  const errorOf = (name: string) => {
+    const input = field(name);
+    const ids = (input.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+    return ids.map((id) => container.querySelector(`#${id}`)?.textContent ?? '').join(' ');
+  };
+
+  it('does not send when the two passwords differ, keeps both, and says so beside the confirm field', async () => {
+    const action = vi.fn<Action>(async () => ({}));
+    mount(action, { fields: REGISTER_FIELDS });
+    type(field('email'), 'a@example.test');
+    type(field('password'), 'abcDEF12!');
+    type(field('passwordConfirm'), 'abcDEF12?');
+    await submit();
+    expect(action).not.toHaveBeenCalled();
+    expect(field('password').value).toBe('abcDEF12!');
+    expect(field('passwordConfirm').value).toBe('abcDEF12?');
+    expect(errorOf('passwordConfirm')).toContain(th.shop.auth.error.passwordMismatch);
+    expect(field('passwordConfirm').getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(field('passwordConfirm'));
+  });
+
+  it('does not send a password that breaks the rules, keeps it, and says so beside the password field', async () => {
+    const action = vi.fn<Action>(async () => ({}));
+    mount(action, { fields: REGISTER_FIELDS });
+    type(field('email'), 'a@example.test');
+    type(field('password'), 'abc');
+    type(field('passwordConfirm'), 'abc');
+    await submit();
+    expect(action).not.toHaveBeenCalled();
+    expect(field('password').value).toBe('abc');
+    expect(errorOf('password')).toContain(th.shop.auth.error.passwordPolicy);
+    expect(document.activeElement).toBe(field('password'));
+  });
+
+  it('clears the browser-side error as soon as the field is typed in again', async () => {
+    mount(vi.fn<Action>(async () => ({})), { fields: REGISTER_FIELDS });
+    type(field('password'), 'abcDEF12!');
+    type(field('passwordConfirm'), 'nope');
+    await submit();
+    expect(errorOf('passwordConfirm')).toContain(th.shop.auth.error.passwordMismatch);
+    type(field('passwordConfirm'), 'nopeX');
+    expect(errorOf('passwordConfirm')).not.toContain(th.shop.auth.error.passwordMismatch);
+  });
+
+  it('sends as before when both checks pass', async () => {
+    const action = vi.fn<Action>(async () => ({}));
+    mount(action, { fields: REGISTER_FIELDS });
+    type(field('email'), 'a@example.test');
+    type(field('password'), 'abcDEF12!');
+    type(field('passwordConfirm'), 'abcDEF12!');
+    await submit();
+    expect(action).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves an empty password to the server, which asks for it', async () => {
+    const action = vi.fn<Action>(async () => ({}));
+    mount(action, { fields: REGISTER_FIELDS });
+    type(field('email'), 'a@example.test');
+    await submit();
+    expect(action).toHaveBeenCalledTimes(1);
   });
 });
 

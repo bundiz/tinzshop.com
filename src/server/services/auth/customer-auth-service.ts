@@ -134,6 +134,12 @@ export async function register(
       return unavailable();
     }
   }
+  // A customer row exists only for an account that has signed in, so it is confirmed: say the email has an account
+  // and send nothing (D-205). The pool hides confirmation status, so an account confirmed but never signed in has no
+  // row and still takes the verify path below.
+  if ((await deps.customers.findByEmail(email)) !== null) {
+    return error('auth.email_exists', 'An account already holds this email', 'shop.auth.error.emailExists', { field: 'email' });
+  }
   const resetFailure = await quietly(deps, 'register reset', email, () => cognito.forgotPassword({ email }));
   // A never-confirmed account may answer ForgotPassword in several ways, so any failure but a throttle resends.
   if (resetFailure !== null && resetFailure !== 'limit_exceeded') {

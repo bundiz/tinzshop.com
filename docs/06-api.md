@@ -238,7 +238,7 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 
 | Action | Does | Next step or error |
 | :--- | :--- | :--- |
-| `register` | Sign up (`given_name`, `family_name`). | Always `verify`, whether the email is new, already registered (a reset code is sent, D-160) or never confirmed (the code is resent). |
+| `register` | Sign up (`given_name`, `family_name`). | `verify` when the email is new, already registered in Cognito without a customer row (a reset code is sent, D-160) or never confirmed (the code is resent). An email with a customer row is `auth.email_exists`, and nothing is sent (D-205). |
 | `confirmRegistration` | Confirms the 6-digit code. | `sign_in` (R1, D-173) when this browser created the account; otherwise a second code is sent and the answer is `set_password`, a redirect to `/forgot-password?step=reset&setPassword=1` (Q-061, D-186). Any failure, including an already-confirmed account, is the same `auth.invalid_code` whoever created the account (Q-060, D-179). |
 | `resendCode` | Resends the sign-up code. | Rate-limited. |
 | `signIn` | Email and password, sets the session cookie; an older session cookie's session is ended first (D-187). | `redirectTo` is the safe `returnTo`. An unconfirmed account goes to `verify`. |
@@ -252,14 +252,17 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 | Code | `messageKey` | When |
 | :--- | :--- | :--- |
 | `auth.rate_limited` | `shop.auth.error.rateLimited` | A limit in D-169 is exceeded; returned before Cognito is called. |
-| `auth.invalid_credentials` | `shop.auth.error.invalidCredentials` | A wrong password or an unknown email. The same message for both (no enumeration). |
+| `auth.invalid_credentials` | `shop.auth.error.invalidCredentials` | A wrong password or an unknown email. The same message for both (no enumeration). Sign-in also gives this key, as a form error and without calling Cognito, for an email that fails the format check (D-207). |
 | `auth.invalid_code` | `shop.auth.error.codeInvalid` (field `code`) | A wrong code, or an unknown email. |
 | `auth.code_expired` | `shop.auth.error.codeExpired` (field `code`) | The code has expired. |
 | `auth.invalid_password` | `shop.auth.error.passwordPolicy` (field `password`) | The pool refused the password; the form checks the same five rules first (D-177). |
+| `auth.email_exists` | `shop.auth.error.emailExists` (field `email`) | Register with an email that has a customer row (D-205). No code is sent. |
 | `auth.account_conflict` | `shop.auth.error.accountConflict` | A correct sign-in whose email another account already holds. |
 | `auth.unavailable` | `shop.auth.error.unavailable` | Cognito could not be reached. Never returned by `register` after a taken email, `resendCode` or `requestPasswordReset`, which always give their normal answer. |
 | (validation) | `shop.auth.error.nameRequired`, `nameTooLong`, `emailInvalid`, `passwordMismatch` (field `passwordConfirm`), `passwordRequired`, `codeFormat` | Zod checks in the controller, before the service. |
 | (controller) | none | The pending cookie is missing or over an hour old; the customer is sent back to the first step with `?expired=1` (a redirect carries no form state, so there is no `formError`). |
+
+**Reasoning behind D-205.** The owner wants a customer who registers an email they already use to be told so plainly, "อีเมลนี้ถูกใช้แล้ว", instead of being sent to a verify page and a reset email (D-160). Cognito would be the natural judge of "already confirmed", but with the pool's "prevent user existence errors" on, neither `ResendConfirmationCode` nor `ConfirmSignUp` tells a confirmed account apart (both checked against the dev pool on 2026-11-14), and the owner chose to keep that setting. Our `customer` table answers it instead: a row is written only by a successful sign-in, so its account is confirmed. The check runs only after `SignUp` says the email is taken, so a row left behind by a Cognito user deleted by hand does not block a fresh registration. The gap is a confirmed account that has never signed in: it has no row, so it keeps the D-160 path and its owner can still get in through the reset code.
 
 **Reasoning behind D-179 (Q-060).** `ConfirmSignUp` reports "already confirmed" before it checks the code, so using that answer to open a choose-a-password step would tell a stranger who typed any code that the email has an account. The verify step therefore answers a confirmed account exactly like a wrong code (same error, same state, same cookies). The owner of an existing account follows the standing link on the verify page to the reset-code step, `PASSWORD_RESET_CODE_PATH` = `/forgot-password?step=reset` (exported from the controller), which reads the email from `tinzshop_pending` and sends no code. The `choose_password` step and `completePasswordChoice` do not exist.
 

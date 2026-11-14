@@ -187,7 +187,21 @@ export async function handleResendCode(deps: CustomerAuthDeps, _formData: FormDa
 export async function handleSignIn(deps: CustomerAuthDeps, formData: FormData, ctx: AuthRequestContext): Promise<AuthActionOutcome> {
   const fields = fieldsOf(formData);
   const parsed = signInSchema.safeParse(fields);
-  if (!parsed.success) return invalid(parsed.error, fields);
+  if (!parsed.success) {
+    const outcome = invalid(parsed.error, fields);
+    const { fieldErrors = {}, ...state } = outcome.state;
+    const { email: emailError, ...otherErrors } = fieldErrors;
+    if (emailError === undefined) return outcome;
+    // No account has a malformed address, so sign-in answers it exactly as a wrong password: the customer is told
+    // their email or password is wrong, never about the email's format (D-207). A missing password is still asked for.
+    return {
+      state: {
+        ...state,
+        formError: 'shop.auth.error.invalidCredentials',
+        ...(Object.keys(otherErrors).length > 0 ? { fieldErrors: otherErrors } : {}),
+      },
+    };
+  }
   const result = await signIn(deps, { ...parsed.data, ip: ctx.ip, now: ctx.now, previousToken: ctx.sessionToken });
   if (!result.ok) return failure(result.error, {}, fields);
   if (result.data.next === 'verify') {
@@ -278,5 +292,5 @@ export async function handleSignOut(deps: CustomerAuthDeps, ctx: AuthRequestCont
       deps.log?.('sign-out failed to end the session', {});
     }
   }
-  return { state: { redirectTo: '/' }, cookies: { clearSession: true } };
+  return { state: { redirectTo: '/sign-in' }, cookies: { clearSession: true } };
 }

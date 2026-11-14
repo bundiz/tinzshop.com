@@ -249,6 +249,9 @@ export function createCognitoIdentity(config: CognitoAdapterConfig, options: Cog
       url.searchParams.set('code_challenge', codeChallenge);
       url.searchParams.set('code_challenge_method', 'S256');
       url.searchParams.set('identity_provider', 'Google');
+      // Cognito forwards this to Google, which then always shows its account chooser: after signing out on a shared
+      // computer, the next person is never signed straight back in as the last one (D-206).
+      url.searchParams.set('prompt', 'select_account');
       return url.toString();
     },
 

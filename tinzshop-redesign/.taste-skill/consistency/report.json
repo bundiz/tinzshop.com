@@ -1,0 +1,3656 @@
+{
+ "page": "/Users/winpassornratchakul/tinzshop.com/tinzshop-redesign/index.html",
+ "url": "http://127.0.0.1:5200/index.html",
+ "at": "2026-11-12T06:19:34.610Z",
+ "out": "/Users/winpassornratchakul/tinzshop.com/tinzshop-redesign/.taste-skill/consistency",
+ "widths": [
+  {
+   "width": 1440,
+   "height": 900,
+   "screens": 8,
+   "held": 0,
+   "errors": [],
+   "findings": [
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PLAYSTATION 5 ทุกอย่างสำหรับ PS5 เครื่อง Slim ทั",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(3), where the ground changes",
+     "stop": 2,
+     "crop": "1440-22-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อนซื้อ ตอบ",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(7), where the ground changes",
+     "stop": 4,
+     "crop": "1440-28-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(9) > div.wrap > div.visit > div.vcard",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(9), where the ground changes",
+     "stop": 6,
+     "crop": "1440-41-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "header.header > div.wrap.header__row > nav.hactions > a.hact:nth-of-type(1)",
+     "text": "เข้าสู่ระบบ บัญชีของฉัน",
+     "stop": 1,
+     "msg": "nav link wraps to a second line",
+     "crop": "1440-14-nav.jpg",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "header.header > div.wrap.header__row > nav.hactions > a.hact:nth-of-type(2)",
+     "text": "รายการ ที่ชอบ",
+     "stop": 1,
+     "msg": "nav link wraps to a second line",
+     "crop": "1440-15-nav.jpg",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "header.header > div.wrap.header__row > nav.hactions > a.hact:nth-of-type(3)",
+     "text": "0 ตะกร้า 0 รายการ",
+     "stop": 1,
+     "msg": "nav link wraps to a second line",
+     "crop": "1440-16-nav.jpg",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 4,
+     "crop": "1440-29-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 4,
+     "crop": "1440-30-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7)",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 5,
+     "crop": "1440-31-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"สมัครสมาชิก\"); soft, fill #fea601 (\"เลือกซื้อสินค้า\"); the odd one out: \"เลือกซื้อสินค้า\"",
+     "crop": "1440-01-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 5,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"อ่านคำถามที่พบบ่อย\"); soft, fill #06c755 (\"แชทกับร้านทาง LINE\"); the odd one out: \"แชทกับร้านทาง LINE\"",
+     "crop": "1440-32-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(the page)",
+     "text": "",
+     "stop": 0,
+     "msg": "5 button styles on the page: soft, fill #1863dc x2 (\"ค้นหา\"); soft, fill #fea601 x1 (\"เลือกซื้อสินค้า\"); soft, outline #ffffff x2 (\"สมัครสมาชิก\"); soft, fill #06c755 x1 (\"แชทกับร้านทาง LINE\"); soft, fill #ffffff, outline #cdd2da x1 (\"ถามสต๊อกทาง LINE\")",
+     "crop": "1440-02-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "same-action",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 5,
+     "msg": "\"แชทกับร้านทาง LINE\" appears 2 times in different looks: soft, fill #06c755 and soft, fill #ffffff, outline #cdd2da",
+     "crop": "1440-33-same-action.jpg",
+     "fix": "draw one action the same way everywhere (only the nav copy may be one size smaller)"
+    },
+    {
+     "check": "copy-headline",
+     "sev": "FAIL",
+     "sel": "h1#hero-title",
+     "text": "เครื่องเกม แผ่นเกม และอุปกรณ์ PS5 · Switch 2 ครบ",
+     "msg": "\"เครื่องเกม แผ่นเกม และอุปกรณ์ PS5 · Switch 2 ครบในร้านเดียว\" does not name what is sold (game consoles, games and it gear online shop, game, consoles, from flags)",
+     "stop": 0,
+     "crop": "1440-03-copy-headline.jpg",
+     "fix": "put the category noun in the h1 (and who it is for, or where), in 2 to 8 words"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "an h3 at 32px, as large as the smallest h2 (20px) or larger (and 1 more like it: \"ทุกอย่างสำหรับ Switch 2\")",
+     "stop": 2,
+     "crop": "1440-23-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "h2 headings in 3 sizes, 20px (\"ชุดพร้อมเล่น PS5 Slim + \") to 40px (x2.00)",
+     "stop": 5,
+     "crop": "1440-34-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "top-stagger",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อนซื้อ ตอบ",
+     "msg": "2 boxes side by side start at different heights (+18, +0px)",
+     "stop": 5,
+     "crop": "1440-35-top-stagger.jpg",
+     "fix": "align the tops of the boxes in the row (one floor, one ceiling)"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.topbar > div.wrap > p.topbar__msg > span:nth-of-type(2)",
+     "text": "ส่งทั่วประเทศไทย ค่าส่งตามขนาดสินค้า · สินค้าชิ้",
+     "stop": 0,
+     "msg": "left edge at 127px, 15px off the page margin at 112px (25 elements, like p.eyebrow)",
+     "crop": "1440-04-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "ul > li:nth-of-type(1) > a.plat > span.plat__ico",
+     "text": "",
+     "stop": 1,
+     "msg": "left edge at 127px, 15px off the page margin at 112px (25 elements, like h2#sets-title)",
+     "crop": "1440-17-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.footer__bot > div.wrap > div.paylist > span.pay:nth-of-type(1)",
+     "text": "ชำระผ่าน K-Payment",
+     "stop": 7,
+     "msg": "left edge at 124px, 12px off the page margin at 112px (25 elements, like p); 1 more in this section off the grid too (span.pay:nth-of-type(4) at 490.5px)",
+     "crop": "1440-47-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "text-contrast",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 5,
+     "msg": "a caption, label or muted line in #ffffff on #06c755 reads 2.26:1 (needs 4.5:1)",
+     "crop": "1440-36-text-contrast.jpg",
+     "fix": "body text in the ink at 7:1 or more; grey (4.5:1 or more) only for captions and labels"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "stop": 1,
+     "msg": "219px between these sections, +174% against the median 80px of gaps at a change of ground",
+     "crop": "1440-18-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 6,
+     "msg": "212px between these sections, +165% against the median 80px of gaps at a change of ground",
+     "crop": "1440-42-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div.topbar > div.wrap > div.topbar__links > a:nth-of-type(4)",
+     "text": "TH · EN",
+     "msg": "\"TH · EN\" goes to \"#\", nowhere",
+     "stop": 0,
+     "crop": "1440-05-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div#drawer > a:nth-of-type(13)",
+     "text": "English",
+     "msg": "\"English\" goes to \"#\", nowhere",
+     "stop": 0,
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "msg": "\"แชทกับร้านทาง LINE\" goes to \"#\", nowhere",
+     "stop": 5,
+     "crop": "1440-37-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-ghost",
+     "text": "อ่านคำถามที่พบบ่อย",
+     "msg": "\"อ่านคำถามที่พบบ่อย\" goes to \"#\", nowhere",
+     "stop": 5,
+     "crop": "1440-38-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div.visit > div.vcard > div.hero__cta > a.btn.btn-dark",
+     "text": "ดูแผนที่ร้าน",
+     "msg": "\"ดูแผนที่ร้าน\" goes to \"#\", nowhere",
+     "stop": 6,
+     "crop": "1440-43-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div.visit > div.vcard > div.hero__cta > a.btn.btn-line",
+     "text": "ถามสต๊อกทาง LINE",
+     "msg": "\"ถามสต๊อกทาง LINE\" goes to \"#\", nowhere",
+     "stop": 6,
+     "crop": "1440-44-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div.wrap.footer__top > div.footer__about > div.social > a",
+     "text": "LINE ของร้าน",
+     "msg": "\"LINE ของร้าน\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-48-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(2) > ul > li:nth-of-type(2) > a",
+     "text": "วิธีสั่งซื้อและชำระเงิน",
+     "msg": "\"วิธีสั่งซื้อและชำระเงิน\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-49-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(2) > ul > li:nth-of-type(3) > a",
+     "text": "ค่าจัดส่ง",
+     "msg": "\"ค่าจัดส่ง\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-50-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(2) > ul > li:nth-of-type(5) > a",
+     "text": "การยกเลิกคำสั่งซื้อ",
+     "msg": "\"การยกเลิกคำสั่งซื้อ\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-51-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(3) > ul > li:nth-of-type(1) > a",
+     "text": "เรื่องราวของ Tinzshop",
+     "msg": "\"เรื่องราวของ Tinzshop\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-52-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(3) > ul > li:nth-of-type(3) > a",
+     "text": "นโยบายการรับประกันและคืนสินค้า",
+     "msg": "\"นโยบายการรับประกันและคืนสินค้า\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-53-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(3) > ul > li:nth-of-type(4) > a",
+     "text": "นโยบายความเป็นส่วนตัว (PDPA)",
+     "msg": "\"นโยบายความเป็นส่วนตัว (PDPA)\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-54-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(3) > ul > li:nth-of-type(5) > a",
+     "text": "เงื่อนไขการใช้บริการ",
+     "msg": "\"เงื่อนไขการใช้บริการ\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-55-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(4) > ul > li:nth-of-type(1) > a",
+     "text": "LINE ของร้าน",
+     "msg": "\"LINE ของร้าน\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-56-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(4) > ul > li:nth-of-type(2) > a",
+     "text": "โทร (เบอร์ร้าน)",
+     "msg": "\"โทร (เบอร์ร้าน)\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-57-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(4) > ul > li:nth-of-type(3) > a",
+     "text": "อีเมลร้าน",
+     "msg": "\"อีเมลร้าน\" goes to \"#\", nowhere",
+     "stop": 7,
+     "crop": "1440-58-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "field-label",
+     "sev": "FAIL",
+     "sel": "input#q",
+     "text": "",
+     "msg": "a input[type=search] without a label you can see: its <label> is hidden",
+     "stop": 0,
+     "crop": "1440-07-field-label.jpg",
+     "fix": "put a <label for> with the field's name above it (references/system.md, Forms); a placeholder is no label"
+    },
+    {
+     "check": "focus-visible",
+     "sev": "FAIL",
+     "sel": "div.topbar:nth-of-type(2) > div.wrap > div.topbar__links > a:nth-of-type(1)",
+     "text": "คำสั่งซื้อของฉัน",
+     "stop": 14,
+     "msg": "Tab stop 2, a \"คำสั่งซื้อของฉัน\": its focus change is faint: 2.78:1 against the ground, 3:1 needed",
+     "crop": "1440-65-focus-visible.jpg",
+     "fix": "keep the kit's ring (system.css :focus-visible, 2px in --action, there at once); a control that hides itself shows on focus"
+    },
+    {
+     "check": "focus-visible",
+     "sev": "FAIL",
+     "sel": "div.topbar:nth-of-type(2) > div.wrap > div.topbar__links > a:nth-of-type(2)",
+     "text": "ประกัน / เคลม",
+     "stop": 15,
+     "msg": "Tab stop 3, a \"ประกัน / เคลม\": its focus change is faint: 2.78:1 against the ground, 3:1 needed",
+     "crop": "1440-66-focus-visible.jpg",
+     "fix": "keep the kit's ring (system.css :focus-visible, 2px in --action, there at once); a control that hides itself shows on focus"
+    },
+    {
+     "check": "focus-visible",
+     "sev": "FAIL",
+     "sel": "div.topbar:nth-of-type(2) > div.wrap > div.topbar__links > a:nth-of-type(3)",
+     "text": "LINE ของร้าน",
+     "stop": 16,
+     "msg": "Tab stop 4, a \"LINE ของร้าน\": its focus change is faint: 2.78:1 against the ground, 3:1 needed",
+     "crop": "1440-67-focus-visible.jpg",
+     "fix": "keep the kit's ring (system.css :focus-visible, 2px in --action, there at once); a control that hides itself shows on focus"
+    },
+    {
+     "check": "focus-visible",
+     "sev": "FAIL",
+     "sel": "div.topbar:nth-of-type(2) > div.wrap > div.topbar__links > a:nth-of-type(4)",
+     "text": "Switch language to English",
+     "stop": 17,
+     "msg": "Tab stop 5, a \"Switch language to English\": its focus change is faint: 2.78:1 against the ground, 3:1 needed",
+     "crop": "1440-68-focus-visible.jpg",
+     "fix": "keep the kit's ring (system.css :focus-visible, 2px in --action, there at once); a control that hides itself shows on focus"
+    },
+    {
+     "check": "run-on",
+     "sev": "FAIL",
+     "sel": "h1#hero-title",
+     "text": "เครื่องเกม แผ่นเกม และอุปกรณ์ PS5 · Switch 2 ครบในร้านเดียว",
+     "msg": "\"องเกม แผ่นเกม และอุปกรณ์ | PS5 · Switch 2\": the heading runs its first sentence into the grey second one with no stop",
+     "stop": 0,
+     "crop": "1440-08-run-on.jpg",
+     "fix": "end the heading's first sentence with a full stop before its grey second one (\"Rooms and prices. Breakfast included.\")"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.card:nth-of-type(1) > div.card__body > h3.card__title > a",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอย DualSense ตัวที่ 2",
+     "stop": 1,
+     "msg": "inside div.card__body, a box sits on the mock's own text and hides it mid-line (\"ผ่อนบัตรเครดิตผ่าน K-Payment ไ\") (and 2 more like it: \"ชุดพร้อมเล่น Switch 2 + \", \"ชุด Switch 2 + เคสกันกระ\")",
+     "crop": "1440-20-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.ncard:nth-of-type(1) > div.ncard__body > h3 > a",
+     "text": "สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้",
+     "stop": 5,
+     "msg": "inside div.ncard__body, a box sits on the mock's own text and hides it mid-line (\"PlayStation\") (and 2 more like it: \"รายชื่อเกม Switch 2 ที่จ\", \"เปิดรับพรีออเดอร์เกมใหม่\")",
+     "crop": "1440-39-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "copy-headings",
+     "sev": "WARN",
+     "sel": "div.grid.g-5 > article.card:nth-of-type(1) > div.card__body > h3.card__title",
+     "text": "จอย DualSense Wireless Controller",
+     "msg": "the card title \"จอย DualSense Wireless Controller\" names no product, part, place or section (4 card titles like it) (and 3 more like it: \"คีย์บอร์ด Mechanical RGB\", \"จอย DualSense สีใหม่ Lim\", \"amiibo ตัวใหม่ (ตัวอย่าง\")",
+     "stop": 3,
+     "crop": "1440-26-copy-headings.jpg",
+     "fix": "name the thing in every heading: the product, a part, the place or a section noun"
+    },
+    {
+     "check": "copy-buttons",
+     "sev": "WARN",
+     "sel": "div#drawer > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "msg": "\"แชทกับร้านทาง LINE\" does not start with a verb (book, buy, try, start, get, see...)",
+     "stop": 0,
+     "fix": "label buttons with a verb and what the visitor gets (\"Book a room\", \"Start free trial\")"
+    },
+    {
+     "check": "copy-actions",
+     "sev": "WARN",
+     "sel": "(the page)",
+     "text": "",
+     "msg": "the main action \"Shop now\" does not read word for word the same in the nav or hero and the closing section",
+     "stop": null,
+     "fix": "few actions, one wording: at most 2 in the hero, the main action word for word in nav, hero and close"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "WARN",
+     "sel": "div.wrap > div.consult > div:nth-of-type(2) > p.consult__handle",
+     "text": "LINE",
+     "msg": "1 line of plain text set larger than the section headings (92px against h2 32px)",
+     "stop": 5,
+     "crop": "1440-40-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "col-edge",
+     "sev": "WARN",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "NINTENDO SWITCH 2 ทุกอย่างสำหรับ Switch 2 เครื่อ",
+     "msg": "the second column starts at 3 places: 728px (section.sec:nth-of-type(3), section.sec:nth-of-type(9)), 773px (section.hero), 846px (section.sec:nth-of-type(7))",
+     "stop": 2,
+     "crop": "1440-24-col-edge.jpg",
+     "fix": "start the second column of every split on the same one or two grid columns"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 6,
+     "msg": "uneven space at the edge of a band: 160px outside its edge, 52px inside it (the space on either side of a change of ground reads as one gap only when the two match)",
+     "crop": "1440-45-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "links",
+     "sev": "WARN",
+     "sel": "div.topbar > div.wrap > div.topbar__links > a:nth-of-type(3)",
+     "text": "LINE ของร้าน",
+     "msg": "\"LINE ของร้าน\" goes to #line, in the footer",
+     "stop": 0,
+     "crop": "1440-10-links.jpg",
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "links",
+     "sev": "WARN",
+     "sel": "div#drawer > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "msg": "\"แชทกับร้านทาง LINE\" goes to #line, in the footer",
+     "stop": 0,
+     "fix": "point every link at a real section, page or file"
+    },
+    {
+     "check": "copy-length",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(4)",
+     "text": "สินค้าขายดีสัปดาห์นี้",
+     "msg": "4 sections over 90 words a screen outside the UI mocks (\"สินค้าขายดีสัปดาห์นี้\" 175, \"ชุดโปรโมชั่นพร้อมเล่น\" 167, \"เครื่องเกม แผ่นเกม และอุ\" 127); 96 words a screen across the page (873 words in 9.1 screens): a tech page says it in about 80 or fewer",
+     "fix": "cut every section to its heading, one line and the product UI: the UI says the rest; no second paragraph, no list of feature sentences",
+     "stop": 3,
+     "crop": "1440-27-copy-length.jpg"
+    },
+    {
+     "check": "one-screen",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(2)",
+     "text": "ชุดโปรโมชั่นพร้อมเล่น",
+     "msg": "5 sections are shorter than the screen, so the next one's heading or picture shows with them: \"ชุดโปรโมชั่นพร้อมเล่น\" is 694px of the 774px under the nav, and \"เลือกซื้อตามเครื่อง\" shows below it (\"เลือกซื้อตามเครื่อง\", \"ทักถามร้านก่อนซื้อ ต\", \"ข่าวเกมล่าสุด\")",
+     "fix": "give each section the screen (min-height: 100svh less the nav, its content centred), or join two short ones into one",
+     "stop": 1,
+     "crop": "1440-21-one-screen.jpg"
+    },
+    {
+     "check": "hero-enter",
+     "sev": "WARN",
+     "sel": "main#main > section.hero",
+     "text": "",
+     "msg": "the hero does not enter on load: no data-enter on the hero and no head line setting html.m-enter (motion.md, The hero's entrance)",
+     "fix": "put data-enter on the hero <section> and keep the head line from starter.html that sets html.m-enter",
+     "stop": 0,
+     "crop": "1440-12-hero-enter.jpg"
+    },
+    {
+     "check": "moment-none",
+     "sev": "WARN",
+     "sel": "(the page)",
+     "text": "",
+     "msg": "a tech page (--type) deals no moment: every kind carries one, two on a long page (moments.md)",
+     "fix": "deal one (moments.mjs pick --page tech) and mount it in its own section",
+     "stop": null
+    },
+    {
+     "check": "heading-order",
+     "sev": "WARN",
+     "sel": "footer#line > div.wrap.footer__top:nth-of-type(1) > div:nth-of-type(2) > h4",
+     "text": "ช่วยเหลือ",
+     "msg": "\"ช่วยเหลือ\" is an h4 after an h2: a level is skipped (in the header or footer)",
+     "stop": 6,
+     "crop": "1440-46-heading-order.jpg",
+     "fix": "step down one level at a time (h1, h2, h3): change the tag, not the look; a footer's column heads are h3"
+    },
+    {
+     "check": "skip-link",
+     "sev": "WARN",
+     "sel": "a.skip",
+     "text": "ข้ามไปเนื้อหาหลัก",
+     "msg": "the first Tab stop is \"ข้ามไปเนื้อหาหลัก\", not a skip link: a keyboard user tabs through the whole nav on every visit",
+     "stop": null,
+     "fix": "add the starter's skip link as the header's first child: <a class=\"skip-link\" href=\"#top\">Skip to content</a>"
+    },
+    {
+     "check": "share-meta",
+     "sev": "WARN",
+     "sel": "head",
+     "text": "",
+     "msg": "the head lacks og:image, twitter:card, an icon: a shared link shows no picture or title of its own",
+     "stop": null,
+     "fix": "copy the head block of starter.html: og tags, twitter:card, the icon and theme-color (references/system.md, Head)"
+    },
+    {
+     "check": "form-fields",
+     "sev": "WARN",
+     "sel": "header.header > div.wrap.header__row > form.search",
+     "text": "",
+     "msg": "the form has no status line (role=\"status\"): sending, sent and errors are never read out",
+     "stop": 0,
+     "crop": "1440-13-form-fields.jpg",
+     "fix": "give each field its type, autocomplete and inputmode, never block paste or disable the button before a submit, and add the status line (references/system.md, Forms)"
+    },
+    {
+     "check": "hero-screen",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the hero ends at 913px on a 900px screen, 13px below the fold: it ends at the fold, 1px either way (SR-1)",
+     "fix": "make the hero exactly one screen (height: 100svh, its content fitted inside), never taller or shorter",
+     "rule": "SR-1 T1",
+     "crop": "1440-rhythm-01-hero-screen.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section is 85px tall (0.1 screens), 815px short of one screen (900px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "1440-rhythm-02-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop ร้านจริงกว่",
+     "msg": "the section is 351px tall (0.4 screens), 549px short of one screen (900px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "1440-rhythm-03-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "footer#line",
+     "text": "Tinzshop ร้านเกม คอนโซล และอุปกรณ์ไอที ห",
+     "msg": "the section is 382px tall (0.4 screens), 518px short of one screen (900px): every section after the hero is one screen or two, 2px either way (and 7 more like it: \"พรีออเดอร์ เปิดจองแล้วจ่\", \"เลือกซื้อตามเครื่อง Play\", \"ไม่แน่ใจว่าจะเลือกรุ่นไห\") (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "1440-rhythm-04-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้วจ่ายเต็มหรือวางมัด",
+     "msg": "the section starts at 3088px, 388px below the screen grid (3 x 900px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "1440-rhythm-05-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(4)",
+     "text": "สินค้าขายดีสัปดาห์นี้ ทั้งหมดPS5Switch 2",
+     "msg": "the section starts at 2109px, 309px below the screen grid (2 x 900px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "1440-rhythm-06-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(9)",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านส",
+     "msg": "the section starts at 4799px, 299px below the screen grid (5 x 900px): sections start on whole screens (and 8 more like it: \"ข่าวเกมล่าสุดอ่านทั้งหมด\", \"ไม่แน่ใจว่าจะเลือกรุ่นไห\", \"หน้าร้านย่านสะพานเหล็กกว\") (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "1440-rhythm-07-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section's content does not fit it: its lowest content ends 84px below its top, past 13px (the section less 72px of bottom padding) (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "1440-rhythm-08-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "footer#line",
+     "text": "Tinzshop ร้านเกม คอนโซล และอุปกรณ์ไอที ห",
+     "msg": "the section's content does not fit it: its lowest content ends 357px below its top, past 310px (the section less 72px of bottom padding) (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "1440-rhythm-09-section-height.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > nav.plats / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "msg": "80px of air between the content of these two sections: 128-480px (64-600px WARN) (every gap out of the band at 1440px, top to bottom: 80px after \"PlayStation 5เครื่อง\", 107px after \"เลือกซื้อตามเครื่อง \", 96px after \"สินค้าขายดีสัปดาห์นี\", 104px after \"พรีออเดอร์ เปิดจองแล\") (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "1440-rhythm-30-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(4) / main#main > section.sec:nth-of-type(5)",
+     "text": "",
+     "msg": "96px of air between the content of these two sections: 128-480px (64-600px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "1440-rhythm-31-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(5) / main#main > section.sec:nth-of-type(6)",
+     "text": "",
+     "msg": "104px of air between the content of these two sections: 128-480px (64-600px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "1440-rhythm-32-section-air.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "the screen at scroll 3826px (the top of section 8) shows 444px of section 8 and the heading of section 8 whole and the content of 2 sections, over 24px each beside section 9: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "1440-rhythm-10-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#why-title",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "the screen at scroll 2700px (stride 3) shows 388px of section 5 and the heading of section 7 whole and the content of 3 sections, over 24px each beside section 6: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "1440-rhythm-11-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#visit-title",
+     "text": "แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็ก",
+     "msg": "the screen at scroll 4270px (the top of section 9) shows 371px of section 10 and the heading of section 10 whole and the content of 2 sections, over 24px each beside section 9: a screen shows one section (another may peek 8px, 24px WARN) (and 7 more like it: scroll 3088px, scroll 4500px, scroll 4799px) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "1440-rhythm-12-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "a <nav> sits directly in <main>: every part of <main> is a <section> (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "1440-rhythm-13-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a band: a box 84% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "1440-rhythm-14-one-section.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "div.feature > div.feature__body > div > h2",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอยตัวที่ 2",
+     "msg": "the hero holds an h2 (1): its heading is the h1, and an h2 opens the next section (SR-5)",
+     "fix": "give each section one h2, first in its .wrap, and the hero only its h1",
+     "rule": "SR-5 T1",
+     "crop": "1440-rhythm-15-one-heading.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "h2#sets-title",
+     "text": "ชุดโปรโมชั่นพร้อมเล่น",
+     "msg": "headings of two sections show whole on one screen at 41 of 98 scroll positions (41.8%; at scroll 250, 300, 350, 400px), here with \"ชุดพร้อมเล่น PS5 Slim + จอยตัวที\": at most 3% on a desktop (SR-5)",
+     "fix": "make the sections one screen tall so their headings sit a screen apart and two never share one",
+     "rule": "SR-5 T2",
+     "crop": "1440-rhythm-16-one-heading.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "header.header",
+     "text": "Tinzshop ค้นหาสินค้า ค้นหา เข้าสู่ระบบบั",
+     "msg": "the nav's first box starts at 112px and its last ends at 1328px, not on its .wrap at 80-1360px (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "1440-rhythm-17-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "a.skip",
+     "text": "ข้ามไปเนื้อหาหลัก",
+     "msg": "a <a> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.mock",
+     "text": "ตัวอย่างงานออกแบบ (Design mockup) — ราคา",
+     "msg": "a <div> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (and 7 more like it: \"ส่งทั่วประเทศไทย ค่าส่งต\", \"Tinzshop ค้นหาสินค้า ค้น\", \"Tinzshop หน้าแรกPlayStat\") (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure",
+     "crop": "1440-rhythm-18-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "header.header > nav.catnav",
+     "text": "หน้าแรกPlayStation 5Nintendo Switch 2IT ",
+     "msg": "a box runs 0-1440px, outside the container lines of the nav at 80-1360px: full width is for background layers and grounds only (SR-6)",
+     "fix": "keep it inside the container lines (.wrap): full width is for background layers and grounds only",
+     "rule": "SR-6 T2-containment",
+     "crop": "1440-rhythm-19-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "footer#line > div.footer__bot",
+     "text": "ชำระผ่าน K-Paymentบัตรเครดิต / เดบิตผ่อน",
+     "msg": "a box runs 0-1440px, outside the container lines of section 11 at 80-1360px: full width is for background layers and grounds only (SR-6)",
+     "fix": "keep it inside the container lines (.wrap): full width is for background layers and grounds only",
+     "rule": "SR-6 T2-containment",
+     "crop": "1440-rhythm-20-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.feature > div.feature__body > div > h2",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอยตัวที่ 2",
+     "msg": "the h2 starts 716px right of the container's left: every h1 and h2 starts on it, 2px either way (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "1440-rhythm-21-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.wrap > div.consult > div:nth-of-type(1) > p.eyebrow",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน",
+     "msg": "3 text blocks start on a left line at x 168, 88px from the container's left: text starts on the container's left, or on one split line (x 623, 732, 841) (also \"ทักถามร้านก่อนซื้อ ตอบในเวลาทำกา\", \"ถามได้ทั้งเรื่องรุ่น โซนแผ่น การ\") (and 9 more like it: \"ทักถามร้านก่อนซื้อ ตอบใน\", \"แวะมาดูของจริงที่หน้าร้า\", x 112) (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "1440-rhythm-22-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "footer#line > div.footer__bot",
+     "text": "ชำระผ่าน K-Paymentบัตรเครดิต / เดบิตผ่อน",
+     "msg": "a box over half the container wide runs 0-1440px, not on the container's lines at 80-1360px (and 1 more like it: \"ไม่แน่ใจว่าจะเลือกรุ่นไห\") (SR-6)",
+     "fix": "run the picture or box from the container's left line to its right line, or put it in a row or a split",
+     "rule": "SR-6 T6-right-edges",
+     "crop": "1440-rhythm-23-container-edges.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(2) > div.wrap > div.grid.g-5",
+     "text": "ชุดโปรโมชั่น ชุดโปรโมชั่น · PS5 ชุดพร้อม",
+     "msg": "a row of 5 items: its first item starts at 112px, the container's left line at 80px; its last item ends at 1328px, the container's right line at 1360px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "1440-rhythm-24-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(4) > div.wrap > div.grid.g-5",
+     "text": "PlayStation 5 · จอย จอย DualSense Wirele",
+     "msg": "a row of 5 items: its first item starts at 112px, the container's left line at 80px; its last item ends at 1328px, the container's right line at 1360px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "1440-rhythm-25-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(8) > div.wrap > div.grid.g-3",
+     "text": "PlayStationสรุปเกมใหม่ที่ประกาศในงานเดือ",
+     "msg": "a row of 3 items: its first item starts at 112px, the container's left line at 80px; its last item ends at 1328px, the container's right line at 1360px (2px either way) (and 6 more like it: \"PlayStation 5เครื่อง · เ\", \"PlayStation 5ทุกอย่างสำห\", \"20พ.ย. 69 เกมใหม่ Switch\") (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "1440-rhythm-26-row-lines.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero > div.wrap.hero__grid",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the two columns of the split start 40px apart at the top (centred on each other): a split's columns are top-aligned, 8px either way (SR-8)",
+     "fix": "top-align both columns of the split (align-items: start)",
+     "rule": "SR-8 T-mode",
+     "crop": "1440-rhythm-27-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero > div.wrap.hero__grid",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the split's columns are off the page's one pair of lines: its right column starts at x 773, on none of the split lines 623 (k=5), 732 (k=6), 841 (k=7) (SR-8)",
+     "fix": "start every split's right column on one shared line (wrap.left + k x (width + 24) / 12, k 5, 6 or 7; 6 on a place page) and end the left one 24px before it",
+     "rule": "SR-8 T-pair",
+     "crop": "1440-rhythm-28-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero > div.wrap.hero__grid",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the split does not run edge to edge on the container: its left column starts at 112px, the container's left at 80px; its right column ends at 1328px, the container's right at 1360px (SR-8)",
+     "fix": "run the split from the container's left line to its right line",
+     "rule": "SR-8 T-edges",
+     "crop": "1440-rhythm-29-split-pair.jpg"
+    }
+   ],
+   "glAsked": 0
+  },
+  {
+   "width": 1024,
+   "height": 768,
+   "screens": 13,
+   "held": 0,
+   "errors": [],
+   "findings": [
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อนซื้อ ตอบ",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(7), where the ground changes",
+     "stop": 8,
+     "crop": "1024-17-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(9) > div.wrap > div.visit > div.vcard",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(9), where the ground changes",
+     "stop": 10,
+     "crop": "1024-27-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "div.wrap > ul > li:nth-of-type(8) > a.nav-sale",
+     "text": "สินค้าลดราคา",
+     "stop": 1,
+     "msg": "\"สินค้าลดราคา\" sits outside the nav bar header.header (0-1024px)",
+     "crop": "1024-04-nav.jpg",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "row-gap",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(2) > div.wrap > div.grid.g-5 > article.card:nth-of-type(5)",
+     "text": "Nintendo Switch 2 · เครื่องเกม Nintendo Switch 2",
+     "msg": "fills 24% of its grid row and leaves 76% of it empty on the right",
+     "stop": 2,
+     "fix": "fill the row at this width: span the columns, or stack the split"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 7,
+     "crop": "1024-15-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 8,
+     "crop": "1024-18-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7)",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 8,
+     "crop": "1024-19-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"สมัครสมาชิก\"); soft, fill #fea601 (\"เลือกซื้อสินค้า\"); the odd one out: \"เลือกซื้อสินค้า\"",
+     "crop": "1024-01-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 8,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"อ่านคำถามที่พบบ่อย\"); soft, fill #06c755 (\"แชทกับร้านทาง LINE\"); the odd one out: \"แชทกับร้านทาง LINE\"",
+     "crop": "1024-20-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(the page)",
+     "text": "",
+     "stop": 0,
+     "msg": "6 button styles on the page: soft, fill #1863dc x2 (\"ค้นหา\"); soft, fill #fea601 x1 (\"เลือกซื้อสินค้า\"); soft, outline #ffffff x2 (\"สมัครสมาชิก\"); square, outline #10141c x1 (\"PlayStation 5 เครื่อง · เกม · จอย\"); soft, fill #06c755 x1 (\"แชทกับร้านทาง LINE\"); soft, fill #ffffff, outline #cdd2da x1 (\"ถามสต๊อกทาง LINE\")",
+     "crop": "1024-02-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "same-action",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 8,
+     "msg": "\"แชทกับร้านทาง LINE\" appears 2 times in different looks: soft, fill #06c755 and soft, fill #ffffff, outline #cdd2da",
+     "crop": "1024-21-same-action.jpg",
+     "fix": "draw one action the same way everywhere (only the nav copy may be one size smaller)"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "an h3 at 24.6px, as large as the smallest h2 (20px) or larger (and 1 more like it: \"ทุกอย่างสำหรับ Switch 2\")",
+     "stop": 4,
+     "crop": "1024-11-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "h2 headings in 3 sizes, 20px (\"ชุดพร้อมเล่น PS5 Slim + \") to 30.7px (x1.53)",
+     "stop": 8,
+     "crop": "1024-22-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "h3 headings in 2 sizes, 16px (\"เกมใหม่ Switch 2 (ตัวอย่\") to 24.6px (x1.54)",
+     "stop": 4,
+     "crop": "1024-12-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.topbar > div.wrap > p.topbar__msg > span:nth-of-type(2)",
+     "text": "ส่งทั่วประเทศไทย ค่าส่งตามขนาดสินค้า · สินค้าชิ้",
+     "stop": 0,
+     "msg": "left edge at 47px, 15px off the page margin at 32px (44 elements, like p.eyebrow)",
+     "crop": "1024-03-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "ul > li:nth-of-type(4) > a.plat > span.plat__ico",
+     "text": "",
+     "stop": 2,
+     "msg": "left edge at 47px, 15px off the page margin at 32px (44 elements, like a.plat)",
+     "crop": "1024-06-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.footer__bot > div.wrap > div.paylist > span.pay:nth-of-type(1)",
+     "text": "ชำระผ่าน K-Payment",
+     "stop": 12,
+     "msg": "left edge at 44px, 12px off the page margin at 32px (44 elements, like p)",
+     "crop": "1024-31-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "contrast",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(1) > ul > li:nth-of-type(1) > a",
+     "text": "เครื่องเกม",
+     "stop": 5,
+     "msg": "body text over a effect reads at 1.1:1 at its worst tenth (needs 4.5:1), on a busy ground (and 1 more like it: \"จอย\")",
+     "crop": "1024-13-contrast.jpg",
+     "fix": "put the text on a calm part of the picture, or on a solid panel"
+    },
+    {
+     "check": "contrast",
+     "sev": "FAIL",
+     "sel": "div:nth-of-type(1) > ul > li:nth-of-type(2) > a",
+     "text": "แผ่นเกม",
+     "stop": 5,
+     "msg": "body text over a effect reads at 1.1:1 at its worst tenth (needs 4.5:1) (and 1 more like it: \"เคส & ฟิล์ม\")",
+     "crop": "1024-14-contrast.jpg",
+     "fix": "put the text on a calm part of the picture, or on a solid panel"
+    },
+    {
+     "check": "text-contrast",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 8,
+     "msg": "a caption, label or muted line in #ffffff on #06c755 reads 2.26:1 (needs 4.5:1)",
+     "crop": "1024-23-text-contrast.jpg",
+     "fix": "body text in the ink at 7:1 or more; grey (4.5:1 or more) only for captions and labels"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "stop": 2,
+     "msg": "272px between these sections, +346% against the median 61px of gaps at a change of ground",
+     "crop": "1024-07-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 11,
+     "msg": "179px between these sections, +193% against the median 61px of gaps at a change of ground",
+     "crop": "1024-29-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.card:nth-of-type(1) > div.card__body > h3.card__title > a",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอย DualSense ตัวที่ 2",
+     "stop": 2,
+     "msg": "inside div.card__body, a box sits on the mock's own text and hides it mid-line (\"ผ่อนบัตรเครดิตผ่าน K-Payment ไ\") (and 3 more like it: \"ชุดพร้อมเล่น Switch 2 + \", \"ชุด Switch 2 + เคสกันกระ\", \"Nintendo Switch 2 เครื่อ\")",
+     "crop": "1024-08-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.ncard:nth-of-type(1) > div.ncard__body > h3 > a",
+     "text": "สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้",
+     "stop": 9,
+     "msg": "inside div.ncard__body, a box sits on the mock's own text and hides it mid-line (\"PlayStation\") (and 2 more like it: \"รายชื่อเกม Switch 2 ที่จ\", \"เปิดรับพรีออเดอร์เกมใหม่\")",
+     "crop": "1024-25-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "no-visual",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(2)",
+     "text": "ชุดโปรโมชั่นพร้อมเล่น",
+     "msg": "pictures, effects and mocks cover 22% of this section; a feature section needs a visual (about 25% or more)",
+     "stop": 3,
+     "crop": "1024-10-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "WARN",
+     "sel": "div.wrap > div.consult > div:nth-of-type(2) > p.consult__handle",
+     "text": "LINE",
+     "msg": "1 line of plain text set larger than the section headings (65.5px against h2 24.6px)",
+     "stop": 9,
+     "crop": "1024-26-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "off-grid",
+     "sev": "WARN",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "the section's heading starts at 73px, 41px off the page margin (32px), and no other section starts there",
+     "stop": 8,
+     "crop": "1024-24-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "WARN",
+     "sel": "h2#visit-title",
+     "text": "แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็ก",
+     "msg": "the section's heading starts at 61px, 29px off the page margin (32px), and no other section starts there",
+     "stop": 10,
+     "crop": "1024-28-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 11,
+     "msg": "uneven space at the edge of a band: 123px outside its edge, 56px inside it (the space on either side of a change of ground reads as one gap only when the two match)",
+     "crop": "1024-30-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "label-centre",
+     "sev": "WARN",
+     "sel": "div.wrap > ul > li:nth-of-type(1) > a.plat",
+     "text": "PlayStation 5 เครื่อง · เกม · จอย",
+     "msg": "its label sits 135px off-centre (15px of room at the left, 150px at the right)",
+     "stop": 2,
+     "crop": "1024-09-label-centre.jpg",
+     "fix": "centre the label in its button, or fill the empty side with an icon"
+    },
+    {
+     "check": "one-screen",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "4 sections are shorter than the screen, so the next one's heading or picture shows with them: \"พรีออเดอร์ เปิดจองแล้ว\" is 578px of the 642px under the nav, and \"ทำไมเกมเมอร์ซื้อกับ Tinzshop\" shows below it (\"ทำไมเกมเมอร์ซื้อกับ \", \"ทักถามร้านก่อนซื้อ ต\", \"ข่าวเกมล่าสุด\")",
+     "fix": "give each section the screen (min-height: 100svh less the nav, its content centred), or join two short ones into one",
+     "stop": 7,
+     "crop": "1024-16-one-screen.jpg"
+    }
+   ],
+   "glAsked": 0
+  },
+  {
+   "width": 820,
+   "height": 1180,
+   "screens": 13,
+   "held": 0,
+   "errors": [],
+   "findings": [
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อนซื้อ ตอบ",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(7), where the ground changes",
+     "stop": 8,
+     "crop": "820-17-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(9) > div.wrap > div.visit > div.vcard",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(9), where the ground changes",
+     "stop": 10,
+     "crop": "820-26-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "(the first screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "no nav bar across the top of the first screen (a header with the brand, the section links and the main action)",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "row-gap",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(2) > div.wrap > div.grid.g-5 > article.card:nth-of-type(5)",
+     "text": "Nintendo Switch 2 · เครื่องเกม Nintendo Switch 2",
+     "msg": "fills 49% of its grid row and leaves 51% of it empty on the right",
+     "stop": 2,
+     "crop": "820-11-row-gap.jpg",
+     "fix": "fill the row at this width: span the columns, or stack the split"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 7,
+     "crop": "820-15-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 7,
+     "crop": "820-16-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7)",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 8,
+     "crop": "820-18-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"สมัครสมาชิก\"); soft, fill #fea601 (\"เลือกซื้อสินค้า\"); the odd one out: \"เลือกซื้อสินค้า\"",
+     "crop": "820-01-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 8,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"อ่านคำถามที่พบบ่อย\"); soft, fill #06c755 (\"แชทกับร้านทาง LINE\"); the odd one out: \"แชทกับร้านทาง LINE\"",
+     "crop": "820-19-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(the page)",
+     "text": "",
+     "stop": 0,
+     "msg": "6 button styles on the page: soft, fill #1863dc x2 (\"ค้นหา\"); soft, fill #fea601 x1 (\"เลือกซื้อสินค้า\"); soft, outline #ffffff x2 (\"สมัครสมาชิก\"); square, outline #10141c x1 (\"PlayStation 5 เครื่อง · เกม · จอย\"); soft, fill #06c755 x1 (\"แชทกับร้านทาง LINE\"); soft, fill #ffffff, outline #cdd2da x1 (\"ถามสต๊อกทาง LINE\")",
+     "crop": "820-02-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "same-action",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 8,
+     "msg": "\"แชทกับร้านทาง LINE\" appears 2 times in different looks: soft, fill #06c755 and soft, fill #ffffff, outline #cdd2da",
+     "crop": "820-20-same-action.jpg",
+     "fix": "draw one action the same way everywhere (only the nav copy may be one size smaller)"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "an h3 at 24px, as large as the smallest h2 (20px) or larger (and 1 more like it: \"ทุกอย่างสำหรับ Switch 2\")",
+     "stop": 3,
+     "crop": "820-12-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "h2 headings in 3 sizes, 20px (\"ชุดพร้อมเล่น PS5 Slim + \") to 28px (x1.40)",
+     "stop": 8,
+     "crop": "820-21-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "h3 headings in 3 sizes, 16px (\"เกมใหม่ Switch 2 (ตัวอย่\") to 24px (x1.50)",
+     "stop": 3,
+     "crop": "820-13-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.wrap.hero__grid > div.feature > div.feature__body > span.price.num",
+     "text": "฿19,490",
+     "msg": "the figure \"฿19,490\" is set at 26px, larger than the section headings (h2 24px); 4 more like it",
+     "fix": "set figures at the h2 size or under: a stat reads as data, not as the heading",
+     "stop": 1,
+     "crop": "820-06-heading-scale.jpg"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.topbar > div.wrap > p.topbar__msg > span:nth-of-type(2)",
+     "text": "ส่งทั่วประเทศไทย ค่าส่งตามขนาดสินค้า · สินค้าชิ้",
+     "stop": 0,
+     "msg": "left edge at 41px, 15px off the page margin at 26px (51 elements, like p.eyebrow)",
+     "crop": "820-03-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "ul > li:nth-of-type(4) > a.plat > span.plat__ico",
+     "text": "",
+     "stop": 1,
+     "msg": "left edge at 41px, 15px off the page margin at 26px (51 elements, like a.plat)",
+     "crop": "820-07-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.wrap > div.sec__head > div.chips > button.chip:nth-of-type(1)",
+     "text": "ทั้งหมด",
+     "stop": 4,
+     "msg": "left edge at 434px, 16px off a common edge of its section at 418px (5 elements, like article.card:nth-of-type(2))",
+     "crop": "820-14-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.footer__bot > div.wrap > div.paylist > span.pay:nth-of-type(1)",
+     "text": "ชำระผ่าน K-Payment",
+     "stop": 12,
+     "msg": "left edge at 38px, 12px off the page margin at 26px (51 elements, like p); 1 more in this section off the grid too (span.pay:nth-of-type(4) at 404.5px)",
+     "crop": "820-30-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "text-contrast",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 8,
+     "msg": "a caption, label or muted line in #ffffff on #06c755 reads 2.26:1 (needs 4.5:1)",
+     "crop": "820-22-text-contrast.jpg",
+     "fix": "body text in the ink at 7:1 or more; grey (4.5:1 or more) only for captions and labels"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "stop": 1,
+     "msg": "260px between these sections, +431% against the median 49px of gaps at a change of ground",
+     "crop": "820-08-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 11,
+     "msg": "154px between these sections, +214% against the median 49px of gaps at a change of ground",
+     "crop": "820-28-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.card:nth-of-type(1) > div.card__body > h3.card__title > a",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอย DualSense ตัวที่ 2",
+     "stop": 1,
+     "msg": "inside div.card__body, a box sits on the mock's own text and hides it mid-line (\"ผ่อนบัตรเครดิตผ่าน K-Payment ไ\") (and 4 more like it: \"ชุดพร้อมเล่น Switch 2 + \", \"ชุด Switch 2 + เคสกันกระ\", \"PlayStation 5 Slim รุ่นม\", \"Nintendo Switch 2 เครื่อ\")",
+     "crop": "820-09-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.ncard:nth-of-type(1) > div.ncard__body > h3 > a",
+     "text": "สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้",
+     "stop": 9,
+     "msg": "inside div.ncard__body, a box sits on the mock's own text and hides it mid-line (\"PlayStation\") (and 2 more like it: \"รายชื่อเกม Switch 2 ที่จ\", \"เปิดรับพรีออเดอร์เกมใหม่\")",
+     "crop": "820-25-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "fold-cut",
+     "sev": "WARN",
+     "sel": "div.feature > div.feature__body > div > p",
+     "text": "คุ้มกว่าซื้อแยก ฿790 · มีสินค้า",
+     "msg": "a line of the hero text is sliced by the bottom of the first screen",
+     "stop": 0,
+     "crop": "820-04-fold-cut.jpg",
+     "fix": "size the hero so the heading ends above the fold, or starts below it"
+    },
+    {
+     "check": "fold-cut",
+     "sev": "WARN",
+     "sel": "div.wrap.hero__grid > div.feature > div.feature__body > span.price.num",
+     "text": "฿19,490",
+     "msg": "a line of the hero text is sliced by the bottom of the first screen",
+     "stop": 0,
+     "crop": "820-05-fold-cut.jpg",
+     "fix": "size the hero so the heading ends above the fold, or starts below it"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "WARN",
+     "sel": "div.wrap > div.consult > div:nth-of-type(2) > p.consult__handle",
+     "text": "LINE",
+     "msg": "1 line of plain text set larger than the section headings (52.5px against h2 24px)",
+     "stop": 8,
+     "crop": "820-23-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "off-grid",
+     "sev": "WARN",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "the section's heading starts at 59px, 33px off the page margin (26px), and no other section starts there",
+     "stop": 8,
+     "crop": "820-24-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "WARN",
+     "sel": "h2#visit-title",
+     "text": "แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็ก",
+     "msg": "the section's heading starts at 55px, 29px off the page margin (26px), and no other section starts there",
+     "stop": 10,
+     "crop": "820-27-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 11,
+     "msg": "uneven space at the edge of a band: 98px outside its edge, 56px inside it (the space on either side of a change of ground reads as one gap only when the two match)",
+     "crop": "820-29-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "label-centre",
+     "sev": "WARN",
+     "sel": "div.wrap > ul > li:nth-of-type(1) > a.plat",
+     "text": "PlayStation 5 เครื่อง · เกม · จอย",
+     "msg": "its label sits 71px off-centre (15px of room at the left, 86px at the right)",
+     "stop": 1,
+     "crop": "820-10-label-centre.jpg",
+     "fix": "centre the label in its button, or fill the empty side with an icon"
+    },
+    {
+     "check": "hero-screen",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the hero ends at 1340px on a 1180px screen, 160px below the fold: it ends at the fold, 1px either way (SR-1)",
+     "fix": "make the hero exactly one screen (height: 100svh, its content fitted inside), never taller or shorter",
+     "rule": "SR-1 T1",
+     "crop": "820-rhythm-01-hero-screen.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section is 169px tall (0.1 screens), 1011px short of one screen (1180px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "820-rhythm-05-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop ร้านจริงกว่",
+     "msg": "the section is 508px tall (0.4 screens), 672px short of one screen (1180px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "820-rhythm-06-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้วจ่ายเต็มหรือวางมัด",
+     "msg": "the section is 565px tall (0.5 screens), 615px short of one screen (1180px): every section after the hero is one screen or two, 2px either way (and 7 more like it: \"ไม่แน่ใจว่าจะเลือกรุ่นไห\", \"สินค้าขายดีสัปดาห์นี้ ทั\", \"ข่าวเกมล่าสุดอ่านทั้งหมด\") (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "820-rhythm-07-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(8)",
+     "text": "ข่าวเกมล่าสุดอ่านทั้งหมด PlayStationสรุป",
+     "msg": "the section starts at 8862px, 578px above the screen grid (8 x 1180px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "820-rhythm-08-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop ร้านจริงกว่",
+     "msg": "the section starts at 7785px, 475px above the screen grid (7 x 1180px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "820-rhythm-09-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(4)",
+     "text": "สินค้าขายดีสัปดาห์นี้ ทั้งหมดPS5Switch 2",
+     "msg": "the section starts at 4273px, 447px above the screen grid (4 x 1180px): sections start on whole screens (and 8 more like it: \"ชุดโปรโมชั่นพร้อมเล่นเคร\", \"Tinzshop ร้านเกม คอนโซล \", \"หน้าร้านย่านสะพานเหล็กกว\") (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "820-rhythm-10-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section's content does not fit it: its lowest content ends 168px below its top, past 97px (the section less 72px of bottom padding) (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "820-rhythm-11-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "footer#line",
+     "text": "Tinzshop ร้านเกม คอนโซล และอุปกรณ์ไอที ห",
+     "msg": "the section's content does not fit it: its lowest content ends 832px below its top, past 780px (the section less 72px of bottom padding) (and 3 more like it: \"ชุดโปรโมชั่นพร้อมเล่นเคร\", \"สินค้าขายดีสัปดาห์นี้ ทั\", \"ข่าวเกมล่าสุดอ่านทั้งหมด\") (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "820-rhythm-12-section-height.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "msg": "49px of air between the content of these two sections: 128-480px (64-600px WARN) (every gap out of the band at 820px, top to bottom: 49px after \"PlayStation 5เครื่อง\", 65px after \"สินค้าขายดีสัปดาห์นี\", 73px after \"พรีออเดอร์ เปิดจองแล\", 115px after \"ทำไมเกมเมอร์ซื้อกับ \", 92px after \"ไม่แน่ใจว่าจะเลือกรุ\", 101px after \"ข่าวเกมล่าสุดอ่านทั้\") (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "820-rhythm-13-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(4) / main#main > section.sec:nth-of-type(5)",
+     "text": "",
+     "msg": "65px of air between the content of these two sections: 128-480px (64-600px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(5) / main#main > section.sec:nth-of-type(6)",
+     "text": "",
+     "msg": "73px of air between the content of these two sections: 128-480px (64-600px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "820-rhythm-38-section-air.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "the screen at scroll 8260px (stride 7) shows 568px of section 8 and the heading of section 8 whole and the content of 2 sections, over 24px each beside section 9: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "820-rhythm-14-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "the screen at scroll 8293px (the top of section 8) shows 568px of section 8 and the heading of section 8 whole and the content of 2 sections, over 24px each beside section 9: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "820-rhythm-15-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#why-title",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "the screen at scroll 7220px (the top of section 6) shows 509px of section 7 and the heading of section 7 whole and the content of 3 sections, over 24px each beside section 6: a screen shows one section (another may peek 8px, 24px WARN) (and 9 more like it: scroll 7080px, scroll 3540px, scroll 3470px) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "820-rhythm-16-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "a <nav> sits directly in <main>: every part of <main> is a <section> (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "820-rhythm-17-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a band: a box 94% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "820-rhythm-18-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(9) > div.wrap > div.visit > div.vcard",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านส",
+     "msg": "a band: a box 94% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "820-rhythm-19-one-section.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "div.feature > div.feature__body > div > h2",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอยตัวที่ 2",
+     "msg": "the hero holds an h2 (1): its heading is the h1, and an h2 opens the next section (SR-5)",
+     "fix": "give each section one h2, first in its .wrap, and the hero only its h1",
+     "rule": "SR-5 T1",
+     "crop": "820-rhythm-20-one-heading.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "h2#sets-title",
+     "text": "ชุดโปรโมชั่นพร้อมเล่น",
+     "msg": "headings of two sections show whole on one screen at 53 of 225 scroll positions (23.6%; at scroll 450, 500, 550, 600px), here with \"ชุดพร้อมเล่น PS5 Slim + จอยตัวที\": at most 3% on a desktop (SR-5)",
+     "fix": "make the sections one screen tall so their headings sit a screen apart and two never share one",
+     "rule": "SR-5 T2",
+     "crop": "820-rhythm-21-one-heading.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "header.header",
+     "text": "Tinzshop ค้นหาสินค้า ค้นหา เข้าสู่ระบบบั",
+     "msg": "the nav's content runs 0px from the left and 0px from the right: the margin is 64-120px at 820px (one container, equal margins, 2px either way) (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "820-rhythm-22-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the content of section 1 runs 0px from the left and 0px from the right: the margin is 64-120px at 820px (one container, equal margins, 2px either way) (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "820-rhythm-23-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the content of section 2 runs 0px from the left and 0px from the right: the margin is 64-120px at 820px (one container, equal margins, 2px either way) (and 10 more like it: \"ชุดโปรโมชั่นพร้อมเล่นเคร\", \"เลือกซื้อตามเครื่อง Play\", \"สินค้าขายดีสัปดาห์นี้ ทั\") (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "820-rhythm-24-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "a.skip",
+     "text": "ข้ามไปเนื้อหาหลัก",
+     "msg": "a <a> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.mock",
+     "text": "ตัวอย่างงานออกแบบ (Design mockup) — ราคา",
+     "msg": "a <div> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (and 7 more like it: \"ส่งทั่วประเทศไทย ค่าส่งต\", \"Tinzshop ค้นหาสินค้า ค้น\", \"Tinzshop หน้าแรกPlayStat\") (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure",
+     "crop": "820-rhythm-25-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(2) > div.consult__q > span.bubble.me",
+     "text": "PS5 Slim รุ่นมีช่องแผ่นกับ Digital ต่างก",
+     "msg": "1 text block starts on a left line at x 435, 435px from the container's left: text starts on the container's left, or on one split line (x 352, 422, 492) (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "820-rhythm-26-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(2) > div.consult__q > span.bubble:nth-of-type(2)",
+     "text": "รุ่นมีช่องแผ่นเล่นแผ่นเกมและ Blu-ray ได้",
+     "msg": "1 text block starts on a left line at x 73, 73px from the container's left: text starts on the container's left, or on one split line (x 352, 422, 492) (and 11 more like it: x 59, \"ทักถามร้านก่อนซื้อ ตอบใน\", \"แวะมาดูของจริงที่หน้าร้า\") (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "820-rhythm-27-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a box over half the container wide runs 26-794px, not on the container's lines at 0-820px (SR-6)",
+     "fix": "run the picture or box from the container's left line to its right line, or put it in a row or a split",
+     "rule": "SR-6 T6-right-edges",
+     "crop": "820-rhythm-28-container-edges.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(5) > div.wrap > div.pre > article.pre__item:nth-of-type(1)",
+     "text": "20พ.ย. 69 เกมใหม่ Switch 2 (ตัวอย่างชื่อ",
+     "msg": "a row of 2 items: its first item starts at 39px, the container's left line at 0px; its last item ends at 203px, the container's right line at 820px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "820-rhythm-29-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(5) > div.wrap > div.pre > article.pre__item:nth-of-type(2)",
+     "text": "27พ.ย. 69 จอย DualSense สีใหม่ Limited E",
+     "msg": "a row of 2 items: its first item starts at 39px, the container's left line at 0px; its last item ends at 203px, the container's right line at 820px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "820-rhythm-30-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(5) > div.wrap > div.pre > article.pre__item:nth-of-type(3)",
+     "text": "4ธ.ค. 69 เกมใหม่ PS5 (ตัวอย่างชื่อเกม) D",
+     "msg": "a row of 2 items: its first item starts at 39px, the container's left line at 0px; its last item ends at 203px, the container's right line at 820px (2px either way) (and 8 more like it: \"11ธ.ค. 69 amiibo ตัวใหม่\", \"Switch 2฿16,900 Astro Bo\", \"ค่าส่งตามขนาดสินค้า สินค\") (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "820-rhythm-31-row-lines.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PlayStation 5ทุกอย่างสำหรับ PS5เครื่อง S",
+     "msg": "the two columns of the split start 67px apart at the top (centred on each other): a split's columns are top-aligned, 8px either way (SR-8)",
+     "fix": "top-align both columns of the split (align-items: start)",
+     "rule": "SR-8 T-mode",
+     "crop": "820-rhythm-32-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "Nintendo Switch 2ทุกอย่างสำหรับ Switch 2",
+     "msg": "the two columns of the split start 67px apart at the top (centred on each other): a split's columns are top-aligned, 8px either way (SR-8)",
+     "fix": "top-align both columns of the split (align-items: start)",
+     "rule": "SR-8 T-mode",
+     "crop": "820-rhythm-33-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PlayStation 5ทุกอย่างสำหรับ PS5เครื่อง S",
+     "msg": "the split's columns are off the page's one pair of lines: its right column starts at x 453, on none of the split lines 352 (k=5), 422 (k=6), 492 (k=7) (SR-8)",
+     "fix": "start every split's right column on one shared line (wrap.left + k x (width + 24) / 12, k 5, 6 or 7; 6 on a place page) and end the left one 24px before it",
+     "rule": "SR-8 T-pair",
+     "crop": "820-rhythm-34-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "Nintendo Switch 2ทุกอย่างสำหรับ Switch 2",
+     "msg": "the split's columns are off the page's one pair of lines: its right column starts at x 453, on none of the split lines 352 (k=5), 422 (k=6), 492 (k=7) (SR-8)",
+     "fix": "start every split's right column on one shared line (wrap.left + k x (width + 24) / 12, k 5, 6 or 7; 6 on a place page) and end the left one 24px before it",
+     "rule": "SR-8 T-pair",
+     "crop": "820-rhythm-35-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PlayStation 5ทุกอย่างสำหรับ PS5เครื่อง S",
+     "msg": "the split does not run edge to edge on the container: its left column starts at 54px, the container's left at 0px; its right column ends at 766px, the container's right at 820px (SR-8)",
+     "fix": "run the split from the container's left line to its right line",
+     "rule": "SR-8 T-edges",
+     "crop": "820-rhythm-36-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "Nintendo Switch 2ทุกอย่างสำหรับ Switch 2",
+     "msg": "the split does not run edge to edge on the container: its left column starts at 54px, the container's left at 0px; its right column ends at 766px, the container's right at 820px (SR-8)",
+     "fix": "run the split from the container's left line to its right line",
+     "rule": "SR-8 T-edges",
+     "crop": "820-rhythm-37-split-pair.jpg"
+    }
+   ],
+   "glAsked": 0
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "screens": 14,
+   "held": 0,
+   "errors": [],
+   "findings": [
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อนซื้อ ตอบ",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(7), where the ground changes",
+     "stop": 9,
+     "crop": "768-15-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(9) > div.wrap > div.visit > div.vcard",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(9), where the ground changes",
+     "stop": 11,
+     "crop": "768-23-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "(the first screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "no nav bar across the top of the first screen (a header with the brand, the section links and the main action)",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "row-gap",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(2) > div.wrap > div.grid.g-5 > article.card:nth-of-type(5)",
+     "text": "Nintendo Switch 2 · เครื่องเกม Nintendo Switch 2",
+     "msg": "fills 49% of its grid row and leaves 51% of it empty on the right",
+     "stop": 2,
+     "crop": "768-08-row-gap.jpg",
+     "fix": "fill the row at this width: span the columns, or stack the split"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 8,
+     "crop": "768-13-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 8,
+     "crop": "768-14-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7)",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 9,
+     "crop": "768-16-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"สมัครสมาชิก\"); soft, fill #fea601 (\"เลือกซื้อสินค้า\"); the odd one out: \"เลือกซื้อสินค้า\"",
+     "crop": "768-01-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 9,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"อ่านคำถามที่พบบ่อย\"); soft, fill #06c755 (\"แชทกับร้านทาง LINE\"); the odd one out: \"แชทกับร้านทาง LINE\"",
+     "crop": "768-17-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(the page)",
+     "text": "",
+     "stop": 0,
+     "msg": "6 button styles on the page: soft, fill #1863dc x2 (\"ค้นหา\"); soft, fill #fea601 x1 (\"เลือกซื้อสินค้า\"); soft, outline #ffffff x2 (\"สมัครสมาชิก\"); square, outline #10141c x1 (\"PlayStation 5 เครื่อง · เกม · จอย\"); soft, fill #06c755 x1 (\"แชทกับร้านทาง LINE\"); soft, fill #ffffff, outline #cdd2da x1 (\"ถามสต๊อกทาง LINE\")",
+     "crop": "768-02-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "same-action",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 9,
+     "msg": "\"แชทกับร้านทาง LINE\" appears 2 times in different looks: soft, fill #06c755 and soft, fill #ffffff, outline #cdd2da",
+     "crop": "768-18-same-action.jpg",
+     "fix": "draw one action the same way everywhere (only the nav copy may be one size smaller)"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "an h3 at 24px, as large as the smallest h2 (20px) or larger (and 1 more like it: \"ทุกอย่างสำหรับ Switch 2\")",
+     "stop": 3,
+     "crop": "768-10-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "h2 headings in 3 sizes, 20px (\"ชุดพร้อมเล่น PS5 Slim + \") to 28px (x1.40)",
+     "stop": 9,
+     "crop": "768-19-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "h3 headings in 3 sizes, 16px (\"เกมใหม่ Switch 2 (ตัวอย่\") to 24px (x1.50)",
+     "stop": 3,
+     "crop": "768-11-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.wrap.hero__grid > div.feature > div.feature__body > span.price.num",
+     "text": "฿19,490",
+     "msg": "the figure \"฿19,490\" is set at 26px, larger than the section headings (h2 24px); 4 more like it",
+     "fix": "set figures at the h2 size or under: a stat reads as data, not as the heading",
+     "stop": 1,
+     "crop": "768-04-heading-scale.jpg"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.topbar > div.wrap > p.topbar__msg > span:nth-of-type(2)",
+     "text": "ส่งทั่วประเทศไทย ค่าส่งตามขนาดสินค้า · สินค้าชิ้",
+     "stop": 0,
+     "msg": "left edge at 39.5px, 14.5px off the page margin at 25px (51 elements, like p.eyebrow)",
+     "crop": "768-03-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "ul > li:nth-of-type(4) > a.plat > span.plat__ico",
+     "text": "",
+     "stop": 1,
+     "msg": "left edge at 39.5px, 14.5px off the page margin at 25px (51 elements, like a.plat)",
+     "crop": "768-05-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.wrap > div.sec__head > div.chips > button.chip:nth-of-type(1)",
+     "text": "ทั้งหมด",
+     "stop": 4,
+     "msg": "left edge at 383.5px, 8.5px off a common edge of its section at 392px (5 elements)",
+     "crop": "768-12-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.footer__bot > div.wrap > div.paylist > span.pay:nth-of-type(1)",
+     "text": "ชำระผ่าน K-Payment",
+     "stop": 13,
+     "msg": "left edge at 36.5px, 11.5px off the page margin at 25px (51 elements, like p)",
+     "crop": "768-26-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "text-contrast",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 9,
+     "msg": "a caption, label or muted line in #ffffff on #06c755 reads 2.26:1 (needs 4.5:1)",
+     "crop": "768-20-text-contrast.jpg",
+     "fix": "body text in the ink at 7:1 or more; grey (4.5:1 or more) only for captions and labels"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "stop": 1,
+     "msg": "259px between these sections, +440% against the median 48px of gaps at a change of ground",
+     "crop": "768-06-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 12,
+     "msg": "152px between these sections, +217% against the median 48px of gaps at a change of ground",
+     "crop": "768-24-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.card:nth-of-type(1) > div.card__body > h3.card__title > a",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอย DualSense ตัวที่ 2",
+     "stop": 2,
+     "msg": "inside div.card__body, a box sits on the mock's own text and hides it mid-line (\"ผ่อนบัตรเครดิตผ่าน K-Payment ไ\") (and 3 more like it: \"ชุดพร้อมเล่น Switch 2 + \", \"ชุด Switch 2 + เคสกันกระ\", \"Nintendo Switch 2 เครื่อ\")",
+     "crop": "768-09-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.ncard:nth-of-type(1) > div.ncard__body > h3 > a",
+     "text": "สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้",
+     "stop": 10,
+     "msg": "inside div.ncard__body, a box sits on the mock's own text and hides it mid-line (\"PlayStation\") (and 3 more like it: \"รายชื่อเกม Switch 2 ที่จ\", \"รายชื่อเกม Switch 2 ที่จ\", \"เปิดรับพรีออเดอร์เกมใหม่\")",
+     "crop": "768-22-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "WARN",
+     "sel": "div.wrap > div.consult > div:nth-of-type(2) > p.consult__handle",
+     "text": "LINE",
+     "msg": "1 line of plain text set larger than the section headings (49.2px against h2 24px)",
+     "stop": 9,
+     "crop": "768-21-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "off-grid",
+     "sev": "WARN",
+     "sel": "div.footer__bot > div.wrap > div.paylist > span.pay:nth-of-type(4)",
+     "text": "PromptPay QR",
+     "stop": 13,
+     "msg": "left edge at 403px, 3px off a common edge of its section at 400px (6 elements, like a)",
+     "crop": "768-27-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 12,
+     "msg": "uneven space at the edge of a band: 96px outside its edge, 56px inside it (the space on either side of a change of ground reads as one gap only when the two match)",
+     "crop": "768-25-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "label-centre",
+     "sev": "WARN",
+     "sel": "div.wrap > ul > li:nth-of-type(1) > a.plat",
+     "text": "PlayStation 5 เครื่อง · เกม · จอย",
+     "msg": "its label sits 55px off-centre (15px of room at the left, 70px at the right)",
+     "stop": 1,
+     "crop": "768-07-label-centre.jpg",
+     "fix": "centre the label in its button, or fill the empty side with an icon"
+    },
+    {
+     "check": "hero-screen",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the hero ends at 1335px on a 1024px screen, 311px below the fold: it ends at the fold, 1px either way (SR-1)",
+     "fix": "make the hero exactly one screen (height: 100svh, its content fitted inside), never taller or shorter",
+     "rule": "SR-1 T1",
+     "crop": "768-rhythm-01-hero-screen.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section is 169px tall (0.2 screens), 855px short of one screen (1024px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "768-rhythm-05-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(4)",
+     "text": "สินค้าขายดีสัปดาห์นี้ ทั้งหมดPS5Switch 2",
+     "msg": "the section is 2824px tall (2.8 screens), 776px over two screens (2048px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "768-rhythm-06-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop ร้านจริงกว่",
+     "msg": "the section is 507px tall (0.5 screens), 517px short of one screen (1024px): every section after the hero is one screen or two, 2px either way (and 7 more like it: \"ไม่แน่ใจว่าจะเลือกรุ่นไห\", \"พรีออเดอร์ เปิดจองแล้วจ่\", \"ข่าวเกมล่าสุดอ่านทั้งหมด\") (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "768-rhythm-07-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(2)",
+     "text": "ชุดโปรโมชั่นพร้อมเล่นเครื่อง เกม และอุปก",
+     "msg": "the section starts at 1503px, 479px below the screen grid (1 x 1024px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "768-rhythm-08-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(8)",
+     "text": "ข่าวเกมล่าสุดอ่านทั้งหมด PlayStationสรุป",
+     "msg": "the section starts at 8604px, 412px below the screen grid (8 x 1024px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "768-rhythm-09-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop ร้านจริงกว่",
+     "msg": "the section starts at 7537px, 369px below the screen grid (7 x 1024px): sections start on whole screens (and 8 more like it: \"เลือกซื้อตามเครื่อง Play\", \"PlayStation 5เครื่อง · เ\", \"หน้าร้านย่านสะพานเหล็กกว\") (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "768-rhythm-10-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section's content does not fit it: its lowest content ends 168px below its top, past 97px (the section less 72px of bottom padding) (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "768-rhythm-11-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "footer#line",
+     "text": "Tinzshop ร้านเกม คอนโซล และอุปกรณ์ไอที ห",
+     "msg": "the section's content does not fit it: its lowest content ends 832px below its top, past 780px (the section less 72px of bottom padding) (and 3 more like it: \"ชุดโปรโมชั่นพร้อมเล่นเคร\", \"สินค้าขายดีสัปดาห์นี้ ทั\", \"ข่าวเกมล่าสุดอ่านทั้งหมด\") (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "768-rhythm-12-section-height.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "msg": "48px of air between the content of these two sections: 128-480px (64-600px WARN) (every gap out of the band at 768px, top to bottom: 48px after \"PlayStation 5เครื่อง\", 64px after \"สินค้าขายดีสัปดาห์นี\", 72px after \"พรีออเดอร์ เปิดจองแล\", 111px after \"ทำไมเกมเมอร์ซื้อกับ \", 88px after \"ไม่แน่ใจว่าจะเลือกรุ\", 100px after \"ข่าวเกมล่าสุดอ่านทั้\") (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "768-rhythm-13-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(4) / main#main > section.sec:nth-of-type(5)",
+     "text": "",
+     "msg": "64px of air between the content of these two sections: 128-480px (64-600px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "768-rhythm-38-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(5) / main#main > section.sec:nth-of-type(6)",
+     "text": "",
+     "msg": "72px of air between the content of these two sections: 128-480px (64-600px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "768-rhythm-39-section-air.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#news-title",
+     "text": "ข่าวเกมล่าสุด",
+     "msg": "the screen at scroll 8044px (the top of section 8) shows 465px of section 9 and the heading of section 9 whole and the content of 2 sections, over 24px each beside section 8: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "768-rhythm-14-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#why-title",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "the screen at scroll 6973px (the top of section 6) shows 461px of section 7 and the heading of section 7 whole and the content of 2 sections, over 24px each beside section 6: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "768-rhythm-15-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "div.wrap > div.consult > div:nth-of-type(2) > p.consult__handle",
+     "text": "LINE",
+     "msg": "the screen at scroll 8192px (stride 8) shows 412px of section 8 and the heading of section 8 whole and the content of 2 sections, over 24px each beside section 9: a screen shows one section (another may peek 8px, 24px WARN) (and 10 more like it: scroll 7168px, scroll 3072px, scroll 1024px) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "768-rhythm-16-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "a <nav> sits directly in <main>: every part of <main> is a <section> (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "768-rhythm-17-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero > div.wrap.hero__grid > div.feature",
+     "text": "ชุดโปรโมชั่นขายดี ชุดพร้อมเล่น PS5 Slim ",
+     "msg": "a band: a box 81% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "768-rhythm-18-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a band: a box 94% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (and 1 more like it: \"หน้าร้าน แวะมาดูของจริงท\") (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "768-rhythm-19-one-section.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "div.feature > div.feature__body > div > h2",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอยตัวที่ 2",
+     "msg": "the hero holds an h2 (1): its heading is the h1, and an h2 opens the next section (SR-5)",
+     "fix": "give each section one h2, first in its .wrap, and the hero only its h1",
+     "rule": "SR-5 T1",
+     "crop": "768-rhythm-20-one-heading.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "h2#sets-title",
+     "text": "ชุดโปรโมชั่นพร้อมเล่น",
+     "msg": "headings of two sections show whole on one screen at 42 of 221 scroll positions (19%; at scroll 600, 650, 700, 750px), here with \"ชุดพร้อมเล่น PS5 Slim + จอยตัวที\": at most 3% on a desktop (SR-5)",
+     "fix": "make the sections one screen tall so their headings sit a screen apart and two never share one",
+     "rule": "SR-5 T2",
+     "crop": "768-rhythm-21-one-heading.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "header.header",
+     "text": "Tinzshop ค้นหาสินค้า ค้นหา เข้าสู่ระบบบั",
+     "msg": "the nav's content runs 0px from the left and 0px from the right: the margin is 64-120px at 768px (one container, equal margins, 2px either way) (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "768-rhythm-22-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the content of section 1 runs 0px from the left and 0px from the right: the margin is 64-120px at 768px (one container, equal margins, 2px either way) (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "768-rhythm-23-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the content of section 2 runs 0px from the left and 0px from the right: the margin is 64-120px at 768px (one container, equal margins, 2px either way) (and 10 more like it: \"ชุดโปรโมชั่นพร้อมเล่นเคร\", \"เลือกซื้อตามเครื่อง Play\", \"สินค้าขายดีสัปดาห์นี้ ทั\") (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "768-rhythm-24-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "a.skip",
+     "text": "ข้ามไปเนื้อหาหลัก",
+     "msg": "a <a> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.mock",
+     "text": "ตัวอย่างงานออกแบบ (Design mockup) — ราคา",
+     "msg": "a <div> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (and 7 more like it: \"ส่งทั่วประเทศไทย ค่าส่งต\", \"Tinzshop ค้นหาสินค้า ค้น\", \"Tinzshop หน้าแรกPlayStat\") (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure",
+     "crop": "768-rhythm-25-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(2) > div.consult__q > span.bubble.me",
+     "text": "PS5 Slim รุ่นมีช่องแผ่นกับ Digital ต่างก",
+     "msg": "1 text block starts on a left line at x 387, 387px from the container's left: text starts on the container's left, or on one split line (x 330, 396, 462) (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "768-rhythm-26-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(2) > div.consult__q > span.bubble:nth-of-type(2)",
+     "text": "รุ่นมีช่องแผ่นเล่นแผ่นเกมและ Blu-ray ได้",
+     "msg": "1 text block starts on a left line at x 69, 69px from the container's left: text starts on the container's left, or on one split line (x 330, 396, 462) (and 11 more like it: x 55, \"ทักถามร้านก่อนซื้อ ตอบใน\", \"แวะมาดูของจริงที่หน้าร้า\") (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "768-rhythm-27-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a box over half the container wide runs 25-743px, not on the container's lines at 0-768px (SR-6)",
+     "fix": "run the picture or box from the container's left line to its right line, or put it in a row or a split",
+     "rule": "SR-6 T6-right-edges",
+     "crop": "768-rhythm-28-container-edges.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(5) > div.wrap > div.pre > article.pre__item:nth-of-type(1)",
+     "text": "20พ.ย. 69 เกมใหม่ Switch 2 (ตัวอย่างชื่อ",
+     "msg": "a row of 2 items: its first item starts at 38px, the container's left line at 0px; its last item ends at 202px, the container's right line at 768px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "768-rhythm-29-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(5) > div.wrap > div.pre > article.pre__item:nth-of-type(2)",
+     "text": "27พ.ย. 69 จอย DualSense สีใหม่ Limited E",
+     "msg": "a row of 2 items: its first item starts at 38px, the container's left line at 0px; its last item ends at 202px, the container's right line at 768px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "768-rhythm-30-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(5) > div.wrap > div.pre > article.pre__item:nth-of-type(3)",
+     "text": "4ธ.ค. 69 เกมใหม่ PS5 (ตัวอย่างชื่อเกม) D",
+     "msg": "a row of 2 items: its first item starts at 38px, the container's left line at 0px; its last item ends at 202px, the container's right line at 768px (2px either way) (and 8 more like it: \"11ธ.ค. 69 amiibo ตัวใหม่\", \"Switch 2฿16,900 Astro Bo\", \"ค่าส่งตามขนาดสินค้า สินค\") (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "768-rhythm-31-row-lines.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PlayStation 5ทุกอย่างสำหรับ PS5เครื่อง S",
+     "msg": "the two columns of the split start 57px apart at the top (centred on each other): a split's columns are top-aligned, 8px either way (SR-8)",
+     "fix": "top-align both columns of the split (align-items: start)",
+     "rule": "SR-8 T-mode",
+     "crop": "768-rhythm-32-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "Nintendo Switch 2ทุกอย่างสำหรับ Switch 2",
+     "msg": "the two columns of the split start 57px apart at the top (centred on each other): a split's columns are top-aligned, 8px either way (SR-8)",
+     "fix": "top-align both columns of the split (align-items: start)",
+     "rule": "SR-8 T-mode",
+     "crop": "768-rhythm-33-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PlayStation 5ทุกอย่างสำหรับ PS5เครื่อง S",
+     "msg": "the split's columns are off the page's one pair of lines: its right column starts at x 424, on none of the split lines 330 (k=5), 396 (k=6), 462 (k=7) (SR-8)",
+     "fix": "start every split's right column on one shared line (wrap.left + k x (width + 24) / 12, k 5, 6 or 7; 6 on a place page) and end the left one 24px before it",
+     "rule": "SR-8 T-pair",
+     "crop": "768-rhythm-34-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "Nintendo Switch 2ทุกอย่างสำหรับ Switch 2",
+     "msg": "the split's columns are off the page's one pair of lines: its right column starts at x 424, on none of the split lines 330 (k=5), 396 (k=6), 462 (k=7) (SR-8)",
+     "fix": "start every split's right column on one shared line (wrap.left + k x (width + 24) / 12, k 5, 6 or 7; 6 on a place page) and end the left one 24px before it",
+     "rule": "SR-8 T-pair",
+     "crop": "768-rhythm-35-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ps",
+     "text": "PlayStation 5ทุกอย่างสำหรับ PS5เครื่อง S",
+     "msg": "the split does not run edge to edge on the container: its left column starts at 53px, the container's left at 0px; its right column ends at 715px, the container's right at 768px (SR-8)",
+     "fix": "run the split from the container's left line to its right line",
+     "rule": "SR-8 T-edges",
+     "crop": "768-rhythm-36-split-pair.jpg"
+    },
+    {
+     "check": "split-pair",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(3) > div.wrap > div.split2 > div.pbanner.pbanner--ns",
+     "text": "Nintendo Switch 2ทุกอย่างสำหรับ Switch 2",
+     "msg": "the split does not run edge to edge on the container: its left column starts at 53px, the container's left at 0px; its right column ends at 715px, the container's right at 768px (SR-8)",
+     "fix": "run the split from the container's left line to its right line",
+     "rule": "SR-8 T-edges",
+     "crop": "768-rhythm-37-split-pair.jpg"
+    }
+   ],
+   "glAsked": 0
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "screens": 16,
+   "held": 0,
+   "errors": [],
+   "findings": [
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อนซื้อ ตอบ",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(7), where the ground changes",
+     "stop": 9,
+     "crop": "390-24-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "flush",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(9) > div.wrap > div.visit > div.vcard",
+     "text": "หน้าร้าน แวะมาดูของจริงที่หน้าร้าน ย่านสะพานเหล็",
+     "msg": "its first line sits 0px under the top edge of section.sec:nth-of-type(9), where the ground changes",
+     "stop": 12,
+     "crop": "390-33-flush.jpg",
+     "fix": "give the section its padding at the edge where the ground changes (the closing call keeps a clear gap above the footer)"
+    },
+    {
+     "check": "nav",
+     "sev": "FAIL",
+     "sel": "(the first screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "no nav bar across the top of the first screen (a header with the brand, the section links and the main action)",
+     "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "FAIL",
+     "sel": "article.card:nth-of-type(1) > div.card__body > h3.card__title > a",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอย DualSense ตัวที่ 2",
+     "msg": "lies over the text \"฿19,490\" (div.card__price > span.price.num) (and 2 more like it: \"Nintendo Switch 2 เครื่อ\", \"SSD M.2 NVMe 2TB พร้อมฮี\")",
+     "stop": 2,
+     "crop": "390-12-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "row-gap",
+     "sev": "FAIL",
+     "sel": "section.sec:nth-of-type(2) > div.wrap > div.grid.g-5 > article.card:nth-of-type(5)",
+     "text": "Nintendo Switch 2 · เครื่องเกม Nintendo Switch 2",
+     "msg": "fills 49% of its grid row and leaves 51% of it empty on the right",
+     "stop": 2,
+     "fix": "fill the row at this width: span the columns, or stack the split"
+    },
+    {
+     "check": "cut-text",
+     "sev": "FAIL",
+     "sel": "article.card:nth-of-type(1) > div.card__body > h3.card__title > a",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอย DualSense ตัวที่ 2",
+     "msg": "cut 23px at the bottom by the overflow of div.grid.g-5 > article.card:nth-of-type(1) > div.card__body > h3.card__title (and 3 more like it: \"Nintendo Switch 2 เครื่อ\", \"SSD M.2 NVMe 2TB พร้อมฮี\", \"จอย GuliKit KingKong 3 M\")",
+     "stop": 2,
+     "crop": "390-14-cut-text.jpg",
+     "fix": "give the text room: no overflow clipping a line, no line past its box"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 8,
+     "crop": "390-22-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 9,
+     "crop": "390-25-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "no-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7)",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+     "stop": 10,
+     "crop": "390-27-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "card-visual",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5) > div.wrap > div.pre",
+     "text": "20 พ.ย. 69 เกมใหม่ Switch 2 (ตัวอย่างชื่อเกม) St",
+     "msg": "4 cards hold only text: no picture, icon, UI fragment or effect in any of them",
+     "stop": 8,
+     "crop": "390-23-card-visual.jpg",
+     "fix": "give the cards a visual: an inset panel with a UI fragment, a photograph or real icons"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 0,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"สมัครสมาชิก\"); soft, fill #fea601 (\"เลือกซื้อสินค้า\"); the odd one out: \"เลือกซื้อสินค้า\"",
+     "crop": "390-01-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 1,
+     "msg": "3 button styles on one screen: square, outline #10141c (\"PlayStation 5 เครื่อง · เกม · จอย\"); soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"สมัครสมาชิก\"); the odd one out: \"สมัครสมาชิก\"",
+     "crop": "390-06-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(one screen)",
+     "text": "",
+     "stop": 10,
+     "msg": "3 button styles on one screen: soft, fill #1863dc (\"ค้นหา\"); soft, outline #ffffff (\"อ่านคำถามที่พบบ่อย\"); soft, fill #06c755 (\"แชทกับร้านทาง LINE\"); the odd one out: \"แชทกับร้านทาง LINE\"",
+     "crop": "390-28-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "button-styles",
+     "sev": "FAIL",
+     "sel": "(the page)",
+     "text": "",
+     "stop": 0,
+     "msg": "6 button styles on the page: soft, fill #1863dc x2 (\"ค้นหา\"); soft, fill #fea601 x1 (\"เลือกซื้อสินค้า\"); soft, outline #ffffff x2 (\"สมัครสมาชิก\"); square, outline #10141c x6 (\"PlayStation 5 เครื่อง · เกม · จอย\"); soft, fill #06c755 x1 (\"แชทกับร้านทาง LINE\"); soft, fill #ffffff, outline #cdd2da x1 (\"ถามสต๊อกทาง LINE\")",
+     "crop": "390-02-button-styles.jpg",
+     "fix": "one primary and one secondary button: one shape, one height per size, one label size"
+    },
+    {
+     "check": "same-action",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 10,
+     "msg": "\"แชทกับร้านทาง LINE\" appears 2 times in different looks: soft, fill #06c755 and soft, fill #ffffff, outline #cdd2da",
+     "crop": "390-29-same-action.jpg",
+     "fix": "draw one action the same way everywhere (only the nav copy may be one size smaller)"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "an h3 at 24px, as large as the smallest h2 (20px) or larger (and 1 more like it: \"ทุกอย่างสำหรับ Switch 2\")",
+     "stop": 4,
+     "crop": "390-16-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "h2#consult-title",
+     "text": "ทักถามร้านก่อนซื้อ ตอบในเวลาทำการ",
+     "msg": "h2 headings in 3 sizes, 20px (\"ชุดพร้อมเล่น PS5 Slim + \") to 28px (x1.40)",
+     "stop": 9,
+     "crop": "390-26-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.split2 > div.pbanner.pbanner--ps > div:nth-of-type(1) > h3",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "h3 headings in 3 sizes, 16px (\"เกมใหม่ Switch 2 (ตัวอย่\") to 24px (x1.50)",
+     "stop": 4,
+     "crop": "390-17-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "heading-scale",
+     "sev": "FAIL",
+     "sel": "div.wrap.hero__grid > div.feature > div.feature__body > span.price.num",
+     "text": "฿19,490",
+     "msg": "the figure \"฿19,490\" is set at 26px, larger than the section headings (h2 24px); 4 more like it",
+     "fix": "set figures at the h2 size or under: a stat reads as data, not as the heading",
+     "stop": 1,
+     "crop": "390-07-heading-scale.jpg"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.topbar > div.wrap > p.topbar__msg > span:nth-of-type(2)",
+     "text": "ส่งทั่วประเทศไทย ค่าส่งตามขนาดสินค้า · สินค้าชิ้",
+     "stop": 0,
+     "msg": "left edge at 31px, 15px off the page margin at 16px (67 elements, like p.eyebrow)",
+     "crop": "390-03-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "off-grid",
+     "sev": "FAIL",
+     "sel": "div.footer__bot > div.wrap > div.paylist > span.pay:nth-of-type(1)",
+     "text": "ชำระผ่าน K-Payment",
+     "stop": 15,
+     "msg": "left edge at 28px, 12px off the page margin at 16px (67 elements, like p); 1 more in this section off the grid too (span.pay:nth-of-type(3) at 28px)",
+     "crop": "390-39-off-grid.jpg",
+     "fix": "move it onto the page margin, or the column edge its section uses"
+    },
+    {
+     "check": "text-contrast",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(1) > div.consult__cta > a.btn.btn-lineapp",
+     "text": "แชทกับร้านทาง LINE",
+     "stop": 10,
+     "msg": "a caption, label or muted line in #ffffff on #06c755 reads 2.26:1 (needs 4.5:1)",
+     "crop": "390-30-text-contrast.jpg",
+     "fix": "body text in the ink at 7:1 or more; grey (4.5:1 or more) only for captions and labels"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "stop": 16,
+     "msg": "338px between these sections, +604% against the median 48px of gaps at a change of ground",
+     "crop": "390-40-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 13,
+     "msg": "152px between these sections, +217% against the median 48px of gaps at a change of ground",
+     "crop": "390-34-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "overlap-text",
+     "sev": "WARN",
+     "sel": "article.ncard:nth-of-type(1) > div.ncard__body > h3 > a",
+     "text": "สรุปเกมใหม่ที่ประกาศในงานเดือนนี้ (ตัวอย่างหัวข้",
+     "stop": 11,
+     "msg": "inside div.ncard__body, a box sits on the mock's own text and hides it mid-line (\"PlayStation\") (and 2 more like it: \"รายชื่อเกม Switch 2 ที่จ\", \"เปิดรับพรีออเดอร์เกมใหม่\")",
+     "crop": "390-32-overlap-text.jpg",
+     "fix": "move the box off the text (or the text off the box)"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "header.header > div.wrap.header__row > a.brand",
+     "text": "Tinzshop",
+     "msg": "a 140x40px tap target: under the 44px a phone needs",
+     "stop": 0,
+     "crop": "390-04-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "header.header > div.wrap.header__row > form.search > button",
+     "text": "ค้นหา",
+     "msg": "a 74x40px tap target: under the 44px a phone needs",
+     "stop": 0,
+     "crop": "390-05-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "section.sec:nth-of-type(2) > div.wrap > div.sec__head > a.link",
+     "text": "ดูชุดทั้งหมด",
+     "msg": "a 100x26px tap target: under the 44px a phone needs",
+     "stop": 2,
+     "crop": "390-15-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "div.pbanner.pbanner--ps > div:nth-of-type(1) > h3 > a.cover",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "msg": "a 204x32px tap target (and 1 more like it on this screen): under the 44px a phone needs",
+     "stop": 4,
+     "crop": "390-18-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "div:nth-of-type(1) > ul > li:nth-of-type(1) > a",
+     "text": "เครื่องเกม",
+     "msg": "a 89x40px tap target (and 7 more like it on this screen): under the 44px a phone needs",
+     "stop": 4,
+     "crop": "390-19-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "div.wrap > div.sec__head > div.chips > button.chip:nth-of-type(1)",
+     "text": "ทั้งหมด",
+     "msg": "a 78x40px tap target (and 3 more like it on this screen): under the 44px a phone needs",
+     "stop": 4,
+     "crop": "390-20-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "footer#line > div.wrap.footer__top > div.footer__about > a.brand",
+     "text": "Tinzshop",
+     "msg": "a 358x40px tap target: under the 44px a phone needs",
+     "stop": 13,
+     "crop": "390-35-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "tap-size",
+     "sev": "WARN",
+     "sel": "div:nth-of-type(2) > ul > li:nth-of-type(1) > a",
+     "text": "คำสั่งซื้อของฉัน",
+     "msg": "a 95x36px tap target (and 12 more like it on this screen): under the 44px a phone needs",
+     "stop": 14,
+     "crop": "390-38-tap-size.jpg",
+     "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+    },
+    {
+     "check": "no-visual",
+     "sev": "WARN",
+     "sel": "main#main > section.hero",
+     "text": "เครื่องเกม แผ่นเกม และอุปกรณ์ PS5 · Switch 2 ครบ",
+     "msg": "pictures, effects and mocks cover 21% of this section; a feature section needs a visual (about 25% or more)",
+     "stop": 1,
+     "crop": "390-08-no-visual.jpg",
+     "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits"
+    },
+    {
+     "check": "button-styles",
+     "sev": "WARN",
+     "sel": "a.skip",
+     "text": "ข้ามไปเนื้อหาหลัก",
+     "msg": "on the phone 6 buttons run the full width of their column, but 2 keep their own width, like \"ข้ามไปเนื้อหาหลัก\" is 143px of 390px: one action in two sizes",
+     "fix": "give every button the same width rule on the phone: all full width, or all at their own width",
+     "stop": null
+    },
+    {
+     "check": "heading-scale",
+     "sev": "WARN",
+     "sel": "div.wrap > div.consult > div:nth-of-type(2) > p.consult__handle",
+     "text": "LINE",
+     "msg": "1 line of plain text set larger than the section headings (44px against h2 24px)",
+     "stop": 10,
+     "crop": "390-31-heading-scale.jpg",
+     "fix": "size headings by level: the h1 largest, one size per level, each level below the one above"
+    },
+    {
+     "check": "contrast",
+     "sev": "WARN",
+     "sel": "div.pbanner.pbanner--ps > div:nth-of-type(1) > h3 > a.cover",
+     "text": "ทุกอย่างสำหรับ PS5",
+     "stop": 4,
+     "msg": "large text over a effect reads at 1.1:1 at its worst tenth (needs 3:1), on a busy ground",
+     "crop": "390-21-contrast.jpg",
+     "fix": "put the text on a calm part of the picture, or on a solid panel"
+    },
+    {
+     "check": "section-gaps",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(9) / footer#line",
+     "text": "",
+     "stop": 13,
+     "msg": "uneven space at the edge of a band: 96px outside its edge, 56px inside it (the space on either side of a change of ground reads as one gap only when the two match)",
+     "crop": "390-36-section-gaps.jpg",
+     "fix": "use one gap between sections (all within 25% of each other)"
+    },
+    {
+     "check": "label-centre",
+     "sev": "WARN",
+     "sel": "div.wrap > ul > li:nth-of-type(2) > a.plat",
+     "text": "Switch 2 เครื่อง · เกม · จอย",
+     "msg": "its label sits 25px off-centre (13px of room at the left, 38px at the right) (and 1 more like it: \"IT Gadgets คีย์บอร์ด · เ\")",
+     "stop": 1,
+     "crop": "390-09-label-centre.jpg",
+     "fix": "centre the label in its button, or fill the empty side with an icon"
+    },
+    {
+     "check": "stranded-action",
+     "sev": "WARN",
+     "sel": "div.visit > div.vcard > div.hero__cta > a.btn.btn-dark",
+     "text": "ดูแผนที่ร้าน",
+     "msg": "stands 255px down from the nearest text of its block (\"แวะมาดูของจริงที่หน้าร้าน ย่าน\") (and 1 more like it: \"ถามสต๊อกทาง LINE\")",
+     "stop": 13,
+     "crop": "390-37-stranded-action.jpg",
+     "fix": "put the button under or beside the text it belongs to"
+    },
+    {
+     "check": "orphan",
+     "sev": "WARN",
+     "sel": "nav.plats > div.wrap > ul > li:nth-of-type(1)",
+     "text": "PlayStation 5 เครื่อง · เกม · จอย",
+     "msg": "its last line holds only \"จอย\" (and 1 more like it: \"Switch 2 เครื่อง · เกม ·\")",
+     "stop": 1,
+     "crop": "390-10-orphan.jpg",
+     "fix": "rebalance the text (text-wrap: pretty, or a shorter line) so the last line holds more than one short word"
+    },
+    {
+     "check": "grounds",
+     "sev": "WARN",
+     "sel": "main#main > section.hero > div.wrap.hero__grid > div.feature",
+     "text": "ชุดโปรโมชั่นขายดี ชุดพร้อมเล่น PS5 Slim ",
+     "msg": "4 flat grounds across the page (#0e1b4d section x3, #142867 band, #f4f5f7 section x8, #ffffff band x8): three at most (the base, a surface, an inverse)",
+     "stop": 1,
+     "crop": "390-11-grounds.jpg",
+     "fix": "three flat grounds at most (the base, one surface, one inverse): lay the other bands on one of them"
+    },
+    {
+     "check": "hero-screen",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the hero ends at 1367px on a 844px screen, 523px below the fold: it ends at the fold, 1px either way (SR-1)",
+     "fix": "make the hero exactly one screen (height: 100svh, its content fitted inside), never taller or shorter",
+     "rule": "SR-1 T1",
+     "crop": "390-rhythm-01-hero-screen.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section is 248px tall (0.3 screens), 596px short of one screen (844px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "390-rhythm-05-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(2)",
+     "text": "ชุดโปรโมชั่นพร้อมเล่นเครื่อง เกม และอุปก",
+     "msg": "the section is 1317px tall (1.6 screens), 371px short of two screens (1688px): every section after the hero is one screen or two, 2px either way (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "390-rhythm-06-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(8)",
+     "text": "ข่าวเกมล่าสุดอ่านทั้งหมด PlayStationสรุป",
+     "msg": "the section is 1213px tall (1.4 screens), 369px over one screen (844px): every section after the hero is one screen or two, 2px either way (and 7 more like it: \"สินค้าขายดีสัปดาห์นี้ ทั\", \"Tinzshop ร้านเกม คอนโซล \", \"เลือกซื้อตามเครื่อง Play\") (SR-2)",
+     "fix": "set the section to one screen or two (height: calc(var(--h,1) * 100vh), --h 1 or 2) and cut or split its content to fit",
+     "rule": "SR-2 T-height",
+     "crop": "390-rhythm-07-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(3)",
+     "text": "เลือกซื้อตามเครื่อง PlayStation 5ทุกอย่า",
+     "msg": "the section starts at 2931px, 399px below the screen grid (3 x 844px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "390-rhythm-08-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(5)",
+     "text": "พรีออเดอร์ เปิดจองแล้วจ่ายเต็มหรือวางมัด",
+     "msg": "the section starts at 5542px, 366px above the screen grid (7 x 844px): sections start on whole screens (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "390-rhythm-09-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7)",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "the section starts at 7109px, 357px below the screen grid (8 x 844px): sections start on whole screens (and 8 more like it: \"PlayStation 5เครื่อง · เ\", \"ทำไมเกมเมอร์ซื้อกับ Tinz\", \"ข่าวเกมล่าสุดอ่านทั้งหมด\") (SR-2)",
+     "fix": "make every section above it exactly one or two screens tall, so this one starts on a whole screen",
+     "rule": "SR-2 T-grid",
+     "crop": "390-rhythm-10-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the section's content does not fit it: its lowest content ends 247px below its top, past 200px (the section less 48px of bottom padding) (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "390-rhythm-11-section-height.jpg"
+    },
+    {
+     "check": "section-height",
+     "sev": "FAIL",
+     "sel": "footer#line",
+     "text": "Tinzshop ร้านเกม คอนโซล และอุปกรณ์ไอที ห",
+     "msg": "the section's content does not fit it: its lowest content ends 1116px below its top, past 1089px (the section less 48px of bottom padding) (SR-2)",
+     "fix": "fit the content above the section's bottom padding (--padb), or make it two screens (.g2) in two groups",
+     "rule": "SR-2 T-fit",
+     "crop": "390-rhythm-12-section-height.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats / main#main > section.sec:nth-of-type(2)",
+     "text": "",
+     "msg": "48px of air between the content of these two sections: 112-420px (56-560px WARN) (every gap out of the band at 390px, top to bottom: 48px after \"PlayStation 5เครื่อง\", 84px after \"ชุดโปรโมชั่นพร้อมเล่\", 69px after \"เลือกซื้อตามเครื่อง \", 58px after \"สินค้าขายดีสัปดาห์นี\", 62px after \"พรีออเดอร์ เปิดจองแล\", 109px after \"ทำไมเกมเมอร์ซื้อกับ \", 86px after \"ไม่แน่ใจว่าจะเลือกรุ\", 100px after \"ข่าวเกมล่าสุดอ่านทั้\") (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "390-rhythm-13-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(4) / main#main > section.sec:nth-of-type(5)",
+     "text": "",
+     "msg": "58px of air between the content of these two sections: 112-420px (56-560px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "390-rhythm-32-section-air.jpg"
+    },
+    {
+     "check": "section-air",
+     "sev": "WARN",
+     "sel": "main#main > section.sec:nth-of-type(5) / main#main > section.sec:nth-of-type(6)",
+     "text": "",
+     "msg": "62px of air between the content of these two sections: 112-420px (56-560px WARN) (SR-3)",
+     "fix": "keep 128-480px of air between the content of neighbouring sections (112-420px on a phone): the sections' padding (--padt, --padb)",
+     "rule": "SR-3 T-gap",
+     "crop": "390-rhythm-33-section-air.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(2)",
+     "text": "ชุดโปรโมชั่นพร้อมเล่นเครื่อง เกม และอุปก",
+     "msg": "the screen at scroll 2532px (stride 3) shows 399px of section 3 and the content of 2 sections, over 24px each beside section 4: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "390-rhythm-14-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "h2#pre-title",
+     "text": "พรีออเดอร์ เปิดจองแล้ว",
+     "msg": "the screen at scroll 5064px (stride 6) shows 367px of section 6 and the heading of section 6 whole and the content of 2 sections, over 24px each beside section 5: a screen shows one section (another may peek 8px, 24px WARN) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "390-rhythm-15-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(6)",
+     "text": "ทำไมเกมเมอร์ซื้อกับ Tinzshop ร้านจริงกว่",
+     "msg": "the screen at scroll 6752px (stride 8) shows 357px of section 7 and the content of 2 sections, over 24px each beside section 8: a screen shows one section (another may peek 8px, 24px WARN) (and 10 more like it: scroll 5908px, scroll 844px, scroll 1366px) (SR-4)",
+     "fix": "make each section exactly one screen or two, so a screen shows one section and no neighbour peeks",
+     "rule": "SR-4 T-views",
+     "crop": "390-rhythm-16-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "a <nav> sits directly in <main>: every part of <main> is a <section> (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "390-rhythm-17-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero > div.wrap.hero__grid > div.feature",
+     "text": "ชุดโปรโมชั่นขายดี ชุดพร้อมเล่น PS5 Slim ",
+     "msg": "a band: a box 92% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "390-rhythm-18-one-section.jpg"
+    },
+    {
+     "check": "one-section",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a band: a box 92% of the section wide on a ground of its own that holds the heading or the intro: the section's own ground is the band (and 1 more like it: \"หน้าร้าน แวะมาดูของจริงท\") (SR-4)",
+     "fix": "put every block of <main> in a <section>, and give a band its own section instead of a ground inside one",
+     "rule": "SR-4 T-dom",
+     "crop": "390-rhythm-19-one-section.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "div.feature > div.feature__body > div > h2",
+     "text": "ชุดพร้อมเล่น PS5 Slim + จอยตัวที่ 2",
+     "msg": "the hero holds an h2 (1): its heading is the h1, and an h2 opens the next section (SR-5)",
+     "fix": "give each section one h2, first in its .wrap, and the hero only its h1",
+     "rule": "SR-5 T1",
+     "crop": "390-rhythm-20-one-heading.jpg"
+    },
+    {
+     "check": "one-heading",
+     "sev": "FAIL",
+     "sel": "h2#sets-title",
+     "text": "ชุดโปรโมชั่นพร้อมเล่น",
+     "msg": "headings of two sections show whole on one screen at 19 of 206 scroll positions (9.2%; at scroll 850, 900, 950, 1000px), here with \"ชุดพร้อมเล่น PS5 Slim + จอยตัวที\": at most 5% on a phone (SR-5)",
+     "fix": "make the sections one screen tall so their headings sit a screen apart and two never share one",
+     "rule": "SR-5 T2",
+     "crop": "390-rhythm-21-one-heading.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "header.header",
+     "text": "Tinzshop ค้นหาสินค้า ค้นหา เข้าสู่ระบบบั",
+     "msg": "the nav's content runs 0px from the left and 0px from the right: the margin is 16-24px at 390px (one container, equal margins, 2px either way) (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "390-rhythm-22-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > section.hero",
+     "text": "หน้าร้านย่านสะพานเหล็กกว่า 20 ปี · ส่งทั",
+     "msg": "the content of section 1 runs 0px from the left and 0px from the right: the margin is 16-24px at 390px (one container, equal margins, 2px either way) (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "390-rhythm-23-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "the content of section 2 runs 0px from the left and 0px from the right: the margin is 16-24px at 390px (one container, equal margins, 2px either way) (and 10 more like it: \"ชุดโปรโมชั่นพร้อมเล่นเคร\", \"เลือกซื้อตามเครื่อง Play\", \"สินค้าขายดีสัปดาห์นี้ ทั\") (SR-6)",
+     "fix": "use one container on every section and the nav (.wrap): one margin left and right, 64-120px on a desktop, 16-24px on a phone",
+     "rule": "SR-6 T1-margins",
+     "crop": "390-rhythm-24-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "a.skip",
+     "text": "ข้ามไปเนื้อหาหลัก",
+     "msg": "a <a> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.mock",
+     "text": "ตัวอย่างงานออกแบบ (Design mockup) — ราคา",
+     "msg": "a <div> at the top of the page, outside header.nav, main, footer.closing and nav.actionbar (and 7 more like it: \"ส่งทั่วประเทศไทย ค่าส่งต\", \"Tinzshop ค้นหาสินค้า ค้น\", \"Tinzshop หน้าแรกPlayStat\") (SR-6)",
+     "fix": "build the page as header.nav, a main of sections (each one in-flow .wrap plus background layers) and footer.closing",
+     "rule": "SR-6 T1-structure",
+     "crop": "390-rhythm-25-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(2) > div.consult__q > span.bubble.me",
+     "text": "PS5 Slim รุ่นมีช่องแผ่นกับ Digital ต่างก",
+     "msg": "1 text block starts on a left line at x 88, 88px from the container's left: text starts on the container's left, or on one split line (x 173, 207, 242) (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "390-rhythm-26-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "div.consult > div:nth-of-type(2) > div.consult__q > span.bubble:nth-of-type(2)",
+     "text": "รุ่นมีช่องแผ่นเล่นแผ่นเกมและ Blu-ray ได้",
+     "msg": "1 text block starts on a left line at x 58, 58px from the container's left: text starts on the container's left, or on one split line (x 173, 207, 242) (and 11 more like it: \"แวะมาดูของจริงที่หน้าร้า\", x 44, \"ทักถามร้านก่อนซื้อ ตอบใน\") (SR-6)",
+     "fix": "start the text on the container's left, or on the one split line every split shares",
+     "rule": "SR-6 T3-left-lines",
+     "crop": "390-rhythm-27-container-edges.jpg"
+    },
+    {
+     "check": "container-edges",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(7) > div.wrap > div.consult",
+     "text": "ไม่แน่ใจว่าจะเลือกรุ่นไหน ทักถามร้านก่อน",
+     "msg": "a box over half the container wide runs 16-374px, not on the container's lines at 0-390px (SR-6)",
+     "fix": "run the picture or box from the container's left line to its right line, or put it in a row or a split",
+     "rule": "SR-6 T6-right-edges",
+     "crop": "390-rhythm-28-container-edges.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "footer#line > div.footer__bot > div.wrap > div.paylist",
+     "text": "ชำระผ่าน K-Paymentบัตรเครดิต / เดบิตผ่อน",
+     "msg": "a row of 2 items: its first item starts at 16px, the container's left line at 0px; its last item ends at 292px, the container's right line at 390px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "390-rhythm-29-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "main#main > nav.plats > div.wrap > ul",
+     "text": "PlayStation 5เครื่อง · เกม · จอยSwitch 2",
+     "msg": "a row of 2 items: its first item starts at 16px, the container's left line at 0px; its last item ends at 374px, the container's right line at 390px (2px either way) (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "390-rhythm-30-row-lines.jpg"
+    },
+    {
+     "check": "row-lines",
+     "sev": "FAIL",
+     "sel": "main#main > section.sec:nth-of-type(2) > div.wrap > div.grid.g-5",
+     "text": "ชุดโปรโมชั่น ชุดโปรโมชั่น · PS5 ชุดพร้อม",
+     "msg": "a row of 2 items: its first item starts at 16px, the container's left line at 0px; its last item ends at 374px, the container's right line at 390px (2px either way) (and 1 more like it: \"PlayStation 5 · จอย จอย \") (SR-7)",
+     "fix": "start the row's first item on the container's left line and end its last on the right line, every item one height",
+     "rule": "SR-7 T-rows",
+     "crop": "390-rhythm-31-row-lines.jpg"
+    }
+   ],
+   "glAsked": 0
+  }
+ ],
+ "shaders": 0,
+ "reduced": {
+  "screens": 7,
+  "notRead": 0
+ },
+ "hidden": {
+  "screens": 14
+ },
+ "slow": {
+  "stops": 16,
+  "late": 0
+ },
+ "sweep": {
+  "widths": [
+   1280,
+   1152,
+   896
+  ],
+  "errors": [],
+  "findings": []
+ },
+ "narrow": {
+  "width": 320,
+  "height": 640,
+  "errors": [],
+  "findings": [
+   {
+    "check": "fold-cut",
+    "sev": "WARN",
+    "sel": "section.hero > div.wrap.hero__grid > div:nth-of-type(1) > p.hero__lead",
+    "text": "สมัครสมาชิกครั้งเดียว ดูราคาทุกรุ่น สั่งซื้อ และ",
+    "msg": "a line of the hero text is sliced by the bottom of the first screen",
+    "crop": "narrow-320-01-fold-cut.jpg",
+    "width": 320,
+    "fix": "size the hero so the heading ends above the fold, or starts below it"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "header.header > div.wrap.header__row > a.brand",
+    "text": "Tinzshop",
+    "msg": "a 140x40px tap target: under the 44px a phone needs",
+    "crop": "narrow-320-02-tap-size.jpg",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "header.header > div.wrap.header__row > form.search > button",
+    "text": "ค้นหา",
+    "msg": "a 74x40px tap target: under the 44px a phone needs",
+    "crop": "narrow-320-03-tap-size.jpg",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "FAIL",
+    "sel": "section.sec:nth-of-type(2) > div.wrap > div.sec__head > a.link",
+    "text": "ดูชุดทั้งหมด",
+    "msg": "a 100x26px tap target: 0px from the next one (\"\"), so a thumb lands on the wrong one",
+    "crop": "narrow-320-04-tap-size.jpg",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "div.pbanner.pbanner--ps > div:nth-of-type(1) > h3 > a.cover",
+    "text": "ทุกอย่างสำหรับ PS5",
+    "msg": "a 204x32px tap target: under the 44px a phone needs",
+    "crop": "narrow-320-05-tap-size.jpg",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "div:nth-of-type(1) > ul > li:nth-of-type(1) > a",
+    "text": "เครื่องเกม",
+    "msg": "a 89x40px tap target (and 7 more like it on this screen): under the 44px a phone needs",
+    "crop": "narrow-320-06-tap-size.jpg",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "div.wrap > div.sec__head > div.chips > button.chip:nth-of-type(1)",
+    "text": "ทั้งหมด",
+    "msg": "a 78x40px tap target (and 3 more like it on this screen): under the 44px a phone needs",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "footer#line > div.wrap.footer__top > div.footer__about > a.brand",
+    "text": "Tinzshop",
+    "msg": "a 288x40px tap target: under the 44px a phone needs",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "tap-size",
+    "sev": "WARN",
+    "sel": "div:nth-of-type(2) > ul > li:nth-of-type(1) > a",
+    "text": "คำสั่งซื้อของฉัน",
+    "msg": "a 95x36px tap target (and 2 more like it on this screen): under the 44px a phone needs",
+    "width": 320,
+    "fix": "make every link and control outside running text 44px tall on a phone: display: inline-flex; align-items: center; min-height: 44px (a footer list then needs no gap), a 44px small button, or a transparent ::before laid past the box"
+   },
+   {
+    "check": "off-viewport",
+    "sev": "FAIL",
+    "sel": "div#drawer",
+    "text": "Tinzshop หน้าแรก PlayStation 5 Nintendo Switch 2",
+    "msg": "at 320px wide it runs 320px past the screen's left edge (cut there: the page clips what runs past it)",
+    "crop": "narrow-320-07-off-viewport.jpg",
+    "width": 320,
+    "fix": "keep it inside the screen at this width: let it shrink, wrap or stack"
+   }
+  ]
+ },
+ "counts": {
+  "FAIL": 267,
+  "WARN": 77
+ },
+ "checks": {
+  "assets": "PASS",
+  "shader-lint": "PASS",
+  "gl-fallback": "PASS",
+  "empty-visual": "PASS",
+  "hero-fill": "PASS",
+  "flush": "FAIL",
+  "placeholder": "PASS",
+  "sample-label": "PASS",
+  "caption": "PASS",
+  "credit-wall": "PASS",
+  "nav": "FAIL",
+  "nav-covers": "PASS",
+  "spill": "PASS",
+  "off-viewport": "FAIL",
+  "fold-card": "PASS",
+  "hover-spill": "PASS",
+  "overlap-text": "FAIL",
+  "collide": "PASS",
+  "tap-size": "FAIL",
+  "row-gap": "FAIL",
+  "cut-text": "FAIL",
+  "fold-cut": "WARN",
+  "marquee": "PASS",
+  "scroll-linked": "PASS",
+  "scroll-reveal": "PASS",
+  "pinned": "PASS",
+  "loop-pause": "PASS",
+  "reduced-motion": "PASS",
+  "hidden-content": "PASS",
+  "webgl": "PASS",
+  "no-visual": "FAIL",
+  "text-only": "PASS",
+  "card-visual": "FAIL",
+  "hidden-visual": "PASS",
+  "card-family": "PASS",
+  "card-layout": "PASS",
+  "nesting": "PASS",
+  "effect-repeat": "PASS",
+  "ui-fit": "PASS",
+  "ui-centre": "PASS",
+  "dark-ground": "PASS",
+  "button-styles": "FAIL",
+  "button-shape": "PASS",
+  "same-action": "FAIL",
+  "button-picture": "PASS",
+  "cta": "PASS",
+  "pricing-tiers": "PASS",
+  "copy-headline": "FAIL",
+  "copy-fact": "PASS",
+  "copy-headings": "WARN",
+  "copy-buttons": "WARN",
+  "copy-actions": "WARN",
+  "heading-scale": "FAIL",
+  "stagger": "PASS",
+  "top-stagger": "FAIL",
+  "off-grid": "FAIL",
+  "col-edge": "WARN",
+  "right-edge": "PASS",
+  "centre-axis": "PASS",
+  "tilt": "PASS",
+  "contrast": "FAIL",
+  "text-contrast": "FAIL",
+  "body-size": "PASS",
+  "busy-ground": "PASS",
+  "section-gaps": "FAIL",
+  "proximity": "PASS",
+  "hole": "PASS",
+  "links": "FAIL",
+  "forms": "PASS",
+  "photo-upscale": "PASS",
+  "photo-set": "PASS",
+  "photo-credit": "PASS",
+  "nav-family": "PASS",
+  "nav-labels": "PASS",
+  "link-styles": "PASS",
+  "heading-align": "PASS",
+  "label-centre": "WARN",
+  "fake-button": "PASS",
+  "stranded-action": "WARN",
+  "orphan": "WARN",
+  "unit-break": "PASS",
+  "tab-wrap": "PASS",
+  "effects-fit": "PASS",
+  "fade-cut": "PASS",
+  "photo-weight": "PASS",
+  "copy-length": "WARN",
+  "nav-current": "PASS",
+  "progress-bar": "PASS",
+  "photo-repeat": "PASS",
+  "button-contrast": "PASS",
+  "photo-print": "PASS",
+  "grounds": "WARN",
+  "split-align": "PASS",
+  "fact-agree": "PASS",
+  "fold-action": "PASS",
+  "action-count": "PASS",
+  "one-screen": "WARN",
+  "hover": "PASS",
+  "hover-move": "PASS",
+  "product-shown": "PASS",
+  "same-object": "PASS",
+  "font-load": "PASS",
+  "visual-caption": "PASS",
+  "visual-empty": "PASS",
+  "effect-kind": "PASS",
+  "hero-enter": "WARN",
+  "moment-none": "WARN",
+  "street-number": "PASS",
+  "postcode": "PASS",
+  "coordinates": "PASS",
+  "company-number": "PASS",
+  "phone-number": "PASS",
+  "hero-screen": "FAIL",
+  "section-height": "FAIL",
+  "section-air": "FAIL",
+  "one-section": "FAIL",
+  "one-heading": "FAIL",
+  "container-edges": "FAIL",
+  "row-lines": "FAIL",
+  "split-pair": "FAIL",
+  "motion-layer": "PASS",
+  "count-text": "PASS",
+  "loop-cycle": "PASS",
+  "section-tile": "PASS",
+  "empty-area": "PASS",
+  "a11y-name": "PASS",
+  "img-alt": "PASS",
+  "field-label": "FAIL",
+  "heading-order": "WARN",
+  "tabindex": "PASS",
+  "focus-ring": "PASS",
+  "focus-visible": "FAIL",
+  "focus-hidden": "PASS",
+  "skip-link": "WARN",
+  "menu-toggle": "PASS",
+  "lang": "PASS",
+  "page-meta": "PASS",
+  "share-meta": "WARN",
+  "action-repeat": "PASS",
+  "map-link": "PASS",
+  "open-now": "PASS",
+  "assumed": "PASS",
+  "run-on": "FAIL",
+  "form-fields": "WARN",
+  "form-send": "PASS"
+ }
+}

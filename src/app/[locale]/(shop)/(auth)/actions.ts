@@ -69,5 +69,6 @@ export async function signOutAction(formData: FormData): Promise<void> {
   const ctx = await readRequestContext({ signOut: true });
   const outcome = await handleSignOut(getCustomerAuthDeps(), ctx);
   await applyCookieChanges(outcome.cookies, ctx.now);
-  redirect(`/${localeOf(formData)}`);
+  // Signing out lands on the sign-in page (D-206).
+  redirect(`/${localeOf(formData)}${outcome.state.redirectTo ?? ''}`);
 }

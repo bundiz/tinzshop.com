@@ -40,7 +40,7 @@ Open `.env` and fill in these lines. Leave the other lines empty. **Never commit
 
 | Variable | What to put |
 | :--- | :--- |
-| `APP_URL` | `http://localhost:3000`, or the port you run on (the job scripts call this address, and the Google sign-in callback URL is built from it) |
+| `APP_URL` | `http://localhost:3003`, or the port you run on (the job scripts call this address, and the Google sign-in callback URL is built from it) |
 | `DATABASE_URL` | keep the default `postgresql://postgres@127.0.0.1:5434/tinzshop` |
 | `TEST_DATABASE_URL` | keep the default `postgresql://postgres@127.0.0.1:5434/tinzshop_test` |
 | `JOB_SECRET` | output of `openssl rand -base64 32` |
@@ -54,7 +54,7 @@ Open `.env` and fill in these lines. Leave the other lines empty. **Never commit
 
 Leave `SHOPEE_API_BASE_URL` empty; it then uses the Shopee sandbox. Leave `TRUSTED_PROXY_HEADER` empty.
 
-**Customer sign-in (plan 014).** The dev pool accepts sign-in callbacks only on `http://localhost:3000` and `http://localhost:3002`, so `APP_URL` must be one of those two. Open the site at the **same host** as `APP_URL`: `localhost`, not `127.0.0.1`, or Google sign-in fails because the browser does not send the sign-in cookie to the other host. How the pool itself is set up is in [`14-integrations.md`](14-integrations.md#amazon-cognito-customer-sign-in).
+**Customer sign-in (plan 014).** The dev pool accepts sign-in callbacks only on the ports its app client lists (`http://localhost:3003`, the default, plus `3000` and `3002`), so `APP_URL` must be one of those. Open the site at the **same host** as `APP_URL`: `localhost`, not `127.0.0.1`, or Google sign-in fails because the browser does not send the sign-in cookie to the other host. How the pool itself is set up is in [`14-integrations.md`](14-integrations.md#amazon-cognito-customer-sign-in).
 
 ## 4. Start the database (Docker PostgreSQL)
 
@@ -76,20 +76,20 @@ npm run db:generate  # generate the Prisma client into src/generated/ (git-ignor
 ## 5. Run the app
 
 ```bash
-npm run dev                 # http://localhost:3000
-npm run dev -- -p 3002      # if port 3000 is taken; then set APP_URL=http://localhost:3002
+npm run dev                 # http://localhost:3003 (the script sets -p 3003)
+npm run dev -- -p 3002      # another port; then set APP_URL=http://localhost:3002
 ```
 
 | Open | What it is |
 | :--- | :--- |
-| http://localhost:3000/th | home page (Thai); `/en` for English |
-| http://localhost:3000/th/product | all products |
-| http://localhost:3000/th/news | news |
-| http://localhost:3000/api/docs | API docs (Swagger), development only |
+| http://localhost:3003/th | home page (Thai); `/en` for English |
+| http://localhost:3003/th/product | all products |
+| http://localhost:3003/th/news | news |
+| http://localhost:3003/api/docs | API docs (Swagger), development only |
 
 The pages are empty until you feed data (step 6).
 
-**Product pages need a signed-in customer** (D-161). Signed out, `/th/product` and every product page send you to sign-in; the home page and news stay open. Register a dev account at http://localhost:3000/th/register with an address you can read (a `+` alias such as `name+tz1@example.com` works on many providers), enter the 6-digit code from the email, then sign in. Passwords need at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character (D-177). The dev pool's built-in sender allows only a few dozen emails a day across the whole team.
+**Product pages need a signed-in customer** (D-161). Signed out, `/th/product` and every product page send you to sign-in; the home page and news stay open. Register a dev account at http://localhost:3003/th/register with an address you can read (a `+` alias such as `name+tz1@example.com` works on many providers), enter the 6-digit code from the email, then sign in. Passwords need at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character (D-177). The dev pool's built-in sender allows only a few dozen emails a day across the whole team.
 
 ## 6. Feed the data
 
@@ -123,7 +123,7 @@ The news comes from the old site's public website, so it needs no account at all
 npm run job:news-import      # about 20 minutes the first time
 ```
 
-Then open http://localhost:3000/th/news. Products stay empty. For products, use path B or C.
+Then open http://localhost:3003/th/news. Products stay empty. For products, use path B or C.
 
 ### Path B: copy a teammate's database (no Shopee needed)
 
@@ -157,7 +157,7 @@ Restart `npm run dev`. Products, categories and news all appear.
 3. Put the id and key in `.env` (step 3).
 
 **C2. Connect the sandbox shop to the app (once).** This stores encrypted Shopee tokens in the database, which the sync needs.
-1. Give your server a public HTTPS address, for example `ngrok http 3000`. Note the domain it prints, such as `https://xxxx.ngrok-free.dev`.
+1. Give your server a public HTTPS address, for example `ngrok http 3003`. Note the domain it prints, such as `https://xxxx.ngrok-free.dev`.
 2. In the Shopee console, open your Test Partner app and set the **Test Redirect URL Domain** to that domain. If they don't match, Shopee answers "redirect_uri domain not consistent".
 3. Authorize with the redirect URL `https://<your-domain>/api/callbacks/shopee`, and log in with the **sandbox test shop account**. Your own Shopee account gets `error_perm`.
 4. The browser shows `{"data":{"accountType":"shop","shopId":…,"connected":true}}`.
@@ -225,7 +225,7 @@ The integration tests empty `tinzshop_test` between tests. They refuse to run ag
 | Shopee callback: `redirect_uri domain not consistent` | the console's Test Redirect URL Domain must equal your tunnel's domain |
 | Sign-in pages answer 500, or the server log says the auth config is invalid | a Cognito value or `SESSION_TOKEN_ENCRYPTION_KEY` is missing or malformed in `.env`; fix it and restart `npm run dev` |
 | Google sign-in ends back on sign-in with an error | you opened the site at a different host or port than `APP_URL` (for example `127.0.0.1` instead of `localhost`); open it at `APP_URL` |
-| Cognito's page shows `redirect_mismatch` | `APP_URL` uses a port the pool does not list; use 3000 or 3002 |
+| Cognito's page shows `redirect_mismatch` | `APP_URL` uses a port the pool does not list; use 3003, 3000 or 3002, or add the port to the app client's callback URLs |
 | The 6-digit code never arrives | check spam (the sender is `no-reply@verificationemail.com`); the dev pool's daily email limit may be used up, so try again tomorrow or ask the project owner |
 
 ## 9. Where to read next

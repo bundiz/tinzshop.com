@@ -101,6 +101,17 @@ describe('register', () => {
     expect(t.cognito.signUp).toHaveBeenCalledWith({ email: 'ann@example.com', password: 'Passw0rd!', firstName: 'Ann', lastName: 'Lee' });
   });
 
+  it('register with an email that already has an account is an email field error, keeps the names and sets no cookie (D-205)', async () => {
+    const { CognitoError } = await import('@/server/adapters/cognito/errors');
+    const t = build({ cognito: { signUp: vi.fn(async () => { throw new CognitoError('username_exists'); }) } });
+    t.deps.customers.findByEmail = async () => ({ id: 'c1', cognitoSub: 's', email: 'ann@example.com', firstName: 'Ann', lastName: 'Lee' });
+    const out = await handleRegister(t.deps, form(good), ctx());
+    expect(out.state.fieldErrors).toEqual({ email: 'shop.auth.error.emailExists' });
+    expect(out.state.values).toMatchObject({ email: 'Ann@Example.com', firstName: ' Ann ', lastName: 'Lee' });
+    expect(out.state.redirectTo).toBeUndefined();
+    expect(out.cookies).toBeUndefined();
+  });
+
   it('a rate-limited register shows the rateLimited form error', async () => {
     const t = build({ count: 99 });
     const out = await handleRegister(t.deps, form(good), ctx());
@@ -226,6 +237,23 @@ describe('sign-in, resend, reset and sign-out', () => {
     expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'ann@example.com' } });
   });
 
+  it('a malformed email on sign-in reads the same as a wrong password, before Cognito (D-207)', async () => {
+    const t = build();
+    const out = await handleSignIn(t.deps, form({ email: 'nope', password: 'x' }), ctx());
+    expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'nope' } });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('a malformed email and no password on sign-in still asks for the password (D-207)', async () => {
+    const t = build();
+    const out = await handleSignIn(t.deps, form({ email: '', password: '' }), ctx());
+    expect(out.state).toEqual({
+      formError: 'shop.auth.error.invalidCredentials',
+      fieldErrors: { password: 'shop.auth.error.passwordRequired' },
+      values: { email: '' },
+    });
+  });
+
   it('resend gives a notice', async () => {
     const t = build();
     const out = await handleResendCode(t.deps, form({}), ctx({ pendingEmail: 'ann@example.com' }));
@@ -300,7 +328,7 @@ describe('sign-in, resend, reset and sign-out', () => {
     };
     const out = await handleSignOut(t.deps, ctx({ sessionToken: 'cookie-value' }));
     expect(deleted).toHaveLength(1);
-    expect(out).toEqual({ state: { redirectTo: '/' }, cookies: { clearSession: true } });
+    expect(out).toEqual({ state: { redirectTo: '/sign-in' }, cookies: { clearSession: true } });
   });
 
   it('sign-out still clears the cookie when ending the session fails, and logs without the token', async () => {
@@ -318,7 +346,7 @@ describe('sign-in, resend, reset and sign-out', () => {
 
   it('sign-out clears the cookie even with no session', async () => {
     const t = build();
-    expect(await handleSignOut(t.deps, ctx())).toEqual({ state: { redirectTo: '/' }, cookies: { clearSession: true } });
+    expect(await handleSignOut(t.deps, ctx())).toEqual({ state: { redirectTo: '/sign-in' }, cookies: { clearSession: true } });
   });
 });
 

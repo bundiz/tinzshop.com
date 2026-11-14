@@ -487,7 +487,6 @@
         "code": "6-digit code",
         "newPassword": "New password",
         "newPasswordConfirm": "Confirm new password",
-        "emailHint": "Used for order confirmations and tax invoices",
         "emailPlaceholder": "name@example.com"
       },
       "google": {
@@ -523,6 +522,7 @@
         "nameRequired": "Please enter your name",
         "nameTooLong": "The name is too long",
         "emailInvalid": "The email format is not valid",
+        "emailExists": "This email is already in use",
         "passwordMismatch": "The two passwords do not match",
         "passwordRequired": "Please enter your password",
         "codeFormat": "Enter the 6-digit code"
