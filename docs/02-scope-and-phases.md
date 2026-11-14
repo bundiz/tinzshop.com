@@ -139,7 +139,7 @@ A website order never changes stock in the system, so the no-overselling guarant
 
 **REQ-032 — ~~Two-step verification for staff~~** · §8 · CHANGED — no second factor (D-232)
 ~~Staff sign-in requires a second factor via **email OTP** (D-064, Q-017). No SMS/phone OTP.~~
-Changed on 2026-11-14 at the client's request, relayed by the project owner: staff sign up and sign in like customers, and the emailed code is asked for at sign-up only. A staff account is protected by its password or Google account alone. D-232 supersedes D-064; the trade-off is set out in `superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md` §10.
+Changed on 2026-11-14 at the client's request, relayed by the project owner: staff sign up and sign in like customers, and no emailed code is asked for at sign-in (the sign-up code stays). A staff account is protected by its password or Google account alone. D-232 supersedes D-064; the trade-off is set out in `superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md` §10.
 
 **REQ-033 — Single bilingual admin entry point** · §8 · CONFIRMED
 Staff use one place to sign in, and the admin panel is usable in both Thai and English.

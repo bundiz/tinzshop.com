@@ -231,8 +231,8 @@ Email sent automatically at every step of an order — the exact step set
 depends on the order-status candidate in Q-023 (REQ-041) — and a customer able
 to view and filter their own order-status history (REQ-042; this replaced the
 earlier "notification opt-out" reading — Q-031, D-073). Staff no longer have a
-second factor at sign-in (D-232, which superseded D-064); the sign-up code
-is the only emailed code.
+second factor at sign-in (D-232, which superseded D-064); the emailed code
+is no longer a sign-in step.
 
 **The category of solution is decided: a mail-relay service** (Q-032, D-074),
 reached through the adapter interface so no vendor name appears in domain
