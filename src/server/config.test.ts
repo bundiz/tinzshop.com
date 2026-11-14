@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseNewsImportJobConfig, parseServerConfig } from '@/server/config';
+import { parseAccountRoleJobConfig, parseNewsImportJobConfig, parseServerConfig } from '@/server/config';
 
 const VALID = {
   SHOPEE_PARTNER_ID: '1236675',
@@ -96,5 +96,16 @@ describe('parseNewsImportJobConfig', () => {
 
   it('rejects a missing job secret, naming the variable', () => {
     expect(() => parseNewsImportJobConfig({})).toThrow('JOB_SECRET');
+  });
+});
+
+describe('parseAccountRoleJobConfig', () => {
+  it('needs only the job secret, not the Shopee settings', () => {
+    expect(parseAccountRoleJobConfig({ JOB_SECRET: 'j'.repeat(32) })).toEqual({ jobSecret: 'j'.repeat(32) });
+  });
+
+  it('rejects a missing or short job secret, naming the variable', () => {
+    expect(() => parseAccountRoleJobConfig({})).toThrow('JOB_SECRET');
+    expect(() => parseAccountRoleJobConfig({ JOB_SECRET: 'short' })).toThrow('JOB_SECRET');
   });
 });

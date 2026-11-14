@@ -92,6 +92,23 @@ export function getNewsImportJobConfig(): NewsImportJobConfig {
   return parseNewsImportJobConfig(process.env);
 }
 
+export type AccountRoleJobConfig = { readonly jobSecret: string };
+
+const accountRoleJobSchema = envSchema.pick({ JOB_SECRET: true });
+
+/** Only the job secret, so the bootstrap job works on an environment with no Shopee settings. */
+export function parseAccountRoleJobConfig(env: Readonly<Record<string, string | undefined>>): AccountRoleJobConfig {
+  const result = accountRoleJobSchema.safeParse(env);
+  if (!result.success) {
+    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
+  }
+  return { jobSecret: result.data.JOB_SECRET };
+}
+
+export function getAccountRoleJobConfig(): AccountRoleJobConfig {
+  return parseAccountRoleJobConfig(process.env);
+}
+
 export type TrustedProxyHeader = 'x-forwarded-for' | 'cf-connecting-ip';
 
 export type AuthConfig = {

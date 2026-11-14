@@ -7,7 +7,7 @@ import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { createCognitoIdentity } from '@/server/adapters/cognito/client';
-import { getAuthConfig, getNewsImportJobConfig, getServerConfig } from '@/server/config';
+import { getAccountRoleJobConfig, getAuthConfig, getNewsImportJobConfig, getServerConfig } from '@/server/config';
 import { createCatalogueCategoriseJobHandler } from '@/server/controllers/catalogue/catalogue-categorise-controller';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
@@ -300,7 +300,7 @@ export function getCurrentCustomerReader(): (token: string | undefined, now: Dat
 /** The account-role job (plan 016, D-235): every environment, reads only `JOB_SECRET`. */
 export function getAccountRoleHandler(): ReturnType<typeof createAccountRoleJobHandler> {
   return createAccountRoleJobHandler({
-    jobSecret: () => getServerConfig().jobSecret,
+    jobSecret: () => getAccountRoleJobConfig().jobSecret,
     findAccountByEmail,
     changeAccountRole,
     log: (message) => console.info(message),
