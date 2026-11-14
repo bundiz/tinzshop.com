@@ -84,13 +84,52 @@ describe('access repository guard', () => {
     expect(await changeAccountRole(a, 'admin')).toBe('unchanged');
   });
 
+  /** Holds both rows locked, starts both calls, waits until two backends are blocked on a lock, then releases. */
+  async function raceBehindLock<T>(ids: string[], start: () => Promise<T>[]): Promise<T[]> {
+    const holder = new Client({ connectionString: getDatabaseUrl() });
+    await holder.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query('SELECT id FROM customer WHERE id = ANY($1::uuid[]) FOR UPDATE', [ids]);
+      const calls = start();
+      const deadline = Date.now() + 10_000;
+      for (;;) {
+        const waiting = await client.query<{ n: number }>(
+          "SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'",
+        );
+        if (waiting.rows[0]!.n >= 2) break;
+        if (Date.now() > deadline) throw new Error('the two calls never both waited on a lock');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      await holder.query('COMMIT');
+      return await Promise.all(calls);
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      await holder.end();
+    }
+  }
+
+  async function unblockedSuperAdmins(): Promise<number> {
+    const left = await client.query(
+      "SELECT count(*)::int AS n FROM customer c JOIN role r ON r.id = c.role_id WHERE r.key = 'super_admin' AND c.blocked_at IS NULL",
+    );
+    return left.rows[0].n;
+  }
+
   it('two concurrent demotions of the only two super_admins: exactly one succeeds', async () => {
     const a = await makeAccount('super_admin');
     const b = await makeAccount('super_admin');
-    const results = await Promise.all([changeAccountRole(a, 'admin'), changeAccountRole(b, 'admin')]);
+    const results = await raceBehindLock([a, b], () => [changeAccountRole(a, 'admin'), changeAccountRole(b, 'admin')]);
     expect([...results].sort()).toEqual(['changed', 'last_super_admin']);
-    const left = await client.query("SELECT count(*)::int AS n FROM customer c JOIN role r ON r.id = c.role_id WHERE r.key = 'super_admin'");
-    expect(left.rows[0].n).toBe(1);
+    expect(await unblockedSuperAdmins()).toBe(1);
+  });
+
+  it('blocking one of the only two super_admins races demoting the other: exactly one succeeds', async () => {
+    const a = await makeAccount('super_admin');
+    const b = await makeAccount('super_admin');
+    const results = await raceBehindLock([a, b], () => [setAccountBlocked(a, true), changeAccountRole(b, 'admin')]);
+    expect([...results].sort()).toEqual(['changed', 'last_super_admin']);
+    expect(await unblockedSuperAdmins()).toBe(1);
   });
 
   it('a blocked super_admin does not count', async () => {
