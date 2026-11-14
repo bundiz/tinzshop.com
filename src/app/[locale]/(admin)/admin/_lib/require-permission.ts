@@ -1,4 +1,6 @@
-import { redirect } from 'next/navigation';
+import { hasLocale } from 'next-intl';
+import { notFound, redirect } from 'next/navigation';
+import { routing } from '@/i18n/routing';
 import { can } from '@/server/services/access/access-service';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
 import type { CurrentCustomer } from '@/server/services/auth/customer-session-service';
@@ -16,6 +18,7 @@ export function noAccessPath(locale: string): string {
  * Action under `/admin`; a hidden menu item is never the check, and a page never relies on a parent layout for it.
  */
 export async function requirePermission(locale: string, path: string, key: PermissionKey): Promise<CurrentCustomer> {
+  if (!hasLocale(routing.locales, locale)) notFound();
   const customer = await requireCustomer(locale, path);
   if (!can(customer, key)) redirect(noAccessPath(locale));
   return customer;

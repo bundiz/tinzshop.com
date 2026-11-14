@@ -88,15 +88,21 @@ describe('the no-access page', () => {
 
 describe('the back-office layout', () => {
   it('draws the shell with the menu for an account that may enter', async () => {
-    request.customer = account('blogger', ['backoffice.enter', 'news.manage']);
+    request.customer = account('sale_manager', ['backoffice.enter']);
     const markup = html(await AdminLayout({ children: <p>child</p>, params: params('th') }));
     expect(markup).toContain('child');
-    expect(markup).toContain('ข่าวและบทความ');
-    expect(markup).toContain('Blogger');
+    expect(markup).toContain('แดชบอร์ด');
+    expect(markup).toContain('Sale-manager');
+    expect(markup).not.toContain('sale_manager');
   });
 
-  it('draws no menu for anyone else: the page itself sends them away', async () => {
+  it('redirects a signed-in Customer to no-access', async () => {
     request.customer = account('customer', []);
+    expect(await redirectOf(() => AdminLayout({ children: <p>child</p>, params: params('en') }))).toBe('/en/admin/no-access');
+  });
+
+  it('lets a signed-out visitor through bare: the page sends them to sign-in', async () => {
+    request.customer = null;
     const markup = html(await AdminLayout({ children: <p>child</p>, params: params('th') }));
     expect(markup).toContain('child');
     expect(markup).not.toContain('แดชบอร์ด');

@@ -51,7 +51,7 @@ export default function SideNav({ locale, permissions, pathname, name, roleLabel
       <Link href={base} aria-label={t('brand.label')} onClick={onNavigate} className="flex items-center gap-2.5 px-2 pt-1 pb-[18px]">
         <img src="/logo-mark.png" alt="" width={34} height={34} className="size-[34px] flex-none rounded-full" />
         <span>
-          <span className="block font-head text-xl leading-none font-bold text-white">Tinzshop</span>
+          <span className="block font-head text-xl leading-none font-bold text-white">{t('brand.word')}</span>
           <span className="mt-1 block text-[11px] leading-none font-semibold tracking-[.08em] text-on-navy-2 uppercase">
             {t('brand.tag')}
           </span>

@@ -569,7 +569,8 @@
     },
     "brand": {
       "label": "Tinzshop back office",
-      "tag": "Back office"
+      "tag": "Back office",
+      "word": "Tinzshop"
     },
     "skip": "Skip to main content",
     "nav": {
