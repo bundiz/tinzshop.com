@@ -85,6 +85,12 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Staff cancellation | การยกเลิกคำสั่งซื้อโดยพนักงาน | An Admin or Top-level Admin cancelling an order in the back office on the customer's request, at any stage up to the goods' return (REQ-013, D-196). Customers have no cancel control. | `staff_cancellation` |
 | Cancellation reason | เหตุผลการยกเลิก | The required reason recorded with a staff cancellation and shown to the customer (D-196). | `cancellation_reason` |
 | Stock-cut export | ไฟล์ตัดสต็อก | The Excel file of paid order lines staff export from the admin order list to cut stock in BigSeller by hand (REQ-020, D-201). Cancelled orders are left out. | `stock_cut_export` |
+| Site sale limit | จำนวนจำกัดขายบนเว็บ | The most units of one Shopee variant the site may sell, set by staff and counted against the site's own sales (REQ-058, D-202). | `site_sale_limit` |
+| Stock source | แหล่งสต็อก | Per variant: Shopee's stock (the default) or a number staff set on the site. The back office shows which, as "linked to Shopee" or not (D-208). | `stock_source` |
+| SKU found on Shopee | พบ SKU บน Shopee | The anomaly flag on a site-only product whose merchant SKU a later Shopee pull finds; staff confirm it is the same product and it locks to Shopee (D-209). | `shopee_sku_found` |
+| Pre-payment stock check | การเช็คสต็อกก่อนชำระเงิน | The live read of a variant's Shopee stock made before every payment (REQ-059, D-204). | `prepayment_stock_check` |
+| Site-only product | สินค้าเฉพาะเว็บ | A product in BigSeller but not on Shopee, added by staff from its merchant SKU, with price and stock set by staff (REQ-060, D-205). | `site_only_product` |
+| Merchant SKU | Merchant SKU | BigSeller's code for an item, the same code on every platform (D-209). Which Shopee field holds it (`model_sku` or `parent_sku`) is confirmed in the plan; never write "SKU" alone. | `merchant_sku` |
 | Wishlist | รายการสินค้าที่ชอบ | A signed-in customer's list of saved products, also called favourites (REQ-056, D-199). | `wishlist` |
 
 **Refunded is deliberately not in this table.** Refund payout is out of scope
