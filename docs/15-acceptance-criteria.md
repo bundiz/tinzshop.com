@@ -82,6 +82,10 @@ are checked on `tinzshop.com`; all others on DEV.
 | 2.12 | The site shows the phone number, email, LINE, opening hours, address and DBD mark (REQ-045). |
 | 2.13 | Staff create a product's Sale Page, distinct from its product page and from news (REQ-055). |
 | 2.14 | Staff mark a product as dropship, and its page shows "Contact staff / Check availability" instead of buying straight away (REQ-050). |
+| 2.15 | Staff set a site sale limit on a variant (for example 10 when Shopee has 20); after the site sells 10 it shows sold out (REQ-058). |
+| 2.16 | When Shopee stock falls below the limit (for example Shopee 5, limit 10), the site stops selling that variant, as Q-065 settles. |
+| 2.17 | Adding a site-only product with a merchant SKU that exists on Shopee is refused (REQ-060). |
+| 2.18 | Adding one whose SKU is not on Shopee succeeds, and staff set its price and stock. |
 
 ### Stage 3 — due 2027-02-09
 
@@ -109,6 +113,7 @@ are checked on `tinzshop.com`; all others on DEV.
 | 3.20 | A cancelled order shows "cancelled" and the reason, in the back office and in the customer's order history. |
 | 3.21 | An order cancelled before export is not in the stock-cut Excel file. |
 | 3.22 | Cancelling an order that was already exported warns staff to restore the stock in BigSeller. |
+| 3.23 | Before payment, the order re-checks stock on Shopee; when Shopee no longer has it, the customer is not sent to payment (REQ-059). |
 
 ### Stage 4 — due 2027-03-02
 

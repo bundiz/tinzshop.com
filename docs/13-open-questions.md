@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 42 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 13 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 16 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -566,6 +566,36 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** None yet.
 - **Effect:** Decides what stage 4's security item is. D-087 stands until this is answered. Either way it needs DNS access for `tinzshop.com` (Q-053).
 - **Ask:** project owner
+
+### Q-065: Site sale limit — what is compared, what counts as sold, and what the customer sees
+- **Status:** UNRESOLVED — not yet asked
+- **Question:** D-202 and D-203 set the rule; these details are not given:
+  1. When Shopee stock drops, is it compared with the **whole limit** (limit 10, Shopee 5 → stop) or with **what is left of it** (limit 10, 7 sold, 3 left, Shopee 5 → keep selling)?
+  2. When a variant stops, does the page show plain "sold out", a link to the shop's other platforms, or both?
+  3. Does a unit count as sold when it is paid, or is it held from checkout? Does a cancelled order (D-196) give its units back to the limit?
+  4. Can staff raise or reset a limit after it has been reached, and does the count then start again?
+  5. Does a variant with no limit set behave as today (Shopee stock only)?
+- **Answer:** None yet. The project owner's example: Shopee 20, site limit 10 → the site sells 10 and is then sold out; Shopee 5 with a site limit of 10 → the variant closes as sold out, or links to the other platforms.
+- **Effect:** Blocks the stock-limit part of stage 2 (REQ-058). The admin screen to set a limit can be built first.
+- **Ask:** project owner
+
+### Q-066: Site-only products — which fields, which SKU, and what if it later appears on Shopee
+- **Status:** UNRESOLVED — not yet asked
+- **Question:** D-205 sets the rule; these details are not given:
+  1. Besides price and stock, staff must also supply what Shopee would normally give: name, description, photos, options, category, shipping size tier. Which of these are required?
+  2. Which Shopee field is checked against the BigSeller merchant SKU: the variant's `model_sku`, the product's `parent_sku`, or both?
+  3. If the SKU later appears on Shopee, does the product switch to Shopee's data, or stay site-only until staff change it?
+  4. Do site orders reduce a site-only product's stock on the site, since Shopee cannot? And does it still go into the stock-cut export (REQ-020)?
+- **Answer:** None yet.
+- **Effect:** Blocks the site-only product screens in stage 2 (REQ-060).
+- **Ask:** project owner
+
+### Q-067: The pre-payment Shopee check — shortfall, and API cost
+- **Status:** UNRESOLVED — not yet asked
+- **Question:** D-204 re-checks Shopee stock before every payment. If Shopee has fewer units than the order (or than the order plus other unpaid orders), does the customer get a "no longer available" message and the order stop, or can they pay for the units still available? If Shopee cannot be reached at that moment, does payment stop or go ahead? How many extra Shopee calls does this add per day (Q-056)?
+- **Answer:** None yet.
+- **Effect:** Blocks the checkout step in stage 3 (REQ-059). Units sold on the site but not yet cut in BigSeller are still in Shopee's count, so this check cannot catch every oversell (D-096 still applies).
+- **Ask:** project owner; the API cost question goes to developers
 
 ---
 

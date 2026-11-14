@@ -47,11 +47,16 @@ stage may slip by up to four weeks at no extra cost, and work outside this
 scope is a change request priced per man-day (D-200). The plan is the project
 owner's of 2026-11-14 and is pending the client's signature on the MOU.
 
+Each stage is code-complete on DEV one week before it is due, leaving that
+week for UAT and fixes — 2026-12-08 for stage 1 (D-206). Win builds stage 1,
+the AWS set-up is shared with the project owner, and Win decides how stage 1
+is split into plans (D-207).
+
 | Stage | Due | Share | Delivers | Requirements |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | 2026-12-15 | 20% (20,000 THB) | Architecture; staff sign-in with email OTP; the six roles; news, imported from the old site (plan 012, done), plus a staff news editor; AWS DEV and PROD with automatic deployment (ADR-0004); PROD showing news and the maintenance notice | REQ-032, 033, 034, 035, 047, 051, 057 |
-| 2 | 2027-01-12 | 30% (30,000 THB) | The Shopee catalogue mirror (plan 010, done); product listing and product pages (plans 011 and 013, done); category management; search; stock status from Shopee; content pages and shop information, editable by staff; Sale Page; dropship set-up and the staff availability gate | REQ-001, 002, 003, 004, 005, 006, 021, 022, 036, 037, 043, 044, 045, 050 (staff side), 055 |
-| 3 | 2027-02-09 | 30% (30,000 THB) | Customer sign-up and sign-in; cart; checkout; shipping cost by size tier; K-Payment card, instalments and PromptPay QR; order status and history; the admin order list with the Excel export for cutting stock in BigSeller; staff cancellation; wishlist | REQ-011, 013, 016, 019, 020, 023, 028, 030, 041, 042, 052, 053, 056 |
+| 2 | 2027-01-12 | 30% (30,000 THB) | The Shopee catalogue mirror (plan 010, done); product listing and product pages (plans 011 and 013, done); category management; search; stock status from Shopee; content pages and shop information, editable by staff; Sale Page; dropship set-up and the staff availability gate; the site sale limit; site-only products | REQ-001, 002, 003, 004, 005, 006, 021, 022, 036, 037, 043, 044, 045, 050 (staff side), 055, 058, 060 |
+| 3 | 2027-02-09 | 30% (30,000 THB) | Customer sign-up and sign-in; cart; checkout; shipping cost by size tier; K-Payment card, instalments and PromptPay QR; order status and history; the admin order list with the Excel export for cutting stock in BigSeller; staff cancellation; wishlist; the live Shopee stock check before payment | REQ-011, 013, 016, 019, 020, 023, 028, 030, 041, 042, 052, 053, 056, 059 |
 | 4 | 2027-03-02 | 20% (20,000 THB) | Simplified tax invoice; shipping label; pre-order; dropship ordering; customer reviews; sales dashboard and the monthly accounting export; security (phase 8); database backup with a timed restore (phase 9); the Thai staff manual; final UAT; ordering opens on PROD; source code handed over | REQ-024, 025, 026, 027, 031, 039, 048, 049, 050 (ordering side), 054 |
 
 **Security and backup before ordering opens (D-198).** The source places
@@ -208,6 +213,9 @@ A signed-in customer can add a product to a wishlist, remove it, and see the lis
 
 ### Payment
 
+**REQ-059 — Live Shopee stock check before payment** · owner, 2026-11-14 · CONFIRMED, new (D-204) `[Q-067]`
+Before every payment, the server re-reads the variant's stock from Shopee and does not send the customer to K-Payment if Shopee no longer has it. This applies to every order. Stage 3.
+
 **REQ-016 — K-Payment: card, instalments and PromptPay QR** · §3 · CONFIRMED (expanded, moved from phase 4)
 A customer pays through K-Payment (Kasikorn Bank) — by credit or debit card, immediately or in instalments (REQ-019, now confirmed in scope, D-089), or via PromptPay QR reached through the K-Payment flow. The system updates payment status automatically from the K-Payment callback, with no staff action required. **This is the only payment method** — bank transfer is removed (D-072, Q-030) and standalone PromptPay is not offered (D-071, Q-029).
 
@@ -296,8 +304,14 @@ No direct carrier integration. Shipping is handled through BigSeller.
 
 ### Channel sync
 
+**REQ-058 — Site sale limit per variant** · owner, 2026-11-14 · CONFIRMED, new (D-202, D-203) `[Q-065]`
+For a product with limited supply, staff set how many units the site may sell, below what Shopee holds (for example Shopee 20, site limit 10). The site counts its own sales against the limit and shows the variant sold out once it is reached. When a catalogue pull brings Shopee stock below the limit (for example Shopee 5, limit 10), the site stops selling the variant. Stage 2.
+
 **REQ-021 — Stock linked with Shopee, Shopee authoritative on conflict** · §4 · CONFIRMED (mechanism changed, D-095)
 The mechanism is BigSeller → Shopee → our pull: staff change stock in BigSeller, BigSeller pushes it to Shopee, and the site's 10-minute pull brings it back (D-095, D-096). The site pushes nothing to Shopee. When the two disagree, Shopee is the source of truth (D-082, Q-046).
+
+**REQ-060 — Site-only products from a BigSeller merchant SKU** · owner, 2026-11-14 · CONFIRMED, new (D-205) `[Q-066]`
+Some items are in BigSeller but not sold on Shopee. Staff add one by its BigSeller merchant SKU. Before it is saved, the system checks Shopee and refuses it if any Shopee listing has that SKU. If none does, staff set its price and stock themselves; Shopee is not its master. Stage 2.
 
 **REQ-022 — Staff map products to Shopee without a programmer** · §4 · CONFIRMED
 A staff member can pair a product on the site with its Shopee listing themselves in the admin panel.

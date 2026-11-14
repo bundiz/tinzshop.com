@@ -27,9 +27,9 @@ domain code off provider SDKs (D-050).
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 61 open questions are on record —
+CONFIRMED, not PROPOSED. 64 open questions are on record —
 see `docs/13-open-questions.md` for the full record: 42 RESOLVED, 6 PARTIALLY
-RESOLVED, 13 still genuinely UNRESOLVED (most waiting on a BigSeller
+RESOLVED, 16 still genuinely UNRESOLVED (most waiting on a BigSeller
 data-inspection session, the Shopee live go-live, Shopee's API call limit, or
 the choice of AWS services). Total budget is 100,000 THB, delivered in four
 payment stages due 2026-12-15, 2027-01-12, 2027-02-09 and 2027-03-02 —
@@ -56,7 +56,10 @@ plans 010, 011, 012 and 013 describe — do not scaffold the rest of the applica
 get ahead of the other plans. K-Payment is the
 **sole** payment method (bank transfer and standalone PromptPay are removed),
 and website orders never change stock — staff adjust stock in BigSeller by
-hand from an admin list (D-096, which supersedes D-068; see also D-072).
+hand from an Excel export (D-096, D-201, which supersede D-068; see also
+D-072). Staff may cap what the site sells with a site sale limit (D-202),
+every order re-checks Shopee stock before payment (D-204), and site-only
+products are the one exception to Shopee as master (D-205).
 
 ## Hard rules
 
