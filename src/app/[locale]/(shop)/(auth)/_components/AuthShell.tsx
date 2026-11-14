@@ -9,7 +9,7 @@ import AuthPerks from './AuthPerks';
 /**
  * The site header and footer around an auth card, with the real customer in the header (sign-in and register send
  * a signed-in customer home, but verify and reset do not, so they show the name). Under the header: the breadcrumb,
- * then the card, with the perks panel beside it from `lg` on sign-in and register (plan 015 Task 8, D-200).
+ * then the card, with the perks panel beside it from `lg` on sign-in and register (plan 015 Task 8, D-220).
  */
 export default function AuthShell({
   path,

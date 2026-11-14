@@ -73,7 +73,7 @@ tinzshop.com/
 ├── src/
 │   ├── app/
 │   │   ├── _fonts/               ← the storefront's self-hosted fonts: woff2 files, fonts.ts (four next/font/local
-│   │   │                           families) and each family's licence file (plan 015, D-192)
+│   │   │                           families) and each family's licence file (plan 015, D-212)
 │   │   ├── api/                  ← route handlers for outside callers (Shopee callback, scheduler, webhooks).
 │   │   │                           OUTSIDE the locale segment: fixed URLs. Thin — each calls a controller
 │   │   └── [locale]/             ← every page route is under a locale segment (D-031)
@@ -153,7 +153,7 @@ skipped and most expensive when it is.
 
 ## Fonts
 
-The storefront uses two families (plan 015, D-192):
+The storefront uses two families (plan 015, D-212):
 
 | Family | Designer | Used for |
 | :--- | :--- | :--- |

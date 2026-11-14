@@ -61,7 +61,7 @@ export function firstInvalidField(fields: { name: string }[], fieldErrors: Recor
  * has hydrated and a password or code can never end up in the URL. React 19 resets the inputs after an action; the
  * controller echoes the non-secret fields (`state.values`) and they re-seed the inputs, while passwords and codes
  * come back empty (D-182). A password that breaks the rules or a confirm field that does not match is caught here
- * before sending, so those never cost the customer what they typed (D-204): field errors beside their inputs, the form-wide
+ * before sending, so those never cost the customer what they typed (D-224): field errors beside their inputs, the form-wide
  * error and notices in one polite live region, and a pending state on the button. Every message arrives as a
  * `shop.auth.*` key from the controller and is translated here, so Cognito's text is never shown (D-032).
  */
@@ -91,14 +91,14 @@ export default function AuthForm({
     ]),
   );
   /**
-   * Errors this browser found before sending (D-204): a password that breaks the rules, or a confirm field that does
+   * Errors this browser found before sending (D-224): a password that breaks the rules, or a confirm field that does
    * not repeat it. The form is then not sent, so React's post-action reset never empties the passwords; the server
    * still checks both, for a browser without JavaScript.
    */
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   /**
    * The fields edited since the server last answered, tied to that answer: a field error the server gave is stale
-   * once its field is changed, so it is hidden until the next answer (D-207). A new answer starts the list afresh.
+   * once its field is changed, so it is hidden until the next answer (D-227). A new answer starts the list afresh.
    */
   const [edited, setEdited] = useState<{ answer: AuthFormState; names: string[] }>({ answer: state, names: [] });
   const editedSinceAnswer = (name: string): boolean => edited.answer === state && edited.names.includes(name);
@@ -175,7 +175,7 @@ export default function AuthForm({
           placeholder={field.placeholderKey === undefined ? undefined : t(field.placeholderKey)}
           revealable={field.type === 'password'}
           // A mismatch error from the last submit is stale once the two passwords match, and a server error once its
-          // field is edited (D-207).
+          // field is edited (D-227).
           error={
             matched
               ? undefined

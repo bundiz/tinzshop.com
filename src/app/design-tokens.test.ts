@@ -10,7 +10,7 @@ function token(name: string): string | undefined {
   return match?.[1]?.trim().replace(/\s+/g, ' ');
 }
 
-// Plan 015, Global Constraints > Tokens (D-191, D-193).
+// Plan 015, Global Constraints > Tokens (D-211, D-213).
 const COLOURS: Record<string, string> = {
   page: '#f4f5f7', surface: '#ffffff', sunk: '#edeff2', ink: '#10141c', 'ink-2': '#394150', muted: '#636b7a',
   line: '#e1e4ea', 'line-2': '#cdd2da',

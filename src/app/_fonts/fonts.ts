@@ -1,7 +1,7 @@
 import localFont from 'next/font/local';
 
 /*
- * The storefront's fonts (R3, D-192): Anuphan (Cadson Demak) for headings and IBM Plex Sans Thai (IBM) for
+ * The storefront's fonts (R3, D-212): Anuphan (Cadson Demak) for headings and IBM Plex Sans Thai (IBM) for
  * body text, both under the SIL Open Font License 1.1 (OFL-*.txt beside the files). Self-hosted: no request
  * to a font host at runtime. Each family is a Thai subset and a Latin subset with the mockup's unicode-range,
  * so a page downloads only the subsets its text uses. `layout.tsx` sets the four CSS variables on <html>;

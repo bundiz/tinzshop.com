@@ -30,7 +30,7 @@ type Props = {
 
 /**
  * One product at `/{locale}/product/{productId}/detail` (D-142), built from the Shopee catalogue mirror (plan 011)
- * and laid out as the redesign's product page (plan 015, D-198). Unknown, malformed or hidden ids are a real 404 (D-120).
+ * and laid out as the redesign's product page (plan 015, D-218). Unknown, malformed or hidden ids are a real 404 (D-120).
  */
 export default async function ProductPage({ params }: Props) {
   const { locale, productId } = await params;

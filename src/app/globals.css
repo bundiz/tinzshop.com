@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens, copied from tinzshop-redesign/css/style.css :root (plan 015, D-191). */
+/* Design tokens, copied from tinzshop-redesign/css/style.css :root (plan 015, D-211). */
 @theme {
   /* surfaces and text */
   --color-page: #f4f5f7;
@@ -65,14 +65,14 @@
   --text-base--line-height: 1.65;
 
   /* The mockup's edges (style.css L570-665), mobile-first, in rem like Tailwind's own so
-     every breakpoint sorts by width (R4, D-193). */
+     every breakpoint sorts by width (R4, D-213). */
   --breakpoint-sm: 40rem;
   --breakpoint-md: 53.75rem;
   --breakpoint-lg: 64rem;
   --breakpoint-xl: 73.75rem;
 }
 
-/* The font variables are set on <html> by next/font/local (src/app/_fonts/fonts.ts, D-192). */
+/* The font variables are set on <html> by next/font/local (src/app/_fonts/fonts.ts, D-212). */
 @theme inline {
   --font-head: var(--font-anuphan-latin), var(--font-anuphan-thai), var(--font-plex-latin),
     var(--font-plex-thai), system-ui, sans-serif;

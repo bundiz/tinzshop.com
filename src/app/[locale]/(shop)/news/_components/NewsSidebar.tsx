@@ -12,7 +12,7 @@ export type NewsSidebarProps = {
 
 /**
  * The sidebar (sticky from `lg`): the "หมวดหมู่ข่าว" panel with real counts, and the navy pre-order panel, whose
- * button links to the listing's pre-order filter, a real page (D-199). The design's "ข่าวยอดนิยม" ranking is left out: nothing records
+ * button links to the listing's pre-order filter, a real page (D-219). The design's "ข่าวยอดนิยม" ranking is left out: nothing records
  * which articles are popular, and a ranking is never made up (D-137).
  */
 export default function NewsSidebar({ categories, activeCategorySlug }: NewsSidebarProps) {

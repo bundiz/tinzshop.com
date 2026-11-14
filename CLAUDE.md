@@ -39,7 +39,7 @@ register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 **Implementation is unblocked for plans 010, 011, 012, 013, 014 and 015 only** (the Shopee catalogue
 mirror — `docs/plans/010-shopee-catalogue-mirror.md`; the landing page and
 product page built from it — `docs/plans/011-landing-page-from-mirror.md`, D-117;
-the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151; customer registration and sign-in through Amazon Cognito, with Google sign-in, and sign-in required for the product pages — `docs/plans/014-customer-authentication.md`, D-152 to D-177, ADR-0003; the storefront restyle to `tinzshop-redesign/` — `docs/plans/015-storefront-redesign.md`, D-190 to D-203),
+the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151; customer registration and sign-in through Amazon Cognito, with Google sign-in, and sign-in required for the product pages — `docs/plans/014-customer-authentication.md`, D-152 to D-177, ADR-0003; the storefront restyle to `tinzshop-redesign/` — `docs/plans/015-storefront-redesign.md`, D-210 to D-223),
 plan 010 on the project owner's
 approval of 2026-10-26 (`docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`,
 §2 *Authority*). Shopee is the master for the catalogue (D-094), so options and

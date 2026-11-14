@@ -5,7 +5,7 @@ import Icon from '@/components/ui/Icon';
 /**
  * The buy row of the buy box: the quantity stepper, "add to cart" and "buy now". There is no cart yet (plan 003),
  * so every control renders as designed and does nothing: buttons are `type="button"` and the quantity stays at 1
- * (D-124). The wishlist and share links are not in the redesign (D-198).
+ * (D-124). The wishlist and share links are not in the redesign (D-218).
  */
 export default function BuyActions() {
   const t = useTranslations('shop.product');

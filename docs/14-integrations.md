@@ -305,7 +305,7 @@ In the AWS console:
 10. **Cognito domain.** Add a prefix domain for the OAuth endpoints. Customers see it only for a moment during the Google redirect.
 11. **App client.** One confidential client, with a client secret.
     - Auth flows: `USER_PASSWORD_AUTH` and refresh token.
-    - OAuth: authorization code grant with PKCE; scopes `openid email profile`. The Google sign-in sends `prompt=select_account`, which Cognito forwards to Google only on the managed login version of the domain (not the classic hosted UI), so Google always shows its account chooser (D-206).
+    - OAuth: authorization code grant with PKCE; scopes `openid email profile`. The Google sign-in sends `prompt=select_account`, which Cognito forwards to Google only on the managed login version of the domain (not the classic hosted UI), so Google always shows its account chooser (D-226).
     - Identity providers: Cognito and Google.
     - Callback URLs: `http://localhost:3003/api/callbacks/cognito` (the dev default), `http://localhost:3000/api/callbacks/cognito` and `http://localhost:3002/api/callbacks/cognito` for development. The production URL is added at go-live.
     - Token validity: access 60 minutes, ID 60 minutes, refresh 7 days. Refresh-token rotation off (O-7, D-176). The Lite tier allows these lifetimes (plan 014 Task 2).

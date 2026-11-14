@@ -82,7 +82,7 @@ describe('AuthForm', () => {
     expect(field('email').value).toBe('a@example.test');
   });
 
-  it('hides a field error from the server once that field is edited, and shows it again if the next answer repeats it (D-207)', async () => {
+  it('hides a field error from the server once that field is edited, and shows it again if the next answer repeats it (D-227)', async () => {
     mount(async () => ({ fieldErrors: { email: 'shop.auth.error.emailInvalid' }, values: { email: 'typo@example' } }));
     type(field('email'), 'typo@example');
     await submit();
@@ -327,7 +327,7 @@ describe('show and hide password', () => {
   });
 });
 
-describe('checks the browser can make before sending (D-204)', () => {
+describe('checks the browser can make before sending (D-224)', () => {
   const REGISTER_FIELDS: AuthFieldSpec[] = [
     { name: 'email', labelKey: 'field.email', type: 'email', autoComplete: 'email' },
     { name: 'password', labelKey: 'field.password', type: 'password', autoComplete: 'new-password', showPasswordRules: true },

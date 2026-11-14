@@ -193,7 +193,7 @@ export async function handleSignIn(deps: CustomerAuthDeps, formData: FormData, c
     const { email: emailError, ...otherErrors } = fieldErrors;
     if (emailError === undefined) return outcome;
     // No account has a malformed address, so sign-in answers it exactly as a wrong password: the customer is told
-    // their email or password is wrong, never about the email's format (D-207). A missing password is still asked for.
+    // their email or password is wrong, never about the email's format (D-227). A missing password is still asked for.
     return {
       state: {
         ...state,

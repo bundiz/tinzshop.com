@@ -11,7 +11,7 @@ export type AuthCardProps = {
 
 /**
  * The card all four auth pages share: the title, and under it a line that says what the page is or links to the
- * other page (D-200). The page's `main` and the perks panel are `AuthShell`'s.
+ * other page (D-220). The page's `main` and the perks panel are `AuthShell`'s.
  */
 export default function AuthCard({ title, description, switchPrompt, children }: AuthCardProps) {
   return (

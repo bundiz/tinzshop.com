@@ -3,7 +3,7 @@ import type { LandingCatalogue, LandingProductCard } from '@/server/services/cat
 const MINI_COUNT = 3;
 
 /**
- * Which products the landing hero shows (R9, D-195): the feature card is the first kit (the best-selling one,
+ * Which products the landing hero shows (R9, D-215): the feature card is the first kit (the best-selling one,
  * since the read sorts kits by sales), or none when there is no kit; the minis are the first three best
  * sellers that are not the feature product.
  */

@@ -157,7 +157,7 @@ describe('createCognitoIdentity: OAuth', () => {
     );
     expect(url.origin + url.pathname).toBe(`https://${config.domain}/oauth2/authorize`);
     expect(url.searchParams.get('identity_provider')).toBe('Google');
-    // Google always shows its account chooser, so a signed-out customer is never signed straight back in (D-206).
+    // Google always shows its account chooser, so a signed-out customer is never signed straight back in (D-226).
     expect(url.searchParams.get('prompt')).toBe('select_account');
     expect(url.searchParams.get('code_challenge_method')).toBe('S256');
     expect(url.searchParams.get('code_challenge')).toBe('ch');

@@ -14,7 +14,7 @@ export type ProductCardProps = {
 };
 
 /**
- * One product as a card (the mockup's `.card`, R11/D-196): image, tags, the wishlist heart, name, price, stock
+ * One product as a card (the mockup's `.card`, R11/D-216): image, tags, the wishlist heart, name, price, stock
  * status and the cart button, linking to its product page. The heart and the cart button are inert until a
  * wishlist and a cart exist (D-124). No category line (categories are a keyword mock, D-143), no instalment
  * line and no rating (spec O-6).

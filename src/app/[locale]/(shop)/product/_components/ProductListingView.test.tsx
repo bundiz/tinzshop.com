@@ -103,7 +103,7 @@ describe('ProductListingView', () => {
     expect(tabs(html)).toMatch(/^<a [^>]*aria-current="page"[\s\S]*?<span>ทั้งหมด</);
     expect(html).toMatch(/<h1[^>]*>สินค้าทั้งหมด<\/h1>/);
     expect(text(html)).toContain('แสดง 1–8 จาก 8 รายการ');
-    // The head agrees with the toolbar even when no product has a category (D-203).
+    // The head agrees with the toolbar even when no product has a category (D-223).
     expect(text(html)).toContain('ทุกแพลตฟอร์ม · 8 รายการ');
     expect(html).not.toContain(`aria-label="${th.shop.news.pagination.label}"`);
   });
@@ -215,7 +215,7 @@ describe('ProductListingView', () => {
     expect(tabs(render(listing({ category: 'nintendo-switch' })))).toContain('#F8D9DF');
   });
 
-  it('shows a count on ทั้งหมด only while it is the active tile (D-203)', () => {
+  it('shows a count on ทั้งหมด only while it is the active tile (D-223)', () => {
     const all = (html: string) => text(tabs(html)).startsWith('ทั้งหมด248 รายการ');
     expect(all(render(listing()))).toBe(true);
     expect(all(render(listing({ types: ['playstation-5-game'] })))).toBe(false);

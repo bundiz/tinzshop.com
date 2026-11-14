@@ -16,7 +16,7 @@ type TabId = 'description' | 'spec' | 'reviews' | 'shipping';
 
 /**
  * The product information tabs: description and specifications when there is data for them, reviews, and
- * shipping and warranty (static text, its warranty link inert until that page exists; D-198). Only our own
+ * shipping and warranty (static text, its warranty link inert until that page exists; D-218). Only our own
  * reviews may be shown (spec O-6) and none exist yet, so the reviews tab is an empty state with an inert
  * "write a review" button: no stars, scores or counts (D-124).
  */

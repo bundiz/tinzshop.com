@@ -102,7 +102,7 @@ describe('register', () => {
     expect(t.calls.map((c) => c.fn)).toEqual(['signUp']);
   });
 
-  it('register with an email that already has an account says so beside the email and sends no code (D-205)', async () => {
+  it('register with an email that already has an account says so beside the email and sends no code (D-225)', async () => {
     const t = build({ cognito: { signUp: fail('username_exists') } });
     expect(await register(t.deps, reg)).toEqual({
       ok: false,

@@ -269,7 +269,7 @@ export const LISTING_FILTERS_ID = 'listing-filters';
 const WIDE_QUERY = '(min-width: 64rem)';
 
 /**
- * Holds whether the filter sheet is open below 1024px (plan 015, R12, D-197). While open the panel is a modal
+ * Holds whether the filter sheet is open below 1024px (plan 015, R12, D-217). While open the panel is a modal
  * dialog (`useModalDialog`: focus moves in, Tab stays in, Escape closes and returns focus to "ตัวกรอง"); it also
  * closes when the window grows past `lg`, where the sidebar always shows.
  */

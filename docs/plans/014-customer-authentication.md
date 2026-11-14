@@ -365,7 +365,7 @@ A whole-branch review after Task 10 asked for these; each was built test first.
 These are run by a person against the dev pool. Never tick a box for a check nobody performed.
 
 - [ ] Register with a new email: the code arrives (bilingual), verifying works, and you can sign in. The header shows the first name.
-- [ ] Register again with that same email (it has signed in, so it has a customer row): "อีเมลนี้ถูกใช้แล้ว" shows beside the email, the names and email stay filled in, and no email arrives (D-205). The same for an email first signed in with Google.
+- [ ] Register again with that same email (it has signed in, so it has a customer row): "อีเมลนี้ถูกใช้แล้ว" shows beside the email, the names and email stay filled in, and no email arrives (D-225). The same for an email first signed in with Google.
 - [ ] Register, verify, but do not sign in; then register that email again: the page looks identical to a new registration, and a reset code arrives. Entering it on the verify page says the code is wrong, exactly like any wrong code (D-179). The link "Got a password-reset email instead? Set a new password" opens the reset step; that code plus a new password works, and every earlier signed-in browser is signed out.
 - [ ] On the forgot-password reset step, a wrong code for an existing email and any code for an unknown email show the same message (check that Cognito's expired-code answer does not tell them apart).
 - [ ] Sign in with Google using that same email: it's the same account (one `customer` row), with no visible error, even on the first link.

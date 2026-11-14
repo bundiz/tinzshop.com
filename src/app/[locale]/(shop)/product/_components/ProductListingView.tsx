@@ -59,7 +59,7 @@ const KIND_ART: Record<ProductTypeKey, ProductArt> = {
 
 /**
  * The design's price presets, in whole baht, with no overlap: `min` is inclusive and `max` means below
- * `max + 1` baht, so ต่ำกว่า ฿2,000 (`max=1999`) covers ฿1,999.99 (D-148, D-197).
+ * `max + 1` baht, so ต่ำกว่า ฿2,000 (`max=1999`) covers ฿1,999.99 (D-148, D-217).
  */
 export const PRICE_PRESETS = [
   { key: 'under2000', minBaht: null, maxBaht: 1999 },
@@ -87,7 +87,7 @@ const CHIP_OFF = 'border-line-2 bg-surface hover:border-ink';
 const CHIP_ON = 'border-brand bg-brand text-white';
 
 /**
- * The all-products page, `/{locale}/product`, laid out as `tinzshop-redesign/` (plan 015, D-197): breadcrumb,
+ * The all-products page, `/{locale}/product`, laid out as `tinzshop-redesign/` (plan 015, D-217): breadcrumb,
  * head, type tiles, the filters (a sticky column from 1024px, a sheet below it), toolbar, active-filter chips,
  * the card grid or list, and pagination. Links keep every other filter; the client controls rewrite the URL.
  */
@@ -104,7 +104,7 @@ export default function ProductListingView({ listing, articlesMenu, customer = n
   const chosenKinds = selectedKinds(facets.types, active.types);
   const kindLabel = (kind: ProductTypeKey) => t(`type.${kind}`);
 
-  // The head's count is the toolbar's (D-203): products with no category are in no facet, so a facet sum would drift.
+  // The head's count is the toolbar's (D-223): products with no category are in no facet, so a facet sum would drift.
   const allCount = listing.total;
   const title = activeCategory?.name ?? t('title');
   const description =
@@ -127,7 +127,7 @@ export default function ProductListingView({ listing, articlesMenu, customer = n
       key: 'all',
       label: t('tabs.all'),
       art: 'console',
-      // Only the active tile can state a count that is true: kind-narrowed facets would shrink it (D-148, D-203).
+      // Only the active tile can state a count that is true: kind-narrowed facets would shrink it (D-148, D-223).
       count: active.types.length === 0 && !active.kit ? listing.total : null,
       href: change({ types: [], kit: false }),
       isActive: active.types.length === 0 && !active.kit,

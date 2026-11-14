@@ -170,7 +170,7 @@ describe('the register page', () => {
     expect(page).toContain('href="/api/auth/google');
     expect(cardHeader(page)).toMatch(/มีบัญชีอยู่แล้ว\? <a [^>]*href="\/th\/sign-in"[^>]*>เข้าสู่ระบบ<\/a>/);
     expect(page).toContain('สมัครด้วย Google');
-    // The email field has no hint under it (D-208).
+    // The email field has no hint under it (D-228).
     expect(page).not.toContain('ใช้รับอีเมลยืนยันคำสั่งซื้อ');
     expect(page).not.toContain('auth-email-hint');
     expect(page).not.toContain('forgot-password');

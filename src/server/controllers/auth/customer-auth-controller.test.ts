@@ -101,7 +101,7 @@ describe('register', () => {
     expect(t.cognito.signUp).toHaveBeenCalledWith({ email: 'ann@example.com', password: 'Passw0rd!', firstName: 'Ann', lastName: 'Lee' });
   });
 
-  it('register with an email that already has an account is an email field error, keeps the names and sets no cookie (D-205)', async () => {
+  it('register with an email that already has an account is an email field error, keeps the names and sets no cookie (D-225)', async () => {
     const { CognitoError } = await import('@/server/adapters/cognito/errors');
     const t = build({ cognito: { signUp: vi.fn(async () => { throw new CognitoError('username_exists'); }) } });
     t.deps.customers.findByEmail = async () => ({ id: 'c1', cognitoSub: 's', email: 'ann@example.com', firstName: 'Ann', lastName: 'Lee' });
@@ -237,14 +237,14 @@ describe('sign-in, resend, reset and sign-out', () => {
     expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'ann@example.com' } });
   });
 
-  it('a malformed email on sign-in reads the same as a wrong password, before Cognito (D-207)', async () => {
+  it('a malformed email on sign-in reads the same as a wrong password, before Cognito (D-227)', async () => {
     const t = build();
     const out = await handleSignIn(t.deps, form({ email: 'nope', password: 'x' }), ctx());
     expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'nope' } });
     expect(t.getCognito).not.toHaveBeenCalled();
   });
 
-  it('a malformed email and no password on sign-in still asks for the password (D-207)', async () => {
+  it('a malformed email and no password on sign-in still asks for the password (D-227)', async () => {
     const t = build();
     const out = await handleSignIn(t.deps, form({ email: '', password: '' }), ctx());
     expect(out.state).toEqual({

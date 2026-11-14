@@ -10,7 +10,7 @@
   - REQ-053 / D-161: sign-in still gates the product pages.
   - No requirement is newly delivered. This plan changes how the existing pages look, not what they do.
 - **Depends on plans:** 011 (home, product page), 012 (news), 013 (listing), 014 (sign-in pages, header account menu). Plan 014 is not merged yet, so this branch merges after it.
-- **Blocked by:** nothing for the restyle itself. Q-062 and Q-063 (UNRESOLVED, added 2026-11-12) block only the entries and phrases this plan leaves out or keeps inert; see *Plan rulings* R5.
+- **Blocked by:** nothing for the restyle itself. Q-068 and Q-069 (UNRESOLVED, added 2026-11-12) block only the entries and phrases this plan leaves out or keeps inert; see *Plan rulings* R5.
 - **Design:** `tinzshop-redesign/`, as recoloured and corrected on 2026-11-12. `_build.mjs` is the source of every page (the `.html` files are its output); the look is `css/style.css`; the mockup's own interactions are `js/app.js`. Line references below (`style.css` L*n*, `_build.mjs` L*n*) are to those files as they stand on 2026-11-12. `design/` stays in the repository as the record of plans 011 to 014 and is no longer the reference.
 - **Branch:** `feat/win/storefront-redesign`, cut from `feat/win/customer-auth`
 
@@ -218,33 +218,33 @@ Mockup class → Tailwind, used by every task. Values are the mockup's.
 
 Each is a plan ruling the developer builds to; the ones the owner's request decides are marked *owner*. Each becomes a D-row in Task 1.
 
-- **R1, the design source (*owner*, D-190).** The storefront follows `tinzshop-redesign/` (as recoloured and corrected on 2026-11-12) instead of `design/`. This supersedes D-124's choice of design file and its list of what is left out; D-124's inert-control rule, its "never a made-up number" rule and its "data still comes from the database" rule stay.
-- **R2, colours and token names (*owner* for the colours, D-191).** The tokens above, named after the mockup's variables. The old tokens are retired by Task 9.
-- **R3, fonts (*owner*, D-192).** Anuphan (Cadson Demak) for headings and IBM Plex Sans Thai (IBM) for body text, both published under the SIL Open Font License 1.1, self-hosted from the mockup's woff2 files with `next/font/local`: no request to Google Fonts or any other host at runtime. The licence text of each family is committed beside the files, and `04` records the families, their licence and where the files came from. Each family is two `localFont` calls, a Thai subset and a Latin subset, each with the mockup's `unicode-range`, so a page downloads only the subsets its text uses.
-- **R4, breakpoints (D-193).** The mockup's edges become the theme's breakpoints, mobile-first: `sm` 640px, `md` 860px, `lg` 1024px, `xl` 1180px; `xs` (480px) is removed. The mockup writes them as `max-width` (so exactly 640px is a phone there and `sm` here); the 1px difference at each edge is accepted. This supersedes the breakpoint bullet of 07's D-124 section. The grids are the class map's `g-5` (2 / 4 / 5 columns, cards 9 and 10 hidden between 860px and 1180px as the mockup does), `g-4` (2 / 3 / 4) and `g-3` (1 / 3).
-- **R5, copy that is cut or renamed (D-190).** Thai is copied exactly except:
-  - Every "Nintendo Switch 2" reads "Nintendo Switch", and every "Switch 2" reads "Switch", from `shop.category.switch` where it is the platform's name (Q-062).
-  - "เครื่องเกมอื่น ๆ · ของเล่น", "สินค้าลดราคา", the tile "ลดราคา" and the banner link "เคส & ฟิล์ม" render inert at `#` (Q-062).
-  - Left out (Q-063): "ราคาถูกกว่าซื้อแยก" (kits subtitle), "คุ้มกว่าซื้อแยก ฿790" (hero card), "คุ้มกว่า" (kits tile), "เครื่องประกันร้าน" (Switch banner), "แจ้งเตือนก่อนวันวางจำหน่ายและวันชำระส่วนที่เหลือ" (pre-order perk's line).
+- **R1, the design source (*owner*, D-210).** The storefront follows `tinzshop-redesign/` (as recoloured and corrected on 2026-11-12) instead of `design/`. This supersedes D-124's choice of design file and its list of what is left out; D-124's inert-control rule, its "never a made-up number" rule and its "data still comes from the database" rule stay.
+- **R2, colours and token names (*owner* for the colours, D-211).** The tokens above, named after the mockup's variables. The old tokens are retired by Task 9.
+- **R3, fonts (*owner*, D-212).** Anuphan (Cadson Demak) for headings and IBM Plex Sans Thai (IBM) for body text, both published under the SIL Open Font License 1.1, self-hosted from the mockup's woff2 files with `next/font/local`: no request to Google Fonts or any other host at runtime. The licence text of each family is committed beside the files, and `04` records the families, their licence and where the files came from. Each family is two `localFont` calls, a Thai subset and a Latin subset, each with the mockup's `unicode-range`, so a page downloads only the subsets its text uses.
+- **R4, breakpoints (D-213).** The mockup's edges become the theme's breakpoints, mobile-first: `sm` 640px, `md` 860px, `lg` 1024px, `xl` 1180px; `xs` (480px) is removed. The mockup writes them as `max-width` (so exactly 640px is a phone there and `sm` here); the 1px difference at each edge is accepted. This supersedes the breakpoint bullet of 07's D-124 section. The grids are the class map's `g-5` (2 / 4 / 5 columns, cards 9 and 10 hidden between 860px and 1180px as the mockup does), `g-4` (2 / 3 / 4) and `g-3` (1 / 3).
+- **R5, copy that is cut or renamed (D-210).** Thai is copied exactly except:
+  - Every "Nintendo Switch 2" reads "Nintendo Switch", and every "Switch 2" reads "Switch", from `shop.category.switch` where it is the platform's name (Q-068).
+  - "เครื่องเกมอื่น ๆ · ของเล่น", "สินค้าลดราคา", the tile "ลดราคา" and the banner link "เคส & ฟิล์ม" render inert at `#` (Q-068).
+  - Left out (Q-069): "ราคาถูกกว่าซื้อแยก" (kits subtitle), "คุ้มกว่าซื้อแยก ฿790" (hero card), "คุ้มกว่า" (kits tile), "เครื่องประกันร้าน" (Switch banner), "แจ้งเตือนก่อนวันวางจำหน่ายและวันชำระส่วนที่เหลือ" (pre-order perk's line).
   - "สินค้าขายดีสัปดาห์นี้" reads "สินค้าขายดี": the best sellers are Shopee's sales count, not one week's.
   - "ซื้อคู่กันบ่อย" reads "สินค้าที่เกี่ยวข้อง": related products are best sellers, not bought-together data.
   - "เลขพัสดุ" is cut from the orders perk and "และแจ้งเลขพัสดุในคำสั่งซื้อเมื่อร้านส่งของ" from the shipping tab: a tracking number is not a core requirement (REQ-031, D-075).
   - The wishlist perk is left out: the wishlist is in the backlog with no phase (D-089).
   - "ถามพนักงานที่เล่น PS5 จริงทาง LINE" reads "ถามพนักงานที่เล่นเกมจริงทาง LINE", the wording of the mockup's own hero, since the product page is not always a PS5.
   - The facts the app already shows from the plan 011 design are kept as written: "หน้าร้านย่านสะพานเหล็ก" and "กว่า 20 ปี".
-- **R6, the top bar (D-194).** It keeps the articles menu (D-140), first in its right-hand group, and the TH/EN switch, both visible at every width (D-118). "คำสั่งซื้อของฉัน", "ประกัน / เคลม" and "LINE ของร้าน" are inert and hidden below `md`, and repeated in the drawer. Below `sm` the message shows only its bold part, "ส่งทั่วประเทศไทย". The language switch looks like the mockup's "TH · EN" with a globe, built as now: the current language a `span aria-current="true"`, the other a `Link` with `hrefLang`, `lang` and its name as `aria-label`.
-- **R7, search stays inert (D-194, D-124).** The form keeps `role="search"`, no `action` and `SearchForm`'s submit guard; the "ค้นหา" button is `type="button"`, so the existing test "no submit button" still holds.
-- **R8, the nav and the drawer (D-194).** The nav is the mockup's (หน้าแรก, PlayStation 5, Nintendo Switch, IT Gadgets, พรีออเดอร์, ชุดโปรโมชั่น, เครื่องเกมอื่น ๆ · ของเล่น, สินค้าลดราคา, ข่าวเกม) with the platform dots. "หมวดหมู่ทั้งหมด" leaves the nav, as in the mockup; `/{locale}/product` stays reachable from the hero's "เลือกซื้อสินค้า", the listing's platform links (the current platform links back to all, D-148) and the product breadcrumb. Below `md` the nav is hidden and the menu button opens `MobileMenu`: a modal dialog (focus moves in, Tab stays in, Escape and the close button close it and return focus to the menu button, the page does not scroll behind it). Its sign-in entry shows only when signed out.
-- **R9, the landing data (D-195).** The landing read changes its section limits to 10 best sellers and 5 kits (SQL in `listStorefrontCandidates` and the service constants); pre-orders stay 4 in the read, so at most 19 rows. The pre-order section is not rendered (plan 005 brings it back) and `shop.home.preOrders.title` is removed. The hero's feature card is the first kit; with no kit it is not rendered and the hero text spans the width. The three minis are the first three best sellers that are not the feature product. "เลือกซื้อสินค้า" links to `/{locale}/product` (supersedes D-118's "scrolls to the best sellers"); "สมัครสมาชิก" links to register and shows only when signed out. The welcome panel goes (supersedes D-185's greeting; the header already shows the name).
-- **R10, best-seller chips are links (D-195).** "ทั้งหมด" is current (a `span aria-current="true"` drawn pressed); "PS5", "Switch" and "IT Gadgets" link to `?category={slug}&sort=best_selling`, a real page (D-124). A toggle that filtered on the page would need three more reads.
-- **R11, the product card (D-196).** As the mockup's `.card`, with: the wishlist heart and the cart button inert (`type="button"`, no `aria-pressed`, labels naming the product); the cart button `disabled` with the label "สินค้าหมด" when out of stock; the "ลดราคา" tag and the red price only when the original price is above the price (the D-123 test); no category line (categories are a keyword mock, D-143, and the card's read model has none), no instalment line, no rating.
-- **R12, the listing (D-197).**
+- **R6, the top bar (D-214).** It keeps the articles menu (D-140), first in its right-hand group, and the TH/EN switch, both visible at every width (D-118). "คำสั่งซื้อของฉัน", "ประกัน / เคลม" and "LINE ของร้าน" are inert and hidden below `md`, and repeated in the drawer. Below `sm` the message shows only its bold part, "ส่งทั่วประเทศไทย". The language switch looks like the mockup's "TH · EN" with a globe, built as now: the current language a `span aria-current="true"`, the other a `Link` with `hrefLang`, `lang` and its name as `aria-label`.
+- **R7, search stays inert (D-214, D-124).** The form keeps `role="search"`, no `action` and `SearchForm`'s submit guard; the "ค้นหา" button is `type="button"`, so the existing test "no submit button" still holds.
+- **R8, the nav and the drawer (D-214).** The nav is the mockup's (หน้าแรก, PlayStation 5, Nintendo Switch, IT Gadgets, พรีออเดอร์, ชุดโปรโมชั่น, เครื่องเกมอื่น ๆ · ของเล่น, สินค้าลดราคา, ข่าวเกม) with the platform dots. "หมวดหมู่ทั้งหมด" leaves the nav, as in the mockup; `/{locale}/product` stays reachable from the hero's "เลือกซื้อสินค้า", the listing's platform links (the current platform links back to all, D-148) and the product breadcrumb. Below `md` the nav is hidden and the menu button opens `MobileMenu`: a modal dialog (focus moves in, Tab stays in, Escape and the close button close it and return focus to the menu button, the page does not scroll behind it). Its sign-in entry shows only when signed out.
+- **R9, the landing data (D-215).** The landing read changes its section limits to 10 best sellers and 5 kits (SQL in `listStorefrontCandidates` and the service constants); pre-orders stay 4 in the read, so at most 19 rows. The pre-order section is not rendered (plan 005 brings it back) and `shop.home.preOrders.title` is removed. The hero's feature card is the first kit; with no kit it is not rendered and the hero text spans the width. The three minis are the first three best sellers that are not the feature product. "เลือกซื้อสินค้า" links to `/{locale}/product` (supersedes D-118's "scrolls to the best sellers"); "สมัครสมาชิก" links to register and shows only when signed out. The welcome panel goes (supersedes D-185's greeting; the header already shows the name).
+- **R10, best-seller chips are links (D-215).** "ทั้งหมด" is current (a `span aria-current="true"` drawn pressed); "PS5", "Switch" and "IT Gadgets" link to `?category={slug}&sort=best_selling`, a real page (D-124). A toggle that filtered on the page would need three more reads.
+- **R11, the product card (D-216).** As the mockup's `.card`, with: the wishlist heart and the cart button inert (`type="button"`, no `aria-pressed`, labels naming the product); the cart button `disabled` with the label "สินค้าหมด" when out of stock; the "ลดราคา" tag and the red price only when the original price is above the price (the D-123 test); no category line (categories are a keyword mock, D-143, and the card's read model has none), no instalment line, no rating.
+- **R12, the listing (D-217).**
   - Head: `h1` and the existing description with the count, "{description} · {count} รายการ".
   - Subcategory tiles: the existing type-kind tabs with counts (D-148), drawn as `.subcat` tiles with the art icons.
   - Filters: the existing groups (หมวดหมู่, สถานะสินค้า, ประเภทสินค้า, ช่วงราคา) as `<details open>` groups. From `lg` a sticky 268px column. Below `lg` a full-screen sheet behind "ตัวกรอง": a modal dialog only while open, closed on Escape, the close button, the "แสดง {count} รายการ" button, or widening past `lg`; each change still navigates at once, as built.
   - Price presets follow the mockup, in D-148's convention: ต่ำกว่า ฿2,000 = `max=1999`, ฿2,000–10,000 = `min=2000&max=9999`, มากกว่า ฿10,000 = `min=10000`. Supersedes D-148's four presets.
   - Toolbar: "แสดง {from}–{to} จาก {total} รายการ"; sort select; the grid/list switch is kept from `sm` (the mockup has none).
-- **R13, the product page (D-198).**
+- **R13, the product page (D-218).**
   - Two columns from `lg` (gallery sticky, buy box).
   - The buy box: a platform tag "{platform} · {type}" from the breadcrumb data (left out with no platform), the kit and pre-order badges, the `h1`, the price box, the options as the mockup's `.opt` chips, the buy row, four assurances and the LINE ask block.
   - `ServicePanel` becomes the assurances and the ask block. The K-Payment chips, store blurb, rate link and contact line go.
@@ -252,14 +252,14 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - Tabs: a fourth tab, "การจัดส่งและรับประกัน", holds the mockup's static text; its warranty link is inert. The reviews tab is the empty state with an inert "เขียนรีวิว".
   - Related products: 5 best sellers, `g-5`, still titled "สินค้าที่เกี่ยวข้อง", with "ดูทั้งหมด" to `?sort=best_selling`.
   - The phone buy bar (below `sm`) is rendered by `VariantPicker`, with the chosen price and an inert "ซื้อเลย".
-- **R14, news (D-199).**
+- **R14, news (D-219).**
   - Head: `h1` with the tabs drawn as the mockup's chips; counts and the scroller are kept.
   - Feature block: the mockup's `.nfeat`.
   - "ข่าวล่าสุด" grid: 1 column, 2 from `sm` (the mockup's inline 2 columns would squeeze a phone).
   - Sidebar from `lg`, 320px: the categories panel (D-137) and the pre-order panel, whose button now links to `?pre_order=1`, a real page (supersedes D-137's inert button). Its text stays the existing keys; the mockup's "เปิดจองแล้ว" and "วางมัดจำก่อนได้" are left out (whether any pre-order is open is data, deposits are plan 005).
   - Every news tag uses one neutral tone (`other`): mapping news categories to platforms would hard-code slugs.
   - News images are 16:9.
-- **R15, the sign-in pages (D-200).**
+- **R15, the sign-in pages (D-220).**
   - Sign-in and register: a breadcrumb, then the card (560px) beside the navy perks panel from `lg`, stacked below it. Verify and forgot password: the card alone, centred, 560px.
   - Under the title, "ยังไม่มีบัญชี? สมัครสมาชิก" / "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" replaces the top-right link (supersedes that part of D-170). Verify and forgot keep their description line.
   - "ลืมรหัสผ่าน?" sits below the password field, right-aligned. It keeps `returnTo` (D-187).
@@ -267,7 +267,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - Buttons: sign-in submits with the `brand` button, register with the `buy` button.
   - Google: "เข้าสู่ระบบด้วย Google" on sign-in, "สมัครด้วย Google" on register.
   - The register email field gets the hint "ใช้รับอีเมลยืนยันคำสั่งซื้อและใบกำกับภาษี".
-- **R16, accessibility fixes over the mockup (D-201).**
+- **R16, accessibility fixes over the mockup (D-221).**
   - The LINE green `#06C755` carries ink text (8.2:1), never white (2.26:1).
   - Every link and control outside running text is at least 44px tall below `sm`: top bar links, breadcrumbs (mockup 32px), chips (40px), active-filter chips (36px), filter checks and summaries, banner links (40px), footer links (36px), section "view all" links. The show-password button keeps its 36px look with a 44px hit area.
   - At 390px, the top bar's content and the footer's payment chips sit on the `wrap` gutter; chips wrap whole, and the copyright drops to its own row.
@@ -277,31 +277,31 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 
 ### Task 1: Docs, decisions and names
 
-**Files:** `docs/11-decisions.md`, `docs/07-frontend-components.md`, `docs/04-tech-stack-and-structure.md`, `docs/12-glossary.md`, `docs/02-scope-and-phases.md`, `CLAUDE.md`. (`docs/13-open-questions.md` already has Q-062 and Q-063, added by the planner on 2026-11-12.)
+**Files:** `docs/11-decisions.md`, `docs/07-frontend-components.md`, `docs/04-tech-stack-and-structure.md`, `docs/12-glossary.md`, `docs/02-scope-and-phases.md`, `CLAUDE.md`. (`docs/13-open-questions.md` already has Q-068 and Q-069, added by the planner on 2026-11-12.)
 
-- [ ] **D-rows D-190 to D-201** in a new section of `11-decisions.md`, "Storefront redesign (owner, 2026-11-12)", before *Deployment*, with one intro line naming the owner's request and this plan:
-  - D-190 R1 and R5 (design source; what is left out or cut, and why)
-  - D-191 R2 (colours, the owner's blue and yellow; token names)
-  - D-192 R3 (fonts, OFL 1.1, self-hosted, `next/font/local`)
-  - D-193 R4 (breakpoints and grids)
-  - D-194 R6 to R8 (top bar, header, search, nav, drawer, footer)
-  - D-195 R9 and R10 (home layout and the landing limits)
-  - D-196 R11 (product card)
-  - D-197 R12 (listing)
-  - D-198 R13 (product page)
-  - D-199 R14 (news)
-  - D-200 R15 (sign-in pages)
-  - D-201 R16 (accessibility fixes)
+- [ ] **D-rows D-210 to D-221** in a new section of `11-decisions.md`, "Storefront redesign (owner, 2026-11-12)", before *Deployment*, with one intro line naming the owner's request and this plan:
+  - D-210 R1 and R5 (design source; what is left out or cut, and why)
+  - D-211 R2 (colours, the owner's blue and yellow; token names)
+  - D-212 R3 (fonts, OFL 1.1, self-hosted, `next/font/local`)
+  - D-213 R4 (breakpoints and grids)
+  - D-214 R6 to R8 (top bar, header, search, nav, drawer, footer)
+  - D-215 R9 and R10 (home layout and the landing limits)
+  - D-216 R11 (product card)
+  - D-217 R12 (listing)
+  - D-218 R13 (product page)
+  - D-219 R14 (news)
+  - D-220 R15 (sign-in pages)
+  - D-221 R16 (accessibility fixes)
 - [ ] **Mark superseded rows** (status column), each pointing at its successor:
-  - D-124 → "Superseded in part — see D-190, D-193" (design file, the left-out list, the breakpoints; the inert-control rule stays)
-  - D-118 → "Superseded in part — see D-195" (the hero's "shop now")
-  - D-137 → "Superseded in part — see D-199" (the pre-order panel's button)
-  - D-147 → "Superseded in part — see D-195" (the landing limits, 8 and 6, become 10 and 5; at most 19 rows)
-  - D-148 → "Superseded in part — see D-197" (the four price presets and the mobile filter panel)
-  - D-170 → "Superseded in part — see D-200" (the centred `max-w-sm` card in the `design/` theme; the header part stays)
-  - D-185 → "Superseded in part — see D-195" (the home welcome panel's greeting)
+  - D-124 → "Superseded in part — see D-210, D-213" (design file, the left-out list, the breakpoints; the inert-control rule stays)
+  - D-118 → "Superseded in part — see D-215" (the hero's "shop now")
+  - D-137 → "Superseded in part — see D-219" (the pre-order panel's button)
+  - D-147 → "Superseded in part — see D-215" (the landing limits, 8 and 6, become 10 and 5; at most 19 rows)
+  - D-148 → "Superseded in part — see D-217" (the four price presets and the mobile filter panel)
+  - D-170 → "Superseded in part — see D-220" (the centred `max-w-sm` card in the `design/` theme; the header part stays)
+  - D-185 → "Superseded in part — see D-215" (the home welcome panel's greeting)
 - [ ] **`07-frontend-components.md`:**
-  - Rewrite *Design fidelity and inert controls (D-124)* as *Design fidelity and inert controls (D-124, D-190)*: the design source, the tokens and fonts (pointing at `globals.css` and `04`), the new breakpoints and grids, the left-out list and the R5 cuts, the 44px and contrast fixes.
+  - Rewrite *Design fidelity and inert controls (D-124)* as *Design fidelity and inert controls (D-124, D-210)*: the design source, the tokens and fonts (pointing at `globals.css` and `04`), the new breakpoints and grids, the left-out list and the R5 cuts, the 44px and contrast fixes.
   - Update the listing, news, article, landing, articles-menu and sign-in sections where R6 to R15 change them: presets, filter sheet, toolbar count, nav without "หมวดหมู่ทั้งหมด", the top bar, the drawer, the news sidebar button, the auth layout and the show-password button.
   - The landing limits sentence (18 → 19).
 - [ ] **`04-tech-stack-and-structure.md`:**
@@ -323,7 +323,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
 - [ ] **`CLAUDE.md`:**
   - *Current state*: add plan 015's code (the restyle to `tinzshop-redesign/`).
   - Question counts: 63 on record, 43 RESOLVED, 6 PARTIALLY RESOLVED, 14 UNRESOLVED.
-  - *Implementation is unblocked*: add plan 015 with its D-range D-190 to D-201, on the owner's request of 2026-11-12. "Build only what plans 010 to 015 describe".
+  - *Implementation is unblocked*: add plan 015 with its D-range D-210 to D-221, on the owner's request of 2026-11-12. "Build only what plans 010 to 015 describe".
 - [ ] **Commit:** `docs: record the storefront redesign as plan 015`
 
 ### Task 2: Foundation — tokens, fonts, logo, icons, primitives and the product card
@@ -413,7 +413,7 @@ Each is a plan ruling the developer builds to; the ones the owner's request deci
   - `the top bar keeps the articles menu and the language switch outside the links hidden below md` (replaces `shows the menu outside the help links…`)
   - `the top bar's LINE link is inert and shows no handle`
   - `the nav lists the mockup's entries, links the product ones to the listing, and leaves เครื่องเกมอื่น ๆ · ของเล่น and สินค้าลดราคา inert` (replaces `links "หมวดหมู่ทั้งหมด" and the product entries…`; no "หมวดหมู่ทั้งหมด" link remains)
-  - `names the Nintendo platform from shop.category.switch, never "Switch 2"` (Q-062)
+  - `names the Nintendo platform from shop.category.switch, never "Switch 2"` (Q-068)
   - `the search button is type=button and the form has no action` (`renders the search form inert…` and `keeps the search form from submitting on Enter` stay)
   - `the menu button controls the drawer with aria-expanded`
   - `MobileMenu`:
@@ -797,7 +797,7 @@ Tasks 1 to 9 are built. The manual test checklist above is still to be run by a 
 - **Header row at 360px.** Menu button, logo and the three actions measure 326 of 328px and sit on one row; the search drops to its own row as designed. No overflow; nothing changed.
 - **Automated look, not the person's visual pass.** With the dev server and headless Chrome, `/th`, `/en`, `/th/news`, `/en/news`, an article, `/th/sign-in`, `/en/sign-in`, `/th/register`, `/th/register/verify` and `/th/forgot-password` were captured at 1440, 390 and 360px. No page scrolls sideways at any of those widths (the only boxes past the edge are the news tabs, inside their own scroller). Fonts load from `/_next/static/media/` only. Not checked: the listing and the product pages (they need a signed-in customer), the verify card itself (without a pending sign-up `/register/verify` returns to register with the "step expired" notice), and the 1180, 1024 and 860px widths. The visual-pass box above stays open for a person.
 - **Seen and left as designed.** The cart count badge overlaps the first letter of the small "ตะกร้า" label at 1440px, exactly as in the mockup (`.badge-count` at `left: 26px`). On the news feature block at phone widths the card's text sits over the upper part of the image, where the gradient is light; with the old site's text-heavy cover images the title is hard to read. Both are for the person doing the visual pass to judge. Review Focus 1 lists the สั่งจากตัวแทน stock state and filter among the things to search for; the consult band's text, as Task 4 gives it, reads "…หรือของที่ต้องสั่งจากตัวแทน" (asking about items the shop orders from a distributor), not a stock state, so it stays and the guard test does not list that phrase.
-- **Recorded.** `shop.home.consult.line` (Task 4's LINE button) in Task 4's key list; the white sale price on navy and `StockBadge`'s `onDark` as D-202, in 07 and in the glossary.
+- **Recorded.** `shop.home.consult.line` (Task 4's LINE button) in Task 4's key list; the white sale price on navy and `StockBadge`'s `onDark` as D-222, in 07 and in the glossary.
 - **Runs.** `tsc --noEmit`, `vitest run` (86 files, 883 tests) and `next build` pass. There is no ESLint config, so no lint run. The integration tests were not run: this task changes no server code. The "Run everything" box stays open for the integration run.
 
 ## Not in this plan
@@ -807,7 +807,7 @@ Tasks 1 to 9 are built. The manual test checklist above is still to be run by a 
 - The store-visit block, the shop's phone, email, opening hours and address (REQ-045, data unknown), and a LINE handle.
 - Customer reviews and ratings (REQ-054, phase 6).
 - Search (REQ-002) and the wishlist (backlog, D-089).
-- Any change to the category tree: a Switch 2 platform, other consoles and toys, a sale listing, a cases type (Q-062).
+- Any change to the category tree: a Switch 2 platform, other consoles and toys, a sale listing, a cases type (Q-068).
 - The card's category line, the product page's model code, related news on the product page.
 - Any server change other than R9's landing limits.
 - The admin.

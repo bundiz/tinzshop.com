@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 
 /**
  * The LINE consult band (the mockup's `.consult`). Both buttons are inert: the shop's LINE account and a FAQ
- * page are not known yet (D-124), so there is no handle and no sample chat (Q-062, Q-063). The big word
+ * page are not known yet (D-124), so there is no handle and no sample chat (Q-068, Q-069). The big word
  * "LINE" is decoration. The LINE button carries ink text on the LINE green (R16).
  */
 export default function ConsultBand() {
