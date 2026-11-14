@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Planned (2026-11-14) — on the project owner's decisions and approval of 2026-11-14
+- **Status:** In progress — Tasks 1 to 4 built and reviewed (2026-11-14); Tasks 5 to 11 not started. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
 - **Stage:** payment stage 1 (due 2026-12-15), checks 1.5 to 1.12 of `docs/15-acceptance-criteria.md` (1.5 and 1.6 rewritten by Task 1)
 - **Requirements:** REQ-033, REQ-034, REQ-035, REQ-051 delivered for stage 1; REQ-032 changed (D-232); REQ-047 extended (the staff editor)
 - **Depends on plans:** 012 (news tables, import, pages), 014 (accounts, sessions, sign-in), 015 (tokens, `buttonClass`)
@@ -54,7 +54,7 @@
 **Files:**
 - Modify: `docs/11-decisions.md`, `docs/02-scope-and-phases.md`, `docs/05-database.md`, `docs/06-api.md`, `docs/12-glossary.md`, `docs/15-acceptance-criteria.md`, `docs/plans/002-catalogue-stock-and-admin-foundation.md`, `CLAUDE.md`
 
-- [ ] **Step 1: Decision rows** after D-228, each one sentence ending "(project owner, 2026-11-14)" and linking to the spec:
+- [x] **Step 1: Decision rows** after D-228, each one sentence ending "(project owner, 2026-11-14)" and linking to the spec:
   - D-229 one account system: staff sign up and sign in through the customer pages (O-1).
   - D-230 every new account is Customer; the Top-level Admin sets the role; one role per account and every role can shop (O-2 to O-4).
   - D-231 Guest is not an account; its role row describes signed-out visitors (O-5).
@@ -71,11 +71,11 @@
   - D-242 role, block and permission changes go to the server log as ids, with no audit table (in line with D-066).
   - D-243 the back office is `/{locale}/admin`; every page and action checks its permission on the server; no access shows a plain page (spec §7).
   - D-244 is reserved for Task 9's editor choice; D-245 for Task 10's product-card tag.
-- [ ] **Step 2: Scope and acceptance.** In `02-scope-and-phases.md`: REQ-032 becomes "CHANGED — no second factor (D-232)" with the old text kept struck through; the stage 1 row's "staff sign-in with email OTP" becomes "staff accounts and roles (staff sign up like customers; D-229)". In `15-acceptance-criteria.md` replace 1.5 and 1.6 with the spec §12 wording.
-- [ ] **Step 3: Database and API docs.** `05-database.md` *Access control*: replace the `staff` block with the tables of spec §4 and the rules of spec §5; *News*: the staff columns' FKs, `news_tag`, `news_article_tag`, `news_article_product`, and remove "tags" from *Not stored now*; *Customer authentication*: drop "the `role` table comes with plan 002". `06-api.md`: a *Back-office Server Actions (plan 016)* section listing the actions of Tasks 7 to 10 with their permission and error keys, and the `account-role` job.
-- [ ] **Step 4: Glossary.** Add: Back office (`/{locale}/admin`), Account role (`customer.role_id`, `RoleKey`), Permission key (`PermissionKey`, the four keys), Back-office key, Blocked account (`blocked_at`), Last-Top-level-Admin guard, Product card (`<tinz-product>`), News tag (`news_tag`), Related products (`news_article_product`), Trash (soft delete restore), `account-role` job. Edit **Staff**: "an account whose role is blogger, sale_manager, admin or super_admin; not a separate table (D-240)". Note on the news row: `*_staff_id` holds a `customer.id`.
-- [ ] **Step 5: Plan 002 and CLAUDE.md.** Plan 002 *Status*: add "staff sign-in, `staff` table and email OTP superseded by plan 016 (D-229, D-232, D-240)". `CLAUDE.md` *Current state*: add plan 016 to the code list and the "unblocked" sentence, on the project owner's approval of 2026-11-14.
-- [ ] **Step 6: Commit** `docs: record plan 016's decisions, the REQ-032 change and the back-office names`
+- [x] **Step 2: Scope and acceptance.** In `02-scope-and-phases.md`: REQ-032 becomes "CHANGED — no second factor (D-232)" with the old text kept struck through; the stage 1 row's "staff sign-in with email OTP" becomes "staff accounts and roles (staff sign up like customers; D-229)". In `15-acceptance-criteria.md` replace 1.5 and 1.6 with the spec §12 wording.
+- [x] **Step 3: Database and API docs.** `05-database.md` *Access control*: replace the `staff` block with the tables of spec §4 and the rules of spec §5; *News*: the staff columns' FKs, `news_tag`, `news_article_tag`, `news_article_product`, and remove "tags" from *Not stored now*; *Customer authentication*: drop "the `role` table comes with plan 002". `06-api.md`: a *Back-office Server Actions (plan 016)* section listing the actions of Tasks 7 to 10 with their permission and error keys, and the `account-role` job.
+- [x] **Step 4: Glossary.** Add: Back office (`/{locale}/admin`), Account role (`customer.role_id`, `RoleKey`), Permission key (`PermissionKey`, the four keys), Back-office key, Blocked account (`blocked_at`), Last-Top-level-Admin guard, Product card (`<tinz-product>`), News tag (`news_tag`), Related products (`news_article_product`), Trash (soft delete restore), `account-role` job. Edit **Staff**: "an account whose role is blogger, sale_manager, admin or super_admin; not a separate table (D-240)". Note on the news row: `*_staff_id` holds a `customer.id`.
+- [x] **Step 5: Plan 002 and CLAUDE.md.** Plan 002 *Status*: add "staff sign-in, `staff` table and email OTP superseded by plan 016 (D-229, D-232, D-240)". `CLAUDE.md` *Current state*: add plan 016 to the code list and the "unblocked" sentence, on the project owner's approval of 2026-11-14.
+- [x] **Step 6: Commit** `docs: record plan 016's decisions, the REQ-032 change and the back-office names`
 
 ### Task 2: Schema — roles, permissions, account role and block, news links
 
@@ -87,11 +87,11 @@
 **Interfaces:**
 - Produces: Prisma models `Role` (`role`: `id`, `key` unique, `isSystem` default true, timestamps), `Permission` (`permission`: `id`, `key` unique), `RolePermission` (`role_permission`: composite PK); `Customer.roleId` (`role_id`, not null, FK), `Customer.blockedAt` (`blocked_at`, nullable); `NewsTag` (`news_tag`: `id`, `name`, `name_key` unique = lower(trim(name))), `NewsArticleTag` (composite PK, cascade), `NewsArticleProduct` (`news_article_product`: `article_id`, `product_id`, composite PK, cascade both, index on `product_id`); FKs `news_article.{author,created_by,updated_by}_staff_id → customer.id ON DELETE SET NULL`.
 
-- [ ] **Step 1: Write the failing integration tests:** `seeds the six roles and four permissions with the default grants` (asserts the exact table of Global Constraints); `backfills existing customers to the customer role` (insert a customer row before the migration's backfill is impossible in-test, so assert `every customer has role_id` and that a new row defaults to `customer`); `a news staff id must reference a customer` (insert with a random uuid → FK error); `a tag name is unique case-insensitively` (`"Switch 2"` then `" switch 2 "` → unique error on `name_key`).
-- [ ] **Step 2: Run** `npm run test:integration -- access-schema` — expect FAIL (tables missing).
-- [ ] **Step 3: Write the migration.** Order: create `role`, `permission`, `role_permission`; insert the six roles with **fixed uuids written as literals** in the migration, the four permissions and the default grants; add `customer.role_id` nullable, `UPDATE customer SET role_id = '<customer role uuid>'`, then `SET NOT NULL` and `SET DEFAULT '<customer role uuid>'`, so every new account is a Customer without the repository naming a role; add `blocked_at`; clear any `*_staff_id` that matches no customer (imports leave them null) and add the three FKs; create the news tag and product link tables. Mirror it in `schema.prisma` and run `npm run db:generate`.
-- [ ] **Step 4: Run** the integration tests and `npm run typecheck` — expect PASS.
-- [ ] **Step 5: Commit** `feat: add roles, permissions, account role and block, and news tag and product links`
+- [x] **Step 1: Write the failing integration tests:** `seeds the six roles and four permissions with the default grants` (asserts the exact table of Global Constraints); `backfills existing customers to the customer role` (insert a customer row before the migration's backfill is impossible in-test, so assert `every customer has role_id` and that a new row defaults to `customer`); `a news staff id must reference a customer` (insert with a random uuid → FK error); `a tag name is unique case-insensitively` (`"Switch 2"` then `" switch 2 "` → unique error on `name_key`).
+- [x] **Step 2: Run** `npm run test:integration -- access-schema` — expect FAIL (tables missing).
+- [x] **Step 3: Write the migration.** Order: create `role`, `permission`, `role_permission`; insert the six roles with **fixed uuids written as literals** in the migration, the four permissions and the default grants; add `customer.role_id` nullable, `UPDATE customer SET role_id = '<customer role uuid>'`, then `SET NOT NULL` and `SET DEFAULT '<customer role uuid>'`, so every new account is a Customer without the repository naming a role; add `blocked_at`; clear any `*_staff_id` that matches no customer (imports leave them null) and add the three FKs; create the news tag and product link tables. Mirror it in `schema.prisma` and run `npm run db:generate`.
+- [x] **Step 4: Run** the integration tests and `npm run typecheck` — expect PASS.
+- [x] **Step 5: Commit** `feat: add roles, permissions, account role and block, and news tag and product links`
 
 ### Task 3: Access rules and the access repository
 
@@ -104,11 +104,11 @@
 - Produces (`access-service.ts`): `can(viewer: { permissions: readonly PermissionKey[] } | null, key: PermissionKey): boolean`; `checkRolePermissions(roleKey: RoleKey, keys: readonly PermissionKey[]): { ok: true } | { ok: false; reason: 'super_admin_locked' | 'back_office_key_for_customer' }` (`super_admin` must equal every key; `customer`/`guest` may hold no back-office key); `type AccessError` codes `access.forbidden`, `access.last_super_admin`, `access.super_admin_locked`, `access.back_office_key_for_customer`, `access.unknown_account`.
 - Produces (`access-repository.ts`): `listRoleGrants(): Promise<Record<RoleKey, PermissionKey[]>>`; `replaceRolePermissions(roleKey: RoleKey, keys: readonly PermissionKey[]): Promise<void>`; `searchAccounts(input: { query: string; roleKey: RoleKey | null; blocked: boolean | null; skip: number; take: number }): Promise<{ total: number; rows: AccountRow[] }>` where `AccountRow = { id; email; firstName; lastName: string | null; roleKey: RoleKey; blockedAt: Date | null; createdAt: Date }`, search over email, first and last name (case-insensitive contains), newest first; `changeAccountRole(accountId: string, roleKey: RoleKey): Promise<'changed' | 'unchanged' | 'last_super_admin' | 'unknown_account'>` and `setAccountBlocked(accountId: string, blocked: boolean): Promise<'changed' | 'unchanged' | 'last_super_admin' | 'unknown_account'>` — each in one transaction that locks the `super_admin` accounts (`SELECT … FOR UPDATE`) and refuses when no unblocked `super_admin` would remain; blocking also deletes the account's `customer_session` rows in the same transaction; `findAccountByEmail(email: string): Promise<{ id: string; roleKey: RoleKey } | null>`.
 
-- [ ] **Step 1: Write the failing unit tests** for `can` (null viewer → false; key present/absent) and `checkRolePermissions` (super_admin with three keys → `super_admin_locked`; customer with `backoffice.enter` → `back_office_key_for_customer`; guest with `news.manage` → same; blogger with any subset → ok).
-- [ ] **Step 2: Write the failing integration tests:** `refuses to demote the last unblocked super_admin`; `refuses to block the last unblocked super_admin`; `allows demoting a super_admin while another unblocked one remains`; `two concurrent demotions of the only two super_admins: exactly one succeeds` (Promise.all of two `changeAccountRole` calls → one `'changed'`, one `'last_super_admin'`); `a blocked super_admin does not count`; `blocking deletes every session of the account`; `searchAccounts finds by part of the email or name, filters by role and blocked, newest first`; `replaceRolePermissions replaces the role's grants`.
-- [ ] **Step 3: Run** unit and integration — expect FAIL.
-- [ ] **Step 4: Implement** the three files to the interfaces above. The repository does not call `checkRolePermissions`; the controller does (Task 8).
-- [ ] **Step 5: Run** — expect PASS. **Commit** `feat: add permission keys, access rules and the access repository`
+- [x] **Step 1: Write the failing unit tests** for `can` (null viewer → false; key present/absent) and `checkRolePermissions` (super_admin with three keys → `super_admin_locked`; customer with `backoffice.enter` → `back_office_key_for_customer`; guest with `news.manage` → same; blogger with any subset → ok).
+- [x] **Step 2: Write the failing integration tests:** `refuses to demote the last unblocked super_admin`; `refuses to block the last unblocked super_admin`; `allows demoting a super_admin while another unblocked one remains`; `two concurrent demotions of the only two super_admins: exactly one succeeds` (Promise.all of two `changeAccountRole` calls → one `'changed'`, one `'last_super_admin'`); `a blocked super_admin does not count`; `blocking deletes every session of the account`; `searchAccounts finds by part of the email or name, filters by role and blocked, newest first`; `replaceRolePermissions replaces the role's grants`.
+- [x] **Step 3: Run** unit and integration — expect FAIL.
+- [x] **Step 4: Implement** the three files to the interfaces above. The repository does not call `checkRolePermissions`; the controller does (Task 8).
+- [x] **Step 5: Run** — expect PASS. **Commit** `feat: add permission keys, access rules and the access repository`
 
 ### Task 4: Role in the session, and blocked accounts at sign-in
 
@@ -121,10 +121,10 @@
 - Produces: `startSessionFromTokens` returns `SignedIn | 'email_taken' | 'blocked'`; `signIn` maps `'blocked'` to the error `auth.account_blocked` / `shop.auth.error.accountBlocked`; the Google callback maps it to `/{locale}/sign-in?error=blocked`, shown by `AuthNotice`.
 - Copy: `shop.auth.error.accountBlocked` = "บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อร้าน" / "This account is suspended. Please contact the shop." (spec §6). New accounts are upserted with the `customer` role.
 
-- [ ] **Step 1: Write the failing tests:** session read returns `roleKey` and `permissions`; `a blocked account reads as signed out and its session row is deleted`; `a role change shows on the next read` (fake repository returns a new role on the second call); password sign-in of a blocked account → `formError: shop.auth.error.accountBlocked`, no session, refresh token revoked (as `email_taken` does); Google callback of a blocked account → location `/th/sign-in?error=blocked`; `AuthNotice` renders the blocked message for `error=blocked`.
-- [ ] **Step 2: Run** `npm test` on those files — expect FAIL.
-- [ ] **Step 3: Implement.** The blocked check in `startSessionFromTokens` runs after the upsert (which returns `blockedAt`) and before the session insert.
-- [ ] **Step 4: Run** `npm test` and `npm run typecheck` — expect PASS. **Commit** `feat: carry the role in the session and refuse blocked accounts`
+- [x] **Step 1: Write the failing tests:** session read returns `roleKey` and `permissions`; `a blocked account reads as signed out and its session row is deleted`; `a role change shows on the next read` (fake repository returns a new role on the second call); password sign-in of a blocked account → `formError: shop.auth.error.accountBlocked`, no session, refresh token revoked (as `email_taken` does); Google callback of a blocked account → location `/th/sign-in?error=blocked`; `AuthNotice` renders the blocked message for `error=blocked`.
+- [x] **Step 2: Run** `npm test` on those files — expect FAIL.
+- [x] **Step 3: Implement.** The blocked check in `startSessionFromTokens` runs after the upsert (which returns `blockedAt`) and before the session insert.
+- [x] **Step 4: Run** `npm test` and `npm run typecheck` — expect PASS. **Commit** `feat: carry the role in the session and refuse blocked accounts`
 
 ### Task 5: The `account-role` job
 
