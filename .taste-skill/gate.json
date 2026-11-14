@@ -6,14 +6,6 @@
  "status": "done",
  "history": [
   {
-   "at": "2026-11-13T03:21:45.142Z",
-   "mode": "hook",
-   "host": "claude",
-   "decision": "allow",
-   "reason": "no build is active here",
-   "stopHookActive": false
-  },
-  {
    "at": "2026-11-13T03:22:59.757Z",
    "mode": "hook",
    "host": "claude",
@@ -159,6 +151,14 @@
   },
   {
    "at": "2026-11-14T15:06:15.317Z",
+   "mode": "hook",
+   "host": "claude",
+   "decision": "allow",
+   "reason": "no build is active here",
+   "stopHookActive": false
+  },
+  {
+   "at": "2026-11-14T15:06:44.613Z",
    "mode": "hook",
    "host": "claude",
    "decision": "allow",
