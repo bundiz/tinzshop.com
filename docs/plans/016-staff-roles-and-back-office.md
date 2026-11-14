@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** In progress — Tasks 1 to 4 built and reviewed (2026-11-14); Tasks 5 to 11 not started. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
+- **Status:** In progress — Tasks 1 to 8 built and reviewed (2026-11-14 to 2026-11-15); Tasks 9 to 11 not started. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
 - **Stage:** payment stage 1 (due 2026-12-15), checks 1.5 to 1.12 of `docs/15-acceptance-criteria.md` (1.5 and 1.6 rewritten by Task 1)
 - **Requirements:** REQ-033, REQ-034, REQ-035, REQ-051 delivered for stage 1; REQ-032 changed (D-232); REQ-047 extended (the staff editor)
 - **Depends on plans:** 012 (news tables, import, pages), 014 (accounts, sessions, sign-in), 015 (tokens, `buttonClass`)
@@ -137,9 +137,9 @@
 - Produces: `POST /api/jobs/account-role`, `Authorization: Bearer <JOB_SECRET>` (the existing job check), JSON body `{ email: string, role: RoleKey }`; answers `200 { result: 'changed' | 'unchanged', role }`, `404 { error: 'unknown_account' }`, `409 { error: 'last_super_admin' }`, `400` on a bad body or `role: 'guest'`, `401` without the secret. Works in production (unlike `catalogue-activate`). Logs the account id, old and new role (D-242).
 - Produces: `npm run account:set-role -- <email> <role>` → `node --env-file=.env scripts/run-job.mjs account-role <email> <role>`; `run-job.mjs` sends the two arguments as the JSON body for this job only and prints the email masked (`abc…@domain`).
 
-- [ ] **Step 1: Write the failing controller tests** for each answer above, and that the log never contains the email.
-- [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** — PASS.
-- [ ] **Step 5:** Add the command to `docs/16-local-setup.md` ("make yourself Top-level Admin after your first sign-in"). **Commit** `feat: add the account-role job to set the first Top-level Admin`
+- [x] **Step 1: Write the failing controller tests** for each answer above, and that the log never contains the email.
+- [x] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** — PASS.
+- [x] **Step 5:** Add the command to `docs/16-local-setup.md` ("make yourself Top-level Admin after your first sign-in"). **Commit** `feat: add the account-role job to set the first Top-level Admin`
 
 ### Task 6: News authoring service and repository
 
