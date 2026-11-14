@@ -28,6 +28,8 @@ import {
   type CurrentCustomer,
   type CustomerSessionDeps,
 } from '@/server/services/auth/customer-session-service';
+import { createAccountRoleJobHandler } from '@/server/controllers/access/account-role-job-controller';
+import { changeAccountRole, findAccountByEmail } from '@/server/repositories/access/access-repository';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
 import {
   tryWithAdvisoryLock,
@@ -293,4 +295,14 @@ export function getGoogleSignInDeps(): GoogleSignInDeps {
  */
 export function getCurrentCustomerReader(): (token: string | undefined, now: Date) => Promise<CurrentCustomer | null> {
   return (token, now) => readCustomerSession(getCustomerSessionDeps(), token, now);
+}
+
+/** The account-role job (plan 016, D-235): every environment, reads only `JOB_SECRET`. */
+export function getAccountRoleHandler(): ReturnType<typeof createAccountRoleJobHandler> {
+  return createAccountRoleJobHandler({
+    jobSecret: () => getServerConfig().jobSecret,
+    findAccountByEmail,
+    changeAccountRole,
+    log: (message) => console.info(message),
+  });
 }

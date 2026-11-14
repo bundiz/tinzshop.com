@@ -1,6 +1,7 @@
 // Runs one of the app's job endpoints against a running dev server and prints its JSON answer.
 //
 //   node --env-file=.env scripts/run-job.mjs <job> [--full]
+//   node --env-file=.env scripts/run-job.mjs account-role <email> <role>
 //
 // Reads JOB_SECRET and APP_URL from the environment (never prints them). APP_URL defaults to
 // http://localhost:3003. Exits non-zero when the job does not answer 2xx, so `npm run data:load`
@@ -11,15 +12,21 @@ const JOBS = {
   'catalogue-activate': '/api/jobs/catalogue-activate',
   'catalogue-categorise': '/api/jobs/catalogue-categorise',
   'news-import': '/api/jobs/news-import',
+  'account-role': '/api/jobs/account-role',
 };
 
-const [job, flag] = process.argv.slice(2);
+const [job, flag, roleArg, ...extra] = process.argv.slice(2);
 const path = JOBS[job];
 if (path === undefined) {
   console.error(`Unknown job "${job ?? ''}". Use one of: ${Object.keys(JOBS).join(', ')}`);
   process.exit(2);
 }
-if (flag !== undefined && !(flag === '--full' && job === 'news-import')) {
+if (job === 'account-role') {
+  if (flag === undefined || roleArg === undefined || extra.length > 0) {
+    console.error('Usage: npm run account:set-role -- <email> <role>');
+    process.exit(2);
+  }
+} else if (flag !== undefined && !(flag === '--full' && job === 'news-import')) {
   console.error('Only news-import takes a flag: --full (re-save every post).');
   process.exit(2);
 }
@@ -33,10 +40,23 @@ if (!secret) {
 const base = (process.env.APP_URL || 'http://localhost:3003').replace(/\/+$/, '');
 const url = `${base}${path}${flag === '--full' ? '?full=1' : ''}`;
 
-console.log(`→ POST ${url}`);
+// account-role sends its two arguments as the JSON body; the email is masked on screen.
+const isRole = job === 'account-role';
+const maskEmail = (email) => {
+  const at = email.lastIndexOf('@');
+  return at < 1 ? '…' : `${email.slice(0, 3)}…${email.slice(at)}`;
+};
+console.log(`→ POST ${url}${isRole ? ` (${maskEmail(flag)} → ${roleArg})` : ''}`);
 let response;
 try {
-  response = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${secret}` } });
+  response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      ...(isRole ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(isRole ? { body: JSON.stringify({ email: flag, role: roleArg }) } : {}),
+  });
 } catch {
   console.error(`Could not reach ${base}. Is the dev server running (npm run dev)?`);
   process.exit(1);

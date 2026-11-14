@@ -91,6 +91,14 @@ The pages are empty until you feed data (step 6).
 
 **Product pages need a signed-in customer** (D-161). Signed out, `/th/product` and every product page send you to sign-in; the home page and news stay open. Register a dev account at http://localhost:3003/th/register with an address you can read (a `+` alias such as `name+tz1@example.com` works on many providers), enter the 6-digit code from the email, then sign in. Passwords need at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character (D-177). The dev pool's built-in sender allows only a few dozen emails a day across the whole team.
 
+**Make yourself Top-level Admin after your first sign-in** (plan 016). Sign in once so your account exists, then, with the dev server running:
+
+```bash
+npm run account:set-role -- you@example.com super_admin
+```
+
+Use your own address. The command prints the address masked and answers `changed` or `unchanged`; sign in again, and `/th/admin` opens. The roles are `customer`, `blogger`, `sale_manager`, `admin` and `super_admin`.
+
 ## 6. Feed the data
 
 A fresh install has **empty tables**. The app never calls Shopee or the old site on its own; you pull data in with **job scripts**, each of which calls a job endpoint on your running dev server (step 5) with your `JOB_SECRET`.
