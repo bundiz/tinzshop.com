@@ -3,7 +3,13 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_LISTING } from '../listing-url';
-import { ListingPriceRange } from './ListingControls';
+import {
+  ListingCheck,
+  ListingFilterPanel,
+  ListingFilterPanelProvider,
+  ListingFilterToggle,
+  ListingPriceRange,
+} from './ListingControls';
 
 const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
@@ -106,5 +112,127 @@ describe('ListingPriceRange', () => {
     type(input, '');
     pressEnter(input);
     expect(push).toHaveBeenCalledExactlyOnceWith('/th/product', { scroll: false });
+  });
+});
+
+/** A controllable `matchMedia`: `widen()` flips every query to matching and tells its listeners. */
+function mockMatchMedia() {
+  const listeners = new Set<() => void>();
+  let matches = false;
+  window.matchMedia = ((query: string) => ({
+    get matches() {
+      return matches;
+    },
+    media: query,
+    addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+    removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+  })) as unknown as typeof window.matchMedia;
+  return {
+    widen: () =>
+      act(() => {
+        matches = true;
+        listeners.forEach((listener) => listener());
+      }),
+  };
+}
+
+function Sheet({ checked = false, minBaht = null }: { checked?: boolean; minBaht?: number | null }) {
+  return (
+    <ListingFilterPanelProvider>
+      <ListingFilterToggle label="ตัวกรอง" />
+      <ListingFilterPanel label="ตัวกรองสินค้า" heading="ตัวกรอง" closeLabel="ปิดตัวกรอง" applyLabel="แสดง 5 รายการ">
+        <ListingCheck label="มีสินค้า" checked={checked} href="/th/product?in_stock=1" />
+        <ListingPriceRange locale="th" active={{ ...DEFAULT_LISTING, minBaht }} labels={LABELS} />
+      </ListingFilterPanel>
+    </ListingFilterPanelProvider>
+  );
+}
+
+const toggle = () => container.querySelector<HTMLButtonElement>('button[aria-controls="listing-filters"]')!;
+const panel = () => container.querySelector<HTMLElement>('#listing-filters')!;
+const checkbox = () => container.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+const openSheet = () => act(() => toggle().click());
+const escape = () => act(() => void document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+
+describe('the filter sheet below lg', () => {
+  let media: ReturnType<typeof mockMatchMedia>;
+  beforeEach(() => {
+    media = mockMatchMedia();
+  });
+
+  it('the open sheet is a modal dialog; Escape closes it and focus returns to ตัวกรอง', () => {
+    act(() => root.render(<Sheet />));
+    expect(panel().getAttribute('role')).toBe('complementary');
+    expect(panel().getAttribute('aria-modal')).toBeNull();
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+
+    openSheet();
+    expect(panel().getAttribute('role')).toBe('dialog');
+    expect(panel().getAttribute('aria-modal')).toBe('true');
+    expect(panel().className).toMatch(/(^| )block( |$)/);
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    expect(panel().contains(document.activeElement)).toBe(true);
+
+    escape();
+    expect(panel().getAttribute('role')).toBe('complementary');
+    expect(panel().className).toMatch(/(^| )hidden( |$)/);
+    expect(document.activeElement).toBe(toggle());
+  });
+
+  it('a checkbox change inside the open sheet keeps it open and keeps focus', () => {
+    act(() => root.render(<Sheet />));
+    openSheet();
+    checkbox().focus();
+    act(() => checkbox().click());
+    expect(push).toHaveBeenCalledExactlyOnceWith('/th/product?in_stock=1', { scroll: false });
+
+    // The server re-renders with the new URL: same elements, still open, focus still on the box.
+    const box = checkbox();
+    act(() => root.render(<Sheet checked />));
+    expect(checkbox()).toBe(box);
+    expect(box.checked).toBe(true);
+    expect(panel().getAttribute('role')).toBe('dialog');
+    expect(document.activeElement).toBe(box);
+  });
+
+  it('the price input keeps focus after Enter inside the sheet', () => {
+    act(() => root.render(<Sheet />));
+    openSheet();
+    const input = minInput();
+    input.focus();
+    type(input, '2500');
+    pressEnter(input);
+    expect(push).toHaveBeenCalledExactlyOnceWith('/th/product?min=2500', { scroll: false });
+    act(() => root.render(<Sheet minBaht={2500} />));
+    expect(minInput()).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(panel().getAttribute('role')).toBe('dialog');
+  });
+
+  it('widening past lg closes the sheet and drops the dialog role', () => {
+    act(() => root.render(<Sheet />));
+    openSheet();
+    expect(panel().getAttribute('role')).toBe('dialog');
+    media.widen();
+    expect(panel().getAttribute('role')).toBe('complementary');
+    expect(panel().getAttribute('aria-modal')).toBeNull();
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('แสดง N รายการ closes the sheet', () => {
+    act(() => root.render(<Sheet />));
+    openSheet();
+    const apply = [...panel().querySelectorAll('button')].find((button) => button.textContent === 'แสดง 5 รายการ')!;
+    act(() => apply.click());
+    expect(panel().getAttribute('role')).toBe('complementary');
+    expect(document.activeElement).toBe(toggle());
+  });
+
+  it('the close button closes the sheet', () => {
+    act(() => root.render(<Sheet />));
+    openSheet();
+    act(() => panel().querySelector<HTMLButtonElement>('button[aria-label="ปิดตัวกรอง"]')!.click());
+    expect(panel().getAttribute('role')).toBe('complementary');
   });
 });

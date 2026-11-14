@@ -44,8 +44,8 @@ checklist.
 
 | Who | How |
 | :--- | :--- |
-| Customer | Email and password. Argon2id hashing — never MD5, SHA-1, or a bare SHA-256 |
-| Staff | The same, plus a mandatory second factor (REQ-032) |
+| Customer | Email and password, or Google, through Amazon Cognito ([ADR-0003](adr/ADR-0003-customer-authentication.md)). Cognito stores and hashes the password; we never do. Our own revocable session sits on top (`customer_session`, plan 014) |
+| Staff | Email and password with Argon2id hashing — never MD5, SHA-1, or a bare SHA-256 — plus a mandatory second factor (REQ-032). Unchanged until plan 002; staff get their own user pool and tables (D-159) |
 | Guest | No account. An opaque cart cookie carrying no personal data |
 
 Session cookies are `HttpOnly`, `Secure`, `SameSite=Lax`, with a server-side
@@ -61,6 +61,8 @@ Rules that follow:
 - Staff sessions expire sooner than customer sessions.
 
 > **Resolved (Q-017, D-064): email OTP only.** No SMS provider is needed.
+
+**Customers with Cognito (plan 014, D-152 to D-177).** The rules above apply as follows: Cognito carries reset codes (single-use, short-lived) and its built-in lockout covers the per-account limit; the per-source limit and the per-email counter are ours (`auth_rate_limit`, D-169). Sessions are 7 days from sign-in. The Cognito access and ID tokens live 60 minutes and are refreshed silently (D-176, which replaced 15 minutes on 2026-11-11): the tokens never reach the browser and signing out deletes our session row at once, so the longer lifetime only means fewer refresh calls; its cost is that disabling a user in Cognito reaches the site within an hour rather than 15 minutes. The cookie value is a random token of which only the SHA-256 is stored. Register, resend and forgot password never reveal whether an email has an account (D-160) by what they answer. **Accepted timing difference (D-188):** register is not constant in time. A new email costs one Cognito call (`SignUp`); an email that already has an account costs one or two more (`ForgotPassword`, then `ResendConfirmationCode` for a never-confirmed one), so someone timing the answer could guess. This is accepted because the register limit (5 per hour per client IP and per email, D-169) makes probing many emails this way slow, and padding every answer to the slowest path would make every registration slower. Registering someone else's email and leaving it unconfirmed cannot keep that account once the real owner finishes the reset: after the real owner's correct code, an account not created in that browser must set a new password with a second code (Q-061, D-186). Until that reset is finished the original password still works (spec §6.1). Passwords, codes, tokens, cookie values and raw emails are never logged.
 
 ### Authorization
 

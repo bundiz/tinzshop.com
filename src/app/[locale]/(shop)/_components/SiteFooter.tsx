@@ -1,17 +1,23 @@
 import { useLocale, useNow, useTimeZone, useTranslations } from 'next-intl';
 import Link from 'next/link';
+import Icon from '@/components/ui/Icon';
 
 const COLUMNS = [
-  { key: 'shopping', links: ['switch', 'ps5', 'gadgets', 'preOrder'] },
-  { key: 'help', links: ['howToOrder', 'payment', 'shipping', 'trackOrder'] },
-  { key: 'aboutUs', links: ['story', 'news', 'contact'] },
-  { key: 'policy', links: ['privacy', 'terms', 'claims'] },
+  { key: 'help', links: ['myOrders', 'howToOrder', 'shipping', 'warranty', 'cancellation'] },
+  { key: 'aboutUs', links: ['story', 'news', 'warrantyPolicy', 'privacy', 'terms'] },
+  { key: 'contact', links: ['line'] },
 ] as const;
 
+const PAYMENTS = ['kpayment', 'card', 'instalment', 'promptPay', 'dbd'] as const;
+
+const LINK =
+  'inline-flex min-h-11 items-center text-on-navy-2 transition-colors duration-[180ms] hover:text-white hover:underline hover:underline-offset-[3px] sm:min-h-9';
+
 /**
- * The storefront footer from the design: logo and description, four link columns, the K-Payment and DBD
- * badges and the copyright line. The column links are inert until their pages exist (D-124); "ข่าวเกม" goes to
- * the news list.
+ * The storefront footer from the redesign (plan 015): the about block with the LINE button, the three link columns
+ * (ช่วยเหลือ, เกี่ยวกับเรา, ติดต่อร้าน), the five payment chips and the copyright line. The links are inert until their
+ * pages exist (D-124); "ข่าวเกม" goes to the news list. "ติดต่อร้าน" holds only the LINE link: no phone number,
+ * email or opening hours is on record (REQ-045).
  */
 export default function SiteFooter() {
   const t = useTranslations('shop');
@@ -20,28 +26,38 @@ export default function SiteFooter() {
   const now = useNow();
 
   return (
-    <footer className="mt-6 bg-[#16161f] text-sm text-[#b9b9c8]">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-x-5 gap-y-7 px-4 pt-9 pb-7 sm:grid-cols-3 md:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))] md:px-6">
-        <div className="col-span-full md:col-auto">
-          <Link href={`/${locale}`} aria-label={t('header.logo.label')} className="inline-flex items-center gap-2.5">
-            <img src="/logo-mark.png" alt="" width={40} height={40} className="size-10" />
-            <span className="text-[22px] leading-none font-extrabold tracking-[-0.02em] text-white">
-              {t('header.logo.wordLead')}
-              <b className="text-accent">{t('header.logo.wordTail')}</b>
-            </span>
+    <footer className="mt-[clamp(48px,6vw,80px)] bg-navy text-[15px] text-on-navy-2">
+      <div className="wrap grid grid-cols-1 gap-8 pt-14 pb-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="sm:col-span-2 lg:col-span-1">
+          <Link href={`/${locale}`} aria-label={t('header.logo.label')} className="inline-flex min-h-11 items-center gap-2.5">
+            <img
+              src="/logo-mark.png"
+              alt=""
+              width={40}
+              height={40}
+              className="size-10 flex-none rounded-full ring-2 ring-white"
+            />
+            <span className="font-head text-[22px] leading-none font-bold tracking-[-.02em] text-white">{t('header.logo.word')}</span>
           </Link>
-          <p className="mt-3 max-w-[340px] leading-[1.7]">{t('footer.about')}</p>
+          <p className="mt-3.5 max-w-[26em]">{t('footer.about')}</p>
+          <div className="mt-[18px] flex gap-2">
+            <a
+              href="#"
+              aria-label={t('footer.contact.line')}
+              className="grid size-11 place-items-center rounded-[10px] bg-white/7 text-white transition-[background-color,transform] duration-[180ms] ease-soft hover:-translate-y-0.5 hover:bg-white/16"
+            >
+              <Icon name="chat" className="size-5" />
+            </a>
+          </div>
         </div>
         {COLUMNS.map((column) => (
           <div key={column.key}>
-            <h2 className="mb-2.5 text-[15px] text-white">
-              {column.key === 'shopping' ? t('footer.shopping.title') : t(`footer.${column.key}.title`)}
-            </h2>
+            <h2 className="mb-3 font-body text-base leading-[1.3] font-semibold text-white">{t(`footer.${column.key}.title`)}</h2>
             <ul>
               {column.links.map((link) => (
-                <li key={link} className="mb-1.5">
-                  <Link href={link === 'news' ? `/${locale}/news` : '#'} className="hover:text-accent">
-                    {column.key === 'shopping' ? t(`category.${link}`) : t(`footer.${column.key}.${link}`)}
+                <li key={link}>
+                  <Link href={link === 'news' ? `/${locale}/news` : '#'} className={LINK}>
+                    {t(`footer.${column.key}.${link}`)}
                   </Link>
                 </li>
               ))}
@@ -50,14 +66,19 @@ export default function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-white/8">
-        <div className="mx-auto flex max-w-[1280px] flex-col gap-3.5 px-4 py-[18px] md:flex-row md:items-center md:justify-between md:px-6">
-          <div className="flex flex-wrap gap-2.5">
-            <PayBadge mark={t('footer.payBadge.mark')} title={t('footer.payBadge.title')} text={t('footer.payBadge.text')} tone="kpay" />
-            <PayBadge mark={t('footer.dbdBadge.mark')} title={t('footer.dbdBadge.title')} text={t('footer.dbdBadge.text')} tone="dbd" />
-          </div>
-          <p className="text-xs text-[#7c7c8e]">
-            {t('footer.copyright', { year: calendarYear(now, locale, timeZone) })}
-          </p>
+        <div className="wrap flex flex-wrap justify-between gap-4 py-5">
+          <ul aria-label={t('footer.pay.label')} className="flex flex-wrap gap-2">
+            {PAYMENTS.map((payment) => (
+              <li
+                key={payment}
+                className="inline-flex h-8 items-center rounded-[6px] bg-white/7 px-3 text-[13px] font-medium text-on-navy"
+              >
+                {t(`footer.pay.${payment}`)}
+              </li>
+            ))}
+          </ul>
+          {/* On its own row below `sm` (R16). */}
+          <p className="basis-full sm:basis-auto">{t('footer.copyright', { year: calendarYear(now, locale, timeZone) })}</p>
         </div>
       </div>
     </footer>
@@ -68,19 +89,4 @@ export default function SiteFooter() {
 function calendarYear(now: Date, locale: string, timeZone: string | undefined): string {
   const parts = new Intl.DateTimeFormat(locale, { year: 'numeric', timeZone }).formatToParts(now);
   return parts.find((part) => part.type === 'year')?.value ?? String(now.getFullYear());
-}
-
-function PayBadge({ mark, title, text, tone }: { mark: string; title: string; text: string; tone: 'kpay' | 'dbd' }) {
-  const markTone = tone === 'kpay' ? 'bg-[#0f9d58] text-[13px] text-white' : 'bg-white text-[10px] leading-[1.2] text-[#16161f]';
-  return (
-    <span className="inline-flex items-center gap-2.5 rounded-(--radius-sm) border border-white/10 bg-white/6 px-3 py-2 text-xs leading-[1.45]">
-      <span aria-hidden="true" className={`grid size-[34px] flex-none place-items-center rounded-lg text-center font-extrabold ${markTone}`}>
-        {mark}
-      </span>
-      <span>
-        <strong className="block text-[13px] text-white">{title}</strong>
-        {text}
-      </span>
-    </span>
-  );
 }

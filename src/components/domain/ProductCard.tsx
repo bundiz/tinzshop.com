@@ -14,36 +14,40 @@ export type ProductCardProps = {
 };
 
 /**
- * One product as a card: image, badges, the wishlist heart, name, price and stock status, linking to its
- * product page. The heart is inert until a wishlist exists (D-124). The design's category line is left out:
- * the mirror carries no category names yet. No rating (spec O-6).
+ * One product as a card (the mockup's `.card`, R11/D-216): image, tags, the wishlist heart, name, price, stock
+ * status and the cart button, linking to its product page. The heart and the cart button are inert until a
+ * wishlist and a cart exist (D-124). No category line (categories are a keyword mock, D-143), no instalment
+ * line and no rating (spec O-6).
  */
 export default function ProductCard({ card, layout = 'grid' }: ProductCardProps) {
   const t = useTranslations('shop.product');
   const locale = useLocale();
   const isOut = card.stockStatus === 'out_of_stock';
   const isList = layout === 'list';
+  // The sale tag and red price only when the original is above the price (D-123).
+  const isSale = card.originalPriceSatang !== null && card.originalPriceSatang > card.priceSatang;
 
   return (
     // The name's link stretches over the whole card, and the card draws the link's focus ring (07 Accessibility).
     <article
-      className={`group relative flex h-full ${isList ? 'flex-row' : 'flex-col'} overflow-hidden rounded-(--radius) border border-border bg-bg shadow-card transition-[box-shadow,border-color,transform] duration-[180ms] hover:-translate-y-0.5 hover:border-[#cbdcf7] hover:shadow-hover has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-primary`}
+      className={`group relative flex h-full ${isList ? 'flex-row gap-3' : 'flex-col'} rounded-[14px] border border-line bg-surface p-2 transition-[transform,box-shadow,border-color] duration-[220ms] ease-soft hover:-translate-y-0.5 hover:border-transparent hover:shadow-2 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-ps sm:rounded-lg sm:p-3`}
     >
-      {(card.isKit || card.isPreOrder) && (
-        <div className="absolute top-2 left-2 z-[1] flex flex-wrap gap-1">
+      {(isSale || card.isKit || card.isPreOrder) && (
+        <div className="absolute top-3.5 left-3.5 z-[2] flex flex-wrap gap-1.5 sm:top-5 sm:left-5">
+          {isSale && <ProductBadge tone="sale">{t('badge.sale')}</ProductBadge>}
           {card.isKit && <ProductBadge tone="bundle">{t('badge.bundle')}</ProductBadge>}
           {card.isPreOrder && <ProductBadge tone="preOrder">{t('badge.preOrder')}</ProductBadge>}
         </div>
       )}
       <button
         type="button"
-        aria-label={t('wishlist.add')}
-        className="absolute top-1.5 right-1.5 z-[3] grid size-[34px] cursor-pointer place-items-center rounded-full border-0 bg-white/90 text-text-muted hover:text-danger"
+        aria-label={t('wishlist.addNamed', { name: card.name })}
+        className="absolute top-3 right-3 z-[3] grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-white/92 text-ink shadow-1 transition-[transform,color] duration-[180ms] ease-soft hover:scale-[1.06] hover:text-sale sm:top-[18px] sm:right-[18px]"
       >
-        <Icon name="heart" className="size-4" />
+        <Icon name="heart" />
       </button>
       <div
-        className={`${isList ? 'w-[120px] flex-none sm:w-[180px]' : ''} ${isOut ? 'opacity-70 grayscale-[0.9]' : ''}`.trim() || undefined}
+        className={`${isList ? 'w-[120px] flex-none sm:w-[180px]' : ''} overflow-hidden rounded-md bg-surface ${isOut ? 'opacity-70 grayscale-[.9]' : ''}`}
       >
         {card.imageUrl !== null ? (
           // A plain <img>: the live Shopee image hosts are not known, so no next/image remote config.
@@ -51,24 +55,22 @@ export default function ProductCard({ card, layout = 'grid' }: ProductCardProps)
             src={card.imageUrl}
             alt={card.name}
             loading="lazy"
-            className="aspect-square w-full bg-bg object-contain"
+            className="aspect-square w-full bg-surface object-contain transition-transform duration-[400ms] ease-soft group-hover:scale-[1.03]"
           />
         ) : (
           <ImagePlaceholder label={t('imagePlaceholderAlt')} />
         )}
       </div>
-      <div className={`flex min-w-0 flex-1 flex-col gap-1 px-3 pt-2.5 pb-3 ${isList ? 'sm:px-4 sm:py-3.5' : ''}`}>
-        <h3
-          className={`line-clamp-2 ${isList ? 'pr-8 sm:text-[15px]' : 'min-h-[calc(1.55em*2)]'} text-sm leading-[1.55] font-medium [overflow-wrap:anywhere] group-hover:text-primary`}
-        >
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-1 pt-3.5 pb-1">
+        <h3 className={`${isList ? 'pr-12 ' : ''}line-clamp-2 min-h-[2.9em] font-body text-[15px] leading-[1.45] font-semibold [overflow-wrap:anywhere] sm:text-base`}>
           <Link
             href={`/${locale}/product/${card.productId}/detail`}
-            className="after:absolute after:inset-0 after:z-[2] after:content-[''] focus-visible:outline-none"
+            className="after:absolute after:inset-0 after:z-[2] after:rounded-[inherit] after:content-[''] focus-visible:outline-none"
           >
             {card.name}
           </Link>
         </h3>
-        <div className="mt-auto pt-1">
+        <div className="mt-auto pt-1.5">
           <PriceDisplay
             satang={card.priceSatang}
             original={card.originalPriceSatang}
@@ -76,12 +78,18 @@ export default function ProductCard({ card, layout = 'grid' }: ProductCardProps)
           />
         </div>
         {card.isPreOrder && card.releaseDate !== null && (
-          <p className="text-xs font-semibold text-accent-dark">
-            {t('releaseDate', { date: card.releaseDate })}
-          </p>
+          <p className="text-xs font-semibold text-warn">{t('releaseDate', { date: card.releaseDate })}</p>
         )}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex min-h-11 items-center justify-between gap-2">
           <StockBadge status={card.stockStatus} />
+          <button
+            type="button"
+            disabled={isOut}
+            aria-label={isOut ? t('stock.out_of_stock') : t('addToCartNamed', { name: card.name })}
+            className="relative z-[3] grid size-11 cursor-pointer place-items-center rounded-[10px] border-0 bg-brand text-white transition-[transform,background-color] duration-[180ms] ease-soft hover:-translate-y-px hover:bg-accent hover:text-ink active:scale-95 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-sunk disabled:text-muted"
+          >
+            <Icon name="cart" />
+          </button>
         </div>
       </div>
     </article>

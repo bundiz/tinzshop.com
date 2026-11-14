@@ -14,5 +14,8 @@ describe('the shop loading state', () => {
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain(th.shop.loading.label);
     expect(html.match(/data-skeleton="card"/g)?.length).toBeGreaterThanOrEqual(4);
+    // The cards sit in the same g-5 grid the page uses.
+    expect(html).toContain('md:grid-cols-4 xl:grid-cols-5');
+    expect(html).toContain('bg-navy');
   });
 });

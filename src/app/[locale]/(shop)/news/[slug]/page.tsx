@@ -2,6 +2,7 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import { readCurrentCustomer } from '../../_components/read-current-customer';
 import { readArticlesMenu } from '../../_components/read-articles-menu';
 import { decodeSlugParam } from '../news-routes';
 import { readNewsArticle } from '../read-news';
@@ -26,8 +27,12 @@ export default async function NewsArticlePage({ params }: Props) {
   const articleSlug = decodeSlugParam(slug);
   if (articleSlug === null) notFound();
   // The header's menu is read alongside, as on the home and product pages.
-  const [article, articlesMenu] = await Promise.all([readNewsArticle(locale, articleSlug), readArticlesMenu(locale)]);
+  const [article, articlesMenu, customer] = await Promise.all([
+    readNewsArticle(locale, articleSlug),
+    readArticlesMenu(locale),
+    readCurrentCustomer(),
+  ]);
   if (article === null) notFound();
 
-  return <NewsArticleView article={article} articlesMenu={articlesMenu} />;
+  return <NewsArticleView article={article} articlesMenu={articlesMenu} customer={customer} />;
 }

@@ -11,8 +11,11 @@ import {
   useTransition,
   type KeyboardEvent,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import Icon from '@/components/ui/Icon';
+import { buttonClass } from '@/components/ui/button-class';
+import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import {
   STOREFRONT_LISTING_SORTS,
   type StorefrontListingParams,
@@ -54,15 +57,15 @@ export function ListingCheck({
   const [shown, setShown] = useOptimistic(checked);
   const [, go] = useListingNavigation();
   return (
-    <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm md:min-h-[34px]">
+    <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-[15px] sm:min-h-10">
       <input
         type="checkbox"
         checked={shown}
         onChange={() => go(href, () => setShown(!checked))}
-        className="size-[18px] flex-none accent-primary"
+        className="size-5 flex-none accent-ink"
       />
       {label}
-      {count !== undefined && <span className="ml-auto text-xs text-text-subtle">{count}</span>}
+      {count !== undefined && <span className="ml-auto text-[13px] text-muted">{count}</span>}
     </label>
   );
 }
@@ -127,7 +130,7 @@ function PriceInput({
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') apply();
       }}
-      className="h-[38px] w-full min-w-0 rounded-(--radius-sm) border border-border px-2.5 text-sm focus:border-primary focus:outline-none"
+      className="min-h-12 w-full min-w-0 rounded-sm border-[1.5px] border-line-2 bg-surface px-3.5 text-base focus:border-ink focus:outline-none"
     />
   );
 }
@@ -159,7 +162,7 @@ export function ListingPriceRange({
     go(href);
   };
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
       <PriceInput
         value={active.minBaht}
         label={labels.min}
@@ -198,7 +201,7 @@ export function ListingSortSelect({
         onChange={(event) =>
           go(listingHref(locale, nextListing(active, { sort: event.currentTarget.value as StorefrontListingSort })))
         }
-        className="h-10 min-w-0 cursor-pointer appearance-none rounded-full border border-border bg-bg pr-8 pl-3 text-sm"
+        className="min-h-11 min-w-0 cursor-pointer appearance-none rounded-sm border-[1.5px] border-line-2 bg-surface pr-10 pl-3.5 text-[15px]"
       >
         {STOREFRONT_LISTING_SORTS.map((sort) => (
           <option key={sort} value={sort}>
@@ -206,7 +209,7 @@ export function ListingSortSelect({
           </option>
         ))}
       </select>
-      <Icon name="chevDown" className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-text-muted" />
+      <Icon name="chevDown" className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ink" />
     </span>
   );
 }
@@ -230,45 +233,80 @@ export function ListingViewToggle({
       onClick={() => {
         if (active !== view) go(hrefs[view]);
       }}
-      className={`grid h-[38px] w-10 cursor-pointer place-items-center border-0 ${
-        active === view ? 'bg-primary text-white' : 'bg-bg text-text-subtle'
+      className={`grid size-11 cursor-pointer place-items-center border-0 ${
+        active === view ? 'bg-brand text-white' : 'bg-surface text-muted'
       }`}
     >
       <Icon name={view} className="size-4" />
     </button>
   );
   return (
-    <div role="group" aria-label={labels.group} className="hidden overflow-hidden rounded-full border border-border sm:inline-flex">
+    <div role="group" aria-label={labels.group} className="hidden overflow-hidden rounded-sm border-[1.5px] border-line-2 sm:inline-flex">
       {button('grid')}
       {button('list')}
     </div>
   );
 }
 
-const FilterPanelContext = createContext<{ open: boolean; toggle: () => void }>({ open: false, toggle: () => {} });
+type FilterPanelState = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  panelRef: RefObject<HTMLDivElement | null>;
+};
+
+const FilterPanelContext = createContext<FilterPanelState | null>(null);
+
+function useFilterPanel(): FilterPanelState {
+  const state = useContext(FilterPanelContext);
+  if (state === null) throw new Error('The filter panel parts must sit inside ListingFilterPanelProvider.');
+  return state;
+}
 
 export const LISTING_FILTERS_ID = 'listing-filters';
 
-/** Holds whether the "ตัวกรอง" panel is open below 900px; from 900px the sidebar always shows. */
+/** The width from which the filters are a sidebar and the sheet has nothing to show (`lg`, 1024px). */
+const WIDE_QUERY = '(min-width: 64rem)';
+
+/**
+ * Holds whether the filter sheet is open below 1024px (plan 015, R12, D-217). While open the panel is a modal
+ * dialog (`useModalDialog`: focus moves in, Tab stays in, Escape closes and returns focus to "ตัวกรอง"); it also
+ * closes when the window grows past `lg`, where the sidebar always shows.
+ */
 export function ListingFilterPanelProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useModalDialog({ open, onClose: () => setOpen(false), containerRef: panelRef, returnFocusRef: buttonRef });
+
+  useEffect(() => {
+    if (!open || typeof window.matchMedia !== 'function') return;
+    const wide = window.matchMedia(WIDE_QUERY);
+    const closeWhenWide = () => {
+      if (wide.matches) setOpen(false);
+    };
+    wide.addEventListener('change', closeWhenWide);
+    return () => wide.removeEventListener('change', closeWhenWide);
+  }, [open]);
+
   return (
-    <FilterPanelContext.Provider value={{ open, toggle: () => setOpen((value) => !value) }}>
-      {children}
-    </FilterPanelContext.Provider>
+    <FilterPanelContext.Provider value={{ open, setOpen, buttonRef, panelRef }}>{children}</FilterPanelContext.Provider>
   );
 }
 
-/** The toolbar's "ตัวกรอง" button, a disclosure for the sidebar below 900px. */
+/** The toolbar's "ตัวกรอง" button: opens the sheet below 1024px, and is not drawn from there. */
 export function ListingFilterToggle({ label }: { label: string }) {
-  const { open, toggle } = useContext(FilterPanelContext);
+  const { open, setOpen, buttonRef } = useFilterPanel();
   return (
     <button
+      ref={buttonRef}
       type="button"
       aria-expanded={open}
       aria-controls={LISTING_FILTERS_ID}
-      onClick={toggle}
-      className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-bg px-3.5 text-sm font-semibold md:hidden"
+      aria-haspopup="dialog"
+      onClick={() => setOpen(!open)}
+      className={`${buttonClass({ variant: 'line' })} min-h-11 px-4 text-[15px] lg:hidden`}
     >
       <Icon name="filter" className="size-4" />
       {label}
@@ -276,16 +314,58 @@ export function ListingFilterToggle({ label }: { label: string }) {
   );
 }
 
-/** The sidebar: hidden below 900px until the toggle opens it, always shown (and sticky) from 900px. */
-export function ListingFilterPanel({ label, children }: { label: string; children: ReactNode }) {
-  const { open } = useContext(FilterPanelContext);
+/**
+ * The filters: a sticky 268px column from `lg`, and below it a full-screen sheet that is hidden until the toggle
+ * opens it. It has the dialog role only while open; from `lg` it is a complementary region. Its head and its
+ * bottom bar ("แสดง {count} รายการ") are for the sheet only.
+ */
+export function ListingFilterPanel({
+  label,
+  heading,
+  closeLabel,
+  applyLabel,
+  children,
+}: {
+  /** The landmark's and the dialog's accessible name. */
+  label: string;
+  /** The sheet's visible heading ("ตัวกรอง"). */
+  heading: string;
+  closeLabel: string;
+  /** "แสดง {count} รายการ". */
+  applyLabel: string;
+  children: ReactNode;
+}) {
+  const { open, setOpen, panelRef } = useFilterPanel();
+  const close = () => setOpen(false);
   return (
-    <aside
+    <div
+      ref={panelRef}
       id={LISTING_FILTERS_ID}
+      tabIndex={-1}
+      role={open ? 'dialog' : 'complementary'}
+      aria-modal={open ? true : undefined}
       aria-label={label}
-      className={`${open ? 'block' : 'hidden'} min-w-0 rounded-(--radius) bg-bg px-4 pt-1 pb-4 md:sticky md:top-24 md:block`}
+      className={`${
+        open ? 'block' : 'hidden'
+      } fixed inset-0 z-70 min-w-0 overflow-auto bg-surface px-[clamp(16px,3.2vw,32px)] pt-4 pb-[100px] lg:sticky lg:inset-auto lg:top-[140px] lg:z-auto lg:block lg:overflow-visible lg:rounded-lg lg:border lg:border-line lg:px-5 lg:py-1.5`}
     >
+      <div className="flex items-center justify-between pb-2 lg:hidden">
+        <b className="font-head text-xl">{heading}</b>
+        <button
+          type="button"
+          aria-label={closeLabel}
+          onClick={close}
+          className="inline-flex size-12 cursor-pointer items-center justify-center rounded-sm hover:bg-sunk"
+        >
+          <Icon name="x" className="size-6" />
+        </button>
+      </div>
       {children}
-    </aside>
+      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface px-[clamp(16px,3.2vw,32px)] py-3 lg:hidden">
+        <button type="button" onClick={close} className={buttonClass({ variant: 'brand', block: true })}>
+          {applyLabel}
+        </button>
+      </div>
+    </div>
   );
 }

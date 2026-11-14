@@ -44,19 +44,19 @@ describe('buildLandingCatalogue', () => {
   });
 
   it('orders best sellers by sales and caps each section', () => {
-    const many = Array.from({ length: 10 }, (_, i) =>
+    const many = Array.from({ length: 12 }, (_, i) =>
       candidate({
         productId: `p${i}`,
         names: { th: `n${i}`, en: `n${i}` },
-        salesCount: i === 9 ? null : i,
+        salesCount: i === 11 ? null : i,
         isKit: true,
       }),
     );
     const catalogue = buildLandingCatalogue(many, 'th');
-    expect(catalogue.bestSellers).toHaveLength(8);
-    expect(catalogue.bestSellers[0]?.productId).toBe('p8');
-    expect(catalogue.bestSellers.map((c) => c.productId)).not.toContain('p9');
-    expect(catalogue.bundles).toHaveLength(6);
+    expect(catalogue.bestSellers).toHaveLength(10);
+    expect(catalogue.bestSellers[0]?.productId).toBe('p10');
+    expect(catalogue.bestSellers.map((c) => c.productId)).not.toContain('p11');
+    expect(catalogue.bundles).toHaveLength(5);
   });
 
   it('puts null sales last and breaks ties by name', () => {

@@ -17,7 +17,7 @@ export type NewsTabsScrollerProps = {
 };
 
 const ARROW =
-  "absolute top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-bg text-text shadow-md hover:border-primary hover:text-primary";
+  "absolute top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface text-ink shadow-1 hover:border-ink";
 
 /** Wraps the server-rendered tab list in a sideways scroll strip with ‹ › buttons shown only when that way can scroll. */
 export default function NewsTabsScroller({
@@ -83,7 +83,7 @@ export default function NewsTabsScroller({
         <>
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-bg to-transparent"
+            className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-page to-transparent"
           />
           <button
             type="button"
@@ -99,7 +99,7 @@ export default function NewsTabsScroller({
         <>
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-bg to-transparent"
+            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-page to-transparent"
           />
           <button
             type="button"

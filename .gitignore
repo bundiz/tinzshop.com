@@ -35,3 +35,6 @@ Thumbs.db
 /requirements
 # Generated Prisma client
 src/generated/
+
+# Design-tool scratch output (taste skill); never committed.
+.taste-skill/

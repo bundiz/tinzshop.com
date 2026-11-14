@@ -1,70 +1,177 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import ImagePlaceholder from '@/components/domain/ImagePlaceholder';
+import PriceDisplay from '@/components/domain/PriceDisplay';
+import ProductBadge from '@/components/domain/ProductBadge';
+import StockBadge from '@/components/domain/StockBadge';
+import { buttonClass } from '@/components/ui/button-class';
+import Icon from '@/components/ui/Icon';
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
+import { listingHref } from '../product/listing-url';
 
 export type HeroProps = {
-  /** The `id` of the section "shop now" scrolls to; `null` when there is none, and the button goes nowhere. */
-  shopNowTarget: string | null;
+  /** The first kit; `null` when there is none, and the card (with the minis) is left out. */
+  feature: LandingProductCard | null;
+  /** The first three best sellers that are not the feature. */
+  minis: readonly LandingProductCard[];
+  /** Signed in: "สมัครสมาชิก" is then left out. */
+  signedIn: boolean;
 };
 
-const DOT_COUNT = 4;
+const FACTS = [
+  { key: 'shipping', icon: 'truck' },
+  { key: 'payment', icon: 'card' },
+  { key: 'invoice', icon: 'receipt' },
+] as const;
+
+// The hero backdrop of style.css L202-206: two glows and a faint 48px grid, on navy.
+const BACKDROP =
+  'bg-[radial-gradient(60%_80%_at_85%_10%,rgba(24,99,220,.55),transparent_60%),radial-gradient(50%_70%_at_70%_100%,rgba(254,166,1,.14),transparent_60%),linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[length:auto,auto,48px_48px,48px_48px]';
+
+const detailHref = (locale: string, card: LandingProductCard) => `/${locale}/product/${card.productId}/detail`;
 
 /**
- * The landing banner: static text from the message catalogue, "shop now" (scrolls to the best sellers),
- * "view all products" and the carousel dots, the last two inert until a category page and banners exist (D-124).
+ * The landing hero (the mockup's `.hero`, plan 015 R9): the pitch, the three facts, "เลือกซื้อสินค้า" to the
+ * product listing and, signed out, "สมัครสมาชิก"; beside them the first kit as a feature card with three
+ * best sellers under it. Everything shown comes from the mirror or the message catalogue.
  */
-export default function Hero({ shopNowTarget }: HeroProps) {
+export default function Hero({ feature, minis, signedIn }: HeroProps) {
   const t = useTranslations('shop.home.hero');
+  const locale = useLocale();
+  const cta = 'w-full sm:w-auto';
 
   return (
-    <div className="relative flex min-h-[260px] flex-col justify-center overflow-hidden rounded-(--radius) bg-[radial-gradient(circle_at_82%_30%,rgba(254,166,1,0.35)_0,rgba(254,166,1,0)_32%),radial-gradient(circle_at_70%_110%,rgba(61,134,240,0.9)_0,rgba(61,134,240,0)_55%),linear-gradient(120deg,var(--color-primary-deep)_0%,var(--color-primary)_62%,#3d86f0_100%)] px-6 pt-7 pb-11 text-white lg:min-h-[300px] lg:px-10 lg:pt-9 lg:pb-[52px]">
+    <section aria-labelledby="hero-title" className="relative isolate overflow-hidden bg-navy text-on-navy">
+      <div aria-hidden="true" className={`absolute inset-0 -z-10 ${BACKDROP}`} />
       <div
-        aria-hidden="true"
-        className="absolute inset-0 [mask-image:linear-gradient(90deg,transparent_30%,#000_100%)] bg-[radial-gradient(rgba(255,255,255,0.14)_1px,transparent_1px)] bg-[length:18px_18px]"
-      />
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        className="absolute -right-10 -bottom-[30px] size-[260px] fill-none stroke-current opacity-[0.18]"
-        strokeWidth={1}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        className={`wrap grid grid-cols-1 items-center gap-8 py-11 lg:min-h-[min(640px,calc(100svh-170px))] lg:gap-12 lg:py-14 ${feature === null ? '' : 'lg:grid-cols-[1.05fr_.95fr]'}`}
       >
-        <path d="M8.5 6.5h7a5.5 5.5 0 0 1 5.4 6.6l-.7 3.4A2.6 2.6 0 0 1 16 17.6L14.7 16H9.3L8 17.6a2.6 2.6 0 0 1-4.2-1.1l-.7-3.4A5.5 5.5 0 0 1 8.5 6.5Z" />
-        <path d="M6.5 11h3.5M8.25 9.25v3.5M15.5 10.4h.01M17.6 12.6h.01" />
-      </svg>
-      <div className="relative max-w-[460px]">
-        <span className="inline-flex items-center rounded-full bg-accent px-3 py-0.5 text-xs font-bold text-text">
-          {t('eyebrow')}
-        </span>
-        <h1 className="mt-3 text-[28px] leading-[1.35] font-extrabold sm:text-[34px] lg:text-[38px]">
-          {t.rich('title', {
-            br: () => <br />,
-            em: (chunks) => <em className="text-accent not-italic">{chunks}</em>,
-          })}
-        </h1>
-        <p className="mt-2 text-[15px] text-[#d6e3fa]">{t('text')}</p>
-        <div className="mt-[18px] flex flex-wrap gap-2.5">
-          <a
-            href={shopNowTarget === null ? '#' : `#${shopNowTarget}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-transparent bg-accent px-5 text-[15px] leading-[1.3] font-bold text-text transition-colors hover:bg-accent-dark"
+        <div className="animate-enter">
+          <p className="inline-flex items-center gap-2 text-[13px] leading-none font-semibold tracking-[.06em] text-on-navy-2 uppercase">
+            {t('eyebrow')}
+          </p>
+          <h1
+            id="hero-title"
+            className="mt-3.5 text-[clamp(34px,4.4vw,58px)] leading-[1.14] font-bold tracking-[-.015em] text-white"
           >
-            {t('shopNow')}
-          </a>
-          <a
-            href="#"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/40 bg-white/12 px-5 text-[15px] leading-[1.3] font-bold text-white transition-colors hover:bg-white/22"
-          >
-            {t('viewAll')}
-          </a>
+            {t.rich('title', { em: (chunks) => <em className="not-italic text-accent">{chunks}</em> })}
+          </h1>
+          <p className="mt-[18px] max-w-[34em] text-[clamp(17px,1.4vw,19px)] text-on-navy-2">{t('lead')}</p>
+          <ul className="mt-[22px] flex flex-wrap gap-x-[22px] gap-y-2.5">
+            {FACTS.map(({ key, icon }) => (
+              <li key={key} className="flex items-center gap-2 font-medium text-on-navy">
+                <Icon name={icon} className="size-[22px] flex-none text-accent" />
+                {t(`facts.${key}`)}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-[30px] flex flex-wrap gap-3">
+            <Link href={listingHref(locale)} className={`${buttonClass({ variant: 'buy', size: 'lg' })} ${cta}`}>
+              {t('shop')}
+              <Icon name="chevRight" />
+            </Link>
+            {!signedIn && (
+              <Link href={`/${locale}/register`} className={`${buttonClass({ variant: 'ghost', size: 'lg' })} ${cta}`}>
+                <Icon name="user" />
+                {t('register')}
+              </Link>
+            )}
+          </div>
         </div>
+        {feature !== null && <FeatureCard feature={feature} minis={minis} locale={locale} />}
       </div>
-      <div aria-hidden="true" className="absolute bottom-4 left-6 flex gap-1.5 lg:left-10">
-        {Array.from({ length: DOT_COUNT }, (_, index) => (
-          <span
-            key={index}
-            className={`h-2 rounded-full ${index === 0 ? 'w-6 bg-accent' : 'w-2 bg-white/45'}`}
-          />
-        ))}
+    </section>
+  );
+}
+
+function FeatureCard({
+  feature,
+  minis,
+  locale,
+}: {
+  feature: LandingProductCard;
+  minis: readonly LandingProductCard[];
+  locale: string;
+}) {
+  const t = useTranslations('shop.home.hero');
+  const tProduct = useTranslations('shop.product');
+
+  return (
+    <article className="animate-enter relative w-full max-w-[620px] rounded-xl border border-white/8 bg-navy-2 p-4 shadow-[0_30px_80px_-30px_rgba(0,0,0,.6)] transition-transform duration-[250ms] ease-soft [animation-delay:.12s] hover:-translate-y-0.5 lg:max-w-none">
+      <div className="absolute top-[30px] left-[30px] z-[2]">
+        <ProductBadge tone="bundle">{t('feature.tag')}</ProductBadge>
       </div>
-    </div>
+      {feature.imageUrl !== null ? (
+        // A plain <img>: the live Shopee image hosts are not known, so no next/image remote config.
+        <img
+          src={feature.imageUrl}
+          alt=""
+          loading="eager"
+          className="aspect-[5/4] w-full rounded-[14px] bg-surface object-contain"
+        />
+      ) : (
+        <ImagePlaceholder
+          label={tProduct('imagePlaceholderAlt')}
+          tone="dark"
+          art="box"
+          className="aspect-[5/4]! rounded-[14px]"
+        />
+      )}
+      <div className="flex items-end justify-between gap-4 px-1.5 pt-4 pb-1">
+        <div className="min-w-0">
+          <h2 className="font-head text-[20px] font-semibold text-white">
+            <Link
+              href={detailHref(locale, feature)}
+              className="after:absolute after:inset-0 after:z-[1] after:rounded-[inherit] after:content-['']"
+            >
+              {feature.name}
+            </Link>
+          </h2>
+          <div className="mt-1">
+            <StockBadge status={feature.stockStatus} onDark />
+          </div>
+        </div>
+        <PriceDisplay
+          satang={feature.priceSatang}
+          original={feature.originalPriceSatang}
+          isRange={feature.isPriceRange}
+          size="feature"
+        />
+      </div>
+      {minis.length > 0 && (
+        <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          {minis.map((mini, index) => (
+            <li key={mini.productId} className={`${index === 0 ? 'flex' : 'hidden sm:flex'} min-w-0`}>
+              <Link
+                href={detailHref(locale, mini)}
+                className="relative z-[2] flex min-h-11 w-full min-w-0 items-center gap-2.5 rounded-md border border-white/6 bg-white/5 p-2.5 transition-[background-color,transform] duration-[180ms] ease-soft hover:-translate-y-0.5 hover:bg-white/10"
+              >
+                <MiniThumb card={mini} />
+                <div className="min-w-0 text-[13px] leading-[1.35] text-on-navy">
+                  <b className="line-clamp-2 font-semibold text-white [overflow-wrap:anywhere]">{mini.name}</b>
+                  <PriceDisplay
+                    satang={mini.priceSatang}
+                    original={mini.originalPriceSatang}
+                    isRange={mini.isPriceRange}
+                    size="mini"
+                  />
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
+  );
+}
+
+/** The 44px thumbnail; decoration beside the name, so the placeholder has no label of its own. */
+function MiniThumb({ card }: { card: LandingProductCard }) {
+  const box = 'size-11 flex-none rounded-sm';
+
+  return card.imageUrl !== null ? (
+    <img src={card.imageUrl} alt="" loading="lazy" className={`${box} bg-surface object-contain`} />
+  ) : (
+    <ImagePlaceholder tone="dark" art="box" className={`${box} aspect-auto!`} />
   );
 }

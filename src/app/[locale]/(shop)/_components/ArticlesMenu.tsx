@@ -206,15 +206,15 @@ export default function ArticlesMenu({ label, items }: ArticlesMenuProps) {
         aria-expanded={state.open}
         aria-controls={panelId}
         onClick={(event) => dispatch({ type: 'activate', pointer: pointerOf(event) })}
-        // The hit area grows past the text to a 44px tap target (07 Responsive).
-        className={`relative flex cursor-pointer items-center gap-1 after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] hover:text-white ${state.open ? 'text-white' : ''}`}
+        // 44px tall on a phone, 40px from md, as the top bar's links (R16).
+        className={`flex min-h-11 cursor-pointer items-center gap-1 text-on-navy hover:text-white md:min-h-10 ${state.open ? 'text-white' : ''}`}
       >
         {label}
         <Icon name="chevDown" className={`size-3.5 transition-transform ${state.open ? 'rotate-180' : ''}`} />
       </button>
       {/* The padding bridges the gap under the button, so the pointer never leaves the menu on its way down. */}
-      <div id={panelId} hidden={!state.open} className="absolute top-full right-0 z-30 pt-2">
-        <ul className="w-56 rounded-(--radius-sm) border border-border bg-bg py-1.5 text-sm text-text shadow-lg">
+      <div id={panelId} hidden={!state.open} className="absolute top-full right-0 z-50 pt-2">
+        <ul className="w-56 rounded-md border border-line bg-surface py-1.5 text-sm text-ink shadow-2">
           {items.map((item, index) => {
             const submenuId = `${id}-submenu-${index}`;
             const hasSubmenu = item.children.length > 0 && item.submenuLabel !== null;
@@ -233,7 +233,7 @@ export default function ArticlesMenu({ label, items }: ArticlesMenuProps) {
                 <div className="flex items-stretch">
                   <Link
                     href={item.href}
-                    className="flex min-h-11 flex-1 items-center px-4 hover:bg-primary-soft hover:text-primary"
+                    className="flex min-h-11 flex-1 items-center px-4 hover:bg-brand-soft hover:text-brand"
                   >
                     {item.label}
                   </Link>
@@ -246,7 +246,7 @@ export default function ArticlesMenu({ label, items }: ArticlesMenuProps) {
                       onClick={(event) =>
                         dispatch({ type: 'activateSubmenu', key: item.href, pointer: pointerOf(event) })
                       }
-                      className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center text-text-muted hover:bg-primary-soft hover:text-primary"
+                      className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center text-muted hover:bg-brand-soft hover:text-brand"
                     >
                       {/* "›": below md the submenu opens downwards inside the panel (the chevron turns down); from md, to the right. */}
                       <Icon
@@ -263,7 +263,7 @@ export default function ArticlesMenu({ label, items }: ArticlesMenuProps) {
                     }}
                     id={submenuId}
                     hidden={!submenuOpen}
-                    className={`border-t border-border bg-bg-subtle py-1 md:absolute md:top-0 md:w-52 md:rounded-(--radius-sm) md:border md:bg-bg md:py-1.5 md:shadow-lg ${
+                    className={`border-t border-line bg-page py-1 md:absolute md:top-0 md:w-52 md:rounded-md md:border md:bg-surface md:py-1.5 md:shadow-2 ${
                       submenuOpen && flipLeft ? 'md:right-full' : 'md:left-full'
                     }`}
                   >
@@ -271,7 +271,7 @@ export default function ArticlesMenu({ label, items }: ArticlesMenuProps) {
                       <li key={child.href}>
                         <Link
                           href={child.href}
-                          className="flex min-h-11 items-center px-6 hover:bg-primary-soft hover:text-primary md:px-4"
+                          className="flex min-h-11 items-center px-6 hover:bg-brand-soft hover:text-brand md:px-4"
                         >
                           {child.label}
                         </Link>

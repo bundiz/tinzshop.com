@@ -92,6 +92,66 @@ export function getNewsImportJobConfig(): NewsImportJobConfig {
   return parseNewsImportJobConfig(process.env);
 }
 
+export type TrustedProxyHeader = 'x-forwarded-for' | 'cf-connecting-ip';
+
+export type AuthConfig = {
+  readonly region: string;
+  readonly userPoolId: string;
+  readonly clientId: string;
+  readonly clientSecret: string;
+  /** The Cognito domain's full host name, without a scheme. */
+  readonly domain: string;
+  /** The site's public base URL, no trailing slash. The Cognito callback URL is built from it. */
+  readonly appUrl: string;
+  readonly sessionTokenEncryptionKey: Buffer;
+  readonly trustedProxyHeader: TrustedProxyHeader;
+};
+
+const authEnvSchema = z.object({
+  APP_URL: z.url(),
+  COGNITO_REGION: z.string().min(1),
+  COGNITO_USER_POOL_ID: z.string().min(1),
+  COGNITO_CLIENT_ID: z.string().min(1),
+  COGNITO_CLIENT_SECRET: z.string().min(1),
+  COGNITO_DOMAIN: z
+    .string()
+    .min(1)
+    .refine((value) => !value.includes('://') && !value.includes('/'), 'must be a host name without a scheme or path'),
+  SESSION_TOKEN_ENCRYPTION_KEY: z
+    .string()
+    .refine((value) => Buffer.from(value, 'base64').length === 32, 'must be 32 bytes, base64 encoded'),
+  TRUSTED_PROXY_HEADER: z.preprocess(
+    emptyAsUndefined,
+    z.enum(['x-forwarded-for', 'cf-connecting-ip']).default('x-forwarded-for'),
+  ),
+});
+
+/** Customer authentication settings (plan 014). Read lazily: signed-out pages never call this. */
+export function parseAuthConfig(env: Readonly<Record<string, string | undefined>>): AuthConfig {
+  const result = authEnvSchema.safeParse(env);
+  if (!result.success) {
+    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
+  }
+  const data = result.data;
+  return {
+    region: data.COGNITO_REGION,
+    userPoolId: data.COGNITO_USER_POOL_ID,
+    clientId: data.COGNITO_CLIENT_ID,
+    clientSecret: data.COGNITO_CLIENT_SECRET,
+    domain: data.COGNITO_DOMAIN,
+    appUrl: data.APP_URL.replace(/\/+$/, ''),
+    sessionTokenEncryptionKey: Buffer.from(data.SESSION_TOKEN_ENCRYPTION_KEY, 'base64'),
+    trustedProxyHeader: data.TRUSTED_PROXY_HEADER,
+  };
+}
+
+let cachedAuth: AuthConfig | undefined;
+
+export function getAuthConfig(): AuthConfig {
+  cachedAuth ??= parseAuthConfig(process.env);
+  return cachedAuth;
+}
+
 let cached: ServerConfig | undefined;
 
 export function getServerConfig(): ServerConfig {

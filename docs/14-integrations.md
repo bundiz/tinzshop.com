@@ -20,6 +20,7 @@ Every external system named in `reference/client-summary-th.md`, in one file.
 | [BigSeller](#bigseller) | NOT RESEARCHED — account exists, data inspection pending | Stock management, daily file sync, shipping/fulfilment, labels | Phase 2 (SKU/Excel), Phase 5 (sync) |
 | [Shopee](#shopee) | RESEARCHED — sandbox access since 2026-10-20; live go-live pending | Catalogue mirror: pull products, options, prices and stock every 10 minutes (D-094, D-095) | Phase 2 (plan 010) |
 | [Old tinzshop.com WordPress](#old-tinzshopcom-wordpress-news-import) | RESEARCHED (2026-10-29) — public REST API, no login | One-time, re-runnable import of the old site's news posts and categories (D-126, D-133) | Phase 6 (plan 012) |
+| [Amazon Cognito](#amazon-cognito-customer-sign-in) | DECIDED — [ADR-0003](adr/ADR-0003-customer-authentication.md); dev pool checks pending (plan 014 Task 2) | Customer registration and sign-in, email and Google | Phase 3 (plan 014) |
 | [Mail relay](#transactional-email) | NOT RESEARCHED — category decided, provider not chosen | Automatic email at every order step | Phase 3 |
 | [Cloudflare](#cloudflare) | DECIDED — Free plan, security/bot scope only | Security, bot verification | Phase 8 |
 | [LINE](#line) | NOT RESEARCHED | Displaying the shop's LINE contact | Phase 6 |
@@ -254,6 +255,70 @@ provider nor DNS access has been established yet.
 Phase 3. Order confirmation email is part of the phase where the shop starts
 selling for real, and it cannot be delivered reliably without a provider and an
 authenticated sender domain.
+
+---
+
+## Amazon Cognito (customer sign-in)
+
+- **Status:** DECIDED ([ADR-0003](adr/ADR-0003-customer-authentication.md), D-152) · **Named in:** not in the source; the project owner's request of 2026-11-03 · **Blocks:** Phase 3 (plan 014)
+
+### What we need it for
+
+Customer registration with email and password (confirmed by a 6-digit code), sign-in with Google, password reset, and one account per email (O-3). Cognito holds only the identity: email, password and the Google link. Customer data stays in our PostgreSQL, linked by `customer.cognito_sub` ([05](05-database.md#customer-authentication-plan-014)). The app calls only Cognito's public APIs with a client id and secret; it holds **no AWS credentials**. Only the pre sign-up Lambda uses admin APIs, through its own IAM role. Every call goes through `src/server/adapters/cognito/`.
+
+### What we do NOT know
+
+Checked in the dev pool in plan 014 Task 2, before the build continues (spec section 13). An answer that contradicts the design goes back to the owner.
+
+- Whether Cognito is offered in `ap-southeast-7` (otherwise Singapore, `ap-southeast-1`).
+- Whether the Lite tier covers everything below: the Google provider, the pre sign-up trigger and the token lifetimes.
+- Whether the first Google sign-in after linking fails once, and with what error text.
+- Whether a user made by `AdminCreateUser` plus `AdminSetUserPassword` (permanent) can later reset the password through `ForgotPassword`.
+- Whether registering again with an unconfirmed email gives `UsernameExistsException`, and `ResendConfirmationCode` works for it.
+- Whether `ConfirmSignUp` on an already-confirmed account fails with an error distinct from a wrong code, and whether Cognito can sign in straight from the confirmation (plan 014 ruling R1).
+- Who owns and pays for the AWS account at go-live (Q-059).
+- Who controls DNS for the production SES sender (Q-053).
+
+### Credential required
+
+Six values, which a developer gets from a teammate privately, never through git: `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_CLIENT_SECRET`, `COGNITO_DOMAIN` and `SESSION_TOKEN_ENCRYPTION_KEY` (ours, not Cognito's). `.env.example` holds placeholders only. The Google OAuth client id and secret live **in Cognito, not in our `.env`**.
+
+### What it blocks
+
+Registration and sign-in, and so every plan that needs a signed-in customer (ordering, profile). Plan 014 Tasks 6 to 8 wait for the dev pool checks.
+
+### Pool setup checklist
+
+The owner follows these steps by hand; infrastructure-as-code waits for phase 7. They come from spec section 4 and add no setting beyond it. One shared dev pool, "tinzshop-dev", serves the team; production gets its own at go-live. Staff get a second pool in plan 002.
+
+In the AWS console:
+
+1. **Region.** Asia Pacific (Thailand) `ap-southeast-7`. Cognito is offered there and the dev pool runs there (plan 014 Task 2, 2026-11-11). It is an opt-in region, so it must be enabled on the AWS account first. Singapore `ap-southeast-1` is the fallback.
+2. **Create the customer user pool.** Feature tier: Lite (D-162); plan 014 Task 2 found everything needed on it.
+3. **Sign-in identifier.** Email, case-insensitive.
+4. **Required attributes.** Email only (D-163). This cannot be changed after the pool is created.
+5. **Self sign-up.** On. **Email verification:** a code, sent automatically on sign-up.
+6. **Prevent user existence errors.** On.
+7. **Password policy.** Minimum length 8; tick *Contains at least 1 number*, *lowercase letter*, *uppercase letter* and *special character* (D-177, which replaced "letters and numbers" on 2026-11-11). The register page states and checks the same five rules.
+8. **Emails.** Development: Cognito's built-in sender, limited to a few dozen emails a day. Production: Amazon SES with a `tinzshop.com` sender, which needs DNS records (Q-053).
+9. **Email template.** One bilingual message for the verification and the reset code, Thai first and English below (D-165). This avoids a message Lambda.
+10. **Cognito domain.** Add a prefix domain for the OAuth endpoints. Customers see it only for a moment during the Google redirect.
+11. **App client.** One confidential client, with a client secret.
+    - Auth flows: `USER_PASSWORD_AUTH` and refresh token.
+    - OAuth: authorization code grant with PKCE; scopes `openid email profile`. The Google sign-in sends `prompt=select_account`, which Cognito forwards to Google only on the managed login version of the domain (not the classic hosted UI), so Google always shows its account chooser (D-226).
+    - Identity providers: Cognito and Google.
+    - Callback URLs: `http://localhost:3003/api/callbacks/cognito` (the dev default), `http://localhost:3000/api/callbacks/cognito` and `http://localhost:3002/api/callbacks/cognito` for development. The production URL is added at go-live.
+    - Token validity: access 60 minutes, ID 60 minutes, refresh 7 days. Refresh-token rotation off (O-7, D-176). The Lite tier allows these lifetimes (plan 014 Task 2).
+
+In the Google Cloud console:
+
+12. **Create a Google OAuth client** and note its client id and secret. The design does not list the Google console's other settings; follow Cognito's own instructions for adding Google as an identity provider. Do not put these two values in `.env` or in git.
+
+Back in the AWS console:
+
+13. **Google identity provider.** Add Google to the pool with the client id and secret from step 12. Attribute mapping: `email`, `email_verified`, `given_name`, `family_name`. The Lite tier offers the Google provider (plan 014 Task 2).
+14. **Pre sign-up Lambda.** Deploy the account-linking trigger from `infra/cognito/pre-sign-up/` and attach it to the pool as the pre sign-up trigger. It runs on a Google login's first visit (`PreSignUp_ExternalProvider`). The Lite tier offers the trigger (plan 014 Task 2). The deploy steps and the IAM role's permissions are in [`infra/cognito/pre-sign-up/README.md`](../infra/cognito/pre-sign-up/README.md).
+15. **Hand over the six values** (see *Credential required*) to each developer privately.
 
 ---
 

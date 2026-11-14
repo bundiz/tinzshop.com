@@ -21,9 +21,9 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
-| **RESOLVED** | 42 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
+| **RESOLVED** | 44 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 13 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 16 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -566,6 +566,52 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** None yet.
 - **Effect:** Decides what stage 4's security item is. D-087 stands until this is answered. Either way it needs DNS access for `tinzshop.com` (Q-053).
 - **Ask:** project owner
+
+---
+
+## Blocking Phase 3 — customer authentication (plan 014)
+
+### Owner request not in the source: Google sign-in
+Not a question. The client source (`reference/client-summary-th.md`) does not mention Google sign-in or Amazon Cognito. Both are the project owner's request of 2026-11-03, approved 2026-11-04 (D-152, D-154, ADR-0003); the source's REQ-011 asks only for customer registration and sign-in. Treat them as the project owner's decisions, not as client requirements, until the client confirms them.
+
+### Q-059: Who owns and pays for the AWS account at go-live?
+- **Status:** UNRESOLVED — not yet asked
+- **Question:** Customer login runs on Amazon Cognito (ADR-0003). Who owns the AWS account that holds the production user pool, the pre sign-up Lambda and the Amazon SES sender, and who pays for it: the client or us?
+- **Answer:** None yet.
+- **Effect:** It affects the handover, not the build. Until it is answered, the dev pool runs in the project owner's account. The free tier covers 10,000 monthly active users (O-1); Amazon SES emails cost a little. The production sender also needs DNS records on tinzshop.com, whose control is Q-053.
+- **Ask:** client, via the project owner
+
+### Q-060: Should a wrong code on a confirmed account reveal that the account exists?
+- **Status:** RESOLVED — 2026-11-11
+- **Question:** The verify step treated "this account is already confirmed" as the sign that the emailed code was a reset code, and then asked for a new password (spec §6.1, O-9). `ConfirmSignUp` reports that status before it checks the code, so a stranger who registers a victim's email and types any 6 digits (such as 000000) would be shown the choose-a-password step and learn the email has an account. Should the step stay as the spec said, or give one answer for every code?
+- **Answer:** The project owner chose "same answer" (2026-11-11). The verify step answers a confirmed account exactly like a wrong code. The verify page always shows the link "Got a password-reset email instead? Set a new password", which leads to the reset-code step for the email in the pending cookie, without sending a new code.
+- **Effect:** No account-existence leak at verify. The owner of an existing account takes one extra click. Recorded as D-179; spec §6.1 and `06-api.md` updated.
+- **Ask:** project owner
+
+### Q-061: Can a stranger keep an account they registered with someone else's email?
+- **Status:** RESOLVED — 2026-11-11
+- **Question:** A stranger registers a victim's email with the stranger's own password and never confirms it. When the victim later registers, `SignUp` says the user exists, `ForgotPassword` fails because the email is not verified, so the app resends the sign-up code. The victim enters it and so confirms the stranger's account, with the stranger's password; a later Google sign-in links to it and keeps it. The pre sign-up Lambda's protection (D-168) exists for exactly this, and this path reopened it. How should the verify step close it?
+- **Answer:** The project owner chose "second code" (2026-11-11). The pending cookie records whether this browser created the account: true only when this browser's `SignUp` succeeded, or when a password sign-in proved the password and Cognito answered that the account is not confirmed; every other way of reaching verify leaves it false, and an older cookie without the record reads as false. After a correct code, an account created here goes to sign-in as before. Any other account is sent a second code (`ForgotPassword`, which works now the email is verified) and the customer is taken to the reset step to set their own password with it; that reset ends every session.
+- **Effect:** A password somebody else chose never survives the real owner's verification. Every answer before a correct code is unchanged (D-160, D-179), so nothing is revealed. A customer who verifies in a browser that did not create the account, or who submitted register again for the same email in the same browser, sets a password once more. Until that reset is finished, the password chosen at sign-up still works; an abandoned reset leaves it in place (spec §6.1). Recorded as D-186; spec §6.1 and `06-api.md` updated.
+- **Ask:** project owner
+
+---
+
+## Blocking Phase 3 — storefront redesign (plan 015)
+
+### Q-068: Does the redesign's category menu change the category tree?
+- **Status:** UNRESOLVED — raised 2026-11-12 by plan 015
+- **Question:** The `tinzshop-redesign/` mockup names its menu entries differently from the category tree the shop uses (D-143, D-149). (1) It calls the Nintendo platform "Nintendo Switch 2" and "Switch 2", but the tree's platform is `nintendo-switch` ("Nintendo Switch"), and the keyword categoriser puts every Switch and Nintendo product in it, Switch 1 items included; the mockup itself labels a GuliKit controller "Nintendo Switch · จอย". (2) It has the entries "เครื่องเกมอื่น ๆ · ของเล่น" (other consoles and toys) and "สินค้าลดราคา" / "ลดราคา" (sale items), for which there is no category and no listing filter. (3) Its Switch banner lists "เคส & ฟิล์ม" (cases and screen film) as a product type, which the tree does not have. Should the tree gain a Switch 2 platform or be renamed, gain an other-consoles-and-toys platform, a sale listing and a cases type, or should the menu follow the tree?
+- **Answer:** None yet.
+- **Effect:** Until answered, plan 015 shows the tree's own names ("Nintendo Switch", or "Switch" where the mockup abbreviates, wherever the mockup writes "Nintendo Switch 2" or "Switch 2"), renders the other-consoles, sale and cases entries inert as designed (D-124), and adds no category, type or filter. A sale listing would be a new listing param (D-145).
+- **Ask:** project owner
+
+### Q-069: May the storefront say that kits cost less, that Switch consoles carry a shop warranty, and that pre-order customers get reminders?
+- **Status:** UNRESOLVED — raised 2026-11-12 by plan 015
+- **Question:** The mockup's copy states three things that no source document or decision states. (1) A kit costs less than buying its items separately: the ชุดโปรโมชั่น subtitle "ราคาถูกกว่าซื้อแยก", the hero card's "คุ้มกว่าซื้อแยก ฿790" and the tile "เครื่อง + เกม คุ้มกว่า". A kit's components and their prices are not known (Q-058), and Shopee's original price is not the sum of the parts. (2) Switch consoles carry the shop's own warranty ("เครื่องประกันร้าน"), while returns and warranty are handled case by case (Q-035, Q-038). (3) Pre-order customers are reminded before the release date and the balance due date ("แจ้งเตือนก่อนวันวางจำหน่ายและวันชำระส่วนที่เหลือ"), which neither REQ-041 nor the pre-order requirement states. Are these true, and does the shop want them said?
+- **Answer:** None yet.
+- **Effect:** Until answered, plan 015 leaves these phrases out and keeps the rest of each block. Each is one message key to add back.
+- **Ask:** project owner (the client for 2 and 3)
 
 ---
 

@@ -7,6 +7,7 @@ import en from '../../../../../../messages/en.json';
 import th from '../../../../../../messages/th.json';
 import NewsCard from './NewsCard';
 import NewsFeature from './NewsFeature';
+import NewsGrid from './NewsGrid';
 import NewsSidebar from './NewsSidebar';
 import NewsTabs from './NewsTabs';
 import { scrollEdges } from './scroll-edges';
@@ -198,5 +199,46 @@ describe('NewsSidebar', () => {
     expect(html).toMatch(/>58<\/span>/);
     expect(html).toContain(th.shop.news.sidebar.preOrderAction);
     expect(html).not.toContain('ข่าวยอดนิยม');
+  });
+
+  it("the sidebar's pre-order button links to the listing with pre_order=1", () => {
+    const html = render(<NewsSidebar categories={CATEGORIES} activeCategorySlug={null} />);
+    const tags = (html.match(/<a\b[^>]*>/g) ?? []).filter((tag) => tag.includes('href="/th/product?pre_order=1"'));
+    expect(tags).toHaveLength(1);
+    expect(text(html)).toContain(th.shop.news.sidebar.preOrderAction);
+    expect(html).not.toContain('href="#"');
+    expect(render(<NewsSidebar categories={[]} activeCategorySlug={null} />, 'en')).toContain('href="/en/product?pre_order=1"');
+  });
+});
+
+describe('news tags and images', () => {
+  const NEUTRAL = 'bg-sunk text-ink-2';
+  const PLATFORM = /bg-(ps|ns|it)-soft|bg-accent|bg-sale/;
+
+  it('every news tag uses the neutral tone', () => {
+    const cardHtml = render(<NewsCard card={card(1)} />);
+    expect(cardHtml).toContain(NEUTRAL);
+    expect(cardHtml).not.toMatch(PLATFORM);
+    const featureHtml = render(<NewsFeature cards={[card(1), card(2), card(3)]} />);
+    expect(featureHtml.match(new RegExp(NEUTRAL, 'g'))).toHaveLength(3);
+    expect(featureHtml).not.toMatch(PLATFORM);
+    const gridHtml = render(<NewsGrid cards={[card(1), card(2), card(3), card(4)]} emptyText="" />);
+    expect(gridHtml.match(new RegExp(NEUTRAL, 'g'))).toHaveLength(4);
+  });
+
+  it('draws every card image, real or placeholder, at 16:9', () => {
+    const real = render(<NewsCard card={card(1, { featuredImageUrl: 'https://old.test/a.jpg' })} />);
+    expect(real).toMatch(/<img[^>]*class="[^"]*aspect-video/);
+    expect(real).not.toContain('4/3');
+    const placeholder = render(<NewsCard card={card(1)} />);
+    expect(placeholder).toContain('aspect-video!');
+    expect(placeholder).not.toContain('4/3');
+    expect(placeholder).toContain('#F2F3F6');
+  });
+
+  it('lays the latest grid out in one column, two from sm', () => {
+    const html = render(<NewsGrid cards={[card(1), card(2)]} emptyText="" />);
+    expect(html).toMatch(/<ul class="[^"]*grid-cols-1[^"]*sm:grid-cols-2/);
+    expect(html).not.toContain('md:grid-cols-3');
   });
 });

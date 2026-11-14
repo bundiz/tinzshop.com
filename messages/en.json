@@ -1,12 +1,10 @@
 {
   "shop": {
     "header": {
-      "tagline": "A game and IT shop for over 20 years, from our Saphan Lek store to online · Delivery across Thailand",
+      "tagline": "<b>Delivery across Thailand</b> <rest>Shipping by item size · free on large items</rest>",
       "logo": {
         "label": "Tinzshop home",
-        "wordLead": "Tinz",
-        "wordTail": "shop",
-        "sub": "Games · Consoles · IT Gadgets"
+        "word": "Tinzshop"
       },
       "language": {
         "label": "Language",
@@ -17,8 +15,9 @@
       },
       "links": {
         "label": "Help links",
-        "trackOrder": "Track an order",
-        "help": "Help"
+        "myOrders": "My orders",
+        "warranty": "Warranty / claims",
+        "line": "Store LINE"
       },
       "articles": {
         "label": "Articles",
@@ -29,8 +28,7 @@
       },
       "search": {
         "label": "Search products",
-        "scope": "All categories",
-        "placeholder": "Search games, consoles or IT gear",
+        "placeholder": "Search games, consoles, accessories",
         "submit": "Search"
       },
       "actions": {
@@ -53,105 +51,103 @@
       },
       "nav": {
         "label": "Main categories",
-        "all": "All categories",
         "home": "Home"
+      },
+      "skip": "Skip to main content",
+      "menu": {
+        "open": "Open menu",
+        "close": "Close menu",
+        "label": "Menu"
+      },
+      "drawer": {
+        "warranty": "Returns, warranty or claims",
+        "account": "Sign in / Register"
       }
     },
     "home": {
       "meta": {
-        "title": "Tinzshop — Home",
-        "description": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop"
+        "title": "Tinzshop — Games, consoles and PS5 · Nintendo Switch gear",
+        "description": "A Saphan Lek games shop for over 20 years: PS5, Nintendo Switch, game discs, controllers and IT gadgets, delivered across Thailand and paid through K-Payment"
       },
       "hero": {
-        "label": "Featured",
-        "eyebrow": "New this month",
-        "title": "Play to the max<br></br>with <em>PlayStation 5</em>",
-        "text": "Consoles, games and accessories all in one place, with instalments through K-Payment",
-        "shopNow": "Shop now",
-        "viewAll": "View all products"
-      },
-      "trust": {
-        "label": "Our services",
-        "shipping": {
-          "title": "Delivery across Thailand",
-          "text": "Shipping priced by product size"
+        "eyebrow": "A Saphan Lek shop for over 20 years · Delivery across Thailand",
+        "title": "Consoles, games and accessories for <em>PS5 · Switch</em> in one shop",
+        "lead": "Register once to see every price, order and follow your orders yourself. Not sure which model? Ask staff who really play games, on LINE, before you buy.",
+        "facts": {
+          "shipping": "Shipping by product size, free for large items",
+          "payment": "Card, instalments or PromptPay QR through K-Payment",
+          "invoice": "An abbreviated tax invoice PDF with every order"
         },
-        "payment": {
-          "title": "Pay with K-Payment",
-          "text": "Card · Instalments · PromptPay QR"
-        },
-        "store": {
-          "title": "A real store for over 20 years",
-          "text": "Our shop in Saphan Lek"
-        },
-        "taxInvoice": {
-          "title": "Automatic tax invoice",
-          "text": "Prices include VAT"
+        "shop": "Shop products",
+        "register": "Create an account",
+        "feature": {
+          "tag": "Best-selling promotion set"
         }
+      },
+      "platforms": {
+        "label": "Shop by platform",
+        "consoleGames": "Consoles · Games · Controllers",
+        "gadgets": "Keyboards · Mice",
+        "preOrder": "Reserve before release",
+        "bundles": "Console + games",
+        "saleTitle": "On sale",
+        "sale": "Special prices"
       },
       "bundles": {
-        "title": "Promotion sets",
-        "subtitle": "Consoles, games and accessories, bundled ready to play"
+        "title": "Ready-to-play promotion sets",
+        "subtitle": "Consoles, games and accessories, bundled as sets",
+        "more": "View all sets"
+      },
+      "banners": {
+        "label": "Shop by console",
+        "ps": {
+          "title": "Everything for PS5",
+          "text": "Slim consoles, both disc-drive and Digital. Zone 3 games with Thai subtitles, controllers and SSDs for more storage."
+        },
+        "switch": {
+          "title": "Everything for Switch",
+          "text": "New Asia-zone games, Pro Controllers, cases and screen protectors."
+        },
+        "casesFilm": "Cases & screen protectors"
       },
       "bestSellers": {
-        "title": "Best sellers"
+        "title": "Best sellers",
+        "filterLabel": "Filter best sellers",
+        "all": "All",
+        "ps5": "PS5",
+        "switch": "Switch",
+        "gadgets": "IT Gadgets"
       },
-      "preOrders": {
-        "title": "Pre-orders"
+      "reasons": {
+        "title": "Why gamers buy from Tinzshop",
+        "store": {
+          "title": "A real shop for over 20 years",
+          "text": "Our Saphan Lek shop has sold consoles and games for a long time. Now you can order online and we deliver across the country."
+        },
+        "staff": {
+          "title": "Ask people who play",
+          "text": "Our staff play games themselves. They recommend models and games for how you play, and never oversell."
+        },
+        "warranty": {
+          "title": "Reach us directly about warranty",
+          "text": "Send a return, warranty or claim request from your order. Staff contact you back and tell you the distributor's service channel."
+        },
+        "documents": {
+          "title": "Complete paperwork",
+          "text": "Prices include 7% VAT. An abbreviated tax invoice is issued for every order and downloadable as a PDF from your order history."
+        }
+      },
+      "consult": {
+        "eyebrow": "Not sure which model to choose?",
+        "title": "Ask the shop before you buy. We answer during opening hours",
+        "text": "Ask about models, disc zones, instalments, or items that must be ordered from the distributor.",
+        "line": "Chat with the shop on LINE",
+        "faq": "Read the frequently asked questions",
+        "word": "LINE"
       },
       "empty": "No products are on sale yet",
-      "rail": {
-        "label": "Product categories",
-        "categoriesTitle": "Product categories",
-        "popularTitle": "Popular picks",
-        "controllers": "Controllers",
-        "games": "Games",
-        "headsets": "Gaming headsets",
-        "keyboards": "Keyboards",
-        "mice": "Mice"
-      },
-      "promo": {
-        "preOrder": {
-          "kicker": "Pre-orders",
-          "title": "November's new games are open for pre-order",
-          "link": "See the list"
-        },
-        "gadgets": {
-          "kicker": "IT Gadgets",
-          "title": "Keyboards, mice and headsets for gamers",
-          "link": "Shop now"
-        }
-      },
-      "welcome": {
-        "label": "Your account",
-        "hello": "Hello",
-        "text": "Welcome to Tinzshop",
-        "signIn": "Sign in",
-        "signUp": "Create an account",
-        "note": "Sign in to order and follow your orders",
-        "orders": "My orders",
-        "wishlist": "Wishlist",
-        "preOrders": "My pre-orders",
-        "contact": "Contact the shop"
-      },
       "section": {
         "more": "View all"
-      },
-      "showcase": {
-        "title": "Shop by category",
-        "consolesText": "Consoles, games and accessories",
-        "gadgetsText": "IT gear for gamers",
-        "preOrderText": "Reserve new games and consoles before release",
-        "tag": {
-          "consoles": "Consoles",
-          "games": "Games",
-          "controllers": "Controllers",
-          "keyboards": "Keyboards",
-          "mice": "Mice",
-          "headsets": "Headsets",
-          "newGames": "New games",
-          "newConsoles": "New consoles"
-        }
       }
     },
     "product": {
@@ -165,7 +161,8 @@
       },
       "badge": {
         "bundle": "Promotion set",
-        "preOrder": "Pre-order"
+        "preOrder": "Pre-order",
+        "sale": "Sale"
       },
       "releaseDate": "Releases {date, date, medium}",
       "imagePlaceholderAlt": "No product image yet",
@@ -179,43 +176,17 @@
         "image": "Product image {index} of {total}",
         "thumbnail": "Image {index}"
       },
-      "vatNote": "Price includes VAT · Instalments through K-Payment",
+      "vatNote": "Pay by credit card through K-Payment, choosing instalments at payment · Price includes VAT",
       "option": {
         "selected": "{name}: <strong>{value}</strong>",
         "soldOut": "{value} (out of stock)"
-      },
-      "service": {
-        "label": "Services",
-        "title": "Services from Tinzshop",
-        "shipping": {
-          "title": "Delivery across Thailand",
-          "text": "Shipping is priced by product size",
-          "rateLink": "See shipping rates"
-        },
-        "taxInvoice": {
-          "title": "Abbreviated tax invoice",
-          "text": "Issued automatically with every order. For a full tax invoice, give us your taxpayer details"
-        },
-        "store": {
-          "title": "The Tinzshop store",
-          "text": "Our shop in Saphan Lek, serving customers for over 20 years"
-        },
-        "contact": {
-          "title": "A question about this product?",
-          "link": "Contact the shop"
-        },
-        "payment": {
-          "title": "Pay with K-Payment",
-          "card": "Credit/debit card",
-          "instalment": "Instalments",
-          "promptPay": "PromptPay QR"
-        }
       },
       "tabs": {
         "label": "Product information",
         "description": "Description",
         "spec": "Specifications",
-        "reviews": "Reviews"
+        "reviews": "Customer reviews",
+        "shipping": "Shipping and warranty"
       },
       "spec": {
         "brand": "Brand",
@@ -235,57 +206,86 @@
         "title": "{name} | Tinzshop"
       },
       "wishlist": {
-        "add": "Add to wishlist"
+        "addNamed": "Add {name} to wishlist"
       },
-      "share": "Share",
       "quantity": {
         "label": "Quantity",
         "decrease": "Decrease quantity",
         "increase": "Increase quantity"
       },
       "addToCart": "Add to cart",
+      "addToCartNamed": "Add {name} to cart",
       "buyNow": "Buy now",
       "reviews": {
-        "empty": "No reviews yet"
+        "empty": "No reviews yet",
+        "write": "Write a review"
       },
       "related": {
         "title": "Related products"
+      },
+      "platformTag": "{platform} · {type}",
+      "assure": {
+        "shipping": {
+          "title": "Delivery by product size",
+          "text": "Large items such as consoles ship free"
+        },
+        "warranty": {
+          "title": "Warranty help available",
+          "text": "Send a request from your order; staff will contact you"
+        },
+        "invoice": {
+          "title": "Automatic tax invoice",
+          "text": "Download the PDF from your order history"
+        },
+        "cancel": {
+          "title": "Cancel before it ships",
+          "text": "Send a cancellation request from the order page"
+        }
+      },
+      "ask": {
+        "title": "A question before you buy?",
+        "text": "Ask staff who actually play games, on LINE",
+        "button": "Ask on LINE"
+      },
+      "shippingTab": {
+        "shippingTitle": "Shipping",
+        "shippingText": "Priced by product size: small items such as game discs, medium ones such as controllers, and large ones such as consoles ship free. The total is shown before you pay.",
+        "warrantyTitle": "Warranty",
+        "warrantyText": "Send a return, warranty or claim request on the <link>warranty and claims contact</link> page. Staff will contact you and tell you the distributor's service channel.",
+        "cancelTitle": "Cancellation",
+        "cancelText": "Send a cancellation request from your account any time before the shop ships the order."
       }
     },
     "footer": {
-      "about": "Games, consoles and IT equipment for over 20 years, from our Saphan Lek store to a full online shop",
+      "about": "Games, consoles and IT equipment. Our shop near Saphan Lek has served customers for over 20 years, and now you can order online anywhere in Thailand",
       "copyright": "© {year} Tinzshop",
-      "shopping": {
-        "title": "Shopping"
-      },
       "help": {
         "title": "Help",
-        "howToOrder": "How to order",
-        "payment": "Payment",
-        "shipping": "Delivery",
-        "trackOrder": "Track an order"
+        "howToOrder": "How to order and pay",
+        "shipping": "Shipping fees",
+        "myOrders": "My orders",
+        "warranty": "Returns, warranty and claims",
+        "cancellation": "Cancelling an order"
       },
       "aboutUs": {
         "title": "About us",
         "story": "The Tinzshop story",
         "news": "Game news",
-        "contact": "Contact us"
+        "warrantyPolicy": "Warranty and returns policy",
+        "privacy": "Privacy policy (PDPA)",
+        "terms": "Terms of service"
       },
-      "policy": {
-        "title": "Policies",
-        "privacy": "Privacy policy",
-        "terms": "Terms of use",
-        "claims": "Product claims"
+      "contact": {
+        "title": "Contact the shop",
+        "line": "Store LINE"
       },
-      "payBadge": {
-        "mark": "K",
-        "title": "Pay with K-Payment",
-        "text": "Credit/debit card · Instalments · PromptPay QR"
-      },
-      "dbdBadge": {
-        "mark": "DBD",
-        "title": "Registered for e-commerce",
-        "text": "DBD mark"
+      "pay": {
+        "label": "Payment methods",
+        "kpayment": "Pay with K-Payment",
+        "card": "Credit / debit card",
+        "instalment": "Instalments",
+        "promptPay": "PromptPay QR",
+        "dbd": "DBD Registered"
       }
     },
     "error": {
@@ -310,7 +310,9 @@
       "gadgets": "IT Gadgets",
       "preOrder": "Pre-orders",
       "bundles": "Promotion sets",
-      "news": "Game news"
+      "news": "Game news",
+      "otherToys": "Other consoles · Toys",
+      "sale": "Sale"
     },
     "news": {
       "meta": {
@@ -323,7 +325,7 @@
         "home": "Home"
       },
       "title": "Game news",
-      "subtitle": "News and announcements from the Tinzshop team",
+      "subtitle": "New game releases, product news and announcements from the shop",
       "tabs": {
         "label": "News categories",
         "all": "All",
@@ -376,11 +378,12 @@
         "home": "Home"
       },
       "title": "All products",
-      "description": "Consoles, games, controllers and accessories for every platform",
-      "categoryDescription": "{types} for {name}",
+      "description": "Consoles, games, controllers and accessories for every platform · {count, number} items",
+      "categoryDescription": "{types} for {name} · {count, number} items",
       "tabs": {
         "label": "Product types",
-        "all": "All"
+        "all": "All",
+        "count": "{count, number} items"
       },
       "type": {
         "console": "Consoles",
@@ -400,18 +403,19 @@
         "minPlaceholder": "Min",
         "maxPlaceholder": "Max",
         "preset": {
-          "under1000": "Under ฿1,000",
-          "from1000": "฿1,000–5,000",
-          "from5000": "฿5,000–20,000",
-          "over20000": "Over ฿20,000"
+          "under2000": "Under ฿2,000",
+          "from2000": "฿2,000–10,000",
+          "over10000": "Over ฿10,000"
         },
         "types": "Product type",
         "status": "Availability",
-        "inStock": "In stock only",
-        "preOrderOnly": "Pre-orders"
+        "inStock": "In stock",
+        "preOrderOnly": "Pre-orders",
+        "close": "Close filters",
+        "apply": "Show {count, number} items"
       },
       "toolbar": {
-        "count": "<strong>{count, number}</strong> items found",
+        "count": "Showing <b>{from, number}–{to, number}</b> of <b>{total, number}</b> items",
         "sortLabel": "Sort by",
         "sort": {
           "recommended": "Sort: Recommended",
@@ -425,7 +429,7 @@
         "list": "List view"
       },
       "active": {
-        "label": "Filters:",
+        "label": "Active filters:",
         "remove": "Remove filter {name}",
         "clear": "Clear all",
         "price": "฿{min, number} – ฿{max, number}",
@@ -434,6 +438,127 @@
         "inStock": "In stock"
       },
       "empty": "No products match these filters"
+    },
+    "auth": {
+      "signIn": {
+        "title": "Sign in",
+        "submit": "Sign in",
+        "forgot": "Forgot password?",
+        "reset": "Your password is changed. Sign in with the new one.",
+        "googleFailed": "Google sign-in did not work. Try again, or use your email and password.",
+        "switchPrompt": "No account yet? <link>Create an account</link>"
+      },
+      "register": {
+        "title": "Create an account",
+        "switchLink": "Sign in",
+        "submit": "Create account",
+        "switchPrompt": "Already have an account? <link>Sign in</link>"
+      },
+      "verify": {
+        "title": "Verify your email",
+        "description": "We sent a 6-digit code to {email}",
+        "submit": "Verify",
+        "resend": "Send the code again",
+        "resent": "A new code is on its way to your email",
+        "confirmed": "Your email is verified. You can sign in now.",
+        "resetInstead": "Got a password-reset email instead? Set a new password"
+      },
+      "forgot": {
+        "title": "Forgot password",
+        "description": "Set a new password with a code sent by email",
+        "switchLink": "Back to sign in",
+        "emailIntro": "Enter your email. If an account exists, we will send a 6-digit code.",
+        "codeIntro": "Enter the 6-digit code from your email, then choose a new password.",
+        "submit": "Send code",
+        "resetSubmit": "Set new password",
+        "resend": "Send a new code",
+        "resent": "If this email has an account, a new code is on its way.",
+        "setPassword": "Your email is verified. To finish, set your password with the new 6-digit code we just emailed you."
+      },
+      "notice": {
+        "expired": "This step timed out. Please start again."
+      },
+      "field": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "password": "Password",
+        "passwordConfirm": "Confirm password",
+        "code": "6-digit code",
+        "newPassword": "New password",
+        "newPasswordConfirm": "Confirm new password",
+        "emailPlaceholder": "name@example.com"
+      },
+      "google": {
+        "label": "Sign in with Google",
+        "or": "or",
+        "register": "Sign up with Google"
+      },
+      "pending": "Working…",
+      "password": {
+        "rulesLabel": "Your password needs",
+        "ruleMet": "(met)",
+        "confirmMatch": "(passwords match)",
+        "rule": {
+          "length": "At least 8 characters",
+          "number": "At least 1 number",
+          "lowercase": "At least 1 lowercase letter",
+          "uppercase": "At least 1 uppercase letter",
+          "special": "At least 1 special character, such as ! @ #"
+        },
+        "show": "Show",
+        "hide": "Hide",
+        "showLabel": "Show password",
+        "hideLabel": "Hide password"
+      },
+      "error": {
+        "rateLimited": "Too many attempts. Please wait a moment and try again.",
+        "invalidCredentials": "The email or password is incorrect",
+        "codeInvalid": "The code is incorrect",
+        "codeExpired": "The code has expired. Please ask for a new one.",
+        "passwordPolicy": "The password does not meet the rules yet",
+        "accountConflict": "You cannot sign in with this account. Please try another way.",
+        "unavailable": "Something went wrong on our side. Please try again.",
+        "nameRequired": "Please enter your name",
+        "nameTooLong": "The name is too long",
+        "emailInvalid": "The email format is not valid",
+        "emailExists": "This email is already in use",
+        "passwordMismatch": "The two passwords do not match",
+        "passwordRequired": "Please enter your password",
+        "codeFormat": "Enter the 6-digit code"
+      },
+      "menu": {
+        "label": "{name}'s account",
+        "signOut": "Sign out",
+        "greeting": "Hello {name}"
+      },
+      "breadcrumb": {
+        "label": "Breadcrumb",
+        "home": "Home"
+      },
+      "perks": {
+        "eyebrow": "Tinzshop members",
+        "signInTitle": "Sign in to see your orders, pre-orders and tax invoices",
+        "registerTitle": "Sign up once and track every order yourself",
+        "orders": {
+          "title": "Track your orders in one place",
+          "text": "Payment status and your whole order history"
+        },
+        "invoice": {
+          "title": "Download tax invoices",
+          "text": "A PDF for every order, kept for later"
+        },
+        "preOrder": {
+          "title": "See pre-orders and the balance due"
+        },
+        "warranty": {
+          "title": "Reach us about a warranty more easily",
+          "text": "Pick the product from your order history, no need to type an order number"
+        }
+      }
+    },
+    "contact": {
+      "lineChat": "Chat with the shop on LINE"
     }
   }
 }

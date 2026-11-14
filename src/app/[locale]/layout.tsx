@@ -4,7 +4,10 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
+import { anuphanLatin, anuphanThai, plexLatin, plexThai } from '../_fonts/fonts';
 import '../globals.css';
+
+const FONT_VARIABLES = [anuphanThai, anuphanLatin, plexThai, plexLatin].map((f) => f.variable).join(' ');
 
 type Props = {
   children: ReactNode;
@@ -25,7 +28,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={FONT_VARIABLES}>
       <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

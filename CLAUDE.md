@@ -11,7 +11,9 @@ source for what it must do is `docs/reference/client-summary-th.md`.
 catalogue mirror), plan 011's code (the landing page and product page) and
 plan 012's code (the news tables, the import from the old WordPress site and
 the news pages) and plan 013's code (the product listing page and a mock
-category assignment). No other application code exists yet.**
+category assignment) and plan 014's code (customer authentication with Amazon
+Cognito; its manual checks are still to be run) and plan 015's code (the
+restyle of those pages to the owner's new design in `tinzshop-redesign/`). No other application code exists yet.**
 
 **The stack is decided.** Next.js (App Router), TypeScript, PostgreSQL and
 Prisma, as one route-grouped application, with the commerce domain written
@@ -27,9 +29,9 @@ domain code off provider SDKs (D-050).
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 61 open questions are on record —
-see `docs/13-open-questions.md` for the full record: 42 RESOLVED, 6 PARTIALLY
-RESOLVED, 13 still genuinely UNRESOLVED (most waiting on a BigSeller
+CONFIRMED, not PROPOSED. 66 open questions are on record —
+see `docs/13-open-questions.md` for the full record: 44 RESOLVED, 6 PARTIALLY
+RESOLVED, 16 still genuinely UNRESOLVED (most waiting on a BigSeller
 data-inspection session, the Shopee live go-live, Shopee's API call limit, or
 the choice of AWS services). Total budget is 100,000 THB, delivered in four
 payment stages due 2026-12-15, 2027-01-12, 2027-02-09 and 2027-03-02 —
@@ -39,10 +41,10 @@ commits to it is pending the client's signature. Only *our own* engineering deci
 `docs/11-decisions.md` are Accepted in the strict ADR sense; treat both that
 register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 
-**Implementation is unblocked for plans 010, 011, 012 and 013 only** (the Shopee catalogue
+**Implementation is unblocked for plans 010, 011, 012, 013, 014 and 015 only** (the Shopee catalogue
 mirror — `docs/plans/010-shopee-catalogue-mirror.md`; the landing page and
 product page built from it — `docs/plans/011-landing-page-from-mirror.md`, D-117;
-the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151),
+the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151; customer registration and sign-in through Amazon Cognito, with Google sign-in, and sign-in required for the product pages — `docs/plans/014-customer-authentication.md`, D-152 to D-177, ADR-0003; the storefront restyle to `tinzshop-redesign/` — `docs/plans/015-storefront-redesign.md`, D-210 to D-223),
 plan 010 on the project owner's
 approval of 2026-10-26 (`docs/superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md`,
 §2 *Authority*). Shopee is the master for the catalogue (D-094), so options and
@@ -51,8 +53,13 @@ plan. Plan 002 is superseded in part by plan 010; its staff authentication and
 role scope is unchanged. Plan 011 is on the project owner's request of 2026-10-28. Plan 012 is on the
 project owner's decisions of 2026-10-29
 (`docs/superpowers/specs/2026-10-29-news-import-and-pages-design.md`, §2). Plan 013 is on the
-project owner's request of 2026-10-29. Build only what
-plans 010, 011, 012 and 013 describe — do not scaffold the rest of the application to
+project owner's request of 2026-10-29. Plan 014 is on the project owner's
+decisions of 2026-11-03 and approval of 2026-11-04
+(`docs/superpowers/specs/2026-11-03-customer-authentication-design.md`, §2); its
+Cognito dev-pool checks 3 to 6 (Task 2) were moved to the plan's manual test checklist (check 7 became moot under ruling R1)
+on 2026-11-11. Plan 015 is on the project owner's request of 2026-11-12
+(`docs/plans/015-storefront-redesign.md`); it changes how existing pages look, not what they do. Build only what
+plans 010 to 015 describe — do not scaffold the rest of the application to
 get ahead of the other plans. K-Payment is the
 **sole** payment method (bank transfer and standalone PromptPay are removed),
 and website orders never change stock — staff adjust stock in BigSeller by

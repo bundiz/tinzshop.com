@@ -76,8 +76,8 @@ async function loadCandidates(ids: string[]): Promise<StorefrontCandidate[]> {
 }
 
 /**
- * The landing page's products (plan 013): the 8 best sellers, the 6 best-selling kits and the 4 soonest
- * pre-orders, each sorted and limited in SQL, as one de-duplicated list of at most 18. Ties break by the
+ * The landing page's products (plan 013): the 10 best sellers, the 5 best-selling kits and the 4 soonest
+ * pre-orders, each sorted and limited in SQL, as one de-duplicated list of at most 19. Ties break by the
  * locale's name (as `pickProductName` picks it) under the database collation, then id, so the read stays
  * bounded and deterministic; at a cutoff tie this may pick a different product than JS `localeCompare`
  * would (ruling R4, D-147). The service builds the sections from these rows with its own sort.
@@ -94,9 +94,9 @@ export async function listStorefrontCandidates(locale: Locale = 'th'): Promise<S
       LEFT JOIN product_translation th ON th.product_id = b.id AND th.locale = 'th'
       LEFT JOIN product_translation en ON en.product_id = b.id AND en.locale = 'en'
     )
-    (SELECT id FROM named ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 8)
+    (SELECT id FROM named ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 10)
     UNION
-    (SELECT id FROM named WHERE is_kit ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 6)
+    (SELECT id FROM named WHERE is_kit ORDER BY sales_count DESC NULLS LAST, name, id LIMIT 5)
     UNION
     (SELECT id FROM named WHERE is_pre_order
      ORDER BY release_date ASC NULLS LAST, sales_count DESC NULLS LAST, name, id LIMIT 4)`;

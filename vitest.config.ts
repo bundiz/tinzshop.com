@@ -10,6 +10,6 @@ export default defineConfig({
   // Component tests render JSX with the React 17+ runtime, as Next.js does.
   esbuild: { jsx: 'automatic' },
   test: {
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'infra/**/*.test.mjs'],
   },
 });

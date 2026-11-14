@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import { buttonClass } from '@/components/ui/button-class';
 import type { ShippingSizeTier } from '@/server/services/catalogue/product-detail-service';
 
 export type ProductTabsProps = {
@@ -11,12 +12,13 @@ export type ProductTabsProps = {
   shippingSizeTier: ShippingSizeTier | null;
 };
 
-type TabId = 'description' | 'spec' | 'reviews';
+type TabId = 'description' | 'spec' | 'reviews' | 'shipping';
 
 /**
- * The product information tabs: description and specifications when there is data for them, and reviews.
- * Only our own reviews may be shown (spec O-6) and none exist yet, so the reviews tab is an empty state:
- * no stars, scores or counts (D-124).
+ * The product information tabs: description and specifications when there is data for them, reviews, and
+ * shipping and warranty (static text, its warranty link inert until that page exists; D-218). Only our own
+ * reviews may be shown (spec O-6) and none exist yet, so the reviews tab is an empty state with an inert
+ * "write a review" button: no stars, scores or counts (D-124).
  */
 export default function ProductTabs({ description, brandName, shippingSizeTier }: ProductTabsProps) {
   const t = useTranslations('shop.product');
@@ -31,7 +33,7 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
   const tabs: TabId[] = [];
   if (description.trim() !== '') tabs.push('description');
   if (specRows.length > 0) tabs.push('spec');
-  tabs.push('reviews');
+  tabs.push('reviews', 'shipping');
 
   const [selected, setSelected] = useState<TabId | undefined>(tabs[0]);
   const active: TabId = selected !== undefined && tabs.includes(selected) ? selected : (tabs[0] ?? 'reviews');
@@ -48,8 +50,8 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
   }
 
   return (
-    <section id="reviews" aria-label={t('tabs.label')} className="mt-4 overflow-hidden rounded-(--radius) bg-bg">
-      <div role="tablist" className="flex overflow-x-auto border-b border-border [scrollbar-width:none]">
+    <section id="reviews" aria-label={t('tabs.label')} className="mt-14">
+      <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-line [scrollbar-width:none]">
         {tabs.map((tab) => (
           <button
             key={tab}
@@ -64,8 +66,8 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
             tabIndex={tab === active ? 0 : -1}
             onClick={() => setSelected(tab)}
             onKeyDown={(event) => onKeyDown(event, tab)}
-            className={`flex min-h-[52px] cursor-pointer items-center border-b-[3px] px-3.5 text-[15px] font-semibold whitespace-nowrap hover:text-primary sm:px-5 ${
-              tab === active ? 'border-primary text-primary' : 'border-transparent text-text-muted'
+            className={`flex min-h-[52px] cursor-pointer items-center border-b-[2.5px] px-[18px] font-semibold whitespace-nowrap transition-colors hover:text-ink ${
+              tab === active ? 'border-accent text-ink' : 'border-transparent text-muted'
             }`}
           >
             {t(`tabs.${tab}`)}
@@ -80,29 +82,54 @@ export default function ProductTabs({ description, brandName, shippingSizeTier }
           aria-labelledby={`${idPrefix}-tab-${tab}`}
           hidden={tab !== active}
           tabIndex={0}
-          className="px-4 py-5 md:p-6"
+          className="py-7"
         >
           {tab === 'reviews' ? (
-            <p className="text-[15px] text-text-muted">{t('reviews.empty')}</p>
+            <>
+              <p className="text-ink-2">{t('reviews.empty')}</p>
+              <a href="#" className={`${buttonClass({ variant: 'line' })} mt-5`}>
+                {t('reviews.write')}
+              </a>
+            </>
           ) : tab === 'description' ? (
-            <p className="max-w-[820px] text-[15px] leading-[1.8] whitespace-pre-line [overflow-wrap:anywhere]">
+            <p className="max-w-[760px] leading-[1.8] whitespace-pre-line text-ink-2 [overflow-wrap:anywhere]">
               {description}
             </p>
+          ) : tab === 'shipping' ? (
+            <div className="max-w-[760px] text-ink-2">
+              {(['shipping', 'warranty', 'cancel'] as const).map((part) => (
+                <div key={part}>
+                  <h3 className="mt-[22px] mb-2 text-[21px] text-ink first:mt-0">{t(`shippingTab.${part}Title`)}</h3>
+                  <p>
+                    {part === 'warranty'
+                      ? t.rich('shippingTab.warrantyText', {
+                          link: (chunks) => (
+                            <a
+                              href="#"
+                              className="inline-flex items-center font-semibold text-ink underline underline-offset-[3px]"
+                            >
+                              {chunks}
+                            </a>
+                          ),
+                        })
+                      : t(`shippingTab.${part}Text`)}
+                  </p>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full max-w-[820px] border-collapse text-sm">
+              <table className="w-full max-w-[820px] border-collapse overflow-hidden rounded-md border border-line bg-surface">
                 <tbody>
                   {specRows.map((row) => (
-                    <tr key={row.label}>
+                    <tr key={row.label} className="border-b border-line last:border-b-0">
                       <th
                         scope="row"
-                        className="w-[36%] border-b border-border bg-bg-subtle px-3.5 py-[11px] text-left align-top leading-[1.6] font-semibold text-text-muted"
+                        className="w-[34%] bg-page px-[18px] py-3.5 text-left align-top font-semibold"
                       >
                         {row.label}
                       </th>
-                      <td className="border-b border-border px-3.5 py-[11px] text-left align-top leading-[1.6] [overflow-wrap:anywhere]">
-                        {row.value}
-                      </td>
+                      <td className="px-[18px] py-3.5 text-left align-top [overflow-wrap:anywhere]">{row.value}</td>
                     </tr>
                   ))}
                 </tbody>

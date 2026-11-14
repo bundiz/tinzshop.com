@@ -6,7 +6,7 @@
     "node": "^20.19 || ^22.12 || >=24.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3003",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -27,9 +27,11 @@
     "data:load": "npm run job:shopee-sync && npm run job:activate && npm run job:categorise && npm run job:news-import"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "3.1165.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@tailwindcss/postcss": "4.3.3",
+    "aws-jwt-verify": "5.2.1",
     "next": "16.4.3",
     "next-intl": "4.14.9",
     "pg": "8.23.1",

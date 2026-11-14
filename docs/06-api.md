@@ -146,7 +146,7 @@ internal id the caller has no right to.** See `08-security-testing.md`.
 
 | Caller | Authenticated by |
 | :--- | :--- |
-| Customer | Session cookie, `HttpOnly`, `Secure`, `SameSite=Lax` |
+| Customer | Session cookie `tinzshop_session`, `HttpOnly`, `Secure`, `SameSite=Lax`; signed in through Cognito (ADR-0003, plan 014) |
 | Guest | No session. A cart is keyed by an opaque cookie value |
 | Staff | Session cookie plus a second factor (REQ-032) |
 | External system | Request signature. Never a session, never an API key in a query string |
@@ -208,6 +208,80 @@ encrypted.
 Any other exception is `500`. The shop allow-list exists because any shop
 that authorizes our partner app can produce a valid code; without it, that
 shop could replace ours and the sync would mirror its catalogue (D-104).
+
+### `GET /api/auth/google` and `GET /api/callbacks/cognito` (plan 014)
+
+Customer sign-in with Google (ADR-0003, D-152). Both are browser `GET`s that answer **302**, never a body, and every response is `Cache-Control: no-store`. They live outside the locale segment (fixed URLs); the locale travels in a query parameter and in the `tinzshop_oauth` cookie. Neither takes a signature or a session.
+
+**`GET /api/auth/google?returnTo&locale`** starts the sign-in.
+
+| Parameter | Rule |
+| :--- | :--- |
+| `returnTo` | A path on this site: it must start with `/` but not `//`, contain no `\` and no locale prefix (`th` or `en` in any letter case), and be at most 512 characters; otherwise it becomes `/`. |
+| `locale` | `th` or `en`. |
+
+It sets the sealed, HttpOnly `tinzshop_oauth` cookie (10 minutes, path `/api`) holding the `state`, the PKCE verifier, `returnTo` and `locale`, then answers `302` to Cognito's authorize endpoint with `identity_provider=Google`, so the customer goes straight to Google.
+
+**`GET /api/callbacks/cognito?code&state`** is where Cognito returns the customer. It checks `state` against the cookie, exchanges the code at Cognito's token endpoint with the client secret and the PKCE verifier, verifies the ID token, upserts the `customer` row by `sub`, starts a `customer_session`, sets `tinzshop_session`, clears `tinzshop_oauth` and answers `302`.
+
+| Status | `Location` | When |
+| :--- | :--- | :--- |
+| `302` | `/{locale}{returnTo}` | Success; the session cookie is set. |
+| `302` | Cognito's authorize endpoint | The first Google sign-in after account linking fails once inside Cognito; the callback retries the authorize step **once** (`retried` in the cookie). The error is recognised by `error_description` containing `Already found an entry for username` (case-insensitive); that text is unverified until the manual Google test (D-180). |
+| `302` | `/{locale}/sign-in?error=google` | Any other failure: `state` mismatch (no token exchange is made), a refused or failed code exchange, an invalid ID token, or an email held by another `sub` (logged by hash only). |
+
+The callback URL registered on the app client is `{APP_URL}/api/callbacks/cognito`. `tinzshop_oauth` older than 10 minutes, missing or tampered with is the `?error=google` redirect in `th`. An unexpected exception is logged by its name and also ends in that redirect, never a `500` (D-180). The code and the tokens are never in a response body or a log.
+
+### Customer auth Server Actions (plan 014)
+
+The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`, not HTTP endpoints, so they are not in `openapi.yaml`; they carry Next's CSRF protection. Each validates `FormData` with Zod, calls one controller in `src/server/controllers/auth/`, and returns `{ fieldErrors?, formError?: messageKey, redirectTo? }` for `useActionState`. A user-facing `formError` is a message key under `shop.auth.*` (D-032); Cognito's own text is never shown.
+
+| Action | Does | Next step or error |
+| :--- | :--- | :--- |
+| `register` | Sign up (`given_name`, `family_name`). | `verify` when the email is new, already registered in Cognito without a customer row (a reset code is sent, D-160) or never confirmed (the code is resent). An email with a customer row is `auth.email_exists`, and nothing is sent (D-225). |
+| `confirmRegistration` | Confirms the 6-digit code. | `sign_in` (R1, D-173) when this browser created the account; otherwise a second code is sent and the answer is `set_password`, a redirect to `/forgot-password?step=reset&setPassword=1` (Q-061, D-186). Any failure, including an already-confirmed account, is the same `auth.invalid_code` whoever created the account (Q-060, D-179). |
+| `resendCode` | Resends the sign-up code. | Rate-limited. |
+| `signIn` | Email and password, sets the session cookie; an older session cookie's session is ended first (D-187). | `redirectTo` is the safe `returnTo`. An unconfirmed account goes to `verify`. |
+| `requestPasswordReset` | Sends a reset code. | Always "if this email has an account, we sent a code". |
+| `resendResetCode` | "Send a new code" on the reset step: `requestPasswordReset` for the email in the pending cookie (D-187). | The notice `shop.auth.forgot.resent` whatever Cognito says; `forgot_password` limit; no pending cookie goes back to `/forgot-password?expired=1`. |
+| `confirmPasswordReset` | Code plus new password for the email in the pending cookie (set by register or by the forgot-password form, so the verify page's link needs no new code); ends **all** of the customer's sessions. | Back to sign-in. A wrong code, an unconfirmed account, an unknown user and an unmapped Cognito refusal are all `auth.invalid_code`. |
+| `signOut` | Deletes the session row, revokes the refresh token, clears the cookie. | Redirect home. |
+
+**Error codes and message keys.** The service returns `Result<…>` (`{ ok: false, error: { code, message, messageKey, details? } }`); a `details.field` makes the controller put the key under `fieldErrors[field]`, otherwise it is the `formError`.
+
+| Code | `messageKey` | When |
+| :--- | :--- | :--- |
+| `auth.rate_limited` | `shop.auth.error.rateLimited` | A limit in D-169 is exceeded; returned before Cognito is called. |
+| `auth.invalid_credentials` | `shop.auth.error.invalidCredentials` | A wrong password or an unknown email. The same message for both (no enumeration). Sign-in also gives this key, as a form error and without calling Cognito, for an email that fails the format check (D-227). |
+| `auth.invalid_code` | `shop.auth.error.codeInvalid` (field `code`) | A wrong code, or an unknown email. |
+| `auth.code_expired` | `shop.auth.error.codeExpired` (field `code`) | The code has expired. |
+| `auth.invalid_password` | `shop.auth.error.passwordPolicy` (field `password`) | The pool refused the password; the form checks the same five rules first (D-177). |
+| `auth.email_exists` | `shop.auth.error.emailExists` (field `email`) | Register with an email that has a customer row (D-225). No code is sent. |
+| `auth.account_conflict` | `shop.auth.error.accountConflict` | A correct sign-in whose email another account already holds. |
+| `auth.unavailable` | `shop.auth.error.unavailable` | Cognito could not be reached. Never returned by `register` after a taken email, `resendCode` or `requestPasswordReset`, which always give their normal answer. |
+| (validation) | `shop.auth.error.nameRequired`, `nameTooLong`, `emailInvalid`, `passwordMismatch` (field `passwordConfirm`), `passwordRequired`, `codeFormat` | Zod checks in the controller, before the service. |
+| (controller) | none | The pending cookie is missing or over an hour old; the customer is sent back to the first step with `?expired=1` (a redirect carries no form state, so there is no `formError`). |
+
+**Reasoning behind D-225.** The owner wants a customer who registers an email they already use to be told so plainly, "อีเมลนี้ถูกใช้แล้ว", instead of being sent to a verify page and a reset email (D-160). Cognito would be the natural judge of "already confirmed", but with the pool's "prevent user existence errors" on, neither `ResendConfirmationCode` nor `ConfirmSignUp` tells a confirmed account apart (both checked against the dev pool on 2026-11-14), and the owner chose to keep that setting. Our `customer` table answers it instead: a row is written only by a successful sign-in, so its account is confirmed. The check runs only after `SignUp` says the email is taken, so a row left behind by a Cognito user deleted by hand does not block a fresh registration. The gap is a confirmed account that has never signed in: it has no row, so it keeps the D-160 path and its owner can still get in through the reset code.
+
+**Reasoning behind D-179 (Q-060).** `ConfirmSignUp` reports "already confirmed" before it checks the code, so using that answer to open a choose-a-password step would tell a stranger who typed any code that the email has an account. The verify step therefore answers a confirmed account exactly like a wrong code (same error, same state, same cookies). The owner of an existing account follows the standing link on the verify page to the reset-code step, `PASSWORD_RESET_CODE_PATH` = `/forgot-password?step=reset` (exported from the controller), which reads the email from `tinzshop_pending` and sends no code. The `choose_password` step and `completePasswordChoice` do not exist.
+
+**Reasoning behind D-186 (Q-061).** A stranger can register a victim's email with the stranger's password and leave it unconfirmed; when the victim registers, `ForgotPassword` fails on the unverified email and the sign-up code is resent, and confirming it would give the victim an account whose password the stranger chose. So `tinzshop_pending` carries `createdHere` (sealed, as 1 or 0 so the length never differs): `register` sets it from whether its `SignUp` succeeded, an unconfirmed `signIn` sets it to true (Cognito answers "not confirmed" only for the right password), and forgot password sets it to false; resending touches no cookie, and a cookie without the field reads as false. After a correct code, `createdHere` false makes `confirmRegistration` call `ForgotPassword` quietly (a failure is logged by code and email hash) and answer `set_password`; the reset step then replaces the password and ends every session. Every answer before a correct code is unchanged, so nothing is revealed. The service's `register` returns `{ next: 'verify', createdHere }` and `signIn` returns `{ next: 'verify', createdHere: true }`; the controller's `setPending` requires `createdHere`, so no new step can write the cookie without deciding it.
+
+**Reasoning behind D-187.** An expired reset code, or a second code (D-186) that Cognito failed to send, would otherwise leave the customer on a step with no way forward except starting again; "Send a new code" asks Cognito again for the email already pending, with the same enumeration-safe answer and limit as forgot password. A sign-in in a browser that still holds a session cookie overwrites that cookie, so the old row would live on until it expired; ending it first (as sign-out does) leaves no session nobody can reach. The callback route reads `tinzshop_session` from the request for the Google path.
+
+**Reasoning behind D-178.**
+- **Pending cookie.** `tinzshop_pending` is sealed and carries the email with its issue time, so a tampered or stale one reads as absent. It also carries `createdHere` (D-186) and the sanitised `returnTo` (set by register from its hidden field, by an unconfirmed sign-in, and by forgot password from its hidden field or the cookie already there; `safeReturnTo` on write and on read, D-183), and a correct verify or reset redirects to `/sign-in?confirmed=1&returnTo=…` or `?reset=1&returnTo=…` when it is not `/`. It stays after a correct verify or reset so the sign-in page can prefill the email (R1, D-173), and is cleared by a sign-in.
+- **Reset purge.** After a reset the service finds the customer with `findCustomerByEmail` and deletes every session row. This needs no extra Cognito sign-in and cannot fail on Cognito being down. A person who never signed in on the site has no rows, so nothing is purged.
+- **Follow-up steps are quiet.** After a taken email, `register` calls `ForgotPassword`; if that fails for any reason except a throttle, it calls `ResendConfirmationCode` (a never-confirmed account may answer `ForgotPassword` in several ways). `resendCode` falls back from resend to a reset on any failure, a throttle included. A failure is logged by code and email hash and never changes the answer, so no response tells an existing email from a new one. Only `CognitoError`s are mapped; any other error is a bug and propagates (D-022).
+- **Sign-in resend.** A sign-in that finds an unconfirmed account sends the code again and goes to verify. That resend counts against the `resend` limit; when it is over, the customer still goes to verify but no code is sent.
+- **Refused email.** If a correct sign-in belongs to a Cognito user whose email another customer holds, the just-issued refresh token is revoked before the refusal.
+
+The controller's state also carries `notice?: messageKey` (`shop.auth.verify.resent`, `shop.auth.forgot.resent`) and `values?` (the non-secret fields `email`, `firstName`, `lastName` as submitted, so a failed attempt keeps them; never a password or a code, D-182). The forgot-password email step redirects to `/forgot-password?step=reset` (D-184). Redirect targets are locale-less (`/register/verify`, `/sign-in?confirmed=1`, `/sign-in?reset=1`); the action adds the locale from the `locale` form field.
+
+**Page query parameters (plan 014 Task 9).** The pages read these and show a message, because a redirect carries no form state: `/sign-in?returnTo=` (passed through `safeReturnTo` into the form and the Google link), `?confirmed=1`, `?reset=1` and `?error=google`; `/register?expired=1` and `/forgot-password?expired=1`; and `/forgot-password?step=reset`, which opens the code and new-password step for the email in the pending cookie (with `&setPassword=1` it also says a second code was sent to set the password, D-186). `/forgot-password?returnTo=` (from the sign-in page's "Forgot password?" link) is sent with the email step as a hidden field (D-187). The product pages redirect a visitor who is not signed in to `/{locale}/sign-in?returnTo={path and query, URL-encoded}` (307).
+
+The adapter reports Cognito failures as a `CognitoError` with one of `username_exists`, `code_mismatch`, `code_expired`, `already_confirmed`, `not_authorized`, `user_not_confirmed`, `invalid_password`, `limit_exceeded` or `unavailable`. These are internal: the controller maps each to a message key, and `username_exists` and `already_confirmed` never reach the screen as such (D-160).
 
 ## Scheduled jobs
 

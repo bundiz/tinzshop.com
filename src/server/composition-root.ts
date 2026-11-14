@@ -6,10 +6,28 @@ import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-sour
 import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-source';
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
-import { getNewsImportJobConfig, getServerConfig } from '@/server/config';
+import { createCognitoIdentity } from '@/server/adapters/cognito/client';
+import { getAuthConfig, getNewsImportJobConfig, getServerConfig } from '@/server/config';
 import { createCatalogueCategoriseJobHandler } from '@/server/controllers/catalogue/catalogue-categorise-controller';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
+import { hitRateLimit } from '@/server/repositories/auth/auth-rate-limit-repository';
+import { findCustomerByEmail, upsertCustomerBySub } from '@/server/repositories/auth/customer-repository';
+import {
+  deleteCustomerSession,
+  deleteCustomerSessions,
+  findCustomerSession,
+  insertCustomerSession,
+  updateSessionAccessToken,
+} from '@/server/repositories/auth/customer-session-repository';
+import type { GoogleSignInDeps } from '@/server/controllers/auth/google-sign-in-controller';
+import type { CognitoIdentity } from '@/server/services/auth/cognito-identity';
+import type { CustomerAuthDeps } from '@/server/services/auth/customer-auth-service';
+import {
+  readCustomerSession,
+  type CurrentCustomer,
+  type CustomerSessionDeps,
+} from '@/server/services/auth/customer-session-service';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
 import {
   tryWithAdvisoryLock,
@@ -224,4 +242,55 @@ export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHan
         options,
       ),
   });
+}
+
+let cognitoIdentity: CognitoIdentity | undefined;
+
+/** The Cognito adapter, built on first use so a request that never signs in never reads auth config. */
+export function getCognitoIdentity(): CognitoIdentity {
+  cognitoIdentity ??= createCognitoIdentity(getAuthConfig());
+  return cognitoIdentity;
+}
+
+/** The session service's dependencies (plan 014): Cognito and the key are read lazily. */
+export function getCustomerSessionDeps(): CustomerSessionDeps {
+  return {
+    getCognito: getCognitoIdentity,
+    getSessionKey: () => getAuthConfig().sessionTokenEncryptionKey,
+    sessions: {
+      insert: insertCustomerSession,
+      find: findCustomerSession,
+      updateAccessToken: updateSessionAccessToken,
+      delete: deleteCustomerSession,
+      deleteAll: deleteCustomerSessions,
+    },
+    log: (message, fields) => console.error(message, fields),
+  };
+}
+
+/** The customer auth service's dependencies (plan 014 Task 7). Logs carry codes and hashes only. */
+export function getCustomerAuthDeps(): CustomerAuthDeps {
+  return {
+    getCognito: getCognitoIdentity,
+    rateLimit: { hitRateLimit },
+    customers: { upsertBySub: upsertCustomerBySub, findByEmail: findCustomerByEmail },
+    session: getCustomerSessionDeps(),
+    log: (message, fields) => console.error(message, fields),
+  };
+}
+
+/** The Google sign-in controller's dependencies (plan 014 Task 8). */
+export function getGoogleSignInDeps(): GoogleSignInDeps {
+  return {
+    auth: getCustomerAuthDeps(),
+    redirectUri: `${getAuthConfig().appUrl}/api/callbacks/cognito`,
+  };
+}
+
+/**
+ * The signed-in customer for a session cookie value, or null (plan 014 Task 9). Built per call; with no
+ * cookie it answers null without reading auth config. It never writes a cookie (D-174, R2).
+ */
+export function getCurrentCustomerReader(): (token: string | undefined, now: Date) => Promise<CurrentCustomer | null> {
+  return (token, now) => readCustomerSession(getCustomerSessionDeps(), token, now);
 }

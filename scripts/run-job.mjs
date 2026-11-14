@@ -3,7 +3,7 @@
 //   node --env-file=.env scripts/run-job.mjs <job> [--full]
 //
 // Reads JOB_SECRET and APP_URL from the environment (never prints them). APP_URL defaults to
-// http://localhost:3000. Exits non-zero when the job does not answer 2xx, so `npm run data:load`
+// http://localhost:3003. Exits non-zero when the job does not answer 2xx, so `npm run data:load`
 // stops at the first failure.
 
 const JOBS = {
@@ -30,7 +30,7 @@ if (!secret) {
   process.exit(2);
 }
 
-const base = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const base = (process.env.APP_URL || 'http://localhost:3003').replace(/\/+$/, '');
 const url = `${base}${path}${flag === '--full' ? '?full=1' : ''}`;
 
 console.log(`→ POST ${url}`);
