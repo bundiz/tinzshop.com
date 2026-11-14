@@ -206,6 +206,16 @@ Decisions: D-161 and D-170 (restyled by plan 015, D-220). Spec: [the customer au
 - **The product-page redirect.** `/{locale}/product` and `/{locale}/product/{id}/detail` call `redirect()` to `/{locale}/sign-in?returnTo=…` on the server when there is no signed-in customer, not only by hiding a link (D-041). Clicking a product on the home page therefore goes to sign-in with `returnTo` set to that product. The home page and the news pages stay public. A signed-in customer who opens sign-in or register is redirected home.
 - **Text.** Every string is a key under `shop.auth.*` in both catalogues (D-032); Cognito's text is never shown.
 
+## Back office (plan 016)
+
+Decisions: D-243, D-249. Spec: [the staff roles and back office design](superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md) section 7. The look is the owner's mockup (`tinzshop-redesign/admin/index.html`, `css/admin.css`) built with Tailwind on the storefront's `@theme` tokens; no new token was needed.
+
+- **The gate.** `requirePermission(locale, path, key)` in `(admin)/admin/_lib/require-permission.ts` returns the signed-in account holding `key`; signed out it redirects to sign-in with `returnTo`, and without the key it redirects to `/{locale}/admin/no-access`. Every page and Server Action under `/admin` calls it first, with its own key; the layout is never the check (D-249).
+- **The layout.** `(admin)/admin/layout.tsx` draws `AdminShell` only for an account holding `backoffice.enter` (and passes everyone else's page through bare, for the page to redirect). `AdminShell` is a Client Component for the narrow-width drawer and the current path: from `md` a fixed navy side menu, below it a drawer behind the top bar's menu button (`aria-expanded`, closed by Escape, the scrim or a link, out of the tab order while closed). The top bar holds only the TH/EN switch (the mockup's search box, bell and counts are left out). `SideNav` lists the sections ภาพรวม → แดชบอร์ด (`backoffice.enter`), เนื้อหา → ข่าวและบทความ (`news.manage`), ระบบ → ผู้ใช้และสิทธิ์ (`account.manage`), an item only when `can` holds its key, and a section only when it has an item; at the foot are the account's first name, its translated role (`admin.role.<roleKey>`), "ดูหน้าร้าน" and sign-out (the storefront's `signOutAction`). Later stages add items to its `SECTIONS` list.
+- **The pages.** `/{locale}/admin` greets "สวัสดี คุณ{name}", and for an account whose menu has nothing but the dashboard (a Sale-manager in stage 1) adds `admin.home.moreLater`. `/{locale}/admin/no-access` renders `NoAccess` from the `(admin-open)` route group, outside the layout, and names no page.
+- **The storefront link.** `AccountMenu` takes `canEnterBackOffice` (from `SiteHeader`, which reads `customer.permissions` with `can`) and then shows "หลังบ้าน" / "Back office" linking to `/{locale}/admin`, above sign-out.
+- **Text.** Every string is under `admin.*` in both catalogues; the role names are the glossary's.
+
 ## Bilingual
 
 **Thai and English, on the storefront and in the admin, from the same

@@ -531,7 +531,8 @@
       "menu": {
         "label": "{name}'s account",
         "signOut": "Sign out",
-        "greeting": "Hello {name}"
+        "greeting": "Hello {name}",
+        "backOffice": "Back office"
       },
       "breadcrumb": {
         "label": "Breadcrumb",
@@ -560,6 +561,53 @@
     },
     "contact": {
       "lineChat": "Chat with the shop on LINE"
+    }
+  },
+  "admin": {
+    "meta": {
+      "title": "Back office"
+    },
+    "brand": {
+      "label": "Tinzshop back office",
+      "tag": "Back office"
+    },
+    "skip": "Skip to main content",
+    "nav": {
+      "label": "Back-office menu",
+      "overview": "Overview",
+      "content": "Content",
+      "system": "System",
+      "dashboard": "Dashboard",
+      "news": "News and articles",
+      "users": "Users and permissions",
+      "viewShop": "View the shop",
+      "signOut": "Sign out",
+      "open": "Open menu",
+      "close": "Close menu"
+    },
+    "language": {
+      "label": "Back-office language",
+      "th": "TH",
+      "en": "EN",
+      "thName": "ภาษาไทย",
+      "enName": "English"
+    },
+    "role": {
+      "guest": "Guest",
+      "customer": "Customer",
+      "blogger": "Blogger",
+      "sale_manager": "Sale manager",
+      "admin": "Admin",
+      "super_admin": "Top-level Admin"
+    },
+    "home": {
+      "greeting": "Hello, {name}",
+      "moreLater": "More tools arrive in later stages"
+    },
+    "noAccess": {
+      "title": "You do not have access to this page",
+      "text": "If you think this is a mistake, please tell an administrator.",
+      "home": "Back to the home page"
     }
   }
 }

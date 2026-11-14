@@ -171,8 +171,8 @@
 - Home page: the greeting "สวัสดี คุณ{name}" and, for an account whose menu is empty beyond home (a Sale-manager in stage 1), the line `admin.home.moreLater` ("เครื่องมือเพิ่มเติมจะมาในรอบถัดไป" / "More tools arrive in later stages").
 - `AccountMenu` shows "หลังบ้าน" / "Back office" linking to `/{locale}/admin` when `can(customer, 'backoffice.enter')`.
 
-- [ ] **Step 1: Write the failing tests:** `requirePermission` redirects a signed-out visitor to sign-in with `returnTo`, refuses a Customer, passes a Blogger for `backoffice.enter`; `SideNav` shows only permitted items (Blogger: dashboard and news; super_admin: all three); the account menu link appears only with `backoffice.enter`.
-- [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** `npm test`, typecheck — PASS. **Commit** `feat: add the back-office shell, menu and permission gate`
+- [x] **Step 1: Write the failing tests:** `requirePermission` redirects a signed-out visitor to sign-in with `returnTo`, refuses a Customer, passes a Blogger for `backoffice.enter`; `SideNav` shows only permitted items (Blogger: dashboard and news; super_admin: all three); the account menu link appears only with `backoffice.enter`.
+- [x] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** `npm test`, typecheck — PASS. **Commit** `feat: add the back-office shell, menu and permission gate`
 
 ### Task 8: Accounts and role permissions pages
 
@@ -245,7 +245,7 @@ Run by a person on the dev pool. Never tick a box for a check nobody performed.
 
 ## Outcome
 
-Not built yet.
+Task 7 (the shell and the gate) is built: `requirePermission`, the layout and side menu, the home page, the no-access page and the account-menu link. Structure learned while building it (D-249): the layout cannot be the check (it does not know the path, and does not re-run on a client-side move), so it draws the frame only for an account holding `backoffice.enter` and every page calls `requirePermission` itself; the no-access page sits in a sibling route group `(admin-open)` so the layout does not wrap it and it cannot loop. Every later page under `/admin` goes in `(admin)/admin/` and calls `requirePermission` first. The integration test of the real `findCustomerSession` query (role key, permission keys, `blockedAt`) was added, deferred from Task 4's review.
 
 ## Not in this plan
 

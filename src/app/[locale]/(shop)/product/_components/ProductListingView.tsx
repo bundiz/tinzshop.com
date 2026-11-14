@@ -16,7 +16,7 @@ import {
 import Pagination from '../../news/_components/Pagination';
 import SiteFooter from '../../_components/SiteFooter';
 import type { ArticlesMenuEntry } from '../../_components/articles-menu';
-import SiteHeader, { type SiteNavKey } from '../../_components/SiteHeader';
+import SiteHeader, { type HeaderCustomer, type SiteNavKey } from '../../_components/SiteHeader';
 import {
   NAV_CATEGORY_SLUGS,
   PRODUCT_TYPE_KINDS,
@@ -46,7 +46,7 @@ export type ProductListingViewProps = {
   /** The header's "บทความ" menu (`readArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
   /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
-  customer?: { firstName: string } | null;
+  customer?: HeaderCustomer | null;
 };
 
 /** The tiles' art: เครื่องเกม and ทั้งหมด use the console, the others their own (plan 015, R12). */

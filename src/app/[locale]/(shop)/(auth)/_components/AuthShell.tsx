@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import type { ArticlesMenuEntry } from '../../_components/articles-menu';
 import SiteFooter from '../../_components/SiteFooter';
-import SiteHeader from '../../_components/SiteHeader';
+import SiteHeader, { type HeaderCustomer } from '../../_components/SiteHeader';
 import AuthPerks from './AuthPerks';
 
 /**
@@ -22,7 +22,7 @@ export default function AuthShell({
   /** The page's path with its query and without the locale, so the language switch keeps `returnTo`. */
   path: string;
   articlesMenu: ArticlesMenuEntry[];
-  customer?: { firstName: string } | null;
+  customer?: HeaderCustomer | null;
   /** The page's crumb label, the last item of the trail. */
   breadcrumb: string;
   /** The perks panel beside the card; `null` for verify and forgot password, where the card stands alone. */

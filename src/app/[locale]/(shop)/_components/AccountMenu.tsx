@@ -8,14 +8,16 @@ import { signOutAction } from '../(auth)/actions';
 export type AccountMenuProps = {
   /** The signed-in customer's first name. */
   firstName: string;
+  /** Whether the account holds `backoffice.enter`: shows the "หลังบ้าน" link to the back office (plan 016). */
+  canEnterBackOffice?: boolean;
 };
 
 /**
- * The signed-in header's account entry: the first name, and a small menu holding "ออกจากระบบ" (D-170). A disclosure,
+ * The signed-in header's account entry: the first name, and a small menu holding "ออกจากระบบ" (D-170) and, for an account that may enter the back office, "หลังบ้าน" (plan 016). A disclosure,
  * not an ARIA `menu`: a button with `aria-expanded` that shows a panel. Escape wherever focus is (focus goes back to the button),
  * a click outside and moving focus out all close it; the panel is in the page's tab order only while open.
  */
-export default function AccountMenu({ firstName }: AccountMenuProps) {
+export default function AccountMenu({ firstName, canEnterBackOffice = false }: AccountMenuProps) {
   const t = useTranslations('shop.auth.menu');
   const tAccount = useTranslations('shop.header.actions.account');
   const locale = useLocale();
@@ -70,6 +72,14 @@ export default function AccountMenu({ firstName }: AccountMenuProps) {
         hidden={!open}
         className="absolute top-full right-0 z-50 mt-1 w-44 rounded-md border border-line bg-surface p-1 shadow-2"
       >
+        {canEnterBackOffice ? (
+          <a
+            href={`/${locale}/admin`}
+            className="flex min-h-11 items-center rounded-sm px-3 text-sm font-medium hover:bg-brand-soft hover:text-brand"
+          >
+            {t('backOffice')}
+          </a>
+        ) : null}
         <form action={signOutAction}>
           <input type="hidden" name="locale" value={locale} />
           <button

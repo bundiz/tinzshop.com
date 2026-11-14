@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import en from '../../../../../messages/en.json';
 import th from '../../../../../messages/th.json';
 import AccountMenu from './AccountMenu';
 
@@ -92,5 +93,40 @@ describe('AccountMenu', () => {
     act(() => toggle().focus());
     act(() => document.getElementById('elsewhere')!.focus());
     expect(panel().hidden).toBe(true);
+  });
+
+  it('has no back-office link by default', () => {
+    expect(panel().querySelector('a')).toBeNull();
+    expect(panel().textContent).not.toContain('หลังบ้าน');
+  });
+
+  describe('the back-office link (plan 016)', () => {
+    const renderMenu = (canEnterBackOffice: boolean, locale: 'th' | 'en' = 'th') => {
+      act(() => root.unmount());
+      root = createRoot(container);
+      act(() =>
+        root.render(
+          <NextIntlClientProvider locale={locale} messages={locale === 'th' ? th : en} timeZone="Asia/Bangkok">
+            <AccountMenu firstName="Tester" canEnterBackOffice={canEnterBackOffice} />
+          </NextIntlClientProvider>,
+        ),
+      );
+    };
+
+    it('shows หลังบ้าน linking to /{locale}/admin only when the account may enter', () => {
+      renderMenu(true);
+      const link = panel().querySelector<HTMLAnchorElement>('a')!;
+      expect(link.textContent).toBe('หลังบ้าน');
+      expect(link.getAttribute('href')).toBe('/th/admin');
+      renderMenu(false);
+      expect(panel().querySelector('a')).toBeNull();
+    });
+
+    it('reads Back office in English', () => {
+      renderMenu(true, 'en');
+      const link = panel().querySelector<HTMLAnchorElement>('a')!;
+      expect(link.textContent).toBe('Back office');
+      expect(link.getAttribute('href')).toBe('/en/admin');
+    });
   });
 });

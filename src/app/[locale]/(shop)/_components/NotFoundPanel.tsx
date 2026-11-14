@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { buttonClass } from '@/components/ui/button-class';
 import type { ArticlesMenuEntry } from './articles-menu';
 import SiteFooter from './SiteFooter';
-import SiteHeader from './SiteHeader';
+import SiteHeader, { type HeaderCustomer } from './SiteHeader';
 
 export type NotFoundPanelProps = {
   title: string;
@@ -12,7 +12,7 @@ export type NotFoundPanelProps = {
   /** The header's "บทความ" menu (`readRequestArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
   /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
-  customer?: { firstName: string } | null;
+  customer?: HeaderCustomer | null;
 };
 
 /** A storefront not-found screen: said plainly inside the site header and footer, with a way home (07 Loading, empty and error). */

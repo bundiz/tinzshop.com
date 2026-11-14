@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { platformTone, type PlatformTone } from '@/components/domain/platform-tone';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
+import { can } from '@/server/services/access/access-service';
+import type { PermissionKey } from '@/server/services/access/permission-keys';
 import { listingHref, NAV_CATEGORY_SLUGS } from '../product/listing-url';
 import AccountMenu from './AccountMenu';
 import ArticlesMenu from './ArticlesMenu';
@@ -25,8 +27,11 @@ export type SiteHeaderProps = {
    * The signed-in customer, from `readCurrentCustomer()`. Every page that draws the header passes it: with a customer
    * the account entry shows the first name and a sign-out menu (D-170); without one it links to sign-in.
    */
-  customer?: { firstName: string } | null;
+  customer?: HeaderCustomer | null;
 };
+
+/** What the header needs of the signed-in customer; `permissions` decides the "หลังบ้าน" link (plan 016). */
+export type HeaderCustomer = { firstName: string; permissions?: readonly PermissionKey[] };
 
 export type SiteNavKey = 'home' | (typeof NAV_CATEGORIES)[number];
 
@@ -185,7 +190,10 @@ export default function SiteHeader({ path, articlesMenu, activeNav, customer = n
                 <strong>{t('actions.account.line2')}</strong>
               </HeaderAction>
             ) : (
-              <AccountMenu firstName={customer.firstName} />
+              <AccountMenu
+                firstName={customer.firstName}
+                canEnterBackOffice={can({ permissions: customer.permissions ?? [] }, 'backoffice.enter')}
+              />
             )}
             <HeaderAction icon="heart" label={t('actions.wishlist.label')}>
               <small>{t('actions.wishlist.line1')}</small>

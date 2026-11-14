@@ -3,7 +3,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import type { NewsListPage } from '@/server/services/news/news-read-service';
 import SiteFooter from '../../_components/SiteFooter';
 import type { ArticlesMenuEntry } from '../../_components/articles-menu';
-import SiteHeader from '../../_components/SiteHeader';
+import SiteHeader, { type HeaderCustomer } from '../../_components/SiteHeader';
 import { newsCategoryPath, newsListPath } from '../news-routes';
 import NewsFeature from './NewsFeature';
 import NewsGrid from './NewsGrid';
@@ -16,7 +16,7 @@ export type NewsListViewProps = {
   /** The header's "บทความ" menu (`readArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
   /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
-  customer?: { firstName: string } | null;
+  customer?: HeaderCustomer | null;
 };
 
 /** How many of page 1's articles go to the feature block (ruling R1, D-134); the rest fill the grid. */

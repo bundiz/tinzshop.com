@@ -79,6 +79,7 @@ tinzshop.com/
 │   │   └── [locale]/             ← every page route is under a locale segment (D-031)
 │   │       ├── (shop)/           ← storefront — customers and guests
 │   │       ├── (admin)/          ← back office — staff only
+│   │       ├── (admin-open)/     ← the back office's no-access page, outside the (admin) layout (D-249)
 │   │       └── (news)/           ← game news (REQ-047)
 │   ├── i18n/                     ← next-intl routing and request config, and the catalogue key-parity test (plan 011)
 │   ├── proxy.ts                  ← next-intl locale routing (Next 16's name for middleware); skips /api, /_next and files

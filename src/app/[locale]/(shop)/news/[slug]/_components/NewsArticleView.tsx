@@ -5,7 +5,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import SiteFooter from '../../../_components/SiteFooter';
 import type { ArticlesMenuEntry } from '../../../_components/articles-menu';
-import SiteHeader from '../../../_components/SiteHeader';
+import SiteHeader, { type HeaderCustomer } from '../../../_components/SiteHeader';
 import NewsCardSection from '../../_components/NewsCardSection';
 import { newsArticlePath, newsCategoryPath, newsListPath } from '../../news-routes';
 import ArticleBody from './ArticleBody';
@@ -15,7 +15,7 @@ export type NewsArticleViewProps = {
   /** The header's "บทความ" menu (`readArticlesMenu`). */
   articlesMenu: ArticlesMenuEntry[];
   /** The signed-in customer for the header (`readCurrentCustomer`), or null. */
-  customer?: { firstName: string } | null;
+  customer?: HeaderCustomer | null;
 };
 
 /**

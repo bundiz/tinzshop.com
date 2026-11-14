@@ -184,6 +184,9 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Account role | ตำแหน่งของบัญชี | The one role an account holds, `customer.role_id`; new accounts are Customer and the Top-level Admin changes it (D-230). | `customer.role_id`, `RoleKey` |
 | Permission key | รหัสสิทธิ์ | A row of `permission` that a role may hold; stage 1 has four: `backoffice.enter`, `news.manage`, `account.manage`, `role.manage` (D-241). | `PermissionKey`, `permission.key` |
 | Back-office key | สิทธิ์หลังบ้าน | A permission key that opens a back-office feature; `customer` and `guest` can never hold one, and the server refuses it (D-241). | `PermissionKey` |
+| Permission gate | ด่านตรวจสิทธิ์ | `requirePermission(locale, path, key)` (plan 016 Task 7): the server-side check every back-office page and action starts with; sends a signed-out visitor to sign-in and an account without the key to the no-access page. | `requirePermission`, `noAccessPath` |
+| No-access page | หน้าไม่มีสิทธิ์ | `/{locale}/admin/no-access`, in the `(admin-open)` route group outside the back-office layout: "คุณไม่มีสิทธิ์เข้าหน้านี้" with a link home, naming no page (D-249). | `NoAccess`, `(admin-open)` |
+| Back-office shell | โครงหลังบ้าน | The frame around every back-office page: navy side menu (`SideNav`) and top bar with the TH/EN switch (`AdminShell`), drawn by `(admin)/admin/layout.tsx` for an account holding `backoffice.enter`. | `AdminShell`, `SideNav` |
 | Blocked account | บัญชีที่ถูกระงับ | A customer account with `blocked_at` set: it has no sessions, cannot sign in, and is refused by the session read (D-234). | `customer.blocked_at` |
 | Last-Top-level-Admin guard | ตัวกันไม่ให้ไม่เหลือ Admin สูงสุด | The rule, checked inside the same transaction as the change, that a role change or block never leaves no unblocked `super_admin` (D-241). | `last_super_admin` |
 

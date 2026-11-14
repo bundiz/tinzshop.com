@@ -105,6 +105,47 @@ describe('customer session repository', () => {
   });
 });
 
+describe('customer session read of the role (plan 016)', () => {
+  it('returns the exact role key, the role\'s permission keys and blockedAt, null then a date after blocking', async () => {
+    const customer = await makeCustomer('s-role', 'role@example.com');
+    // The seeded Blogger role holds exactly backoffice.enter and news.manage.
+    await client.query("UPDATE customer SET role_id = (SELECT id FROM role WHERE key = 'blogger') WHERE id = $1", [customer.id]);
+    await insertCustomerSession({
+      tokenHash: 'role-h',
+      customerId: customer.id,
+      refreshTokenSealed: 'r',
+      accessTokenSealed: 'a',
+      accessTokenExpiresAt: new Date('2026-11-10T00:15:00Z'),
+      expiresAt: new Date('2026-12-01T00:00:00Z'),
+    });
+
+    const before = await findCustomerSession('role-h');
+    expect(before?.customer.roleKey).toBe('blogger');
+    expect([...(before?.customer.permissions ?? [])].sort()).toEqual(['backoffice.enter', 'news.manage']);
+    expect(before?.customer.blockedAt).toBeNull();
+
+    await client.query('UPDATE customer SET blocked_at = now() WHERE id = $1', [customer.id]);
+    const after = await findCustomerSession('role-h');
+    expect(after?.customer.blockedAt).toBeInstanceOf(Date);
+    expect(after?.customer.roleKey).toBe('blogger');
+  });
+
+  it('a customer on the Customer role has no permission keys', async () => {
+    const customer = await makeCustomer('s-plain', 'plain@example.com');
+    await insertCustomerSession({
+      tokenHash: 'plain-h',
+      customerId: customer.id,
+      refreshTokenSealed: 'r',
+      accessTokenSealed: 'a',
+      accessTokenExpiresAt: new Date('2026-11-10T00:15:00Z'),
+      expiresAt: new Date('2026-12-01T00:00:00Z'),
+    });
+    const found = await findCustomerSession('plain-h');
+    expect(found?.customer.roleKey).toBe('customer');
+    expect(found?.customer.permissions).toEqual([]);
+  });
+});
+
 describe('auth rate limit repository', () => {
   it('hitRateLimit counts within a window and sweeps ended windows', async () => {
     const w1 = new Date('2026-11-10T10:00:00Z');

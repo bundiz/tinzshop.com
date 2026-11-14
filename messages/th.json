@@ -531,7 +531,8 @@
       "menu": {
         "label": "บัญชีของ {name}",
         "signOut": "ออกจากระบบ",
-        "greeting": "สวัสดี คุณ{name}"
+        "greeting": "สวัสดี คุณ{name}",
+        "backOffice": "หลังบ้าน"
       },
       "breadcrumb": {
         "label": "เส้นทาง",
@@ -560,6 +561,53 @@
     },
     "contact": {
       "lineChat": "แชทกับร้านทาง LINE"
+    }
+  },
+  "admin": {
+    "meta": {
+      "title": "หลังบ้าน"
+    },
+    "brand": {
+      "label": "Tinzshop หลังบ้าน",
+      "tag": "หลังบ้าน"
+    },
+    "skip": "ข้ามไปเนื้อหาหลัก",
+    "nav": {
+      "label": "เมนูหลังบ้าน",
+      "overview": "ภาพรวม",
+      "content": "เนื้อหา",
+      "system": "ระบบ",
+      "dashboard": "แดชบอร์ด",
+      "news": "ข่าวและบทความ",
+      "users": "ผู้ใช้และสิทธิ์",
+      "viewShop": "ดูหน้าร้าน",
+      "signOut": "ออกจากระบบ",
+      "open": "เปิดเมนู",
+      "close": "ปิดเมนู"
+    },
+    "language": {
+      "label": "ภาษาของหลังบ้าน",
+      "th": "TH",
+      "en": "EN",
+      "thName": "ภาษาไทย",
+      "enName": "English"
+    },
+    "role": {
+      "guest": "ผู้เยี่ยมชม",
+      "customer": "ลูกค้า",
+      "blogger": "Blogger",
+      "sale_manager": "Sale-manager",
+      "admin": "Admin",
+      "super_admin": "Admin สูงสุด"
+    },
+    "home": {
+      "greeting": "สวัสดี คุณ{name}",
+      "moreLater": "เครื่องมือเพิ่มเติมจะมาในรอบถัดไป"
+    },
+    "noAccess": {
+      "title": "คุณไม่มีสิทธิ์เข้าหน้านี้",
+      "text": "หากคิดว่าเป็นความผิดพลาด โปรดแจ้งผู้ดูแลระบบ",
+      "home": "กลับหน้าแรก"
     }
   }
 }
