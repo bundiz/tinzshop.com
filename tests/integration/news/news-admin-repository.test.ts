@@ -5,8 +5,11 @@ import { getPrisma } from '@/server/repositories/shared/prisma';
 import type { ArticleInput } from '@/server/services/news/news-admin-service';
 import { resetDatabase } from '../setup/database';
 
+let defaultCategoryId: string | null = null;
+
 beforeEach(async () => {
   await resetDatabase();
+  defaultCategoryId = null;
 });
 
 const prisma = () => getPrisma();
@@ -51,15 +54,21 @@ function input(overrides: Partial<ArticleInput> = {}): ArticleInput {
 
 async function save(
   editorId: string,
-  over: { id?: string | null; input?: ArticleInput; action?: 'draft' | 'publish' | 'unpublish'; publishAt?: Date | null } = {},
+  over: { id?: string | null; input?: ArticleInput; action?: 'draft' | 'publish' | 'unpublish'; publishAt?: Date | null; now?: Date } = {},
 ) {
+  const body = over.input ?? input();
+  // Publishing needs a category (R9): give the default input one.
+  if (over.action === 'publish' && body.categoryIds.length === 0) {
+    defaultCategoryId ??= await category('default-category');
+    body.categoryIds = [defaultCategoryId];
+  }
   const result = await admin.save({
     id: over.id ?? null,
     editorId,
-    input: over.input ?? input(),
+    input: body,
     action: over.action ?? 'draft',
     publishAt: over.publishAt ?? null,
-    now: new Date(),
+    now: over.now ?? new Date(),
   });
   if (!result.ok) throw new Error(`save failed: ${result.error.code}`);
   return result.data;
@@ -97,11 +106,17 @@ describe('news authoring against the database', () => {
     expect(draft.status).toBe('draft');
     expect(draft.publishedAt).toEqual(published.publishedAt);
 
-    // Republishing a draft that was live goes live now.
-    await save(who, { id, action: 'publish' });
+    // Republishing a draft that was live goes live now (R8)...
+    const later = new Date(NOW.getTime() + HOUR);
+    await save(who, { id, action: 'publish', now: later });
     const again = await prisma().newsArticle.findUniqueOrThrow({ where: { id } });
     expect(again.status).toBe('published');
-    expect(again.publishedAt?.getTime()).toBeGreaterThanOrEqual(published.publishedAt?.getTime() ?? 0);
+    expect(again.publishedAt).toEqual(later);
+
+    // ...and saving it again while live is an update that keeps the date, even with a past publishAt.
+    await save(who, { id, action: 'publish', now: new Date(later.getTime() + HOUR) });
+    await save(who, { id, action: 'publish', publishAt: new Date(NOW.getTime() - HOUR), now: new Date(later.getTime() + 2 * HOUR) });
+    expect((await prisma().newsArticle.findUniqueOrThrow({ where: { id } })).publishedAt).toEqual(later);
   });
 
   it('schedules a future publish, which the list shows as scheduled and the live rule does not yet', async () => {
@@ -218,7 +233,7 @@ describe('news authoring against the database', () => {
     const who = await editor();
     const cat = await category('news');
     const a = await save(who, { input: input({ th: { title: 'Alpha ข่าว', excerpt: '', bodyHtml: '<p>a</p>' }, categoryIds: [cat] }) });
-    const b = await save(who, { input: input({ th: { title: 'Beta', excerpt: '', bodyHtml: '<p>b</p>' } }), action: 'publish' });
+    const b = await save(who, { input: input({ th: { title: 'Beta', excerpt: 'e', bodyHtml: '<p>b</p>' } }), action: 'publish' });
 
     const all = await admin.list({ query: '', status: null, categoryId: null, page: 1 });
     expect(all.rows.map((r) => [r.id, r.status])).toEqual([[b.id, 'published'], [a.id, 'draft']]);

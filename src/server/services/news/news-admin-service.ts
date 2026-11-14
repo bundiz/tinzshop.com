@@ -89,6 +89,8 @@ export type NewsAdminDeps = {
     listAdminArticles: (filter: AdminArticleFilter) => Promise<{ total: number; rows: AdminArticleListRecord[] }>;
     findAdminArticle: (id: string) => Promise<AdminArticleRecord | null>;
     findExistingCategoryIds: (ids: readonly string[]) => Promise<string[]>;
+    /** Of these ids, the categories with `is_listed = true`. */
+    findListedCategoryIds: (ids: readonly string[]) => Promise<string[]>;
     findExistingProductIds: (ids: readonly string[]) => Promise<string[]>;
     findEditorFirstName: (editorId: string) => Promise<string | null>;
     /** Null when `id` names no article. */
@@ -154,6 +156,11 @@ export function normaliseTagNames(names: readonly string[]): string[] {
   return result;
 }
 
+/** Whether a sanitised body says anything: some text, or an image, an embed or a product card. */
+function hasContent(html: string): boolean {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, '') !== '' || /<(img|iframe|tinz-product)\b/i.test(html);
+}
+
 function deriveStatus(row: { status: 'draft' | 'published'; publishedAt: Date | null }, now: Date): NewsAdminStatus {
   if (row.status === 'draft') return 'draft';
   return row.publishedAt !== null && row.publishedAt.getTime() > now.getTime() ? 'scheduled' : 'published';
@@ -201,8 +208,9 @@ export type SaveArticleInput = {
 };
 
 /**
- * Creates or updates an article in one save. The Thai title and body are required; English is a set;
- * category and product ids must exist; every body is sanitised; the status follows the action. A trashed
+ * Creates or updates an article in one save. The Thai title and body (non-empty after sanitising) are
+ * required on every save; publishing also needs the Thai excerpt and a category (R9, D-248). English is a set;
+ * category and product ids must exist; every body is sanitised; the status follows the action (R8, D-247). A trashed
  * article is not found (restore it first).
  */
 export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput): Promise<Result<{ id: string; slug: string }>> {
@@ -217,14 +225,18 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
 
   const thTitle = input.th.title.trim();
   if (thTitle === '') return invalid('th.title', 'The Thai title is required');
-  if (input.th.bodyHtml.trim() === '') return invalid('th.bodyHtml', 'The Thai body is required');
+  const thBody = deps.sanitize(input.th.bodyHtml);
+  if (!hasContent(thBody)) return invalid('th.bodyHtml', 'The Thai body is required');
+  const thExcerpt = input.th.excerpt.trim();
+  if (action === 'publish' && thExcerpt === '') return invalid('th.excerpt', 'The Thai excerpt is required to publish');
 
   let en: ArticleTranslationInput | null = null;
   const enTitle = input.en?.title.trim() ?? '';
-  const enBody = input.en?.bodyHtml.trim() ?? '';
-  if (input.en !== null && (enTitle !== '' || enBody !== '' || input.en.excerpt.trim() !== '')) {
-    if (enTitle === '' || enBody === '') return invalid('en', 'English needs a title and a body, or neither');
-    en = { title: enTitle, excerpt: input.en.excerpt.trim(), bodyHtml: deps.sanitize(input.en.bodyHtml) };
+  const enBodyRaw = input.en?.bodyHtml.trim() ?? '';
+  if (input.en !== null && (enTitle !== '' || enBodyRaw !== '' || input.en.excerpt.trim() !== '')) {
+    const enBody = deps.sanitize(input.en.bodyHtml);
+    if (enTitle === '' || !hasContent(enBody)) return invalid('en', 'English needs a title and a body, or neither');
+    en = { title: enTitle, excerpt: input.en.excerpt.trim(), bodyHtml: enBody };
   }
 
   const categoryIds = [...new Set(input.categoryIds)];
@@ -234,6 +246,15 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   if (categoryIds.length > 0 && (await deps.news.findExistingCategoryIds(categoryIds)).length !== categoryIds.length) {
     return invalid('categoryIds', 'A category does not exist');
   }
+  if (action === 'publish') {
+    if (categoryIds.length === 0) return invalid('categoryIds', 'Publishing needs at least one category');
+    // A category already linked may stay (an imported article's unlisted one); a newly linked one must be listed.
+    const linked = new Set(existing?.categoryIds ?? []);
+    const added = categoryIds.filter((categoryId) => !linked.has(categoryId));
+    if (added.length > 0 && (await deps.news.findListedCategoryIds(added)).length !== added.length) {
+      return invalid('categoryIds', 'A new category must be listed');
+    }
+  }
   if (productIds.length > 0 && (await deps.news.findExistingProductIds(productIds)).length !== productIds.length) {
     return invalid('productIds', 'A product does not exist');
   }
@@ -242,11 +263,13 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   let publishedAt: Date | null;
   if (action === 'publish') {
     status = 'published';
+    const storedAt = existing?.status === 'published' ? existing.publishedAt : null;
+    const isLive = storedAt !== null && storedAt <= now;
     if (publishAt !== null && publishAt.getTime() > now.getTime()) publishedAt = publishAt;
-    // Updating an article that is already live keeps its date; otherwise it goes live now.
-    else if (publishAt === null && existing?.status === 'published' && existing.publishedAt !== null && existing.publishedAt <= now) {
-      publishedAt = existing.publishedAt;
-    } else publishedAt = now;
+    // R8: saving an article that is already live is an update and keeps its date; a draft or a
+    // scheduled article goes live now.
+    else if (isLive) publishedAt = storedAt;
+    else publishedAt = now;
   } else {
     // draft and unpublish both leave `published_at` as it was.
     status = 'draft';
@@ -263,7 +286,7 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
     status,
     publishedAt,
     bylineName,
-    th: { title: thTitle, excerpt: input.th.excerpt.trim(), bodyHtml: deps.sanitize(input.th.bodyHtml) },
+    th: { title: thTitle, excerpt: thExcerpt, bodyHtml: thBody },
     en,
     categoryIds,
     tagNames: normaliseTagNames(input.tagNames),

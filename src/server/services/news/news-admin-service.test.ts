@@ -24,7 +24,7 @@ function input(overrides: Partial<ArticleInput> = {}): ArticleInput {
     slug: null,
     th: { title: 'ข่าว เกม ใหม่', excerpt: 'สรุป', bodyHtml: '<p>เนื้อหา</p>' },
     en: null,
-    categoryIds: [],
+    categoryIds: [CATEGORY],
     tagNames: [],
     productIds: [],
     bylineName: 'Writer',
@@ -58,6 +58,7 @@ function setup(existing: AdminArticleRecord | null = null) {
     listAdminArticles: vi.fn(async (_filter: AdminArticleFilter): Promise<{ total: number; rows: AdminArticleListRecord[] }> => ({ total: 0, rows: [] })),
     findAdminArticle: vi.fn(async () => existing),
     findExistingCategoryIds: vi.fn(async (ids: readonly string[]) => [...ids]),
+    findListedCategoryIds: vi.fn(async (ids: readonly string[]) => [...ids]),
     findExistingProductIds: vi.fn(async (ids: readonly string[]) => [...ids]),
     findEditorFirstName: vi.fn(async () => 'Editor'),
     saveArticle: vi.fn(async (write: { id: string | null; slug: string | null }) => ({
@@ -151,11 +152,38 @@ describe('saveArticle: status', () => {
     expect(written(news)).toMatchObject({ status: 'published', publishedAt: NOW });
   });
 
-  it('re-publishing an article already live keeps its publish date', async () => {
+  it('re-publishing an article already live (publishAt null) keeps its publish date', async () => {
     const live = new Date('2026-01-01T00:00:00Z');
     const { deps, news } = setup(record({ status: 'published', publishedAt: live }));
     await save(deps, { id: ARTICLE, action: 'publish', publishAt: null });
     expect(written(news)).toMatchObject({ status: 'published', publishedAt: live });
+  });
+
+  it('publish on a scheduled article with no publishAt publishes now', async () => {
+    const { deps, news } = setup(record({ status: 'published', publishedAt: new Date('2026-12-01T00:00:00Z') }));
+    await save(deps, { id: ARTICLE, action: 'publish', publishAt: null });
+    expect(written(news)).toMatchObject({ status: 'published', publishedAt: NOW });
+  });
+
+  it('publish on a live article with a past publishAt keeps its date (an update)', async () => {
+    const live = new Date('2026-01-01T00:00:00Z');
+    const { deps, news } = setup(record({ status: 'published', publishedAt: live }));
+    await save(deps, { id: ARTICLE, action: 'publish', publishAt: new Date('2026-05-05T00:00:00Z') });
+    expect(written(news)).toMatchObject({ status: 'published', publishedAt: live });
+  });
+
+  it('publish on a live article with a future publishAt schedules it', async () => {
+    const later = new Date('2027-01-01T00:00:00Z');
+    const { deps, news } = setup(record({ status: 'published', publishedAt: new Date('2026-01-01T00:00:00Z') }));
+    await save(deps, { id: ARTICLE, action: 'publish', publishAt: later });
+    expect(written(news)).toMatchObject({ publishedAt: later });
+  });
+
+  it('draft on a published article makes it a draft and keeps published_at', async () => {
+    const live = new Date('2026-01-01T00:00:00Z');
+    const { deps, news } = setup(record({ status: 'published', publishedAt: live }));
+    await save(deps, { id: ARTICLE, action: 'draft' });
+    expect(written(news)).toMatchObject({ status: 'draft', publishedAt: live });
   });
 
   it('unpublish sets draft and keeps published_at', async () => {
@@ -163,6 +191,57 @@ describe('saveArticle: status', () => {
     const { deps, news } = setup(record({ status: 'published', publishedAt: live }));
     await save(deps, { id: ARTICLE, action: 'unpublish' });
     expect(written(news)).toMatchObject({ status: 'draft', publishedAt: live });
+  });
+});
+
+describe('saveArticle: required fields (R9)', () => {
+  const thWith = (over: Partial<ArticleInput['th']>) => input({ th: { title: 'a', excerpt: 'e', bodyHtml: '<p>b</p>', ...over } });
+  const fieldOf = (result: Awaited<ReturnType<typeof save>>) =>
+    result.ok ? null : (result.error.details as { field: string }).field;
+
+  it('a draft needs only the Thai title and a body with content', async () => {
+    const { deps, news } = setup();
+    expect((await save(deps, { input: input({ th: { title: 'a', excerpt: '', bodyHtml: '<p>b</p>' }, categoryIds: [] }) })).ok).toBe(true);
+    expect(news.saveArticle).toHaveBeenCalledTimes(1);
+  });
+
+  it('a body that sanitises to nothing is empty, on a draft too', async () => {
+    const { deps, news } = setup();
+    vi.mocked(deps.sanitize).mockImplementation((html) => html.replace(/<script>.*?<\/script>/g, ''));
+    expect(fieldOf(await save(deps, { input: thWith({ bodyHtml: '<script>x()</script>' }) }))).toBe('th.bodyHtml');
+    expect(fieldOf(await save(deps, { input: thWith({ bodyHtml: '<p> </p>' }) }))).toBe('th.bodyHtml');
+    expect(news.saveArticle).not.toHaveBeenCalled();
+  });
+
+  it('publish needs a Thai excerpt', async () => {
+    const { deps, news } = setup();
+    expect(fieldOf(await save(deps, { action: 'publish', input: thWith({ excerpt: '  ' }) }))).toBe('th.excerpt');
+    expect(news.saveArticle).not.toHaveBeenCalled();
+  });
+
+  it('publish needs at least one category', async () => {
+    const { deps, news } = setup();
+    expect(fieldOf(await save(deps, { action: 'publish', input: input({ categoryIds: [] }) }))).toBe('categoryIds');
+    expect(news.saveArticle).not.toHaveBeenCalled();
+  });
+
+  it('publish refuses a newly linked category that is not listed, but keeps one already linked', async () => {
+    const { deps, news } = setup(record({ categoryIds: [CATEGORY] }));
+    news.findListedCategoryIds.mockImplementation(async () => []);
+    // Already linked (an imported article's unlisted category): allowed to stay.
+    expect((await save(deps, { id: ARTICLE, action: 'publish' })).ok).toBe(true);
+    expect(news.findListedCategoryIds).not.toHaveBeenCalled();
+
+    const other = '55555555-5555-4555-8555-555555555555';
+    const refused = await save(deps, { id: ARTICLE, action: 'publish', input: input({ categoryIds: [CATEGORY, other] }) });
+    expect(fieldOf(refused)).toBe('categoryIds');
+    expect(news.findListedCategoryIds).toHaveBeenCalledWith([other]);
+  });
+
+  it('a draft may link an unlisted category', async () => {
+    const { deps, news } = setup();
+    news.findListedCategoryIds.mockImplementation(async () => []);
+    expect((await save(deps, { action: 'draft' })).ok).toBe(true);
   });
 });
 

@@ -121,6 +121,11 @@ export async function findExistingCategoryIds(ids: readonly string[]): Promise<s
   return rows.map((row) => row.id);
 }
 
+export async function findListedCategoryIds(ids: readonly string[]): Promise<string[]> {
+  const rows = await getPrisma().newsCategory.findMany({ where: { id: { in: [...ids] }, isListed: true }, select: { id: true } });
+  return rows.map((row) => row.id);
+}
+
 export async function findExistingProductIds(ids: readonly string[]): Promise<string[]> {
   const rows = await getPrisma().product.findMany({ where: { id: { in: [...ids] } }, select: { id: true } });
   return rows.map((row) => row.id);
@@ -132,8 +137,9 @@ export async function findEditorFirstName(editorId: string): Promise<string | nu
 }
 
 /**
- * The slug to store: `base`, or `base-2`, `base-3`, … the first no other article holds (a staff slug
- * never collides with an imported one, D-136). The article's own current slug counts as free.
+ * The slug to store: `base`, or `base-2`, `base-3`, … the first no other article holds, imported or not
+ * (staff slugs take `-2`, `-3`; the import's own `-{source_id}` rule, D-136, is separate). The article's
+ * own current slug counts as free.
  */
 async function uniqueSlug(tx: Prisma.TransactionClient, base: string, ownId: string | null): Promise<string> {
   const holders = await tx.newsArticle.findMany({

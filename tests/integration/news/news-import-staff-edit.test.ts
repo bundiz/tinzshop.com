@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { WordPressClient } from '@/server/adapters/wordpress/client';
+import type { NewsCategorySlugRules } from '@/server/adapters/wordpress/map-post';
 import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-source';
 import type { WpPost } from '@/server/adapters/wordpress/schemas';
 import { getNewsAdmin } from '@/server/composition-root';
@@ -48,10 +49,10 @@ function fakeClient(posts: WpPost[]): WordPressClient {
   };
 }
 
-function run(posts: WpPost[], full = false): Promise<NewsImportSummary> {
+function run(posts: WpPost[], full = false, rules?: NewsCategorySlugRules): Promise<NewsImportSummary> {
   return runNewsImport(
     {
-      source: createWordPressNewsSource(fakeClient(posts)),
+      source: createWordPressNewsSource(fakeClient(posts), rules),
       news: { upsertNewsCategories, upsertNewsArticle, findArticleSourceStates, applyExcludedNewsCategories },
       lock: (task) => tryWithAdvisoryLock(NEWS_IMPORT_LOCK_KEY, task),
       logError: () => {},
@@ -125,5 +126,59 @@ describe('the import and a staff edit (D-236)', () => {
 
     expect(summary).toMatchObject({ updated: 0, skippedStaffEdits: 1 });
     expect((await prisma().newsArticle.findUniqueOrThrow({ where: { id: imported.id } })).deletedAt).not.toBeNull();
+  });
+
+  it('the excluded-category pass leaves a staff-edited article and a staff-written one alone (D-236)', async () => {
+    await run([post(101), post(102)]);
+    const edited = await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 101n }, select: { id: true } });
+    const who = await editor();
+    const category = await prisma().newsCategory.findUniqueOrThrow({ where: { sourceId: 5n }, select: { id: true } });
+    const saved = await getNewsAdmin().save({
+      id: edited.id,
+      editorId: who,
+      action: 'draft',
+      publishAt: null,
+      now: new Date(),
+      input: {
+        slug: null,
+        th: { title: 'แก้', excerpt: 'ส', bodyHtml: '<p>x</p>' },
+        en: null,
+        categoryIds: [category.id],
+        tagNames: [],
+        productIds: [],
+        bylineName: 'ทีมงาน',
+      },
+    });
+    expect(saved.ok).toBe(true);
+    const written = await getNewsAdmin().save({
+      id: null,
+      editorId: who,
+      action: 'draft',
+      publishAt: null,
+      now: new Date(),
+      input: {
+        slug: null,
+        th: { title: 'เขียนเอง', excerpt: 'ส', bodyHtml: '<p>x</p>' },
+        en: null,
+        categoryIds: [category.id],
+        tagNames: [],
+        productIds: [],
+        bylineName: 'ทีมงาน',
+      },
+    });
+    expect(written.ok).toBe(true);
+
+    // The old site's news category becomes excluded; the sources are unchanged.
+    expect(await run([post(101), post(102)], false, { excluded: ['news'], unlisted: [] })).toMatchObject({ outcome: 'succeeded' });
+
+    const untouched = await prisma().newsArticle.findUniqueOrThrow({ where: { id: edited.id }, include: { categories: true } });
+    expect(untouched.deletedAt).toBeNull();
+    expect(untouched.categories).toHaveLength(1);
+    const own = await prisma().newsArticle.findUniqueOrThrow({ where: { id: (written as { data: { id: string } }).data.id }, include: { categories: true } });
+    expect(own.categories).toHaveLength(1);
+    // The unedited imported article is hidden and unlinked, as before.
+    const plain = await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 102n }, include: { categories: true } });
+    expect(plain.deletedAt).not.toBeNull();
+    expect(plain.categories).toHaveLength(0);
   });
 });

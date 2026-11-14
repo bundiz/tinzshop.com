@@ -223,7 +223,8 @@ export async function upsertNewsArticle(
  * category gets `deleted_at` (an already-set one is kept); then every link to an excluded category is
  * removed. It never clears `deleted_at`: restoring is `upsertNewsArticle`'s, when a changed source version
  * gives the post another category. Only imported rows (`source_id` set) have `deleted_at` set, and with
- * no excluded category the pass is a no-op. No category or article row is deleted. A second run
+ * no excluded category the pass is a no-op. It leaves staff-edited rows (`updated_by_staff_id` set, D-236)
+ * and staff-written rows (no `source_id`) alone: neither their `deleted_at` nor their links change. No category or article row is deleted. A second run
  * changes nothing.
  */
 export async function applyExcludedNewsCategories(excludedSourceIds: readonly bigint[]): Promise<void> {
@@ -237,12 +238,15 @@ export async function applyExcludedNewsCategories(excludedSourceIds: readonly bi
       await tx.newsArticle.updateMany({
         where: {
           sourceId: { not: null },
+          updatedByStaffId: null,
           deletedAt: null,
           categories: { some: { categoryId: { in: excludedIds } }, none: { categoryId: { notIn: excludedIds } } },
         },
         data: { deletedAt: new Date() },
       });
-      await tx.newsArticleCategory.deleteMany({ where: { categoryId: { in: excludedIds } } });
+      await tx.newsArticleCategory.deleteMany({
+        where: { categoryId: { in: excludedIds }, article: { sourceId: { not: null }, updatedByStaffId: null } },
+      });
     },
     { timeout: TRANSACTION_TIMEOUT_MS },
   );
