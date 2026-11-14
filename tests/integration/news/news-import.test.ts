@@ -112,6 +112,7 @@ describe('news import', () => {
       created: 3,
       updated: 0,
       unchanged: 0,
+      skippedStaffEdits: 0,
       failed: 0,
       failedPosts: [],
       removedEmbeds: 3,

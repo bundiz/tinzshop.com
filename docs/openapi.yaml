@@ -261,6 +261,7 @@ paths:
                     created: 0
                     updated: 1
                     unchanged: 538
+                    skippedStaffEdits: 0
                     failed: 1
                     failedPosts: [{ sourceId: '5492', reason: save_failed }]
                     removedEmbeds: 0
@@ -411,12 +412,13 @@ components:
                       message: { type: string }
     NewsImportCounts:
       type: object
-      required: [categories, created, updated, unchanged, failed, failedPosts, removedEmbeds]
+      required: [categories, created, updated, unchanged, skippedStaffEdits, failed, failedPosts, removedEmbeds]
       properties:
         categories: { type: integer, minimum: 0, description: Categories read from the source and saved. }
         created: { type: integer, minimum: 0 }
         updated: { type: integer, minimum: 0 }
         unchanged: { type: integer, minimum: 0, description: Posts whose source time had not moved; not written. }
+        skippedStaffEdits: { type: integer, minimum: 0, description: Posts staff have edited, which the import never writes (D-236); counted when the source changed or full is set. }
         failed: { type: integer, minimum: 0, description: Posts that failed to map or save; the run carried on. }
         failedPosts:
           type: array

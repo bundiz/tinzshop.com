@@ -95,6 +95,7 @@ describe('runNewsImport', () => {
       created: 3,
       updated: 0,
       unchanged: 0,
+      skippedStaffEdits: 0,
       failed: 0,
       failedPosts: [],
       removedEmbeds: 2,
@@ -209,6 +210,18 @@ describe('runNewsImport', () => {
     expect(news.upsertNewsArticle).toHaveBeenCalledTimes(1);
   });
 
+  it('counts a post the repository skips for a staff edit, and not as created, updated or embeds removed', async () => {
+    const { deps, news } = setup({
+      pages: [{ articles: [article(1n, '2026-02-01T00:00:00Z', 4), article(2n)], failures: [], skipped: 0, totalPages: 1 }],
+      upsert: async (snapshot) => (snapshot.sourceId === 1n ? 'skipped_staff_edit' : 'created'),
+    });
+
+    const summary = await runNewsImport(deps);
+
+    expect(summary).toMatchObject({ outcome: 'succeeded', created: 1, updated: 0, unchanged: 0, skippedStaffEdits: 1, removedEmbeds: 0 });
+    expect(news.upsertNewsArticle).toHaveBeenCalledTimes(2);
+  });
+
   it('tells the source which posts are unchanged, by source id and modified time', async () => {
     const { deps, source } = setup({
       pages: [{ articles: [], failures: [], skipped: 0, totalPages: 1 }],
@@ -253,6 +266,7 @@ describe('runNewsImport', () => {
       created: 0,
       updated: 0,
       unchanged: 0,
+      skippedStaffEdits: 0,
       failed: 0,
       failedPosts: [],
       removedEmbeds: 0,

@@ -13,6 +13,7 @@ const SUCCEEDED: NewsImportSummary = {
   created: 540,
   updated: 0,
   unchanged: 0,
+  skippedStaffEdits: 0,
   failed: 0,
   failedPosts: [],
   removedEmbeds: 7,
@@ -112,7 +113,7 @@ describe('createNewsImportJobHandler', () => {
       error: {
         code: 'news_import.failed',
         reason: 'timeout',
-        summary: { categories: 13, created: 100, updated: 0, unchanged: 0, failed: 1, failedPosts, removedEmbeds: 7 },
+        summary: { categories: 13, created: 100, updated: 0, unchanged: 0, skippedStaffEdits: 0, failed: 1, failedPosts, removedEmbeds: 7 },
       },
     });
   });

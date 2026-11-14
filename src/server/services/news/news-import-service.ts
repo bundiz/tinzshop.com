@@ -25,6 +25,8 @@ type NewsImportCounts = {
   updated: number;
   /** Posts whose `source_modified_at` matched, so nothing was written. */
   unchanged: number;
+  /** Posts staff have edited, which the import never writes (D-236); counted when the source changed or `full` is set. */
+  skippedStaffEdits: number;
   /** Posts that failed to map or to save; the run carried on without them. */
   failed: number;
   /** Which posts failed and why: the source's fixed reason, or `save_failed`. */
@@ -81,6 +83,7 @@ async function execute(
     created: 0,
     updated: 0,
     unchanged: 0,
+    skippedStaffEdits: 0,
     failed: 0,
     failedPosts: [],
     removedEmbeds: 0,
@@ -123,8 +126,9 @@ async function execute(
         const hidden = article.categorySourceIds.length > 0 && kept.length === 0;
         try {
           const result = await news.upsertNewsArticle({ ...article, categorySourceIds: kept }, { hidden, full });
-          counts[result] += 1;
-          if (result !== 'unchanged') counts.removedEmbeds += article.removedEmbeds;
+          if (result === 'skipped_staff_edit') counts.skippedStaffEdits += 1;
+          else counts[result] += 1;
+          if (result === 'created' || result === 'updated') counts.removedEmbeds += article.removedEmbeds;
         } catch (error) {
           deps.logError(`news import: post ${article.sourceId} save_failed: ${describe(error)}`);
           fail(article.sourceId, 'save_failed');

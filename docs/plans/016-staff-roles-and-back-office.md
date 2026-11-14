@@ -154,10 +154,10 @@
 - Rules the tests pin: `publish` with `publishAt` null sets `status = published`, `published_at = now`; with a future `publishAt` it schedules; `unpublish` sets `draft` and keeps `published_at`; slug from the Thai title on first save when `slug` is null, decoded and lower-cased, with spaces to `-`, unique by appending `-2`, `-3`…; every body through the injected `sanitize(html) → html`; `created_by_staff_id` and `author_staff_id` set on create, `updated_by_staff_id` on every save; tags normalised (trim, collapse spaces, dedupe case-insensitively) and created on first use; `bylineName` empty → the editor's first name; trash sets `deleted_at`, restore clears it.
 - Produces (import): `upsertNewsArticle` returns `'skipped_staff_edit'` when the stored row has `source_id` and `updated_by_staff_id IS NOT NULL`, also under `full`; `NewsImportSummary` gains `skippedStaffEdits: number` (D-236).
 
-- [ ] **Step 1: Write the failing unit tests** for each rule above, plus `an <img> in an imported body survives a save` and `a body with a script is sanitised before it is stored`.
-- [ ] **Step 2: Write the failing integration tests:** save, publish, schedule, unpublish, trash, restore round-trips; the slug clash suffix; tags and product links replaced on save; `the import skips a staff-edited article on a normal run and on ?full=1 and counts it`.
-- [ ] **Step 3: Run** — FAIL. **Step 4: Implement.** **Step 5: Run** unit, integration, typecheck — PASS.
-- [ ] **Step 6: Commit** `feat: add news authoring, trash and restore, and keep the import off staff edits`
+- [x] **Step 1: Write the failing unit tests** for each rule above, plus `an <img> in an imported body survives a save` and `a body with a script is sanitised before it is stored`.
+- [x] **Step 2: Write the failing integration tests:** save, publish, schedule, unpublish, trash, restore round-trips; the slug clash suffix; tags and product links replaced on save; `the import skips a staff-edited article on a normal run and on ?full=1 and counts it`.
+- [x] **Step 3: Run** — FAIL. **Step 4: Implement.** **Step 5: Run** unit, integration, typecheck — PASS.
+- [x] **Step 6: Commit** `feat: add news authoring, trash and restore, and keep the import off staff edits`
 
 ### Task 7: Back-office shell and the access gate
 

@@ -37,6 +37,15 @@ import {
   NEWS_IMPORT_LOCK_KEY,
 } from '@/server/repositories/shared/advisory-lock';
 import {
+  findAdminArticle,
+  findEditorFirstName,
+  findExistingCategoryIds,
+  findExistingProductIds,
+  listAdminArticles,
+  saveArticle as saveNewsArticle,
+  setArticleDeleted,
+} from '@/server/repositories/news/news-admin-repository';
+import {
   applyExcludedNewsCategories,
   countLiveNewsArticles,
   findLiveNewsArticle,
@@ -84,6 +93,15 @@ import {
 } from '@/server/services/catalogue/storefront-listing-service';
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
+import {
+  getAdminArticle,
+  listAdminArticles as listAdminNewsArticles,
+  restoreArticle,
+  saveArticle,
+  trashArticle,
+  type NewsAdminDeps,
+} from '@/server/services/news/news-admin-service';
+import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
 import { runNewsImport } from '@/server/services/news/news-import-service';
 import {
   getNewsArticle,
@@ -244,6 +262,33 @@ export function getNewsImportHandler(): ReturnType<typeof createNewsImportJobHan
         options,
       ),
   });
+}
+
+/**
+ * The news authoring service (plan 016): built per call, needs only the database. Every body goes through
+ * `sanitizeArticleHtml`, the import's sanitiser (`docs/05-database.md`, *News*).
+ */
+export function getNewsAdmin() {
+  const deps: NewsAdminDeps = {
+    news: {
+      listAdminArticles,
+      findAdminArticle,
+      findExistingCategoryIds,
+      findExistingProductIds,
+      findEditorFirstName,
+      saveArticle: saveNewsArticle,
+      setArticleDeleted,
+    },
+    sanitize: (html) => sanitizeArticleHtml(html).html,
+    now: () => new Date(),
+  };
+  return {
+    list: (input: Parameters<typeof listAdminNewsArticles>[1]) => listAdminNewsArticles(deps, input),
+    get: (id: string) => getAdminArticle(deps, id),
+    save: (input: Parameters<typeof saveArticle>[1]) => saveArticle(deps, input),
+    trash: (id: string, editorId: string) => trashArticle(deps, id, editorId),
+    restore: (id: string, editorId: string) => restoreArticle(deps, id, editorId),
+  };
 }
 
 let cognitoIdentity: CognitoIdentity | undefined;

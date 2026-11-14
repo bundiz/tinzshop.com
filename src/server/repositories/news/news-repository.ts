@@ -10,7 +10,7 @@ import type { NewsArticleSnapshot, NewsCategorySnapshot } from '@/server/service
 
 const TRANSACTION_TIMEOUT_MS = 20_000;
 
-export type NewsArticleUpsertResult = 'created' | 'updated' | 'unchanged';
+export type NewsArticleUpsertResult = 'created' | 'updated' | 'unchanged' | 'skipped_staff_edit';
 
 function compareSourceIds(a: bigint, b: bigint): number {
   return a < b ? -1 : a > b ? 1 : 0;
@@ -150,7 +150,9 @@ function articleFields(snapshot: NewsArticleSnapshot, slug: string) {
  * `hidden` is the excluded-category rule (D-139): true sets `deleted_at` (an already-set one is kept),
  * false clears it; the import owns `deleted_at` of imported rows before go-live. `full` (the full
  * re-import, D-140) writes an existing row even when `source_modified_at` has not moved, so it is
- * `updated`. No staff column is touched, and no article row is ever deleted.
+ * `updated`. No staff column is touched, and no article row is ever deleted. A staff edit wins (D-236):
+ * a row with `source_id` and `updated_by_staff_id` set is never written, so when the unchanged check
+ * does not apply (the source moved, or `full`) the result is `skipped_staff_edit` and nothing is written.
  */
 export async function upsertNewsArticle(
   snapshot: NewsArticleSnapshot,
@@ -160,7 +162,7 @@ export async function upsertNewsArticle(
     async (tx) => {
       const current = await tx.newsArticle.findUnique({
         where: { sourceId: snapshot.sourceId },
-        select: { id: true, sourceModifiedAt: true, deletedAt: true },
+        select: { id: true, sourceModifiedAt: true, deletedAt: true, updatedByStaffId: true },
       });
       if (
         !options.full &&
@@ -169,6 +171,7 @@ export async function upsertNewsArticle(
       ) {
         return 'unchanged';
       }
+      if (current !== null && current.updatedByStaffId !== null) return 'skipped_staff_edit';
 
       const holder = await tx.newsArticle.findUnique({ where: { slug: snapshot.slug }, select: { id: true } });
       const slug = slugFor(snapshot, holder?.id ?? null, current?.id);
