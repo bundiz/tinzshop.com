@@ -4,8 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CognitoError, type CognitoErrorCode } from '@/server/adapters/cognito/errors';
 import { decryptSecret, encryptSecret } from '@/lib/secret-box';
-import type { CustomerSessionRecord } from '@/server/repositories/auth/customer-session-repository';
-import type { CustomerRecord } from '@/server/repositories/auth/customer-repository';
+import type { CustomerSessionRecord, SessionCustomer } from '@/server/repositories/auth/customer-session-repository';
 
 import {
   endAllCustomerSessions,
@@ -17,10 +16,20 @@ import {
 
 const NOW = new Date('2026-11-10T00:00:00Z');
 const key = randomBytes(32);
-const customer: CustomerRecord = { id: 'c1', cognitoSub: 'sub-1', email: 'a@b.co', firstName: 'Som', lastName: null };
+const customer: SessionCustomer = {
+  id: 'c1',
+  cognitoSub: 'sub-1',
+  email: 'a@b.co',
+  firstName: 'Som',
+  lastName: null,
+  roleKey: 'customer',
+  permissions: [],
+  blockedAt: null,
+};
+const SIGNED_IN = { id: 'c1', firstName: 'Som', email: 'a@b.co', roleKey: 'customer', permissions: [] };
 const sha = (v: string) => createHash('sha256').update(v).digest('hex');
 
-type Row = CustomerSessionRecord & { customer: CustomerRecord };
+type Row = CustomerSessionRecord & { customer: SessionCustomer };
 
 function build(row: Row | null, refresh?: () => Promise<{ accessToken: string; idToken: string; accessExpiresAt: Date }>) {
   const state = { row, deleted: [] as string[], deletedAll: [] as string[], inserted: [] as unknown[], updates: [] as unknown[] };
@@ -93,9 +102,32 @@ describe('readCustomerSession', () => {
 
   it('valid session within access lifetime does not refresh', async () => {
     const { deps, cognito, getCognito } = build(rowFor('tok'));
-    expect(await readCustomerSession(deps, 'tok', NOW)).toEqual({ id: 'c1', firstName: 'Som', email: 'a@b.co' });
+    expect(await readCustomerSession(deps, 'tok', NOW)).toEqual(SIGNED_IN);
     expect(cognito.refresh).not.toHaveBeenCalled();
     expect(getCognito).not.toHaveBeenCalled();
+  });
+
+  it('the session read carries the role key and permission keys', async () => {
+    const { deps } = build(rowFor('tok', { customer: { ...customer, roleKey: 'admin', permissions: ['backoffice.enter', 'news.manage'] } }));
+    expect(await readCustomerSession(deps, 'tok', NOW)).toEqual({
+      ...SIGNED_IN,
+      roleKey: 'admin',
+      permissions: ['backoffice.enter', 'news.manage'],
+    });
+  });
+
+  it('a blocked account reads as signed out and its session row is deleted', async () => {
+    const { deps, state, cognito } = build(rowFor('tok', { customer: { ...customer, blockedAt: new Date(NOW.getTime() - 1000) } }));
+    expect(await readCustomerSession(deps, 'tok', NOW)).toBeNull();
+    expect(state.deleted).toEqual([sha('tok')]);
+    expect(cognito.refresh).not.toHaveBeenCalled();
+  });
+
+  it('a role change shows on the next read', async () => {
+    const { deps, state } = build(rowFor('tok'));
+    expect((await readCustomerSession(deps, 'tok', NOW))?.roleKey).toBe('customer');
+    state.row = rowFor('tok', { customer: { ...customer, roleKey: 'blogger', permissions: ['news.manage'] } });
+    expect(await readCustomerSession(deps, 'tok', NOW)).toMatchObject({ roleKey: 'blogger', permissions: ['news.manage'] });
   });
 
   it('an unknown token is signed out', async () => {
@@ -105,7 +137,7 @@ describe('readCustomerSession', () => {
 
   it('expired access token refreshes and stores the new expiry', async () => {
     const { deps, cognito, state } = build(rowFor('tok', { accessTokenExpiresAt: new Date(NOW.getTime() - 1) }));
-    expect(await readCustomerSession(deps, 'tok', NOW)).toEqual({ id: 'c1', firstName: 'Som', email: 'a@b.co' });
+    expect(await readCustomerSession(deps, 'tok', NOW)).toEqual(SIGNED_IN);
     expect(cognito.refresh).toHaveBeenCalledWith({ sub: 'sub-1', refreshToken: 'R' });
     const update = state.updates[0] as { id: string; sealed: string; expiresAt: Date };
     expect(update.id).toBe('s1');

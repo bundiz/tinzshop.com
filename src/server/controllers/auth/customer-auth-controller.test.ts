@@ -41,7 +41,7 @@ function build(over: { cognito?: Record<string, unknown>; count?: number } = {})
     getCognito,
     rateLimit: { hitRateLimit: async () => over.count ?? 1 },
     customers: {
-      upsertBySub: async () => ({ ok: true, customer: { id: 'c1', cognitoSub: 's', email: 'ann@example.com', firstName: 'Ann', lastName: null } }),
+      upsertBySub: async () => ({ ok: true, customer: { id: 'c1', cognitoSub: 's', email: 'ann@example.com', firstName: 'Ann', lastName: null, blockedAt: null } }),
       findByEmail: async () => null,
     },
     session: {
@@ -235,6 +235,17 @@ describe('sign-in, resend, reset and sign-out', () => {
     const t = build({ cognito: { signInWithPassword: vi.fn(async () => { throw new CognitoError('not_authorized'); }) } });
     const out = await handleSignIn(t.deps, form({ email: 'ann@example.com', password: 'x' }), ctx());
     expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'ann@example.com' } });
+  });
+
+  it('a blocked account is the accountBlocked form error', async () => {
+    const t = build();
+    t.deps.customers.upsertBySub = async () => ({
+      ok: true,
+      customer: { id: 'c1', cognitoSub: 's', email: 'ann@example.com', firstName: 'Ann', lastName: null, blockedAt: NOW },
+    });
+    const out = await handleSignIn(t.deps, form({ email: 'ann@example.com', password: 'x' }), ctx());
+    expect(out.state.formError).toBe('shop.auth.error.accountBlocked');
+    expect(out.cookies?.setSession).toBeUndefined();
   });
 
   it('a malformed email on sign-in reads the same as a wrong password, before Cognito (D-227)', async () => {

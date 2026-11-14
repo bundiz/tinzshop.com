@@ -1,5 +1,7 @@
 import { getPrisma } from '@/server/repositories/shared/prisma';
 
+import type { PermissionKey, RoleKey } from '@/server/services/access/permission-keys';
+
 import type { CustomerRecord } from './customer-repository';
 
 export type NewCustomerSession = {
@@ -11,6 +13,13 @@ export type NewCustomerSession = {
   expiresAt: Date;
 };
 
+/** The customer on a session read: identity, the role key, the role's permission keys and the block time, in one query. */
+export type SessionCustomer = CustomerRecord & {
+  roleKey: RoleKey;
+  permissions: PermissionKey[];
+  blockedAt: Date | null;
+};
+
 export type CustomerSessionRecord = NewCustomerSession & { id: string };
 
 export async function insertCustomerSession(row: NewCustomerSession): Promise<void> {
@@ -19,12 +28,20 @@ export async function insertCustomerSession(row: NewCustomerSession): Promise<vo
 
 export async function findCustomerSession(
   tokenHash: string,
-): Promise<(CustomerSessionRecord & { customer: CustomerRecord }) | null> {
+): Promise<(CustomerSessionRecord & { customer: SessionCustomer }) | null> {
   const row = await getPrisma().customerSession.findUnique({
     where: { tokenHash },
     include: {
       customer: {
-        select: { id: true, cognitoSub: true, email: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          cognitoSub: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          blockedAt: true,
+          role: { select: { key: true, permissions: { select: { permission: { select: { key: true } } } } } },
+        },
       },
     },
   });
@@ -37,7 +54,16 @@ export async function findCustomerSession(
     accessTokenSealed: row.accessTokenSealed,
     accessTokenExpiresAt: row.accessTokenExpiresAt,
     expiresAt: row.expiresAt,
-    customer: row.customer,
+    customer: {
+      id: row.customer.id,
+      cognitoSub: row.customer.cognitoSub,
+      email: row.customer.email,
+      firstName: row.customer.firstName,
+      lastName: row.customer.lastName,
+      blockedAt: row.customer.blockedAt,
+      roleKey: row.customer.role.key as RoleKey,
+      permissions: row.customer.role.permissions.map((grant) => grant.permission.key as PermissionKey),
+    },
   };
 }
 

@@ -517,6 +517,7 @@
         "codeInvalid": "The code is incorrect",
         "codeExpired": "The code has expired. Please ask for a new one.",
         "passwordPolicy": "The password does not meet the rules yet",
+        "accountBlocked": "This account is suspended. Please contact the shop.",
         "accountConflict": "You cannot sign in with this account. Please try another way.",
         "unavailable": "Something went wrong on our side. Please try again.",
         "nameRequired": "Please enter your name",

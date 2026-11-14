@@ -258,6 +258,7 @@ The auth forms are Server Actions in `src/app/[locale]/(shop)/(auth)/actions.ts`
 | `auth.invalid_password` | `shop.auth.error.passwordPolicy` (field `password`) | The pool refused the password; the form checks the same five rules first (D-177). |
 | `auth.email_exists` | `shop.auth.error.emailExists` (field `email`) | Register with an email that has a customer row (D-225). No code is sent. |
 | `auth.account_conflict` | `shop.auth.error.accountConflict` | A correct sign-in whose email another account already holds. |
+| `auth.account_blocked` | `shop.auth.error.accountBlocked` | A correct sign-in of an account that is blocked: no session starts and the refresh token is revoked. Google sign-in redirects to `/{locale}/sign-in?error=blocked` instead (D-234). |
 | `auth.unavailable` | `shop.auth.error.unavailable` | Cognito could not be reached. Never returned by `register` after a taken email, `resendCode` or `requestPasswordReset`, which always give their normal answer. |
 | (validation) | `shop.auth.error.nameRequired`, `nameTooLong`, `emailInvalid`, `passwordMismatch` (field `passwordConfirm`), `passwordRequired`, `codeFormat` | Zod checks in the controller, before the service. |
 | (controller) | none | The pending cookie is missing or over an hour old; the customer is sent back to the first step with `?expired=1` (a redirect carries no form state, so there is no `formError`). |

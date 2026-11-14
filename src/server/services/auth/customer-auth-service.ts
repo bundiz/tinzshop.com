@@ -23,7 +23,7 @@ export type CustomerAuthDeps = {
       email: string;
       firstName: string;
       lastName: string | null;
-    }): Promise<{ ok: true; customer: CustomerIdentityRecord } | { ok: false; reason: 'email_taken' }>;
+    }): Promise<{ ok: true; customer: CustomerIdentityRecord & { blockedAt: Date | null } } | { ok: false; reason: 'email_taken' }>;
     findByEmail(email: string): Promise<CustomerIdentityRecord | null>;
   };
   session: CustomerSessionDeps;
@@ -182,7 +182,8 @@ async function endSessionsFor(deps: CustomerAuthDeps, email: string): Promise<vo
 /**
  * Turns Cognito tokens into an upserted customer and a started session. Password sign-in and Google
  * sign-in both end here. When another `sub` holds the email, no session is started and the refresh
- * token is revoked so no live token is left behind; the log carries the email hash only.
+ * token is revoked so no live token is left behind; the log carries the email hash only. A blocked account is
+ * refused the same way (no session, refresh token revoked), logged by customer id.
  *
  * `previousToken` is the session cookie the browser already held: that session is ended (row deleted,
  * refresh token revoked) before the new one starts, so a sign-in never leaves an orphaned row. A
@@ -192,7 +193,7 @@ export async function startSessionFromTokens(
   deps: CustomerAuthDeps,
   cognito: CognitoIdentity,
   input: { tokens: CognitoTokens; now: Date; previousToken?: string | undefined },
-): Promise<SignedIn | 'email_taken'> {
+): Promise<SignedIn | 'email_taken' | 'blocked'> {
   const { tokens } = input;
   const identity = await cognito.verifyIdToken(tokens.idToken);
   // Cognito stores native emails lowercased (we lowercase them); lowercase anyway before the upsert.
@@ -208,6 +209,11 @@ export async function startSessionFromTokens(
     await quietly(deps, 'revoke after refused sign-in', identityEmail, () => cognito.revokeRefreshToken(tokens.refreshToken));
     return 'email_taken';
   }
+  if (upsert.customer.blockedAt !== null) {
+    deps.log?.('sign-in refused: account blocked', { customerId: upsert.customer.id, code: 'blocked' });
+    await quietly(deps, 'revoke after refused sign-in', identityEmail, () => cognito.revokeRefreshToken(tokens.refreshToken));
+    return 'blocked';
+  }
   if (input.previousToken !== undefined && input.previousToken !== '') {
     await endCustomerSession(deps.session, input.previousToken);
   }
@@ -221,10 +227,12 @@ async function signInAndStart(
   deps: CustomerAuthDeps,
   cognito: CognitoIdentity,
   input: { email: string; password: string; now: Date; previousToken?: string | undefined },
-): Promise<SignedIn | 'email_taken'> {
+): Promise<SignedIn | 'email_taken' | 'blocked'> {
   const tokens = await cognito.signInWithPassword({ email: input.email, password: input.password });
   return startSessionFromTokens(deps, cognito, { tokens, now: input.now, previousToken: input.previousToken });
 }
+
+const accountBlocked = () => error('auth.account_blocked', 'This account is blocked', 'shop.auth.error.accountBlocked');
 
 const accountConflict = () =>
   error('auth.account_conflict', 'Another account already holds this email', 'shop.auth.error.accountConflict');
@@ -257,6 +265,7 @@ export async function signIn(
   try {
     const signedIn = await signInAndStart(deps, cognito, { email, password: input.password, now: input.now, previousToken: input.previousToken });
     if (signedIn === 'email_taken') return accountConflict();
+    if (signedIn === 'blocked') return accountBlocked();
     return { ok: true, data: { next: 'done', ...signedIn } };
   } catch (e) {
     const code = codeOf(e);

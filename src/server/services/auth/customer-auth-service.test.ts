@@ -23,7 +23,7 @@ const TOKENS = { accessToken: 'A', idToken: 'I', refreshToken: 'R', accessExpire
 
 type Overrides = Partial<{ [K in keyof CognitoIdentity]: (...args: never[]) => unknown }>;
 
-function build(opts: { cognito?: Overrides; rateLimitCount?: number; limitFor?: (key: string) => number; upsertEmailTaken?: boolean; existingCustomerId?: string | null } = {}) {
+function build(opts: { cognito?: Overrides; rateLimitCount?: number; limitFor?: (key: string) => number; upsertEmailTaken?: boolean; upsertBlocked?: boolean; existingCustomerId?: string | null } = {}) {
   const calls: Array<{ fn: string; input: unknown }> = [];
   const record = (fn: string, impl?: (input: never) => unknown) =>
     vi.fn(async (input: never) => {
@@ -60,7 +60,7 @@ function build(opts: { cognito?: Overrides; rateLimitCount?: number; limitFor?: 
     customers: {
       upsertBySub: async (input) => {
         state.upserts.push(input);
-        return opts.upsertEmailTaken ? { ok: false, reason: 'email_taken' } : { ok: true, customer };
+        return opts.upsertEmailTaken ? { ok: false, reason: 'email_taken' } : { ok: true, customer: { ...customer, blockedAt: opts.upsertBlocked ? NOW : null } };
       },
       findByEmail: async () =>
         opts.existingCustomerId === null ? null : { ...customer, id: opts.existingCustomerId ?? 'c1' },
@@ -327,6 +327,16 @@ describe('signIn', () => {
   it('a refused email revokes the refresh token it just received', async () => {
     const t = build({ upsertEmailTaken: true });
     await signIn(t.deps, input);
+    expect(t.calls.filter((c) => c.fn === 'revokeRefreshToken')).toEqual([{ fn: 'revokeRefreshToken', input: 'R' }]);
+  });
+
+  it('a blocked account is refused at password sign-in with its own message, no session, and the refresh token revoked', async () => {
+    const t = build({ upsertBlocked: true });
+    expect(await signIn(t.deps, input)).toMatchObject({
+      ok: false,
+      error: { code: 'auth.account_blocked', messageKey: 'shop.auth.error.accountBlocked' },
+    });
+    expect(t.state.inserted).toHaveLength(0);
     expect(t.calls.filter((c) => c.fn === 'revokeRefreshToken')).toEqual([{ fn: 'revokeRefreshToken', input: 'R' }]);
   });
 

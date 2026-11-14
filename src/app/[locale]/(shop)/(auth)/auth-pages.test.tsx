@@ -1,3 +1,4 @@
+import type { CurrentCustomer } from '@/server/services/auth/customer-session-service';
 import { createTranslator, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -7,7 +8,7 @@ import en from '../../../../../messages/en.json';
 import th from '../../../../../messages/th.json';
 
 const request = vi.hoisted(() => ({
-  customer: null as { id: string; firstName: string; email: string } | null,
+  customer: null as CurrentCustomer | null,
   pendingEmail: null as string | null,
 }));
 
@@ -121,8 +122,14 @@ describe('the sign-in page', () => {
     expect(await signIn({ error: 'google' }, 'en')).toContain(en.shop.auth.signIn.googleFailed);
   });
 
+  it('shows the blocked message for ?error=blocked, in both languages', async () => {
+    expect(await signIn({ error: 'blocked' })).toContain(th.shop.auth.error.accountBlocked);
+    expect(await signIn({ error: 'blocked' }, 'en')).toContain(en.shop.auth.error.accountBlocked);
+    expect(await signIn({ error: 'blocked' })).not.toContain(th.shop.auth.signIn.googleFailed);
+  });
+
   it('signed-in customer opening sign-in goes home', async () => {
-    request.customer = { id: 'c1', firstName: 'Test', email: 'test@example.test' };
+    request.customer = { id: 'c1', firstName: 'Test', email: 'test@example.test', roleKey: 'customer', permissions: [] };
     expect(await redirectOf(() => signIn())).toBe('/th');
     expect(await redirectOf(() => signIn({}, 'en'))).toBe('/en');
     expect(await redirectOf(() => register())).toBe('/th');
@@ -246,7 +253,7 @@ describe('the verify page', () => {
 
   it('shows the signed-in customer\'s name in the header', async () => {
     request.pendingEmail = 'pending@example.test';
-    request.customer = { id: 'c1', firstName: 'Tester', email: 'test@example.test' };
+    request.customer = { id: 'c1', firstName: 'Tester', email: 'test@example.test', roleKey: 'customer', permissions: [] };
     expect(await verify()).toContain('Tester');
     expect(await forgot()).toContain('Tester');
   });

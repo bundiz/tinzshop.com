@@ -18,7 +18,7 @@ export type UpsertCustomerInput = {
 };
 
 export type UpsertCustomerResult =
-  | { ok: true; customer: CustomerRecord }
+  | { ok: true; customer: CustomerRecord & { blockedAt: Date | null } }
   | { ok: false; reason: 'email_taken' };
 
 /** The violated unique index: from `meta.target` (query engine) or the driver adapter's cause. */
@@ -53,7 +53,7 @@ export async function upsertCustomerBySub(input: UpsertCustomerInput): Promise<U
         lastName: input.lastName,
       },
       update: { email },
-      select: { id: true, cognitoSub: true, email: true, firstName: true, lastName: true },
+      select: { id: true, cognitoSub: true, email: true, firstName: true, lastName: true, blockedAt: true },
     });
 
   for (let attempt = 0; ; attempt += 1) {

@@ -124,6 +124,7 @@ export async function handleGoogleCallback(deps: GoogleSignInDeps, input: Google
     });
     const signedIn = await startSessionFromTokens(deps.auth, cognito, { tokens, now: input.now, previousToken: input.sessionToken });
     if (signedIn === 'email_taken') return failure(locale); // already logged by hash
+    if (signedIn === 'blocked') return { location: `/${locale}/sign-in?error=blocked`, clearOauth: true }; // already logged by id
     return {
       location: `/${locale}${safeReturnTo(oauth.returnTo)}`,
       clearOauth: true,

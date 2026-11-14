@@ -17,7 +17,7 @@ const oauth = (over: Partial<OauthState> = {}): OauthState => ({
   ...over,
 });
 
-function build(over: { identity?: Record<string, unknown>; upsertOk?: boolean; exchange?: () => Promise<unknown> } = {}) {
+function build(over: { identity?: Record<string, unknown>; upsertOk?: boolean; upsertBlocked?: boolean; exchange?: () => Promise<unknown> } = {}) {
   const cognito = {
     googleAuthorizeUrl: vi.fn(({ state }: { state: string }) => `https://auth.example.test/authorize?state=${state}`),
     exchangeCode: vi.fn(
@@ -34,9 +34,11 @@ function build(over: { identity?: Record<string, unknown>; upsertOk?: boolean; e
     revokeRefreshToken: vi.fn(async () => undefined),
   };
   const upsertBySub = vi.fn(async (i: { lastName: string | null }) =>
-    over.upsertOk === false
+    over.upsertBlocked === true
+      ? ({ ok: true, customer: { id: 'c1', cognitoSub: 'g-sub', email: 'ann@example.com', firstName: 'Ann', lastName: null, blockedAt: NOW } } as const)
+      : over.upsertOk === false
       ? ({ ok: false, reason: 'email_taken' } as const)
-      : ({ ok: true, customer: { id: 'c1', cognitoSub: 'g-sub', email: 'ann@example.com', firstName: 'Ann', lastName: i.lastName } } as const),
+      : ({ ok: true, customer: { id: 'c1', cognitoSub: 'g-sub', email: 'ann@example.com', firstName: 'Ann', lastName: i.lastName, blockedAt: null } } as const),
   );
   const log = vi.fn();
   const auth: CustomerAuthDeps = {
@@ -121,6 +123,15 @@ describe('GET /api/callbacks/cognito', () => {
     expect(lower.setOauth?.retried).toBe(true);
     const other = await handleGoogleCallback(deps, callback({ error: 'access_denied', errorDescription: 'user denied', code: null }));
     expect(other.location).toBe('/en/sign-in?error=google');
+  });
+
+  it('a blocked account goes to the blocked redirect, with the oauth cookie cleared and no session', async () => {
+    const { deps, cognito } = build({ upsertBlocked: true });
+    const out = await handleGoogleCallback(deps, callback());
+    expect(out.location).toBe('/en/sign-in?error=blocked');
+    expect(out.clearOauth).toBe(true);
+    expect(out.setSession).toBeUndefined();
+    expect(cognito.revokeRefreshToken).toHaveBeenCalledWith('R');
   });
 
   it('success sets the session cookie and redirects to returnTo', async () => {

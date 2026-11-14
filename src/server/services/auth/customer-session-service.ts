@@ -2,11 +2,19 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import { decryptSecret, encryptSecret } from '@/lib/secret-box';
 
+import type { PermissionKey, RoleKey } from '@/server/services/access/permission-keys';
+
 import type { CognitoIdentity, CognitoTokens } from './cognito-identity';
 
 export const SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type CurrentCustomer = { id: string; firstName: string; email: string };
+export type CurrentCustomer = {
+  id: string;
+  firstName: string;
+  email: string;
+  roleKey: RoleKey;
+  permissions: readonly PermissionKey[];
+};
 
 type SessionRow = {
   id: string;
@@ -28,7 +36,16 @@ export type CustomerSessionDeps = {
     insert(row: NewSessionRow): Promise<void>;
     find(
       tokenHash: string,
-    ): Promise<(SessionRow & { customer: { id: string; cognitoSub: string; email: string; firstName: string } }) | null>;
+    ): Promise<(SessionRow & { customer: {
+          id: string;
+          cognitoSub: string;
+          email: string;
+          firstName: string;
+          roleKey: RoleKey;
+          permissions: readonly PermissionKey[];
+          blockedAt: Date | null;
+        };
+      }) | null>;
     updateAccessToken(id: string, sealed: string, expiresAt: Date): Promise<void>;
     delete(tokenHash: string): Promise<void>;
     deleteAll(customerId: string): Promise<void>;
@@ -87,7 +104,19 @@ export async function readCustomerSession(
     return null;
   }
 
-  const current: CurrentCustomer = { id: row.customer.id, firstName: row.customer.firstName, email: row.customer.email };
+  // A blocked account is signed out on its next request, whatever its token says (spec §6).
+  if (row.customer.blockedAt !== null) {
+    await deps.sessions.delete(tokenHash);
+    return null;
+  }
+
+  const current: CurrentCustomer = {
+    id: row.customer.id,
+    firstName: row.customer.firstName,
+    email: row.customer.email,
+    roleKey: row.customer.roleKey,
+    permissions: row.customer.permissions,
+  };
   if (row.accessTokenExpiresAt.getTime() > now.getTime()) return current;
 
   try {

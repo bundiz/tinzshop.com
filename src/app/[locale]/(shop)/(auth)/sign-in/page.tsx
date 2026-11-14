@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>): Promi
 
 /**
  * `/{locale}/sign-in` (plan 014): email and password, "ลืมรหัสผ่าน?" below the password, Google, and the register link under the title. It shows the
- * notices a redirect carries (`?confirmed=1`, `?reset=1`, `?error=google`); the email is prefilled from the pending
+ * notices a redirect carries (`?confirmed=1`, `?reset=1`, `?error=google`, `?error=blocked`); the email is prefilled from the pending
  * cookie after a verify or a reset (R1, D-173). A signed-in customer goes home.
  */
 export default async function SignInPage({ params, searchParams }: Props) {
@@ -40,6 +40,7 @@ export default async function SignInPage({ params, searchParams }: Props) {
   const confirmed = firstParam(query.confirmed) === '1';
   const reset = firstParam(query.reset) === '1';
   const googleFailed = firstParam(query.error) === 'google';
+  const blocked = firstParam(query.error) === 'blocked';
   const [t, articlesMenu, pendingEmail] = await Promise.all([
     getTranslations({ locale, namespace: 'shop.auth' }),
     readArticlesMenu(locale),
@@ -61,6 +62,7 @@ export default async function SignInPage({ params, searchParams }: Props) {
       >
         {confirmed && <AuthNotice tone="success">{t('verify.confirmed')}</AuthNotice>}
         {reset && <AuthNotice tone="success">{t('signIn.reset')}</AuthNotice>}
+        {blocked && <AuthNotice tone="error">{t('error.accountBlocked')}</AuthNotice>}
         {googleFailed && <AuthNotice tone="error">{t('signIn.googleFailed')}</AuthNotice>}
         <AuthForm
           action={signInAction}
