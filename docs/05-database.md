@@ -267,8 +267,10 @@ Rules:
 ## Deletion and retention
 
 Two requirements pull in opposite directions: documents must remain
-retrievable for five years (REQ-026), and a customer may delete their personal
-data (REQ-046).
+retrievable for five years (REQ-026), and a customer may ask the shop to delete their
+personal data. Since 2026-11-14 the site has no self-service for that request
+(REQ-046 removed, D-197); staff handle it, and the retention rule still limits
+what they may erase.
 
 **Resolved (Q-028, D-070, superseding D-017's Blocked status).** Tax and
 accounting documents may retain the necessary customer information as an

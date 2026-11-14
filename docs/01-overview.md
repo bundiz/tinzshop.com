@@ -15,8 +15,8 @@ section called "Blogs". It supports Thai and English, prices in Thai baht, and
 selling and delivery within Thailand only.
 
 The technology stack is **decided**: Next.js, TypeScript, PostgreSQL and
-Prisma, with the commerce domain written in-house. Hosting is deliberately not
-chosen yet. See
+Prisma, with the commerce domain written in-house. Hosting is AWS
+(`adr/ADR-0004-aws-hosting-and-environments.md`). See
 `adr/ADR-0001-backend-approach.md` and Q-008.
 
 ## Who uses it
@@ -65,8 +65,8 @@ adding any of it affects timeline and budget. These rows are marked `✗`:
 
 - Instalment payment via K-Payment — scheduled in phase 3 (REQ-016, D-089)
 - Customer-written product reviews — scheduled in phase 6 (REQ-054, D-084)
-- Loyalty points / gift cards — in scope, held in the post-launch backlog given the 100,000 THB budget (see `02-scope-and-phases.md#backlog-items-confirmed-in-scope-but-not-scheduled`)
-- Wishlist, also shown in order history — in scope, same backlog
+- Loyalty points / gift cards — **removed** on 2026-11-14 (D-199, Q-062)
+- Wishlist — scheduled in payment stage 3 as REQ-056 (D-199)
 
 ## Where to look next
 

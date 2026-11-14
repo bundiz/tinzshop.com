@@ -80,8 +80,12 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Awaiting stock (pre-order) | รอสินค้าเข้า | Candidate, Q-023, following D-068's pre-order flow | `awaiting_stock` |
 | Received (pre-order) | รับสินค้าแล้ว | Candidate, Q-023, following D-068's pre-order flow | `received` |
 | Shipped | จัดส่ง | §8, email trigger; candidate, Q-023 | `shipped` |
-| Cancelled | ยกเลิก | §8, email trigger; candidate, Q-023 | `cancelled` |
+| Cancelled | ยกเลิก | §8, email trigger; required by staff cancellation (D-196). The full status set is still Q-023. | `cancelled` |
 | Completed | สำเร็จ | Candidate, Q-023 | `completed` |
+| Staff cancellation | การยกเลิกคำสั่งซื้อโดยพนักงาน | An Admin or Top-level Admin cancelling an order in the back office on the customer's request, at any stage up to the goods' return (REQ-013, D-196). Customers have no cancel control. | `staff_cancellation` |
+| Cancellation reason | เหตุผลการยกเลิก | The required reason recorded with a staff cancellation and shown to the customer (D-196). | `cancellation_reason` |
+| Stock-cut export | ไฟล์ตัดสต็อก | The Excel file of paid order lines staff export from the admin order list to cut stock in BigSeller by hand (REQ-020, D-201). Cancelled orders are left out. | `stock_cut_export` |
+| Wishlist | รายการสินค้าที่ชอบ | A signed-in customer's list of saved products, also called favourites (REQ-056, D-199). | `wishlist` |
 
 **Refunded is deliberately not in this table.** Refund payout is out of scope
 (D-077, Q-036), so no order status models it.
@@ -253,6 +257,12 @@ their file names in `.claude/agents/`.
 | Page not found | หน้าที่ไม่พบ | The storefront's own 404 for any URL under a locale that matches no page (D-122): the catch-all route `src/app/[locale]/(shop)/[...rest]/` (`CatchAllPage` calls `notFound()`, `CatchAllLayout` sets the not-found `<title>`) and its `not-found.tsx`, `PageNotFound`. Text is `shop.notFound.*`. `NotFoundPanel`, in `(shop)/_components/`, is the shared not-found screen (header, message, link home, footer) used by it and by `ProductNotFound`. | `PageNotFound`, `CatchAllPage`, `CatchAllLayout`, `NotFoundPanel`, `/{locale}/{...rest}` |
 | Message catalogue | แคตตาล็อกข้อความ | The Thai and English text of every user-facing string, one JSON file per locale, both carrying every key (D-031, D-032). Keys are dot paths; the storefront's namespaces are `shop.header`, `shop.home`, `shop.product`, `shop.footer`, and `shop.error` and `shop.loading` for the storefront's error and loading states. A key-parity test fails when one file has a key the other lacks, or a message is empty (plan 011). | `messages/th.json`, `messages/en.json` |
 | Locale routing | การกำหนดเส้นทางตามภาษา | The next-intl configuration that puts every page under `/th` or `/en`: `th` is the default, `/` redirects to `/th`, and the locale is never detected from a browser header or a cookie. The proxy runs on page routes only, never on `/api/**`, `/_next/**` or a path with a file extension (plan 011). | `routing`, `src/i18n/routing.ts`, `src/proxy.ts` |
+| Payment stage | งวด | One of the four paid delivery stages in the MOU, each accepted against its UAT checklist (D-193). | `payment_stage` |
+| UAT checklist | รายการตรวจรับ | The checks the client runs on DEV to accept a payment stage (D-194, `15-acceptance-criteria.md`). | `uat_checklist` |
+| PROD | เว็บไซต์จริง | The live environment at `tinzshop.com` (D-190). | `prod` |
+| DEV | เว็บไซต์ทดสอบ | The development and test environment at `dev.tinzshop.com`. Replaces the earlier term "staging" (D-190). | `dev` |
+| Integration branch | branch develop | The `develop` branch: feature branches merge into it and it deploys to DEV; it merges into `main` once DEV passes (D-191). | `develop` |
+| Maintenance notice | ข้อความปิดปรับปรุง | The notice PROD shows from stage 1 until ordering opens: the site is being rebuilt, cannot take orders yet, and lists the shop's other sales channels (REQ-057). | `maintenance_notice` |
 
 ## Terms deliberately NOT defined here
 

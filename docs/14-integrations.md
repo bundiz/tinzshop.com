@@ -186,7 +186,7 @@ only the shop configured in `SHOPEE_SHOP_ID` (D-104).
 ### What it blocks
 
 Plan 010 builds against the sandbox only. Production use waits on the live
-go-live and authorization (Q-042) and on ADR-0002 for where the scheduler runs.
+go-live and authorization (Q-042) and on Q-063 for which AWS service runs the scheduler.
 
 ---
 
@@ -273,7 +273,7 @@ even starting.
 
 - The specific rule configuration — still to be built once DNS access exists.
 - Who controls DNS for tinzshop.com. The domain owner is known (Q-053) but account access is not yet arranged.
-- How it interacts with hosting, which is deferred — see [ADR-0002](adr/ADR-0002-hosting-and-deployment.md).
+- How it interacts with AWS hosting ([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)) — Q-064.
 
 ### Credential required
 

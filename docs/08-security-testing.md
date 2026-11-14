@@ -11,7 +11,7 @@ Worth stating plainly, because it decides where effort goes:
 
 | Asset | Why an attacker wants it | Requirement |
 | :--- | :--- | :--- |
-| Customer personal data — name, address, phone, email, and optionally a tax/national ID | Directly saleable; a PDPA breach is a legal event in Thailand | REQ-046 |
+| Customer personal data — name, address, phone, email, and optionally a tax/national ID | Directly saleable; a PDPA breach is a legal event in Thailand | PDPA (REQ-046 self-service removed, D-197) |
 | Staff accounts | Full access to prices, stock and orders | REQ-032, REQ-034 |
 | Tax documents | Legally retained for five years, and legally defective if altered | REQ-024, REQ-026 |
 | Stock and price data | Changing either is direct financial damage and may go unnoticed | REQ-020, REQ-037 |
@@ -112,7 +112,9 @@ the sole payment method (D-072, Q-030). The one remaining upload path is:
 
 ### Personal data and PDPA
 
-REQ-046 requires a customer to view, correct and delete their own data.
+PDPA still applies, but the site has no self-service for viewing, correcting or
+deleting one's own data: REQ-046 is removed and staff handle those requests
+(D-197).
 
 - Collect only what an order needs. A field nobody uses is a field that can leak.
 - Personal fields are separable from an order's financial content (`05-database.md`), which is what makes erasure conceivable at all.
@@ -246,7 +248,7 @@ Each runs in Thai and in English.
 | :--- | :--- |
 | K-Payment's actual security requirements (signing, retry, error behaviour) | Q-033 residual — credentials exist, sandbox testing not yet done |
 | A named approver for phase sign-off | Q-052 residual — criteria are drafted in `15-acceptance-criteria.md` |
-| Backup restore testing | [ADR-0002](adr/ADR-0002-hosting-and-deployment.md) — strategy proposed in `10-deployment.md#backup` (D-088), restore must still be performed and timed |
+| Backup restore testing | AWS services (Q-063, [ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)) — strategy proposed in `10-deployment.md#backup` (D-088), restore must still be performed and timed |
 
 **Resolved since the last revision:** staff second factor is email OTP only
 (D-064, Q-017); PDPA erasure versus retention (D-070, Q-028); there is no

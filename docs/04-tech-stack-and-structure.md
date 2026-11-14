@@ -29,7 +29,7 @@ this table names the choice, not the number.
 
 | Not chosen | Why not | When |
 | :--- | :--- | :--- |
-| Hosting and runtime | [ADR-0002](adr/ADR-0002-hosting-and-deployment.md) — deferred by the project owner | Phase 7 |
+| Which AWS services run it | AWS is chosen ([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)); the services are not (Q-063) | Stage 1 |
 | Job queue / scheduler | Depends on where it runs, and on Q-043 | Phase 5 |
 | Specific mail-relay provider | Category decided (D-074); vendor and sending domain not chosen (Q-032 residual) | Phase 3 |
 | File / image storage | Product images and payment slips both need it; nothing in the source describes volume or retention | Phase 2 |
