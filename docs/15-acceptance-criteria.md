@@ -54,8 +54,8 @@ are checked on `tinzshop.com`; all others on DEV.
 | 1.2 | **(PROD)** No page or button that places an order exists. |
 | 1.3 | **(PROD)** The articles imported from the old site are all there, by category, and open (REQ-047). |
 | 1.4 | `dev.tinzshop.com` opens, and test data on DEV never appears on PROD (D-190). |
-| 1.5 | A staff member signs in to the back office only after entering the OTP sent by email (REQ-032, D-064). |
-| 1.6 | A wrong or missing OTP refuses the sign-in. |
+| 1.5 | A staff member signs up and signs in like a customer; the Top-level Admin gives the account a staff role and the back office opens (D-229, D-232). |
+| 1.6 | An account with the Customer role, or a blocked account, cannot open the back office (D-234). |
 | 1.7 | All six roles exist: Guest, Customer, Blogger, Sale-manager, Admin, Top-level Admin (REQ-034). |
 | 1.8 | A Top-level Admin adds and removes staff and sets their role. |
 | 1.9 | A Blogger reaches the news menu only, and no other menu. |

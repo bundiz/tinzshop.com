@@ -58,9 +58,8 @@ content_page      news_article >── news_category
 ```
 
 **Removed from the earlier draft:** `refund` (out of scope, D-077) and
-`audit_log` (removed, D-066). `staff` is a `customer`-shaped identity distinct
-from the customer/guest roles, holding the same `role` foreign key — see
-*Access control* below.
+`audit_log` (removed, D-066). There is no `staff` table: staff are `customer`
+accounts with a staff role (D-240) — see *Access control* below.
 
 ## Money
 
@@ -225,13 +224,35 @@ Permissions are rows, not code (D-040, REQ-035), because the shop owner must
 change them without a developer.
 
 ```
-staff            id, email, is_active, two_factor_enabled   -- staff identity only
-customer         id, email, ...                             -- customer identity, separate table
-role             id, name, is_system      -- six system rows: blogger, sale_manager,
-                                           -- admin, super_admin, customer, guest
-permission       id, key            e.g. product.edit, order.viewOwn
+customer         id, ..., role_id (FK role, not null, default Customer row), blocked_at (nullable)
+role             id, key (unique), is_system, timestamps
+permission       id, key (unique)            e.g. news.manage
 role_permission  role_id, permission_id      composite PK
 ```
+
+**`customer` is the one account table (D-240, plan 016).** Every account can shop, so every account is a customer; a staff role is an addition to it, not a different kind of person. The earlier `staff` table (`id, email, is_active, two_factor_enabled`) is dropped.
+
+- **`customer.role_id`** is a uuid, not null, FK to `role`, defaulting to the Customer row. The existing upsert creates new accounts with it; the migration backfills existing rows to Customer.
+- **`customer.blocked_at`** is a nullable timestamptz: set when the Top-level Admin blocks the account, cleared on unblock. A blocked account cannot sign in, and the session read refuses it (D-234).
+- **`role`**: `key` is one of `guest`, `customer`, `blogger`, `sale_manager`, `admin`, `super_admin`; `is_system` is always true. Display names are message keys, Thai and English, not stored. Seeded by the migration; no screen creates or deletes a role (D-063).
+- **`permission`** is seeded by the migration; later plans add their own keys in their own migrations. **`role_permission`** has the composite primary key (`role_id`, `permission_id`).
+- **An account's role is read on every request** (D-040), together with the session, so a role or permission change applies on the account's next page load with no sign-out.
+
+**Stage 1 permission keys (D-241, spec §5).**
+
+| Key | Allows | Default holders |
+| :--- | :--- | :--- |
+| `backoffice.enter` | Open the back office and see its home page | Blogger, Sale-manager, Admin, Top-level Admin |
+| `news.manage` | List, create, edit, publish, unpublish, schedule, trash and restore news articles | Blogger, Admin, Top-level Admin |
+| `account.manage` | Find accounts, change roles, block and unblock | Top-level Admin |
+| `role.manage` | Change which permissions each role holds | Top-level Admin |
+
+Rules:
+
+- **`super_admin` always holds every permission.** Its column is ticked and disabled in the grid, and the server refuses to remove any.
+- **Customer and Guest can never hold a back-office key** (the four above and any later key marked back-office). The grid shows those cells disabled and the server refuses them, so one click can never turn every account into staff.
+- **Last-Top-level-Admin guard.** There is always at least one unblocked account with the `super_admin` role. The server refuses a role change or a block that would leave none, inside the same transaction as the change, so two concurrent demotions cannot both pass.
+- **Guest is not assigned to an account** (D-231); no account has `role_id` pointing at it.
 
 **Six roles, all system rows (D-062, Q-015):** Blogger, Sale-manager, Admin,
 Top-level Admin, Customer, and Guest. Customer and Guest go through the same
@@ -246,25 +267,27 @@ permission key — refund is out of scope (D-077).
 
 ## News
 
-Defined in [the news design](superpowers/specs/2026-10-29-news-import-and-pages-design.md) (section 4), on the project owner's decisions of 2026-10-29 (D-125 to D-132; D-125 superseded by D-139 and restored by D-140). Naming follows the catalogue pattern (D-014): uuid ids and a translation table per locale. Five tables:
+Defined in [the news design](superpowers/specs/2026-10-29-news-import-and-pages-design.md) (section 4), on the project owner's decisions of 2026-10-29 (D-125 to D-132; D-125 superseded by D-139 and restored by D-140). Naming follows the catalogue pattern (D-014): uuid ids and a translation table per locale. Eight tables:
 
 - **`news_category`**: `slug` (unique, decoded), `parent_id` (self-reference, nullable), `position` (WordPress id order, D-134), `source_id` (WordPress category id, `BigInt`, unique, nullable), `is_listed` (boolean, not null, default `true`; D-139) and the timestamps. **`news_category_translation`**: `category_id`, `locale`, `name`, unique per locale.
 - **`news_article`**: `slug` (unique, decoded), `featured_image_url` (the old-site URL, D-127), `source_id` (WordPress post id, `BigInt`, unique, nullable), `source_url`, `source_modified_at`, `status` (`news_article_status`: `draft` or `published`), `published_at`, `byline_name`, `author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`, `deleted_at` and the timestamps.
 - **`news_article_translation`**: `article_id`, `locale`, `title`, `excerpt` (plain text), `body_html` (sanitised), unique per locale. Imported posts have `th` only; the storefront falls back to it on `/en`.
 - **`news_article_category`**: `article_id` and `category_id`, composite primary key, indexed on `category_id`.
+- **`news_tag`** (plan 016, D-239): `id`, `name` (trimmed, unique case-insensitively), timestamps. **`news_article_tag`**: `article_id` and `tag_id`, composite primary key. Stage 1 stores and edits tags in the back office only; the storefront does not show them.
+- **`news_article_product`** (plan 016, D-239): `article_id` and `product_id`, composite primary key. A live article is listed on the product page of every product it is linked to.
 
 Rules:
 
 - **Live article.** An article is shown only when `status = 'published'`, `published_at <= now()` and `deleted_at IS NULL`. A future `published_at` is a scheduled article; no extra status or job exists (D-130).
 - **Tab counts.** The news tabs' counts are one SQL query, `countLiveNewsArticlesByCategory(now)` in `news-repository.ts`: a recursive CTE expands each category to itself and its descendants (`UNION`, so a cycle in the stored tree still terminates), joins `news_article_category` and the live-article rule, and takes `COUNT(DISTINCT article_id)` per category, so an article in a parent and its child counts once and an unlisted descendant rolls up (D-141). It returns one row per category with a live article instead of every (article, category) link; at today's volume the planner rightly picks sequential scans and hash joins, since most articles are live.
 - **CHECK** `status <> 'published' OR published_at IS NOT NULL`, and a partial index on (`status`, `published_at` desc) where `deleted_at` is null.
-- **Staff ids** (`author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`) are plain nullable uuids with no foreign key, because `staff_user` does not exist yet; plan 002 adds the FK. Imported posts leave `author_staff_id` null.
+- **Staff ids** (`author_staff_id`, `created_by_staff_id`, `updated_by_staff_id`) are foreign keys to `customer.id`, `ON DELETE SET NULL` (D-240, plan 016; plan 012 held them as plain uuids). They hold a customer id because staff are customer accounts; the names are kept. Imported posts leave `author_staff_id` null. A staff save sets `updated_by_staff_id`, and the import then skips that article (D-236).
 - **Deleting is soft** (`deleted_at`); a deleted article is never shown (D-131).
 - **Listed and unlisted categories (D-139; D-141).** A category with `is_listed = false` has no tab, is never a card's tag, a breadcrumb or a related-articles key, and its category route is a 404; its articles still appear under "ทั้งหมด". An *excluded category* is stored unlisted and never linked to any article; none is excluded today, since the old site's review tree is news again (D-140). An *unlisted category* (Uncategorized, and บทความ since D-141) keeps its links, and its articles roll up into its listed ancestors' pages and tab counts (D-141); an unlisted top-level category such as Uncategorized has no ancestor, so its articles are found only under "ทั้งหมด". No category row is deleted, and a category that is no longer unlisted is set back to listed on the next import.
 - **Who sets `deleted_at` before go-live (D-139).** The import owns `deleted_at` of imported rows (`source_id` set): it sets it on an article whose source categories are all excluded, keeps one already set, and clears it only when a changed source version gives the article another category; the pass over stored articles never clears it. It never touches a row without `source_id`. The full re-import (`?full=1`, D-140) saves every post again, so it clears `deleted_at` on every imported article the rules do not hide, including the ones D-139 hid.
 - **`body_html` is stored already sanitised** at import with an allow-list, and rendered only from the stored value; it is the only HTML the site renders from data. **Invariant: every writer of `body_html` — the import today, the staff news editor later — passes it through the same sanitiser before saving.** The article page renders it as HTML and adds attributes to its `<img>` and `<iframe>` tags by string (D-138), which is safe only because sanitised HTML escapes every literal `<`; an unsanitised write would be rendered as is.
 - **Imported slugs stay unique:** a decoded slug already held by another row gets `-{source_id}` appended, the same on every re-run (D-136).
-- **Not stored now:** revision history, tags, comments and SEO fields beyond the excerpt.
+- **Not stored now:** revision history, comments and SEO fields beyond the excerpt (D-239).
 
 ## Customer authentication (plan 014)
 
@@ -274,7 +297,7 @@ Defined in [the customer authentication design](superpowers/specs/2026-11-03-cus
 - **`customer_session`**: `id`, `token_hash` (unique, SHA-256 of the random cookie token; the cookie value is never stored), `customer_id` (FK), `refresh_token_sealed` and `access_token_sealed` (`encryptSecret` under `SESSION_TOKEN_ENCRYPTION_KEY`, D-167), `access_token_expires_at`, `expires_at` (sign-in time + 7 days), `created_at`. A password reset deletes every row of that customer.
 - **`auth_rate_limit`**: `key` (`{action}:ip:{ip}` or `{action}:email:{sha256 of the trimmed, lowercased email}`, where `{action}` is `sign_in`, `register`, `verify`, `resend` or `forgot_password`; for example `sign_in:ip:{ip}` and `sign_in:email:{sha256}`), `window_start`, `count`; primary key (`key`, `window_start`). A key holds an IP address, which is personal data, so rows are deleted when their window ends.
 
-There is no password, reset-token or Google-account table. The `role` table (D-062) comes with plan 002; until then any signed-in person who has a `customer` row is a customer.
+There is no password, reset-token or Google-account table. `customer` also carries `role_id` and `blocked_at` (see *Access control*, D-240); every signed-in person with a `customer` row has a role, and new accounts are created as Customer (D-230).
 
 ## Deletion and retention
 

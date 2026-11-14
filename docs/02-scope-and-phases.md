@@ -49,7 +49,7 @@ owner's of 2026-11-14 and is pending the client's signature on the MOU.
 
 | Stage | Due | Share | Delivers | Requirements |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | 2026-12-15 | 20% (20,000 THB) | Architecture; staff sign-in with email OTP; the six roles; news, imported from the old site (plan 012, done), plus a staff news editor; AWS DEV and PROD with automatic deployment (ADR-0004); PROD showing news and the maintenance notice | REQ-032, 033, 034, 035, 047, 051, 057 |
+| 1 | 2026-12-15 | 20% (20,000 THB) | Architecture; staff accounts and roles (staff sign up like customers; D-229); the six roles; news, imported from the old site (plan 012, done), plus a staff news editor; AWS DEV and PROD with automatic deployment (ADR-0004); PROD showing news and the maintenance notice | REQ-032, 033, 034, 035, 047, 051, 057 |
 | 2 | 2027-01-12 | 30% (30,000 THB) | The Shopee catalogue mirror (plan 010, done); product listing and product pages (plans 011 and 013, done); category management; search; stock status from Shopee; content pages and shop information, editable by staff; Sale Page; dropship set-up and the staff availability gate | REQ-001, 002, 003, 004, 005, 006, 021, 022, 036, 037, 043, 044, 045, 050 (staff side), 055 |
 | 3 | 2027-02-09 | 30% (30,000 THB) | Customer sign-up and sign-in; cart; checkout; shipping cost by size tier; K-Payment card, instalments and PromptPay QR; order status and history; the admin order list with the Excel export for cutting stock in BigSeller; staff cancellation; wishlist | REQ-011, 013, 016, 019, 020, 023, 028, 030, 041, 042, 052, 053, 056 |
 | 4 | 2027-03-02 | 20% (20,000 THB) | Simplified tax invoice; shipping label; pre-order; dropship ordering; customer reviews; sales dashboard and the monthly accounting export; security (phase 8); database backup with a timed restore (phase 9); the Thai staff manual; final UAT; ordering opens on PROD; source code handed over | REQ-024, 025, 026, 027, 031, 039, 048, 049, 050 (ordering side), 054 |
@@ -137,8 +137,9 @@ A website order never changes stock in the system, so the no-overselling guarant
 
 ### Admin back office
 
-**REQ-032 — Two-step verification for staff** · §8 · CONFIRMED (narrowed)
-Staff sign-in requires a second factor via **email OTP** (D-064, Q-017). No SMS/phone OTP.
+**REQ-032 — ~~Two-step verification for staff~~** · §8 · CHANGED — no second factor (D-232)
+~~Staff sign-in requires a second factor via **email OTP** (D-064, Q-017). No SMS/phone OTP.~~
+Changed on 2026-11-14 at the client's request, relayed by the project owner: staff sign up and sign in like customers, and the emailed code is asked for at sign-up only. A staff account is protected by its password or Google account alone. D-232 supersedes D-064; the trade-off is set out in `superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md` §10.
 
 **REQ-033 — Single bilingual admin entry point** · §8 · CONFIRMED
 Staff use one place to sign in, and the admin panel is usable in both Thai and English.

@@ -13,7 +13,7 @@ plan 012's code (the news tables, the import from the old WordPress site and
 the news pages) and plan 013's code (the product listing page and a mock
 category assignment) and plan 014's code (customer authentication with Amazon
 Cognito; its manual checks are still to be run) and plan 015's code (the
-restyle of those pages to the owner's new design in `tinzshop-redesign/`). No other application code exists yet.**
+restyle of those pages to the owner's new design in `tinzshop-redesign/`) and plan 016's code (staff roles and the back office: a role and a block on every customer account, the permission tables, the back-office pages and the staff news editor). No other application code exists yet.**
 
 **The stack is decided.** Next.js (App Router), TypeScript, PostgreSQL and
 Prisma, as one route-grouped application, with the commerce domain written
@@ -41,7 +41,7 @@ commits to it is pending the client's signature. Only *our own* engineering deci
 `docs/11-decisions.md` are Accepted in the strict ADR sense; treat both that
 register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 
-**Implementation is unblocked for plans 010, 011, 012, 013, 014 and 015 only** (the Shopee catalogue
+**Implementation is unblocked for plans 010, 011, 012, 013, 014, 015 and 016 only** (the Shopee catalogue
 mirror — `docs/plans/010-shopee-catalogue-mirror.md`; the landing page and
 product page built from it — `docs/plans/011-landing-page-from-mirror.md`, D-117;
 the news tables, import and pages — `docs/plans/012-news-import-and-pages.md`, D-125 to D-140; the product listing page, the product page's move to `/product/{id}/detail` and the mock categories — `docs/plans/013-product-listing-page.md`, D-142 to D-151; customer registration and sign-in through Amazon Cognito, with Google sign-in, and sign-in required for the product pages — `docs/plans/014-customer-authentication.md`, D-152 to D-177, ADR-0003; the storefront restyle to `tinzshop-redesign/` — `docs/plans/015-storefront-redesign.md`, D-210 to D-223),
@@ -58,8 +58,9 @@ decisions of 2026-11-03 and approval of 2026-11-04
 (`docs/superpowers/specs/2026-11-03-customer-authentication-design.md`, §2); its
 Cognito dev-pool checks 3 to 6 (Task 2) were moved to the plan's manual test checklist (check 7 became moot under ruling R1)
 on 2026-11-11. Plan 015 is on the project owner's request of 2026-11-12
-(`docs/plans/015-storefront-redesign.md`); it changes how existing pages look, not what they do. Build only what
-plans 010 to 015 describe — do not scaffold the rest of the application to
+(`docs/plans/015-storefront-redesign.md`); it changes how existing pages look, not what they do. Plan 016 is on the project owner's decisions and approval of 2026-11-14
+(`docs/superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md`, §2); staff sign up like customers, the Top-level Admin sets roles, and REQ-032's second factor is dropped (D-232). Build only what
+plans 010 to 016 describe — do not scaffold the rest of the application to
 get ahead of the other plans. K-Payment is the
 **sole** payment method (bank transfer and standalone PromptPay are removed),
 and website orders never change stock — staff adjust stock in BigSeller by
