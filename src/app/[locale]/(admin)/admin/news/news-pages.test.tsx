@@ -68,7 +68,7 @@ vi.mock('@/server/composition-root', async () => {
 const { default: NewsListPage } = await import('./page');
 const { default: NewNewsPage } = await import('./new/page');
 const { default: EditNewsPage } = await import('./[id]/page');
-const { default: PreviewPage } = await import('./[id]/preview/page');
+const { default: PreviewPage } = await import('../../../(admin-preview)/admin/news/[id]/preview/page');
 
 function params(locale: string): Promise<{ locale: string }>;
 function params(locale: string, id: string): Promise<{ locale: string; id: string }>;
@@ -276,7 +276,7 @@ describe('the preview page', () => {
   });
 
   it('marks the page noindex', async () => {
-    const { generateMetadata } = await import('./[id]/preview/page');
+    const { generateMetadata } = await import('../../../(admin-preview)/admin/news/[id]/preview/page');
     expect(await generateMetadata({ params: params('th', ID) })).toMatchObject({ robots: { index: false } });
   });
 });

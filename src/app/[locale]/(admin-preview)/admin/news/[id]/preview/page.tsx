@@ -7,8 +7,8 @@ import type { NewsArticleDetail } from '@/server/services/news/news-read-service
 import NewsArticleView from '../../../../../(shop)/news/[slug]/_components/NewsArticleView';
 import { readArticlesMenu } from '../../../../../(shop)/_components/read-articles-menu';
 import { readCurrentCustomer } from '../../../../../(shop)/_components/read-current-customer';
-import { requirePermission } from '../../../_lib/require-permission';
-import { categoryName } from '../../_lib/categories';
+import { requirePermission } from '../../../../../(admin)/admin/_lib/require-permission';
+import { categoryName } from '../../../../../(admin)/admin/news/_lib/categories';
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -18,7 +18,7 @@ export async function generateMetadata(_props: Props): Promise<Metadata> {
 
 /**
  * `/{locale}/admin/news/{id}/preview`: the saved article drawn by the storefront's own article page component, so staff see
- * what a reader will. It shows the last saved version (not what is typed in the editor), a draft or scheduled one too, in
+ * what a reader will. It lives in its own route group, `(admin-preview)`, so the page is the article alone, without the back-office frame. It shows the last saved version (not what is typed in the editor), a draft or scheduled one too, in
  * the page's language or Thai when that translation does not exist. Needs `news.manage`; never indexed.
  */
 export default async function NewsPreviewPage({ params }: Props) {

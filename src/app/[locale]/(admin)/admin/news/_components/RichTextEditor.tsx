@@ -1,66 +1,31 @@
 'use client';
 
-import { mergeAttributes, Node } from '@tiptap/core';
-import Image from '@tiptap/extension-image';
-import Youtube, { isValidYoutubeUrl } from '@tiptap/extension-youtube';
+import { isValidYoutubeUrl } from '@tiptap/extension-youtube';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
 import { useTranslations } from 'next-intl';
-import { useId, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import type { Editor } from '@tiptap/core';
 
 import { buttonClass } from '@/components/ui/button-class';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
+import { wouldLoseContent } from './body-roundtrip';
+import { buildExtensions } from './editor-extensions';
 import { ProductSearchBox, type ProductSearch } from './ProductPicker';
 
-/**
- * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as a labelled
- * box (the node view, never saved); the saved HTML is only the element and the id. The storefront draws the live card
- * from it (Task 10), and the sanitiser does not keep the tag until then.
- */
-export const ProductCard = Node.create<{ label: string }>({
-  name: 'productCard',
-  group: 'block',
-  atom: true,
-  selectable: true,
-  draggable: true,
-  addOptions: () => ({ label: '' }),
-  addAttributes: () => ({
-    id: {
-      default: null,
-      parseHTML: (element) => element.getAttribute('data-id'),
-      renderHTML: (attributes) => (attributes.id ? { 'data-id': attributes.id } : {}),
-    },
-    // The name is only for the editor's box: never written into the saved HTML.
-    name: { default: null, rendered: false },
-  }),
-  parseHTML: () => [{ tag: 'tinz-product[data-id]' }],
-  renderHTML: ({ HTMLAttributes }) => ['tinz-product', mergeAttributes(HTMLAttributes)],
-  addNodeView() {
-    const label = this.options.label;
-    return ({ node }) => {
-      const dom = document.createElement('tinz-product');
-      dom.setAttribute('data-id', String(node.attrs.id ?? ''));
-      dom.setAttribute('contenteditable', 'false');
-      dom.className = 'my-3 block rounded-sm border-2 border-dashed border-brand bg-brand-soft p-3 font-semibold text-brand-dark';
-      dom.textContent = node.attrs.name ? `${label}: ${node.attrs.name}` : label;
-      return { dom };
-    };
-  },
-});
-
-type BlockKind = 'p' | 'h2' | 'h3' | 'blockquote';
+type BlockKind = 'p' | 'h2' | 'h3' | 'blockquote' | 'other';
 
 function blockOf(editor: Editor | null): BlockKind {
   if (editor === null) return 'p';
   if (editor.isActive('heading', { level: 2 })) return 'h2';
   if (editor.isActive('heading', { level: 3 })) return 'h3';
   if (editor.isActive('blockquote')) return 'blockquote';
+  if (editor.isActive('heading')) return 'other';
   return 'p';
 }
 
 function setBlock(editor: Editor, kind: BlockKind): void {
+  if (kind === 'other') return;
   const chain = editor.chain().focus();
   if (kind === 'blockquote') {
     if (!editor.isActive('blockquote')) chain.setBlockquote();
@@ -191,26 +156,13 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
   const opener = useRef<HTMLButtonElement | null>(null);
   const cardLabel = t('productCard');
   const blockId = useId();
+  // The stored body holds something the editor cannot keep: it is shown read-only and saved exactly as stored.
+  const [locked, setLocked] = useState(false);
 
   const editor = useEditor({
     // Rendered on the server as the empty shell; the editor mounts in the browser (avoids a hydration mismatch).
     immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [2, 3] },
-        // Only what the toolbar offers; the sanitiser decides what is kept anyway.
-        code: false,
-        codeBlock: false,
-        strike: false,
-        underline: false,
-        horizontalRule: false,
-        link: { openOnClick: false, autolink: false, linkOnPaste: false, protocols: ['http', 'https'] },
-      }),
-      // No toolbar button, no paste and no drop of files: this only keeps an imported body's pictures.
-      Image.configure({ inline: true, allowBase64: false }),
-      Youtube.configure({ nocookie: false, controls: true, modestBranding: true }),
-      ProductCard.configure({ label: cardLabel }),
-    ],
+    extensions: buildExtensions(cardLabel),
     content: initialHtml,
     editorProps: {
       attributes: {
@@ -222,6 +174,16 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
     },
     onUpdate: ({ editor: current }) => onChange(current.getHTML()),
   });
+
+  useEffect(() => {
+    if (editor === null) return;
+    const lossy = wouldLoseContent(initialHtml, editor.getHTML());
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- decided once, when the editor first exists
+    setLocked(lossy);
+    editor.setEditable(!lossy, false);
+    // The body prop is the stored one; later edits must not re-run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
 
   const state = useEditorState({
     editor,
@@ -243,6 +205,7 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
 
   const block = state?.block ?? 'p';
   const flag = (value: boolean | undefined) => value === true;
+  const off = editor === null || locked;
 
   return (
     <div className="rounded-md border border-line bg-surface">
@@ -253,7 +216,7 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
         <select
           id={blockId}
           value={block}
-          disabled={editor === null}
+          disabled={off}
           onChange={(event) => editor && setBlock(editor, event.target.value as BlockKind)}
           className="min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-2.5 text-ink"
         >
@@ -262,32 +225,42 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
               {t(`block.${kind}`)}
             </option>
           ))}
+          {block === 'other' ? (
+            <option value="other" disabled>
+              {t('block.other')}
+            </option>
+          ) : null}
         </select>
         <span className={SEP} aria-hidden="true" />
-        <button type="button" aria-label={t('toolbar.bold')} aria-pressed={flag(state?.bold)} disabled={editor === null} onClick={() => editor?.chain().focus().toggleBold().run()} className={`${TOOL} font-bold`}>
+        <button type="button" aria-label={t('toolbar.bold')} aria-pressed={flag(state?.bold)} disabled={off} onClick={() => editor?.chain().focus().toggleBold().run()} className={`${TOOL} font-bold`}>
           B
         </button>
-        <button type="button" aria-label={t('toolbar.italic')} aria-pressed={flag(state?.italic)} disabled={editor === null} onClick={() => editor?.chain().focus().toggleItalic().run()} className={`${TOOL} italic`}>
+        <button type="button" aria-label={t('toolbar.italic')} aria-pressed={flag(state?.italic)} disabled={off} onClick={() => editor?.chain().focus().toggleItalic().run()} className={`${TOOL} italic`}>
           I
         </button>
-        <button type="button" aria-label={t('toolbar.link')} aria-pressed={flag(state?.link)} disabled={editor === null} onClick={open('link')} className={TOOL}>
+        <button type="button" aria-label={t('toolbar.link')} aria-pressed={flag(state?.link)} disabled={off} onClick={open('link')} className={TOOL}>
           URL
         </button>
         <span className={SEP} aria-hidden="true" />
-        <button type="button" aria-label={t('toolbar.bulletList')} aria-pressed={flag(state?.bulletList)} disabled={editor === null} onClick={() => editor?.chain().focus().toggleBulletList().run()} className={TOOL}>
+        <button type="button" aria-label={t('toolbar.bulletList')} aria-pressed={flag(state?.bulletList)} disabled={off} onClick={() => editor?.chain().focus().toggleBulletList().run()} className={TOOL}>
           •≡
         </button>
-        <button type="button" aria-label={t('toolbar.orderedList')} aria-pressed={flag(state?.orderedList)} disabled={editor === null} onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={TOOL}>
+        <button type="button" aria-label={t('toolbar.orderedList')} aria-pressed={flag(state?.orderedList)} disabled={off} onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={TOOL}>
           1.
         </button>
         <span className={SEP} aria-hidden="true" />
-        <button type="button" aria-label={t('toolbar.youtube')} disabled={editor === null} onClick={open('youtube')} className={TOOL}>
+        <button type="button" aria-label={t('toolbar.youtube')} disabled={off} onClick={open('youtube')} className={TOOL}>
           YouTube
         </button>
-        <button type="button" aria-label={t('toolbar.product')} disabled={editor === null} onClick={open('product')} className={TOOL}>
+        <button type="button" aria-label={t('toolbar.product')} disabled={off} onClick={open('product')} className={TOOL}>
           {cardLabel}
         </button>
       </div>
+      {locked ? (
+        <p role="alert" className="border-b border-line bg-warn-soft p-3 font-medium text-warn">
+          {t('bodyLocked')}
+        </p>
+      ) : null}
       <EditorContent editor={editor} />
 
       {dialog === 'link' && editor ? (

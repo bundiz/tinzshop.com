@@ -10,6 +10,7 @@ import type { NewsAdminState } from '@/server/controllers/news/news-admin-contro
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import type { NewsAdminStatus } from '@/server/services/news/news-admin-service';
 import { saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
+import { bodyOrEmpty } from './body-roundtrip';
 import ProductPicker from './ProductPicker';
 import RichTextEditor from './RichTextEditor';
 import TagInput from './TagInput';
@@ -84,7 +85,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const trashAction = actions?.trash ?? trashArticleAction;
   const search = actions?.search ?? searchProductsAction;
 
-  const [saved, formAction] = useActionState(saveAction, IDLE);
+  const [saved, formAction, saving] = useActionState(saveAction, IDLE);
   const [trashed, trashFormAction] = useActionState(trashAction, IDLE);
   const [language, setLanguage] = useState<'th' | 'en'>('th');
   const [th, setTh] = useState<Translation>(article?.th ?? EMPTY);
@@ -128,8 +129,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
       <form action={formAction} aria-label={e('form')} className="grid gap-4">
         <input type="hidden" name="locale" value={locale} />
         {article ? <input type="hidden" name="id" value={article.id} /> : null}
-        <input type="hidden" name="thBodyHtml" value={th.bodyHtml} />
-        <input type="hidden" name="enBodyHtml" value={en.bodyHtml} />
+        <input type="hidden" name="thBodyHtml" value={bodyOrEmpty(th.bodyHtml)} />
+        <input type="hidden" name="enBodyHtml" value={bodyOrEmpty(en.bodyHtml)} />
 
         <div className="flex flex-wrap items-center gap-2.5">
           <a href={`/${locale}/admin/news`} className="inline-flex min-h-11 items-center font-semibold text-ink-2 hover:text-ink">
@@ -146,19 +147,19 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
             ) : null}
             {isPublished ? (
               <>
-                <button type="submit" name="action" value="unpublish" className={buttonClass({ variant: 'line' })}>
+                <button type="submit" disabled={saving} name="action" value="unpublish" className={buttonClass({ variant: 'line' })}>
                   {e('button.unpublish')}
                 </button>
-                <button type="submit" name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
+                <button type="submit" disabled={saving} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
                   {e('button.update')}
                 </button>
               </>
             ) : (
               <>
-                <button type="submit" name="action" value="draft" className={buttonClass({ variant: 'line' })}>
+                <button type="submit" disabled={saving} name="action" value="draft" className={buttonClass({ variant: 'line' })}>
                   {e('button.saveDraft')}
                 </button>
-                <button type="submit" name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
+                <button type="submit" disabled={saving} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
                   {e('button.publish')}
                 </button>
               </>

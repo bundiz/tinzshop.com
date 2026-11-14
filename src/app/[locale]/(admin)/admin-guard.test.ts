@@ -14,14 +14,16 @@ function walk(dir: string): string[] {
   });
 }
 
-const files = walk(__dirname).filter((path) => /[\\/](page\.tsx|actions\.ts)$/.test(path));
+// The preview page sits in its own route group, outside the shell, and needs the same check.
+const PREVIEW = join(__dirname, '..', '(admin-preview)');
+const files = [...walk(__dirname), ...walk(PREVIEW)].filter((path) => /[\\/](page\.tsx|actions\.ts)$/.test(path));
 
 describe('the back-office permission rule', () => {
   it('finds the pages to check', () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  it.each(files.map((path) => [path.slice(__dirname.length)]))('%s calls requirePermission(', (path) => {
-    expect(readFileSync(join(__dirname, path!), 'utf8')).toContain('requirePermission(');
+  it.each(files.map((path) => [path]))('%s calls requirePermission(', (path) => {
+    expect(readFileSync(path!, 'utf8')).toContain('requirePermission(');
   });
 });
