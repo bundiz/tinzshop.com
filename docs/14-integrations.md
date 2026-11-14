@@ -230,8 +230,9 @@ sync cannot be built, until this one inspection happens.
 Email sent automatically at every step of an order — the exact step set
 depends on the order-status candidate in Q-023 (REQ-041) — and a customer able
 to view and filter their own order-status history (REQ-042; this replaced the
-earlier "notification opt-out" reading — Q-031, D-073). Staff two-factor is
-email OTP (REQ-032, Q-017, D-064), which also runs through this integration.
+earlier "notification opt-out" reading — Q-031, D-073). Staff no longer have a
+second factor at sign-in (D-232, which superseded D-064); the sign-up code
+is the only emailed code.
 
 **The category of solution is decided: a mail-relay service** (Q-032, D-074),
 reached through the adapter interface so no vendor name appears in domain

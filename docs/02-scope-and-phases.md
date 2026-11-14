@@ -145,7 +145,7 @@ Changed on 2026-11-14 at the client's request, relayed by the project owner: sta
 Staff use one place to sign in, and the admin panel is usable in both Thai and English.
 
 **REQ-034 — Six roles, permission-based access** · §8 · CONFIRMED (rewritten)
-Access is divided among six roles: Blogger, Sale-manager, Admin, Top-level Admin, Customer, and Guest (D-062, Q-015). Customer and Guest are rows in the same `role`/`role_permission` tables as the four staff roles, not a special case.
+Access is divided among six roles: Blogger, Sale-manager, Admin, Top-level Admin, Customer, and Guest (D-062, Q-015). Customer and Guest are rows in the same `role`/`role_permission` tables as the four staff roles, not a special case. Guest is not an account: its role row describes signed-out visitors (D-231).
 
 **REQ-035 — Owner-configurable role permissions, editing only** · §8 · CONFIRMED (narrowed)
 The shop owner can adjust the permissions of each of the six existing roles themselves, without a developer changing code. **There is no "create a new role" capability** (D-063, Q-016).
@@ -157,7 +157,7 @@ The product management screen lists parent products, and a parent can be expande
 A staff member can edit, inline and for several products at once, only the fields Shopee does not hold: menu category, shipping size tier, pre-order and release date, and activation. Price, stock and the other Shopee fields are no longer editable on the site.
 
 **REQ-051 — Staff roles** · §8 · CONFIRMED (see REQ-034)
-The four staff roles: Blogger (writes news only), Sale-manager (products, stock, orders, finance), Admin (oversees everything), and Top-level Admin (adds and removes staff, and configures the system).
+The four staff roles: Blogger (writes news only), Sale-manager (products, stock, orders, finance), Admin (oversees everything), and Top-level Admin (adds and removes staff, and configures the system). *Note: staff are now ordinary accounts; the Top-level Admin sets an account's role and blocks or unblocks it (D-230, D-234).*
 
 ### Removed
 

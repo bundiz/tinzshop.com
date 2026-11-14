@@ -182,6 +182,7 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Answer:** "Use Email OTP. No phone/SMS OTP is required."
 - **Effect:** REQ-032 is settled: email OTP only. No SMS provider is needed, which removes an entire integration from `14-integrations.md`.
 - **Recorded in:** `11-decisions.md` D-064.
+- **Superseded 2026-11-14:** the client later asked for no second factor at sign-in; D-232 supersedes D-064 and changes REQ-032. This record stays as history.
 
 ### Q-018: Who produces the Thai and English content
 - **Status:** RESOLVED — 2026-09-13

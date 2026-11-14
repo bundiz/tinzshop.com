@@ -41,7 +41,7 @@ feature (Q-016, D-063).
 | Blogger | Writes news only |
 | Sale-manager | Products, stock, orders, finance |
 | Admin | Oversees everything |
-| Top-level Admin | Adds and removes staff, and configures the system |
+| Top-level Admin | Sets accounts' roles, blocks or unblocks accounts (D-230, D-234), and configures the system |
 
 The shop owner can adjust each role's permissions without a developer, editing
 only — not creating new roles (§8, Q-016, D-063).

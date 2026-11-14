@@ -57,7 +57,7 @@ are checked on `tinzshop.com`; all others on DEV.
 | 1.5 | A staff member signs up and signs in like a customer; the Top-level Admin gives the account a staff role and the back office opens (D-229, D-232). |
 | 1.6 | An account with the Customer role, or a blocked account, cannot open the back office (D-234). |
 | 1.7 | All six roles exist: Guest, Customer, Blogger, Sale-manager, Admin, Top-level Admin (REQ-034). |
-| 1.8 | A Top-level Admin adds and removes staff and sets their role. |
+| 1.8 | The Top-level Admin sets an account's role, and blocks or unblocks it (D-230, D-234). |
 | 1.9 | A Blogger reaches the news menu only, and no other menu. |
 | 1.10 | Staff write a new article and save it as a draft; the draft is not on the site. |
 | 1.11 | Publishing the article puts it on the site. |
@@ -161,7 +161,7 @@ are checked on `tinzshop.com`; all others on DEV.
 - [ ] A product with two or more option types can be created, each variant carrying its own code, price and stock (REQ-005).
 - [ ] The public storefront never exposes a real stock number, in the page or in any network response (REQ-006, D-024).
 - [ ] All six roles exist as rows, permissions are editable by the owner without a code change, and no "create a role" control exists anywhere in the admin (REQ-034, REQ-035, D-062, D-063).
-- [ ] Staff sign-in requires email OTP; sign-in without it is refused (REQ-032, D-064).
+- ~~Staff sign-in requires email OTP; sign-in without it is refused (REQ-032, D-064).~~ Removed (changed by D-232): no second factor at sign-in.
 - ~~Excel import dry-run writes nothing to the database (REQ-038).~~ Removed with REQ-038 (D-094).
 
 **Invariant check:** ~~no-overselling integration test~~ — withdrawn, because website orders never change stock (D-096, D-044).
