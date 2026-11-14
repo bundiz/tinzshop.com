@@ -86,6 +86,8 @@ are checked on `tinzshop.com`; all others on DEV.
 | 2.16 | When Shopee stock falls below the limit (for example Shopee 5, limit 10), the site stops selling that variant, as Q-065 settles. |
 | 2.17 | Adding a site-only product with a merchant SKU that exists on Shopee is refused (REQ-060). |
 | 2.18 | Adding one whose SKU is not on Shopee succeeds, and staff set its price and stock. |
+| 2.19 | The back office shows, for every variant, whether its stock is linked to Shopee or set by staff; a variant without a staff number uses Shopee's stock (D-208). |
+| 2.20 | When a Shopee pull finds a site-only product's merchant SKU, the back office flags it; after staff confirm it is the same product, it shows Shopee's data (D-209). |
 
 ### Stage 3 — due 2027-02-09
 
