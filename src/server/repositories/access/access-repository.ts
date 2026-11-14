@@ -158,3 +158,12 @@ export async function setAccountBlocked(accountId: string, blocked: boolean): Pr
     },
   );
 }
+
+/** An account's role and blocked flag, or null: read for the back office's log of the old value (D-242). */
+export async function findAccountState(accountId: string): Promise<{ roleKey: RoleKey; blocked: boolean } | null> {
+  const row = await getPrisma().customer.findUnique({
+    where: { id: accountId },
+    select: { blockedAt: true, role: { select: { key: true } } },
+  });
+  return row === null ? null : { roleKey: row.role.key as RoleKey, blocked: row.blockedAt !== null };
+}

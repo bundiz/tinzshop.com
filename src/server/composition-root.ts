@@ -29,7 +29,22 @@ import {
   type CustomerSessionDeps,
 } from '@/server/services/auth/customer-session-service';
 import { createAccountRoleJobHandler } from '@/server/controllers/access/account-role-job-controller';
-import { changeAccountRole, findAccountByEmail } from '@/server/repositories/access/access-repository';
+import {
+  changeAccountRole,
+  findAccountByEmail,
+  findAccountState,
+  listRoleGrants,
+  replaceRolePermissions,
+  searchAccounts,
+  setAccountBlocked,
+} from '@/server/repositories/access/access-repository';
+import {
+  changeAccountRoleCommand,
+  saveRolePermissionsCommand,
+  setAccountBlockedCommand,
+  type AccountAdminActor,
+  type AccountAdminDeps,
+} from '@/server/controllers/access/account-admin-controller';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
 import {
   tryWithAdvisoryLock,
@@ -352,4 +367,23 @@ export function getAccountRoleHandler(): ReturnType<typeof createAccountRoleJobH
     changeAccountRole,
     log: (message) => console.info(message),
   });
+}
+
+/** The accounts and role-permission back-office pages (plan 016, Task 8). Logs carry ids and keys only (D-242). */
+export function getAccountAdmin() {
+  const deps: AccountAdminDeps = {
+    findAccount: findAccountState,
+    changeAccountRole,
+    setAccountBlocked,
+    listRoleGrants,
+    replaceRolePermissions,
+    log: (message, fields) => console.info(message, fields),
+  };
+  return {
+    searchAccounts,
+    listRoleGrants,
+    changeRole: (actor: AccountAdminActor, formData: FormData) => changeAccountRoleCommand(deps, actor, formData),
+    setBlocked: (actor: AccountAdminActor, formData: FormData) => setAccountBlockedCommand(deps, actor, formData),
+    saveRolePermissions: (actor: AccountAdminActor, formData: FormData) => saveRolePermissionsCommand(deps, actor, formData),
+  };
 }

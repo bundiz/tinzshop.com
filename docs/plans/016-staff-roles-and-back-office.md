@@ -186,8 +186,8 @@
 - Page (from `users.html`): tabs "บัญชีทั้งหมด" and "ตำแหน่งและสิทธิ์" (the mockup's separate staff and customer tabs become one list with a role filter); search box (email or name); role and status filters (active, blocked); table columns name, email, role (a select, `account.manage` only), status, created; row action block or unblock with a confirm dialog; 20 per page. Left out from the mockup: add user, delete, export, bulk selection, phone, order count, total spent, last visit, the email-code banner, "awaiting email confirmation".
 - Grid: rows are the four permission keys with translated descriptions (`admin.permission.<key>`); columns are the six roles; `super_admin` column ticked and disabled; back-office cells for `customer` and `guest` disabled; one save button per grid.
 
-- [ ] **Step 1: Write the failing tests:** each action refuses without its permission; `roleKey: 'guest'` is refused; the last-admin and lock errors come back as their message keys; the grid renders disabled cells exactly as above; the table hides the role select for an account without `account.manage` (defensive; the page itself needs it).
-- [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** — PASS. **Commit** `feat: add the accounts page and the role permissions grid`
+- [x] **Step 1: Write the failing tests:** each action refuses without its permission; `roleKey: 'guest'` is refused; the last-admin and lock errors come back as their message keys; the grid renders disabled cells exactly as above; the table hides the role select for an account without `account.manage` (defensive; the page itself needs it).
+- [x] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** — PASS. **Commit** `feat: add the accounts page and the role permissions grid`
 
 ### Task 9: News list and editor pages
 
@@ -246,6 +246,8 @@ Run by a person on the dev pool. Never tick a box for a check nobody performed.
 ## Outcome
 
 Task 7 (the shell and the gate) is built: `requirePermission`, the layout and side menu, the home page, the no-access page and the account-menu link. Structure learned while building it (D-249): the layout cannot be the check (it does not know the path, and does not re-run on a client-side move), so it draws the frame only for an account holding `backoffice.enter` and every page calls `requirePermission` itself; the no-access page sits in a sibling route group `(admin-open)` so the layout does not wrap it and it cannot loop. Every later page under `/admin` goes in `(admin)/admin/` and calls `requirePermission` first. The integration test of the real `findCustomerSession` query (role key, permission keys, `blockedAt`) was added, deferred from Task 4's review.
+
+Task 8 (the accounts page and the role permissions grid) is built (D-250). Learned: next-intl message keys cannot contain a dot, so `admin.permission.<key>` is nested (`permission.backoffice.enter`); the grid saves one role per button because the action takes one `roleKey`; an added `findAccountState` read supplies the log's old value. The manual checks (change a role, block, unblock in a browser) are still to be run by a person.
 
 ## Not in this plan
 

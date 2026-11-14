@@ -5,6 +5,7 @@ import { getDatabaseUrl } from '@/server/config';
 import {
   changeAccountRole,
   findAccountByEmail,
+  findAccountState,
   listRoleGrants,
   replaceRolePermissions,
   searchAccounts,
@@ -203,5 +204,13 @@ describe('access repository reads and grants', () => {
     const after = await listRoleGrants();
     expect([...after.blogger].sort()).toEqual(['backoffice.enter', 'role.manage']);
     expect([...after.admin].sort()).toEqual(['backoffice.enter', 'news.manage']);
+  });
+});
+
+describe('findAccountState', () => {
+  it('returns the role and the blocked flag, and null for an unknown id', async () => {
+    const id = await makeAccount('blogger', { blocked: true });
+    expect(await findAccountState(id)).toEqual({ roleKey: 'blogger', blocked: true });
+    expect(await findAccountState('00000000-0000-4000-8000-000000000000')).toBeNull();
   });
 });

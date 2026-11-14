@@ -609,6 +609,87 @@
       "title": "You do not have access to this page",
       "text": "If you think this is a mistake, please tell an administrator.",
       "home": "Back to the home page"
+    },
+    "users": {
+      "title": "Users and permissions",
+      "subtitle": "Find accounts, change roles, block accounts and set what each role may do",
+      "tabsLabel": "Sections of this page",
+      "tabAccounts": "All accounts",
+      "tabRoles": "Roles and permissions",
+      "search": {
+        "label": "Search accounts",
+        "placeholder": "Search by name or email",
+        "submit": "Search"
+      },
+      "filter": {
+        "role": "Role",
+        "allRoles": "All roles",
+        "status": "Status",
+        "allStatuses": "All statuses"
+      },
+      "status": {
+        "active": "Active",
+        "blocked": "Blocked"
+      },
+      "count": "{count} accounts found",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "created": "Joined",
+        "actions": "Actions"
+      },
+      "noLastName": "—",
+      "roleSelect": "Role of {name}",
+      "saveRole": "Save",
+      "block": "Block",
+      "unblock": "Unblock",
+      "confirm": {
+        "blockTitle": "Block this account?",
+        "blockText": "{name} will be signed out everywhere at once and cannot sign in until the account is unblocked.",
+        "unblockTitle": "Unblock this account?",
+        "unblockText": "{name} will be able to sign in again as usual.",
+        "cancel": "Cancel"
+      },
+      "empty": "No accounts match.",
+      "pager": {
+        "label": "Pages",
+        "prev": "Previous",
+        "next": "Next",
+        "range": "Page {page} of {pages}"
+      }
+    },
+    "roles": {
+      "hint": "The Top-level Admin role always holds every permission and cannot be changed. Customers and guests cannot enter the back office and cannot be given these permissions.",
+      "permission": "Permission",
+      "cell": "{permission} — {role}",
+      "save": "Save permissions",
+      "saveRole": "Save the permissions of {role}",
+      "saved": "Permissions saved"
+    },
+    "saved": "Saved",
+    "permission": {
+      "backoffice": {
+        "enter": "Open the back office and see its home page"
+      },
+      "news": {
+        "manage": "Manage news: list, create, edit, publish, unpublish, schedule and delete"
+      },
+      "account": {
+        "manage": "Find accounts, change roles, block and unblock"
+      },
+      "role": {
+        "manage": "Change which permissions each role holds"
+      }
+    },
+    "error": {
+      "forbidden": "You do not have permission to do this.",
+      "invalid": "The data is not valid. Please try again.",
+      "lastSuperAdmin": "There must always be at least one Top-level Admin account that is not blocked.",
+      "unknownAccount": "This account was not found.",
+      "superAdminLocked": "The Top-level Admin must hold every permission; none can be removed.",
+      "backOfficeKeyForCustomer": "Customers and guests cannot be given a back-office permission."
     }
   }
 }
