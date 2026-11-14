@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
@@ -18,10 +18,10 @@ export type AdminShellProps = {
   children: ReactNode;
 };
 
-/** The same page in another locale: the path's first segment is the locale (D-031). */
-function inLocale(pathname: string, locale: string, target: string): string {
+/** The same page in another locale: the path's first segment is the locale (D-031). The query string (a list's filters, its page) is kept. */
+function inLocale(pathname: string, query: string, locale: string, target: string): string {
   return pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
-    ? `/${target}${pathname.slice(locale.length + 1)}`
+    ? `/${target}${pathname.slice(locale.length + 1)}${query === '' ? '' : `?${query}`}`
     : `/${target}/admin`;
 }
 
@@ -34,6 +34,7 @@ function inLocale(pathname: string, locale: string, target: string): string {
 export default function AdminShell({ locale, permissions, name, roleLabel, children }: AdminShellProps) {
   const t = useTranslations('admin');
   const pathname = usePathname();
+  const query = useSearchParams().toString();
   const [open, setOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
 
@@ -100,7 +101,7 @@ export default function AdminShell({ locale, permissions, name, roleLabel, child
                     </span>
                   ) : (
                     <Link
-                      href={inLocale(pathname, locale, target)}
+                      href={inLocale(pathname, query, locale, target)}
                       hrefLang={target}
                       lang={target}
                       aria-label={t(`language.${target}Name`)}

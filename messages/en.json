@@ -689,6 +689,168 @@
       "unknownAccount": "This account was not found.",
       "superAdminLocked": "The Top-level Admin must hold every permission; none can be removed.",
       "backOfficeKeyForCustomer": "Customers and guests cannot be given a back-office permission."
+    },
+    "news": {
+      "title": "News and articles",
+      "subtitle": "Write, edit, publish or schedule the shop's news and articles",
+      "new": "Write new article",
+      "tabsLabel": "Article status",
+      "tab": {
+        "all": "All",
+        "published": "Published",
+        "scheduled": "Scheduled",
+        "draft": "Drafts",
+        "trash": "Trash"
+      },
+      "search": {
+        "label": "Search articles",
+        "placeholder": "Search by title",
+        "submit": "Search"
+      },
+      "filter": {
+        "category": "Category",
+        "allCategories": "All categories"
+      },
+      "count": "Showing {count} articles",
+      "columns": {
+        "title": "Title",
+        "categories": "Categories",
+        "author": "Author",
+        "languages": "Languages",
+        "status": "Status",
+        "date": "Date",
+        "actions": "Actions"
+      },
+      "status": {
+        "draft": "Draft",
+        "scheduled": "Scheduled",
+        "published": "Published"
+      },
+      "untitled": "(no title yet)",
+      "restore": "Restore",
+      "restoreLabel": "Restore {title}",
+      "empty": "No articles match.",
+      "emptyTrash": "The trash is empty.",
+      "pager": {
+        "label": "Pages",
+        "prev": "Previous",
+        "next": "Next",
+        "range": "Page {page} of {pages}"
+      },
+      "editor": {
+        "back": "All articles",
+        "form": "Edit article",
+        "languagesLabel": "Article language",
+        "th": "ไทย",
+        "en": "English",
+        "enHint": "Write the English version with both a title and a body. Without one, the English site shows the Thai version.",
+        "titleLabel": "Article title",
+        "titlePlaceholder": "Add a title",
+        "slugLabel": "End of the link (slug)",
+        "slugPrefix": "Link: /news/",
+        "slugHint": "Leave empty to make it from the title",
+        "excerptLabel": "Summary",
+        "excerptHint": "Shown in the article list. Needed before publishing (Thai).",
+        "bodyLabel": "Article body",
+        "toolbar": {
+          "label": "Format text",
+          "block": "Paragraph style",
+          "bold": "Bold",
+          "italic": "Italic",
+          "link": "Insert link",
+          "bulletList": "Bulleted list",
+          "orderedList": "Numbered list",
+          "youtube": "Insert YouTube video",
+          "product": "Insert product card"
+        },
+        "block": {
+          "p": "Paragraph",
+          "h2": "Heading 2",
+          "h3": "Heading 3",
+          "blockquote": "Quote"
+        },
+        "linkDialog": {
+          "title": "Insert link",
+          "url": "Link address (URL)",
+          "ok": "Apply link",
+          "remove": "Remove link",
+          "cancel": "Cancel",
+          "invalid": "Enter a link starting with https:// or http://"
+        },
+        "youtubeDialog": {
+          "title": "Insert YouTube video",
+          "url": "Video link",
+          "ok": "Insert video",
+          "cancel": "Cancel",
+          "invalid": "Enter a valid YouTube video link"
+        },
+        "productDialog": {
+          "title": "Insert product card",
+          "hint": "The card shows the chosen product's latest price and stock status",
+          "cancel": "Cancel"
+        },
+        "productCard": "Product card",
+        "panel": {
+          "publish": "Publishing",
+          "categories": "Categories",
+          "tags": "Tags",
+          "products": "Related products"
+        },
+        "state": "Status",
+        "when": "Publish time",
+        "whenNow": "Now",
+        "whenLater": "Schedule…",
+        "whenAt": "Date and time (Thailand time)",
+        "byline": "Author",
+        "featured": "Original picture from the old site (cannot be changed)",
+        "categoriesEmpty": "There are no categories yet",
+        "tagLabel": "Add a tag",
+        "tagPlaceholder": "Add a tag, then press Enter",
+        "tagRemove": "Remove tag {name}",
+        "productsHint": "This article will appear on the pages of the products you pick",
+        "productsSearch": "Search products",
+        "productsPlaceholder": "Search by product name or SKU",
+        "productsNone": "No products found",
+        "productsAdd": "Add {name}",
+        "productsRemove": "Remove {name}",
+        "button": {
+          "preview": "Preview",
+          "saveDraft": "Save draft",
+          "publish": "Publish",
+          "update": "Update",
+          "unpublish": "Unpublish",
+          "trash": "Move to trash"
+        },
+        "previewHint": "The preview shows the last saved version",
+        "confirm": {
+          "trashTitle": "Move this article to the trash?",
+          "trashText": "It leaves the site at once and can be restored from the trash",
+          "cancel": "Cancel",
+          "trash": "Move to trash"
+        },
+        "saved": {
+          "draft": "Draft saved",
+          "publish": "Published",
+          "scheduled": "Scheduled for publishing",
+          "unpublish": "Unpublished"
+        }
+      },
+      "preview": {
+        "banner": "Preview of the saved version. Customers cannot see it yet.",
+        "edit": "Back to editing"
+      },
+      "error": {
+        "forbidden": "You do not have permission to do this.",
+        "invalid": "The data is not valid. Please try again.",
+        "notFound": "This article was not found.",
+        "titleRequired": "A Thai title is required.",
+        "bodyRequired": "A Thai body is required.",
+        "excerptRequired": "A Thai summary is required before publishing.",
+        "englishIncomplete": "The English version needs both a title and a body, or leave all of it empty.",
+        "categories": "Choose at least one category that is shown on the site before publishing.",
+        "products": "A product you chose was not found.",
+        "publishAtInvalid": "The date and time set are not valid."
+      }
     }
   }
 }

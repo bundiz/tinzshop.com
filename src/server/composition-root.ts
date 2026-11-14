@@ -45,7 +45,17 @@ import {
   type AccountAdminActor,
   type AccountAdminDeps,
 } from '@/server/controllers/access/account-admin-controller';
+import {
+  restoreArticleCommand,
+  saveArticleCommand,
+  searchProductsCommand,
+  trashArticleCommand,
+  type NewsAdminActor,
+  type NewsAdminCommandDeps,
+} from '@/server/controllers/news/news-admin-controller';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
+import { findProductSummaries, searchActiveProducts } from '@/server/repositories/catalogue/product-search-repository';
+import { productSummariesForPicker, searchProductsForPicker, type ProductSearchDeps } from '@/server/services/catalogue/product-search-service';
 import {
   tryWithAdvisoryLock,
   CATALOGUE_SYNC_LOCK_KEY,
@@ -305,6 +315,31 @@ export function getNewsAdmin() {
     save: (input: Parameters<typeof saveArticle>[1]) => saveArticle(deps, input),
     trash: (id: string, editorId: string) => trashArticle(deps, id, editorId),
     restore: (id: string, editorId: string) => restoreArticle(deps, id, editorId),
+    /** Every news category (listed or not), in `position` order: the editor's checkboxes and the list's names. */
+    categories: async () => (await listNewsCategories()).sort((a, b) => a.position - b.position),
+    /** The products named, for the editor's selected list (a read from the catalogue, R3). */
+    productsByIds: (ids: readonly string[]) => productSummariesForPicker(productSearchDeps, ids),
+  };
+}
+
+const productSearchDeps: ProductSearchDeps = { catalogue: { searchActiveProducts, findProductSummaries } };
+
+/** The news form commands (plan 016 Task 9): each takes the signed-in actor and checks `news.manage` itself. */
+export function getNewsAdminCommands() {
+  const news = getNewsAdmin();
+  const deps: NewsAdminCommandDeps = {
+    save: (request) => news.save(request),
+    trash: news.trash,
+    restore: news.restore,
+    searchProducts: (query) => searchProductsForPicker(productSearchDeps, query),
+    now: () => new Date(),
+    log: (message, fields) => console.error(message, fields),
+  };
+  return {
+    save: (actor: NewsAdminActor, formData: FormData) => saveArticleCommand(deps, actor, formData),
+    trash: (actor: NewsAdminActor, formData: FormData) => trashArticleCommand(deps, actor, formData),
+    restore: (actor: NewsAdminActor, formData: FormData) => restoreArticleCommand(deps, actor, formData),
+    searchProducts: (actor: NewsAdminActor, query: string) => searchProductsCommand(deps, actor, query),
   };
 }
 

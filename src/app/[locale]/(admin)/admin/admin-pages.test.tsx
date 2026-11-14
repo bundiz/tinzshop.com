@@ -16,7 +16,7 @@ vi.mock('next-intl/server', () => ({
 }));
 vi.mock('../../(shop)/_components/read-current-customer', () => ({ readCurrentCustomer: async () => request.customer }));
 vi.mock('../../(shop)/(auth)/actions', () => ({ signOutAction: async () => {} }));
-vi.mock('next/navigation', async (original) => ({ ...(await original<object>()), usePathname: () => '/th/admin' }));
+vi.mock('next/navigation', async (original) => ({ ...(await original<object>()), usePathname: () => '/th/admin', useSearchParams: () => new URLSearchParams() }));
 
 const { default: AdminHomePage } = await import('./page');
 const { default: NoAccessPage } = await import('../../(admin-open)/admin/no-access/page');
