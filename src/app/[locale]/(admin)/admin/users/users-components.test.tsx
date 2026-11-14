@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { PermissionKey, RoleKey } from '@/server/services/access/permission-keys';
 import en from '../../../../../../messages/en.json';
 import th from '../../../../../../messages/th.json';
-import AccountTable, { type AccountTableRow } from './_components/AccountTable';
+import AccountTable, { ErrorLine, type AccountTableRow } from './_components/AccountTable';
 import RolePermissionGrid from './_components/RolePermissionGrid';
 
 function html(node: React.ReactNode, locale: 'th' | 'en' = 'en'): string {
@@ -48,6 +48,18 @@ describe('AccountTable', () => {
     const out = html(<AccountTable locale="en" rows={[row]} permissions={['account.manage']} />);
     expect(out).not.toContain('value="guest"');
     for (const key of ['customer', 'blogger', 'sale_manager', 'admin', 'super_admin']) expect(out).toContain(`value="${key}"`);
+  });
+
+  it('names the account in the block and unblock buttons', () => {
+    const out = html(<AccountTable locale="en" rows={[row, { ...row, id: 'x', blocked: true }]} permissions={['account.manage']} />);
+    expect(out).toContain('aria-label="Block: Somchai"');
+    expect(out).toContain('aria-label="Unblock: Somchai"');
+  });
+
+  it('shows a short saved line after a successful role change, and the error key text on a refusal', () => {
+    expect(html(<ErrorLine state={{ status: 'ok' }} showSaved />)).toContain('Saved');
+    expect(html(<ErrorLine state={{ status: 'ok' }} />)).toBe('');
+    expect(html(<ErrorLine state={{ status: 'error', errorKey: 'lastSuperAdmin' }} />)).toContain('at least one Top-level Admin');
   });
 
   it('shows the empty message for no rows', () => {

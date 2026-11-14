@@ -39,11 +39,18 @@ function displayName(row: AccountTableRow): string {
   return [row.firstName, row.lastName].filter((part) => part !== null && part !== '').join(' ');
 }
 
-function ErrorLine({ state }: { state: AccountAdminState }) {
-  const t = useTranslations('admin.error');
+export function ErrorLine({ state, showSaved = false }: { state: AccountAdminState; showSaved?: boolean }) {
+  const t = useTranslations('admin');
+  if (state.status === 'ok' && showSaved) {
+    return (
+      <p role="status" className="mt-1 text-sm font-medium text-ok-ink">
+        {t('saved')}
+      </p>
+    );
+  }
   return state.status === 'error' ? (
     <p role="alert" className="mt-1 max-w-[260px] text-sm font-medium text-sale">
-      {t(state.errorKey)}
+      {t(`error.${state.errorKey}`)}
     </p>
   ) : null;
 }
@@ -72,7 +79,7 @@ function RoleForm({ locale, row, action }: { locale: string; row: AccountTableRo
           {t('users.saveRole')}
         </button>
       </div>
-      <ErrorLine state={state} />
+      <ErrorLine state={state} showSaved />
     </form>
   );
 }
@@ -100,7 +107,7 @@ function BlockForm({ locale, row, action }: { locale: string; row: AccountTableR
         <input type="hidden" name="accountId" value={row.id} />
         <input type="hidden" name="blocked" value={row.blocked ? 'false' : 'true'} />
       </form>
-      <button ref={opener} type="button" onClick={() => setOpen(true)} className={`${buttonClass({ variant: 'line' })} min-h-11 px-3.5 text-sm`}>
+      <button ref={opener} type="button" aria-label={`${t(kind)}: ${name}`} onClick={() => setOpen(true)} className={`${buttonClass({ variant: 'line' })} min-h-11 px-3.5 text-sm`}>
         {t(kind)}
       </button>
       <ErrorLine state={state} />

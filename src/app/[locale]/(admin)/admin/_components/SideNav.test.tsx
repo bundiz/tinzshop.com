@@ -60,4 +60,12 @@ describe('SideNav', () => {
     expect(markup).toContain('href="/th"');
     expect(markup).toContain('ออกจากระบบ');
   });
+
+  it('shows the users item for either account.manage or role.manage, linking to the tab the viewer can open', () => {
+    const accounts = html(['backoffice.enter', 'account.manage'], 'en');
+    expect(accounts).toContain('href="/en/admin/users"');
+    const rolesOnly = html(['backoffice.enter', 'role.manage'], 'en');
+    expect(rolesOnly).toContain('href="/en/admin/users?tab=roles"');
+    expect(html(BLOGGER, 'en')).not.toContain('/admin/users');
+  });
 });

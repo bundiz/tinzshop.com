@@ -640,7 +640,6 @@
         "created": "Joined",
         "actions": "Actions"
       },
-      "noLastName": "—",
       "roleSelect": "Role of {name}",
       "saveRole": "Save",
       "block": "Block",

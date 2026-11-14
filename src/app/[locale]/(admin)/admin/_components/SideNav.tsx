@@ -18,14 +18,20 @@ export type SideNavProps = {
   onNavigate?: () => void;
 };
 
-type Item = { key: 'dashboard' | 'news' | 'users'; path: string; permission: PermissionKey; icon: IconName };
+type Item = {
+  key: 'dashboard' | 'news' | 'users';
+  path: string;
+  /** The item shows when the account holds any of these keys. */
+  permission: PermissionKey[];
+  icon: IconName;
+};
 type Section = { key: 'overview' | 'content' | 'system'; items: Item[] };
 
 /** The stage 1 menu, in the mockup's order. Later plans add their items here, each with its key. */
 const SECTIONS: Section[] = [
-  { key: 'overview', items: [{ key: 'dashboard', path: '', permission: 'backoffice.enter', icon: 'grid' }] },
-  { key: 'content', items: [{ key: 'news', path: '/news', permission: 'news.manage', icon: 'list' }] },
-  { key: 'system', items: [{ key: 'users', path: '/users', permission: 'account.manage', icon: 'user' }] },
+  { key: 'overview', items: [{ key: 'dashboard', path: '', permission: ['backoffice.enter'], icon: 'grid' }] },
+  { key: 'content', items: [{ key: 'news', path: '/news', permission: ['news.manage'], icon: 'list' }] },
+  { key: 'system', items: [{ key: 'users', path: '/users', permission: ['account.manage', 'role.manage'], icon: 'user' }] },
 ];
 
 const ITEM =
@@ -58,7 +64,7 @@ export default function SideNav({ locale, permissions, pathname, name, roleLabel
         </span>
       </Link>
       {SECTIONS.map((section) => {
-        const items = section.items.filter((item) => can(viewer, item.permission));
+        const items = section.items.filter((item) => item.permission.some((key) => can(viewer, key)));
         if (items.length === 0) return null;
         return (
           <div key={section.key} className="mt-3.5">
@@ -68,10 +74,11 @@ export default function SideNav({ locale, permissions, pathname, name, roleLabel
             <ul>
               {items.map((item) => {
                 const href = `${base}${item.path}`;
+                const linkTo = item.key === 'users' && !can(viewer, 'account.manage') ? `${href}?tab=roles` : href;
                 return (
                   <li key={item.key}>
                     <Link
-                      href={href}
+                      href={linkTo}
                       onClick={onNavigate}
                       aria-current={isCurrent(pathname, href, item.path === '') ? 'page' : undefined}
                       className={ITEM}

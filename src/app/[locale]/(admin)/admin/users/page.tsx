@@ -1,9 +1,11 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
+import { can } from '@/server/services/access/access-service';
 import { buttonClass } from '@/components/ui/button-class';
 import { getAccountAdmin } from '@/server/composition-root';
 import { ROLE_KEYS, type RoleKey } from '@/server/services/access/permission-keys';
+import { readCurrentCustomer } from '../../../(shop)/_components/read-current-customer';
 import { requirePermission } from '../_lib/require-permission';
 import AccountTable from './_components/AccountTable';
 import RolePermissionGrid from './_components/RolePermissionGrid';
@@ -36,7 +38,11 @@ export default async function UsersPage({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const query = await searchParams;
   const t = await getTranslations({ locale, namespace: 'admin' });
-  const rolesTab = first(query.tab) === 'roles';
+  const viewer = await readCurrentCustomer();
+  const canAccounts = can(viewer, 'account.manage');
+  const canRoles = can(viewer, 'role.manage');
+  // A viewer holding only role.manage lands on the roles tab; the server checks below still run for whoever asks.
+  const rolesTab = first(query.tab) === 'roles' || (!canAccounts && canRoles);
 
   const header = (
     <div className="mb-4">
@@ -47,12 +53,16 @@ export default async function UsersPage({ params, searchParams }: Props) {
 
   const tabs = (
     <nav aria-label={t('users.tabsLabel')} className="mb-4 flex gap-1 border-b border-line pb-2">
-      <Link href={href(locale, {})} aria-current={rolesTab ? undefined : 'page'} className={TAB}>
-        {t('users.tabAccounts')}
-      </Link>
-      <Link href={href(locale, { tab: 'roles' })} aria-current={rolesTab ? 'page' : undefined} className={TAB}>
-        {t('users.tabRoles')}
-      </Link>
+      {canAccounts ? (
+        <Link href={href(locale, {})} aria-current={rolesTab ? undefined : 'page'} className={TAB}>
+          {t('users.tabAccounts')}
+        </Link>
+      ) : null}
+      {canRoles ? (
+        <Link href={href(locale, { tab: 'roles' })} aria-current={rolesTab ? 'page' : undefined} className={TAB}>
+          {t('users.tabRoles')}
+        </Link>
+      ) : null}
     </nav>
   );
 
@@ -68,7 +78,7 @@ export default async function UsersPage({ params, searchParams }: Props) {
     );
   }
 
-  const viewer = await requirePermission(locale, '/admin/users', 'account.manage');
+  const account = await requirePermission(locale, '/admin/users', 'account.manage');
   const q = first(query.q).trim().slice(0, 100);
   const roleParam = first(query.role);
   const roleKey: RoleKey | null = (ROLE_KEYS as readonly string[]).includes(roleParam) ? (roleParam as RoleKey) : null;
@@ -125,7 +135,7 @@ export default async function UsersPage({ params, searchParams }: Props) {
       </form>
       <AccountTable
         locale={locale}
-        permissions={viewer.permissions}
+        permissions={account.permissions}
         rows={rows.map((row) => ({
           id: row.id,
           email: row.email,

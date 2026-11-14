@@ -286,7 +286,7 @@ The adapter reports Cognito failures as a `CognitoError` with one of `username_e
 
 ### Back-office Server Actions (plan 016)
 
-The back office's forms are Server Actions, not HTTP endpoints, so they are not in `openapi.yaml`; they carry Next's CSRF protection. Each validates `FormData` with Zod, then re-checks its permission on the server (D-243): a missing permission is `admin.error.forbidden`. The accounts and role actions are form actions `(previous, formData)` that also read a hidden `locale` and return a state: `{ status: 'idle' }`, `{ status: 'ok' }` (the page is then revalidated) or `{ status: 'error', errorKey }` with `errorKey` a key under `admin.error.*` (D-250). `accountId` must be a uuid, `roleKey` must be assignable (not `guest`) for role changes, and every `keys[]` entry must be a stage 1 permission key, otherwise `admin.error.invalid`. Role, block and permission changes are logged as ids (D-242). Actions for the accounts and role pages are in `src/app/[locale]/(admin)/admin/users/actions.ts`; those for news are in `.../admin/news/actions.ts`.
+The back office's forms are Server Actions, not HTTP endpoints, so they are not in `openapi.yaml`; they carry Next's CSRF protection. Each first re-checks its permission on the server (D-243), then validates `FormData` with Zod: a missing permission is `admin.error.forbidden`. The accounts and role actions are form actions `(previous, formData)` that also read a hidden `locale` and return a state: `{ status: 'idle' }`, `{ status: 'ok' }` (the page is then revalidated) or `{ status: 'error', errorKey }` with `errorKey` a key under `admin.error.*` (D-250). `accountId` must be a uuid, `roleKey` must be assignable (not `guest`) for role changes, and every `keys[]` entry must be a stage 1 permission key, otherwise `admin.error.invalid`. Role, block and permission changes are logged as ids (D-242). Actions for the accounts and role pages are in `src/app/[locale]/(admin)/admin/users/actions.ts`; those for news are in `.../admin/news/actions.ts`.
 
 | Action | Permission | Does | Errors (message keys) |
 | :--- | :--- | :--- | :--- |
@@ -297,7 +297,7 @@ The back office's forms are Server Actions, not HTTP endpoints, so they are not 
 | `trashArticleAction`, `restoreArticleAction` | `news.manage` | Soft delete and restore (`deleted_at`, D-131, D-239). | `admin.error.forbidden` |
 | `searchProductsAction` (`query`) | `news.manage` | Up to 10 active products by name or SKU, for related products and product cards. | `admin.error.forbidden` |
 
-The exact validation keys are fixed when Tasks 8 and 9 are built; this table is updated with them.
+The accounts and roles actions' error keys are now fixed (the three rows above, D-250); the news actions' validation keys are fixed when Task 9 is built, and this table is updated with them.
 
 ## Scheduled jobs
 
