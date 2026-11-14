@@ -31,53 +31,39 @@ the phase-to-requirement mapping changed materially from the original draft.
 
 ## Schedule and budget
 
-**Total budget: 100,000 THB for phases 2 through 9** (Q-006). Phase 1
-documentation is substantially complete already. This is a lean budget for the
-integration list this project carries (K-Payment, BigSeller, Shopee,
-Cloudflare, email), which is the reasoning behind several scope-narrowing
-answers below — no carrier API, no audit log, no refund engine, no centralized
-return/warranty engine, daily-file sync instead of a paid realtime API.
+**Total budget: 100,000 THB for all remaining work** (Q-006), paid in four
+payment stages. External running costs — AWS, the domain, K-Payment fees,
+email sending and security services — are the client's and are not part of
+the budget (D-200). This is a lean budget for the integration list this
+project carries (K-Payment, Shopee, AWS, email), which is the reasoning behind
+several scope-narrowing answers below — no carrier API, no audit log, no
+refund engine, no return/warranty engine, and no direct BigSeller connection.
 
-**The schedule below is a proposal from the project side (Q-004), not a
-client-committed deadline.** It should go back to the client for confirmation.
-It will also move if the BigSeller data-inspection session (the single
-dependency behind Q-007, Q-011, Q-012, Q-014 and Q-044) turns up more work than
-assumed here, or if Shopee access (Q-042) arrives late.
+**Delivery is by payment stage (D-193, Q-062).** The phases further down still
+group the requirements; the stages set the order they are delivered and paid
+in. Each stage is accepted against its UAT checklist on DEV and signed off by
+the client's owner before it is paid (D-194, `15-acceptance-criteria.md`). A
+stage may slip by up to four weeks at no extra cost, and work outside this
+scope is a change request priced per man-day (D-200). The plan is the project
+owner's of 2026-11-14 and is pending the client's signature on the MOU.
 
-| Phase | Dates (proposed) | Duration | Why this length |
-| :--- | :--- | :--- | :--- |
-| 1 — Planning documentation | 2026-09-01 → 2026-09-15 | 2 weeks | Documentation, mostly complete at time of writing |
-| 2 — Catalogue, stock, admin foundation | 2026-09-16 → 2026-10-13 | 4 weeks | Scaffold, schema, roles/2FA, and the Shopee catalogue mirror (plan 010; Excel import removed, REQ-038, D-094) — the foundation everything else sits on |
-| 3 — Storefront, ordering, K-Payment, simplified tax invoice | 2026-10-14 → 2026-11-17 | 5 weeks | Now includes K-Payment integration and testing (moved from phase 4, Q-030) since it is the only payment method and credentials already exist (Q-033) |
-| 4 — Shipping tiers, simple label, case-by-case return/claim contact | 2026-11-18 → 2026-12-08 | 3 weeks | Lighter than originally planned — no carrier API, no refund engine, no return/warranty policy engine (Q-034, Q-035, Q-036, Q-037, Q-038) |
-| 5 — Pre-order, dropship, BigSeller/Shopee sync | 2026-12-09 → 2027-01-12 | 5 weeks | Includes buffer for the BigSeller data-inspection dependency; extends if Shopee access (Q-042) is still unavailable |
-| 6 — News, content pages, product reviews, Sale Page, reports | 2027-01-13 → 2027-02-09 | 4 weeks | Includes migrating existing content before building the new content types |
-| 7 — Testing, training, go live | 2027-02-10 → 2027-03-02 | 3 weeks | One Thai training manual (Q-051), acceptance sign-off per `15-acceptance-criteria.md` |
-| 8 — Security and bot verification (Cloudflare Free) | 2027-02-24 → 2027-03-02 | 1 week, **run alongside phase 7** | Recommended change from the source's ordering — see *Recommended re-ordering* below |
-| 9 — Database backup | 2027-02-24 → 2027-03-02 | 1 week, **run alongside phase 7** | Same reasoning — a live shop with no backup and no bot protection is the wrong order |
+| Stage | Due | Share | Delivers | Requirements |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 2026-12-15 | 20% (20,000 THB) | Architecture; staff sign-in with email OTP; the six roles; news, imported from the old site (plan 012, done), plus a staff news editor; AWS DEV and PROD with automatic deployment (ADR-0004); PROD showing news and the maintenance notice | REQ-032, 033, 034, 035, 047, 051, 057 |
+| 2 | 2027-01-12 | 30% (30,000 THB) | The Shopee catalogue mirror (plan 010, done); product listing and product pages (plans 011 and 013, done); category management; search; stock status from Shopee; content pages and shop information, editable by staff; Sale Page; dropship set-up and the staff availability gate | REQ-001, 002, 003, 004, 005, 006, 021, 022, 036, 037, 043, 044, 045, 050 (staff side), 055 |
+| 3 | 2027-02-09 | 30% (30,000 THB) | Customer sign-up and sign-in; cart; checkout; shipping cost by size tier; K-Payment card, instalments and PromptPay QR; order status and history; the admin order list with the Excel export for cutting stock in BigSeller; staff cancellation; wishlist | REQ-011, 013, 016, 019, 020, 023, 028, 030, 041, 042, 052, 053, 056 |
+| 4 | 2027-03-02 | 20% (20,000 THB) | Simplified tax invoice; shipping label; pre-order; dropship ordering; customer reviews; sales dashboard and the monthly accounting export; security (phase 8); database backup with a timed restore (phase 9); the Thai staff manual; final UAT; ordering opens on PROD; source code handed over | REQ-024, 025, 026, 027, 031, 039, 048, 049, 050 (ordering side), 054 |
 
-**Recommended re-ordering.** The source places security (phase 8) and backups
-(phase 9) after go-live. `03-architecture.md` and `10-deployment.md` already
-flagged this as worth raising with the client (Q-001's ordering was never
-confirmed). Now that a schedule has to be committed to, the recommendation is
-made concrete: **run phases 8 and 9 in parallel with the tail of phase 7**, so
-Cloudflare and a tested backup both exist before the shop takes its first real
-payment. This is a scheduling recommendation, not a requirement change, and
-should be confirmed with the client alongside the rest of this schedule.
+**Security and backup before ordering opens (D-198).** The source places
+security (phase 8) and backups (phase 9) after go-live. They are delivered in
+stage 4 instead and must be complete before the maintenance notice comes off
+PROD, so the shop never takes a real payment without them. Until then PROD
+holds news articles and staff accounts, but no customer or order data.
 
-**Backlog — confirmed in scope, not scheduled.** Loyalty points/gift cards and
-a wishlist are confirmed in scope by Q-002 (`+` means "add to scope"), but
-neither is detailed anywhere in the source beyond its name, and the 100,000
-THB budget does not stretch to building either alongside the nine phases
-above. They are held as a post-launch backlog:
-
-| Item | Source | Why deferred |
-| :--- | :--- | :--- |
-| Loyalty points / gift cards | §10, marked `+` | No design detail exists anywhere in the source; budget does not cover discovery plus build inside phases 2–9 |
-| Wishlist, shown in order history | §10, marked `+` | Same — low cost individually, but every addition to the fixed budget displaces something else |
-
-If the client wants either moved into a numbered phase, that is new direction
-and should be said explicitly, along with what it displaces.
+**Removed on 2026-11-14 (Q-062).** The return, warranty and claim contact path
+(REQ-014, D-195), PDPA self-service (REQ-046, D-197), loyalty points and gift
+cards (D-199), and any direct BigSeller connection (D-201). There is no
+backlog left: the wishlist is REQ-056 in stage 3.
 
 ---
 
@@ -87,22 +73,22 @@ and should be said explicitly, along with what it displaces.
 | :--- | :--- |
 | 1 — Planning documentation | *(none — this documentation is the deliverable)* |
 | 2 — Products, variants, stock, Excel | REQ-004, 005, 006, 020, 032, 033, 034, 035, 036, 037, 038 (REMOVED), 051 |
-| 3 — Storefront, ordering, K-Payment, invoice | REQ-001, 002, 003, 010 (REMOVED), 011, 016, 019, 023, 024, 025, 026, 041, 042, 052, 053 |
-| 4 — Shipping tiers, labels, return/claim contact | REQ-013, 014, 028, 030 |
+| 3 — Storefront, ordering, K-Payment, invoice | REQ-001, 002, 003, 010 (REMOVED), 011, 016, 019, 023, 024, 025, 026, 041, 042, 052, 053, 056 |
+| 4 — Shipping tiers, labels, cancellation | REQ-013, 014 (REMOVED), 028, 030 |
 | 5 — Pre-order, dropship, Shopee sync | REQ-021, 022, 048, 049, 050 |
-| 6 — News, content pages, reviews, reports | REQ-027, 039, 043, 044, 045, 046, 047, 054, 055 |
-| 7 — Testing, training, go live | *(no new requirements)* |
-| 8 — Security and bot verification | *(none written — Cloudflare Free scoped in Q-054)* |
+| 6 — News, content pages, reviews, reports | REQ-027, 039, 043, 044, 045, 046 (REMOVED), 047, 054, 055 |
+| 7 — Testing, training, go live | REQ-057 (delivered early, in stage 1) |
+| 8 — Security | *(none written — Cloudflare Free scoped in Q-054; open again in Q-064)* |
 | 9 — Database backup | *(none written — strategy in `10-deployment.md#backup`)* |
 | Cross-cutting | REQ-007, 008, 009 |
-| Removed | REQ-010, 015, 017, 018, 029, 038, 040 |
-| Backlog, not scheduled | Loyalty/gift cards, wishlist (§10, `+`) |
+| Removed | REQ-010, 014, 015, 017, 018, 029, 038, 040, 046 |
+| Backlog, not scheduled | *(none — loyalty removed, wishlist is REQ-056, D-199)* |
 
 ---
 
 ## Phase 1 — Planning documentation
 
-- **Dates:** 2026-09-01 → 2026-09-15
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (from the source):** planning documents covering the detail of the work, division of work, scope, and working method, written to a shared format; a clear project structure; and identifying what is not yet known or not yet clear and making it clear. The source names Cloudflare, Shopee, BigSeller, Medusa JS and K-Payment as the subjects to get clear on.
 - **Status:** Substantially complete. Medusa JS was evaluated and not chosen ([ADR-0001](adr/ADR-0001-backend-approach.md)). K-Payment, Shopee and BigSeller remain NOT RESEARCHED pending the accounts and data named in `13-open-questions.md`'s residual items. Cloudflare's scope is now fixed (Q-054) even though no configuration exists yet.
 
@@ -117,7 +103,7 @@ This documentation is the deliverable. No requirement is delivered by it.
 
 ## Phase 2 — Products, variants, stock (Shopee catalogue mirror)
 
-- **Dates:** 2026-09-16 → 2026-10-13
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (from the source, as revised):** the product system, product options and stock — now delivered as a mirror of the Shopee catalogue (plan 010, D-094, D-095). The source's Excel file import is removed (REQ-038, D-094).
 - **Blocked by:** plan 010 (the catalogue mirror) is not blocked; the rest of the phase is unchanged and still waits on its own plans and questions. Per the project owner's approval of 2026-10-26 (spec §2 *Authority*), the catalogue's shape comes from Shopee, so Q-013 and Q-014 do not block it and the Excel format (Q-012) no longer applies. Still open and outside plan 010: Q-056 (Shopee's API call limit, before go-live) and Q-042 (live go-live and owner authorization).
 
@@ -146,8 +132,8 @@ The storefront shows availability as **in stock or out of stock** — never a re
 
 ### Stock
 
-**REQ-020 — Stock changed by staff from a list of paid order lines** · §4 · CONFIRMED (rewritten, D-096)
-A website order never changes stock in the system, so the no-overselling guarantee is **removed**. Instead, admin sees a list of paid order lines and staff update stock in BigSeller by hand (manual stock adjustment, ตัดสต๊อกด้วยมือ); BigSeller pushes it to Shopee, and the next catalogue sync brings the new number back to the site. Between a payment and that sync the site can show stock that is no longer true; staff handle an oversold order outside the system (D-077). Pre-order lines are excluded from the list because stock leaves only when goods arrive (REQ-048). Supersedes D-068; see [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md) §2 and §5.5.
+**REQ-020 — Stock changed by staff from an Excel export of paid order lines** · §4 · CONFIRMED (rewritten, D-096, D-201)
+A website order never changes stock in the system, so the no-overselling guarantee is **removed**. Instead, staff export an Excel file of paid order lines from the admin order list (no separate page, D-201) and update stock in BigSeller by hand (manual stock adjustment, ตัดสต๊อกด้วยมือ); BigSeller pushes it to Shopee, and the next catalogue sync brings the new number back to the site. Between a payment and that sync the site can show stock that is no longer true; staff handle an oversold order outside the system (D-077). Pre-order lines are excluded from the list because stock leaves only when goods arrive (REQ-048). Supersedes D-068; see [spec](superpowers/specs/2026-10-26-shopee-catalogue-mirror-database-design.md) §2 and §5.5.
 
 ### Admin back office
 
@@ -190,7 +176,7 @@ No audit log of price, stock or order-status changes is built.
 
 ## Phase 3 — Storefront, ordering, K-Payment, simplified tax invoice
 
-- **Dates:** 2026-10-14 → 2026-11-17
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (from the source, as revised):** the storefront, ordering, K-Payment card/instalment/PromptPay-QR payment, and the simplified tax invoice. **K-Payment is folded into this phase** because bank transfer (its original phase-3 payment method) is removed, leaving no payment method at all for phase 3 unless K-Payment moves up — and its credentials already exist (Q-033).
 - **Blocked by:** phase 2 complete; conducting K-Payment sandbox testing (Q-033 residual); an example invoice, to finalize the exact simplified-invoice fields (Q-027 residual).
 
@@ -216,6 +202,9 @@ There is no guest checkout. A signed-out visitor sees only the front page's prod
 
 **REQ-011 — Customer account with order history** · §2 · CONFIRMED
 A customer can register, sign in, view their past orders, and download the simplified tax invoice for an order.
+
+**REQ-056 — Wishlist / favourite products** · §10 (`+`) · CONFIRMED, scheduled (D-199)
+A signed-in customer can add a product to a wishlist, remove it, and see the list. The source lists it beside order history; how it is shown is a stage 3 design detail.
 
 ### Payment
 
@@ -260,16 +249,17 @@ A visitor who is not signed in can see only the products on the front page. This
 
 ## Phase 4 — Shipping tiers, simple label, return/claim contact
 
-- **Dates:** 2026-11-18 → 2026-12-08
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (as revised):** configurable shipping-tier pricing, an optional simple self-printed shipping label, and a staff-handled contact path for cancellation, return, warranty and claim requests. **Lighter than originally planned:** no carrier integration, no refund engine, and no centralized return/warranty/cancellation policy engine — all removed or reduced by the 2026-09-13 answers.
 - **Blocked by:** phase 3 complete; an example shipping label, to finalize its exact layout (Q-039 residual); whether weight or dimensions becomes the long-term shipping-tier basis (Q-040 residual).
 
 ### Customer service
 
-**REQ-013 — Request cancellation of an unshipped order** · §2 · CONFIRMED
-A customer can request cancellation of an order that has not yet shipped. Post-shipment cancellation/return is handled case by case, directly between customer and shop — no workflow is built for it (D-076, Q-037).
+**REQ-013 — Staff cancel an order on the customer's request** · §2 · CONFIRMED (rewritten, D-196)
+A customer cannot cancel an order on the site. The order page shows the shop's contact channels instead, and the customer contacts the shop with a reason. An Admin or Top-level Admin then cancels the order in the back office, at any stage up to the goods' return, and must enter a reason; Sale-manager and Blogger cannot cancel. The customer sees the cancelled status and the reason in their order history. A cancelled order is left out of the stock-cut export (REQ-020); if it was already exported, staff are warned to restore the stock in BigSeller. Refunds and returned goods are handled outside the system (D-077). The full order-status set is still Q-023.
 
-**REQ-014 — Contact staff for return, warranty or claim** · §2 · CONFIRMED (narrowed)
+**REQ-014 — Contact staff for return, warranty or claim** · §2 · REMOVED (D-195, Q-062)
+Removed 2026-11-14: the shop handles after-sales service through its existing channels, and the site builds no contact form or queue for it. Distributor or warranty contact information can still be shown on a product's Sale Page (REQ-055, D-078). Was:
 A customer can submit contact details and a description of an issue for staff to follow up manually. There is no automated eligibility check and no centralized policy engine (D-076, Q-035); a warranty claim is routed to the product's distributor, with contact information for the relevant distributor shown to the customer rather than handled inside the system (D-078, Q-038).
 
 ### Shipping
@@ -300,7 +290,7 @@ No direct carrier integration. Shipping is handled through BigSeller.
 
 ## Phase 5 — Pre-order, dropship, Shopee stock sync
 
-- **Dates:** 2026-12-09 → 2027-01-12
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (from the source):** pre-order, products from distributors (dropship), and Shopee stock linking.
 - **Blocked by:** phase 4 complete; the BigSeller data-inspection dependency; Shopee sandbox access now exists (Q-042 PARTIALLY RESOLVED — live go-live and the owner's authorization are pending); Shopee data/extraction research is largely done through plan 010 (Q-045 still UNRESOLVED).
 
@@ -331,7 +321,7 @@ Products sourced from a distributor can be sold without holding stock. Before a 
 
 ## Phase 6 — News, content pages, product reviews, Sale Page, reports
 
-- **Dates:** 2027-01-13 → 2027-02-09
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (from the source, as revised):** news, the various content pages, customer product reviews, per-product Sale Pages, and sales reports. **Migrate existing content into the new system before building the new content types on top of it** — an instruction from the 2026-09-13 answers that applies specifically here.
 - **Blocked by:** an accounting export format, still pending review (Q-050).
 
@@ -358,7 +348,8 @@ Staff can edit the content of those pages without a developer changing code.
 **REQ-045 — Shop information displayed** · §9 · CONFIRMED
 The site displays the shop's phone number, email, LINE, opening hours, address, and the DBD registration mark.
 
-**REQ-046 — PDPA data rights** · §9 · CONFIRMED (resolved)
+**REQ-046 — PDPA data rights** · §9 · REMOVED (D-197, Q-062)
+Removed 2026-11-14: the shop handles these requests through its contact channels, and the site builds no self-service for them. Was:
 A customer can view, correct, and delete their own personal data, subject to the retention exception in REQ-026 (D-070, Q-028).
 
 **REQ-047 — Game news section, staff-written** · §2 · CONFIRMED (narrowed)
@@ -378,23 +369,29 @@ Each product can carry a Sale Page: a page distinct from the normal product page
 
 ## Phase 7 — Testing, staff training, go live
 
-- **Dates:** 2027-02-10 → 2027-03-02
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables (from the source):** system testing, staff training, and going live.
 - **Blocked by:** all earlier phases; a named client approver for phase sign-off (Q-052 residual); the registered tax ID (Q-025); actual DNS/hosting account access (Q-053 residual).
 
 No new requirements. This phase verifies the ones already delivered, against
 the criteria in `15-acceptance-criteria.md`. The go-live conditions are in
-`10-deployment.md`, and hosting must be decided here per
-[ADR-0002](adr/ADR-0002-hosting-and-deployment.md).
+`10-deployment.md`, and hosting is AWS
+([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)). PROD is already live from
+stage 1 with the news section and the maintenance notice (REQ-057); going live
+here means taking the notice off and opening ordering.
 
 **REQ-051 (training) is delivered here as one combined Thai-language manual**
 covering all six roles (D-086, Q-051), not per-role versions.
 
+**REQ-057 — Maintenance notice on PROD until ordering opens** · owner, 2026-11-14 · CONFIRMED, new (D-192)
+From payment stage 1, `tinzshop.com` shows the news section and a notice that the site is being rebuilt and cannot take orders yet, pointing customers to the shop's other sales channels. No page or button that places an order is reachable on PROD until stage 4 takes the notice off. Delivered early, in stage 1, so the old site can be shut down.
+
 ---
 
-## Phase 8 — Security and bot verification (Cloudflare)
+## Phase 8 — Security
 
-- **Dates:** 2027-02-24 → 2027-03-02, run alongside the tail of phase 7 — see *Recommended re-ordering* above.
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
+- **Renamed** from "Security and bot verification (Cloudflare)" on 2026-11-14 and delivered in stage 4, before ordering opens (D-198). Whether Cloudflare is still the tool now that hosting is AWS is Q-064; until it is answered, D-087 stands.
 - **Deliverables:** Cloudflare **Free** plan, scoped to security and bot protection (WAF managed rules, bot fight mode, DNS proxying). No paid tier without a future justified need (D-087, Q-054).
 - **Blocked by:** DNS access to tinzshop.com (Q-053 residual).
 
@@ -402,7 +399,7 @@ covering all six roles (D-086, Q-051), not per-role versions.
 
 ## Phase 9 — Database backup
 
-- **Dates:** 2027-02-24 → 2027-03-02, run alongside the tail of phase 7 — see *Recommended re-ordering* above.
+- **Dates:** set by the payment stages, not by phase — see *Schedule and budget* (D-193).
 - **Deliverables:** automatic daily database backup, kept deliberately lightweight given the 100,000 THB budget and BigSeller already holding a secondary record of transaction data (D-088, Q-055). Full policy in `10-deployment.md#backup`.
 
 ---
@@ -437,25 +434,20 @@ deleted outright, so nobody re-adds them believing they were simply missed.
 | REQ-029 | Integrate at least one real carrier | D-075, Q-034 |
 | REQ-038 | Excel import and export of products | D-094 |
 | REQ-040 | Audit history of price/stock/order-status changes | D-066, Q-020 |
+| REQ-014 | Contact staff for return, warranty or claim | D-195, Q-062 |
+| REQ-046 | PDPA self-service: view, correct and delete own data | D-197, Q-062 |
 
 ---
 
 ## Backlog items confirmed in scope, but not scheduled
 
-See *Schedule and budget* above for the reasoning.
-
-| Item | Source | Status |
-| :--- | :--- | :--- |
-| Loyalty points / gift cards | §10, marked `+` | In scope (D-089, Q-002); no phase assigned |
-| Wishlist, shown in order history | §10, marked `+` | In scope (D-089, Q-002); no phase assigned |
+None. Loyalty points and gift cards are removed, and the wishlist is REQ-056 in
+stage 3 (D-199, which supersedes D-089's backlog).
 
 ---
 
 ## Cross-phase observation
 
-The source places phases 8 and 9 — security and backups — after go-live. This
-document now recommends running them alongside the tail of phase 7 instead,
-so the shop does not take a real payment before Cloudflare and a tested
-backup both exist. That is a scheduling recommendation on our side, not a
-client instruction, and should be confirmed alongside the rest of the
-schedule in this document.
+The source places phases 8 and 9 — security and backups — after go-live. That
+order is changed (D-198): both are delivered in stage 4 and must be complete
+before ordering opens on PROD.

@@ -194,7 +194,7 @@ Until this table is filled, treat every path as shared and ask first.
 
 ### Branches
 
-Branch off `main`. Name it `<type>/<short-description>`, lowercase, hyphenated.
+Branch off `develop` (D-191). Name it `<type>/<short-description>`, lowercase, hyphenated.
 
 | Type | For |
 | :--- | :--- |
@@ -203,6 +203,10 @@ Branch off `main`. Name it `<type>/<short-description>`, lowercase, hyphenated.
 | `docs/` | Documentation only |
 | `chore/` | Tooling, dependencies, housekeeping |
 | `refactor/` | Restructuring with no behaviour change |
+
+A merge into `develop` deploys to DEV automatically. `develop` merges into
+`main` by pull request once DEV passes, and that deploys to PROD automatically
+(ADR-0004).
 
 Keep them short-lived. A long branch in a two-developer project with parallel
 agents becomes a merge problem faster than it becomes a feature.
@@ -313,7 +317,7 @@ works under the ownership of the person running it (Part 2, Rule 4), follows
 | `planner` | `.claude/agents/planner.md` | Writes and maintains plans in `docs/plans/`, keeps the board's issues in step, finds blocking questions | Write application code |
 | `developer` | `.claude/agents/developer.md` | Builds features and fixes from a plan, with their tests and doc updates | Start work without a plan, or past an UNRESOLVED question |
 | `tester-security-reviewer` | `.claude/agents/tester-security-reviewer.md` | Runs checks, writes missing tests, walks the pre-merge and security checklists in `08-security-testing.md`, reports findings | Change application code; replace the other developer's review (D-045) |
-| `devops` | `.claude/agents/devops.md` | CI, environments, `.env.example`, release, backup and restore procedures | Choose or code for a hosting provider before ADR-0002 is decided |
+| `devops` | `.claude/agents/devops.md` | CI, environments, `.env.example`, release, backup and restore procedures | Pick AWS services before Q-063 is answered, or put a provider SDK in domain code (D-050) |
 
 In Claude Code, ask for one by name ("use the planner agent to …") or let
 Claude pick one from its description. Changing an agent's file is a change to

@@ -10,8 +10,8 @@ Start here. Everything in this folder derives from one source:
 > agreed yet.** See Q-001 in `13-open-questions.md`.
 
 The technology stack **is** decided — Next.js, TypeScript, PostgreSQL and
-Prisma ([ADR-0001](adr/ADR-0001-backend-approach.md)). Hosting deliberately is
-not ([ADR-0002](adr/ADR-0002-hosting-and-deployment.md)).
+Prisma ([ADR-0001](adr/ADR-0001-backend-approach.md)). Hosting is AWS
+([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)).
 
 ## Read in this order
 
@@ -26,7 +26,7 @@ not ([ADR-0002](adr/ADR-0002-hosting-and-deployment.md)).
 | 4 | [07-frontend-components.md](07-frontend-components.md) | Component tiers, bilingual rules, forms, responsive, accessibility |
 | 5 | [08-security-testing.md](08-security-testing.md) | Security, testing and validation, and the pre-merge checklist |
 | 6 | [09-coding-guidelines.md](09-coding-guidelines.md) | Code rules, file ownership, branches, pull requests, plans |
-| 8 | [10-deployment.md](10-deployment.md) | What deployment must satisfy, including the proposed backup strategy. No hosting provider named — see ADR-0002 |
+| 8 | [10-deployment.md](10-deployment.md) | What deployment must satisfy, including the proposed backup strategy. Hosting is AWS (ADR-0004); the AWS services are not chosen yet (Q-063) |
 | 7 | [11-decisions.md](11-decisions.md) | **Every decision, one sentence each.** The register |
 | | [12-glossary.md](12-glossary.md) | English / Thai / definition / identifier for every domain term |
 | | [13-open-questions.md](13-open-questions.md) | 55 questions (Q-001…Q-055) — 37 resolved, 5 partially resolved, 13 still open. See its residual-items table for what's left to chase |

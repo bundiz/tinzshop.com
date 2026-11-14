@@ -21,9 +21,9 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
-| **RESOLVED** | 41 | Answered 2026-09-13. Decision recorded in `11-decisions.md`. |
+| **RESOLVED** | 42 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 11 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 13 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -538,6 +538,37 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 
 ---
 
+## Delivery plan and hosting (project owner, 2026-11-14)
+
+### Q-062: Delivery plan, payment stages and scope changes for the MOU
+- **Status:** RESOLVED — 2026-11-14
+- **Question:** The project needs a payment agreement (MOU) with clear stages. Which work goes into which stage, by when, how is each stage accepted, and what is cut?
+- **Answer:** The project owner's answers of 2026-11-14, on the client's behalf. The MOU still needs the client's signature.
+  - The MOU covers all work in the 100,000 THB budget, in four payment stages of 20/30/30/20%, due 2026-12-15, 2027-01-12, 2027-02-09 and 2027-03-02 (D-193). Stage 1 is paid only when all its work is done.
+  - Stage 1 includes AWS DEV and PROD with automatic deployment, and PROD shows the news section with a maintenance notice (ADR-0004, D-190 to D-192).
+  - Every stage is accepted against a UAT checklist on DEV and signed by the client's owner before it is paid (D-194).
+  - Cut: the return, warranty and claim contact path (REQ-014, D-195), PDPA self-service (REQ-046, D-197), loyalty points and gift cards (D-199), and a direct BigSeller connection (D-201).
+  - Kept, but changed: cancellation by staff only (REQ-013, D-196); the wishlist, scheduled in stage 3 (REQ-056, D-199); the stock cut from an Excel export rather than a separate admin page (REQ-020, D-201); phase 8 renamed "Security", with phases 8 and 9 delivered in stage 4 before ordering opens (D-198).
+  - Commercial terms: a stage may slip up to four weeks at no extra cost; change requests are priced per man-day; bugs against a UAT checklist are fixed free for one month after stage 4; all external running costs are the client's (D-200).
+- **Effect:** Replaces the proposed phase dates (D-090) that answered Q-004. Phases in `02-scope-and-phases.md` still group the requirements; stages set the delivery order. Q-052's residual (a named approver) is closed by D-194. The MOU, with names, the payment split and tax details, is kept outside this repository.
+- **Ask:** client, via the project owner — signature pending
+
+### Q-063: Which AWS services run the application, database, jobs and backups?
+- **Status:** UNRESOLVED — not yet researched
+- **Question:** ADR-0004 puts Tinzshop on AWS but names no service. What runs the Next.js application, the PostgreSQL database, the scheduled jobs (the 10-minute Shopee pull, the news import), file storage (the news images that must leave the old site before it shuts down, D-127) and the daily backup, in which region, and what does it cost each month?
+- **Answer:** None yet.
+- **Effect:** Blocks stage 1's DEV and PROD set-up and the CI/CD pipeline. Until it is answered, no infrastructure or provider-specific code is written. The answer must still meet `10-deployment.md`, including backup and restore (D-088), and its monthly cost belongs in the client's running-cost sheet (D-200).
+- **Ask:** developers, then the project owner
+
+### Q-064: Is Cloudflare still in front of the site now that hosting is AWS?
+- **Status:** UNRESOLVED — not yet asked
+- **Question:** D-087 chose Cloudflare Free for security and bot protection before hosting was known. Now that hosting is AWS (ADR-0004) and phase 8 is renamed "Security" (D-198), is Cloudflare still the security layer, or is stage 4's security work done another way?
+- **Answer:** None yet.
+- **Effect:** Decides what stage 4's security item is. D-087 stands until this is answered. Either way it needs DNS access for `tinzshop.com` (Q-053).
+- **Ask:** project owner
+
+---
+
 ## Residual items — not new questions, but not fully closed either
 
 These came out of otherwise-resolved answers above. None blocks the phase it is filed under; each is a loose end worth tracking so it does not get lost.
@@ -551,5 +582,4 @@ These came out of otherwise-resolved answers above. None blocks the phase it is 
 | Q-039 | An example shipping label | client |
 | Q-040 | Whether weight or dimensions is the long-term shipping-tier classification basis | client |
 | Q-044 / Q-007 / Q-011 / Q-012 / Q-014 | One BigSeller data-inspection session covering stock, Excel export, and SKU examples — this single task resolves five open questions at once | client, with developer access to the account |
-| Q-052 | A named approver for each phase's sign-off | client |
-| Q-053 | Actual DNS/hosting account access | client, via the domain owner |
+| Q-053 | Actual DNS/hosting account access — now blocks payment stage 1, since PROD and DEV need their addresses then (ADR-0004) | client, via the domain owner |

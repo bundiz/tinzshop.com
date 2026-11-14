@@ -1,15 +1,12 @@
 # Deployment
 
-**No hosting provider has been chosen.** That is deliberate:
-[ADR-0002](adr/ADR-0002-hosting-and-deployment.md) defers the decision to
-phase 7 by the project owner's choice.
+**Hosting is AWS** ([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md), which supersedes ADR-0002's
+deferral). Which AWS services run the application, the database, the jobs and
+the backups is not decided yet (Q-063).
 
-This document therefore records **what the deployment must satisfy**, not
-where it runs. Every statement here is a requirement any candidate must meet,
-and together they are the criteria ADR-0002 will be judged against.
-
-> Nothing here may be read as naming a provider. When ADR-0002 is decided, this
-> document gains the concrete procedure — it does not get rewritten.
+This document records **what the deployment must satisfy**. Every statement
+here applies to whichever AWS services Q-063 picks. When it is answered, this
+document gains the concrete procedure — it does not get rewritten.
 
 ## Provider independence
 
@@ -24,7 +21,7 @@ Concretely:
 - Configuration comes from environment variables through the single Zod-validated config module (`04-tech-stack-and-structure.md`), never from a provider-specific runtime object.
 - Nothing depends on a filesystem persisting between requests. Uploaded slips and generated PDFs go to storage, never to local disk.
 
-Breaking any of these turns ADR-0002 from a decision into a migration.
+Breaking any of these ties the domain code to one provider's SDK (D-050).
 
 ## Environments
 
@@ -33,23 +30,27 @@ Three, and only three:
 | Environment | Purpose | Data |
 | :--- | :--- | :--- |
 | **Local** | Development | Seed data only. Never real customer data, never a real tax id or merchant id |
-| **Staging** | Review, staff training (phase 7), integration testing against provider sandboxes | Anonymised or synthetic. Never a copy of production |
-| **Production** | The live shop | Real |
+| **DEV** (`dev.tinzshop.com`) | Review, each payment stage's UAT, staff training, integration testing against provider sandboxes (D-190, D-194) | Anonymised or synthetic. Never a copy of production |
+| **PROD** (`tinzshop.com`) | The live site: news and the maintenance notice from stage 1, the full shop from stage 4 (D-192) | Real |
 
-**Staging never holds a copy of production.** Real customer names, addresses,
-phone numbers and payment slips fall under PDPA (REQ-046), and a staging
-environment is by definition the less carefully guarded one.
+**DEV never holds a copy of PROD.** Real customer names, addresses and phone
+numbers fall under PDPA, and a test environment is by definition the less
+carefully guarded one.
 
 Every environment runs the same build artefact, configured differently. A
 build that behaves differently in production is a build nobody tested.
 
 ## Release
 
-Requirements, whatever pipeline eventually implements them:
+The flow is fixed by D-191: feature branches merge into `develop` by pull
+request, a merge into `develop` deploys to DEV automatically, and a merge into
+`main`, made only after DEV passes, deploys to PROD automatically.
+
+Requirements, whatever pipeline implements that flow:
 
 1. **`main` is always deployable.** It is protected, and reached only by pull request (`09-coding-guidelines.md`).
 2. **Nothing merges that has not passed** typecheck, lint, unit tests, integration tests against a real PostgreSQL, and a dependency vulnerability audit.
-3. **One artefact promoted forward.** The thing tested on staging is the thing that reaches production, not a rebuild of the same commit.
+3. **One artefact promoted forward.** The thing tested on DEV is the thing that reaches production, not a rebuild of the same commit.
 4. **Deployment is one command or one button**, and is repeatable by either developer. A release that only one person knows how to perform is a single point of failure with a name.
 5. **Rollback is possible and has been rehearsed.** "We would just deploy the previous commit" is not a rollback plan until someone has done it.
 6. **Zero-downtime for application releases.** The shop does not stop selling to ship a change.
@@ -123,17 +124,16 @@ without a future justified need. Configuration still cannot be written until
 DNS access exists — the domain owner is known (Q-053: the project owner's
 father) but account access is not yet arranged.
 
-`02-scope-and-phases.md` now recommends running phase 8 alongside the tail of
-phase 7 rather than strictly after go-live, so the site does not launch
-without Cloudflare in place — a scheduling recommendation, not yet confirmed
-by the client.
+Phase 8 is delivered in stage 4, before ordering opens (D-198). Whether
+Cloudflare is still the tool now that hosting is AWS is Q-064.
 
 ## Going live
 
 Phase 7. Not a checklist to write now — most of it depends on decisions not
 yet made — but these must be true before the shop takes a real order:
 
-- [ ] ADR-0002 decided, and production actually running on it.
+- [ ] PROD running on AWS (ADR-0004), on the services Q-063 picks.
+- [ ] Security (phase 8) and backup (phase 9) complete before the maintenance notice comes off (D-198).
 - [ ] Domain and DNS controlled by a known party (Q-053).
 - [ ] TLS valid and renewing automatically.
 - [ ] Backups running, and **a restore performed and timed**.
@@ -143,17 +143,18 @@ yet made — but these must be true before the shop takes a real order:
 - [ ] Every secret in the platform's secret store, none in the repository.
 - [ ] Error tracking and alerting live, with someone actually receiving the alerts.
 - [ ] Rollback rehearsed.
-- [ ] Staff trained from the one combined Thai-language manual (D-086, Q-051), and acceptance signed off per `15-acceptance-criteria.md` by a named approver (Q-052 residual — nobody has been named yet).
+- [ ] Staff trained from the one combined Thai-language manual (D-086, Q-051), and acceptance signed off per `15-acceptance-criteria.md` by the client's owner, stage by stage (D-194).
 
 ## Undecided
 
 | Area | Blocked on |
 | :--- | :--- |
-| Hosting, runtime, region | [ADR-0002](adr/ADR-0002-hosting-and-deployment.md) — phase 7 |
+| Which AWS services, region and monthly cost | Q-063 — blocks stage 1 |
+| Whether Cloudflare stays in front of AWS | Q-064 |
 | Specific mail-relay provider and sending domain | Q-032 residual |
 | Actual DNS/hosting account access | Q-053 residual — ownership is known (the project owner's father), access is not yet arranged |
 
 **Resolved since the last revision:** backup strategy (D-088, Q-055);
-Cloudflare scope and plan (D-087, Q-054); stock-import mechanism is a daily
-file, not a live API (D-081, Q-043); total budget is 100,000 THB (D-090,
-Q-006).
+Cloudflare scope and plan (D-087, Q-054); there is no BigSeller connection and
+stock comes from Shopee (D-201); total budget is 100,000 THB in four payment
+stages (D-193, Q-062); hosting is AWS (ADR-0004).

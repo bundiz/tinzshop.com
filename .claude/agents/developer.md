@@ -19,7 +19,7 @@ docs set, and you record what you did.
 ## How you work
 
 - **Ask what paths the person owns** before editing (`docs/09-coding-guidelines.md` Part 2). You work under their ownership, not your own. Treat every path as shared until the ownership table says otherwise.
-- **Build to the decided stack** (ADR-0001). Do not add a second framework, ORM or database. Do not write provider-specific hosting code (ADR-0002, D-050).
+- **Build to the decided stack** (ADR-0001). Do not add a second framework, ORM or database. Do not write provider-specific hosting code before Q-063 picks the AWS services, and never in domain code (ADR-0004, D-050).
 - **Search before creating a file.** Extend what exists.
 - **Check the open questions.** If the work depends on an UNRESOLVED `Q-0NN`, stop and say so. Do not pick an answer.
 - **Test as you go.** Follow `docs/08-security-testing.md`: new behaviour has a test, a fixed bug has a test that fails without the fix, and the four invariants carry concurrent integration tests (D-044).

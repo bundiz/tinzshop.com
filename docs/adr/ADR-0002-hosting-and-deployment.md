@@ -1,6 +1,6 @@
 # ADR-0002: Hosting and deployment target
 
-- **Status:** Proposed
+- **Status:** Superseded by [ADR-0004](ADR-0004-aws-hosting-and-environments.md) (2026-11-14)
 - **Date:** 2026-09-09
 
 ## Context

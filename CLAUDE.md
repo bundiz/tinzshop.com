@@ -18,19 +18,24 @@ Prisma, as one route-grouped application, with the commerce domain written
 in-house — `docs/adr/ADR-0001-backend-approach.md`, Accepted. Build to it; do
 not re-litigate it, and do not introduce a second framework, ORM or database.
 
-**Hosting is deliberately not decided** and is deferred to phase 7 —
-`docs/adr/ADR-0002-hosting-and-deployment.md`. Never write provider-specific
-code or name a host as chosen.
+**Hosting is AWS** — `docs/adr/ADR-0004-aws-hosting-and-environments.md`,
+which supersedes ADR-0002. PROD is `tinzshop.com` and DEV is `dev.tinzshop.com`.
+Feature branches merge into `develop`, which deploys to DEV; `develop` merges
+into `main` once DEV passes, which deploys to PROD. Which AWS services is still
+open (Q-063): write no infrastructure code until it is answered, and keep
+domain code off provider SDKs (D-050).
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 58 open questions are on record —
-see `docs/13-open-questions.md` for the full record: 41 RESOLVED, 6 PARTIALLY
-RESOLVED, 11 still genuinely UNRESOLVED (most waiting on a BigSeller
-data-inspection session, the Shopee live go-live, or Shopee's API call limit). Total budget is 100,000 THB and
-a proposed schedule exists — `docs/02-scope-and-phases.md#schedule-and-budget`
-— but it is a project-side proposal pending client confirmation, not itself a
-client commitment. Only *our own* engineering decisions in
+CONFIRMED, not PROPOSED. 61 open questions are on record —
+see `docs/13-open-questions.md` for the full record: 42 RESOLVED, 6 PARTIALLY
+RESOLVED, 13 still genuinely UNRESOLVED (most waiting on a BigSeller
+data-inspection session, the Shopee live go-live, Shopee's API call limit, or
+the choice of AWS services). Total budget is 100,000 THB, delivered in four
+payment stages due 2026-12-15, 2027-01-12, 2027-02-09 and 2027-03-02 —
+`docs/02-scope-and-phases.md#schedule-and-budget` (D-193) — each accepted
+against its UAT checklist in `docs/15-acceptance-criteria.md`. The MOU that
+commits to it is pending the client's signature. Only *our own* engineering decisions in
 `docs/11-decisions.md` are Accepted in the strict ADR sense; treat both that
 register and the RESOLVED rows in `docs/13-open-questions.md` as build-to.
 
