@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { Editor } from '@tiptap/core';
 import { NextIntlClientProvider } from 'next-intl';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -11,7 +12,7 @@ import ArticleEditor, { type EditorArticle } from './ArticleEditor';
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: () => {} }) }));
 
 const STORED = '<p>Kept</p><dl><dt>Term</dt><dd>Meaning</dd></dl>';
-const article: EditorArticle = {
+let article: EditorArticle = {
   id: '44444444-4444-4444-8444-444444444444',
   slug: 'a',
   status: 'draft',
@@ -36,6 +37,10 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
 });
+
+function withBody(bodyHtml: string): void {
+  article = { ...article, th: { ...article.th, bodyHtml } };
+}
 
 async function mount(save: (previous: unknown, formData: FormData) => Promise<never>) {
   await act(async () => {
@@ -72,5 +77,27 @@ describe('ArticleEditor', () => {
     expect(container.querySelector<HTMLButtonElement>('button[value="publish"]')!.disabled).toBe(true);
     await act(async () => finish());
     expect(container.querySelector<HTMLButtonElement>('button[value="draft"]')!.disabled).toBe(false);
+  });
+
+  // A locked body must be saved as stored even when the editor itself changes: StarterKit's trailing-node rule and a split
+  // figure both rewrite the document on a selection-only transaction.
+  it.each([
+    ['a table with thead and tfoot', '<p>Intro text</p><table><thead><tr><th>H</th></tr></thead><tbody><tr><td>B</td></tr></tbody><tfoot><tr><td>F</td></tr></tfoot></table>'],
+    ['a figure with two pictures', '<figure><img src="https://old.example/1.jpg" alt="1"><img src="https://old.example/2.jpg" alt="2"></figure>'],
+  ])('submits %s exactly as stored after a click or a selection inside it', async (_name, stored) => {
+    withBody(stored);
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save);
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    const editor = (container.querySelector('.ProseMirror') as unknown as { editor: Editor }).editor;
+    await act(async () => {
+      editor.commands.selectAll();
+      editor.commands.setTextSelection({ from: 1, to: 3 });
+      editor.commands.setNodeSelection(1);
+      editor.commands.focus('end');
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].get('thBodyHtml')).toBe(stored);
   });
 });

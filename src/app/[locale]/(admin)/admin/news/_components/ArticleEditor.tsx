@@ -90,6 +90,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const [language, setLanguage] = useState<'th' | 'en'>('th');
   const [th, setTh] = useState<Translation>(article?.th ?? EMPTY);
   const [en, setEn] = useState<Translation>(article?.en ?? EMPTY);
+  // A body the editor cannot keep is saved exactly as stored, whatever the editor reports (the lock decides, not onChange).
+  const [locked, setLocked] = useState({ th: false, en: false });
   const [slug, setSlug] = useState(article?.slug ?? '');
   const [byline, setByline] = useState(article?.bylineName ?? defaultByline);
   const [categoryIds, setCategoryIds] = useState<string[]>(article?.categoryIds ?? []);
@@ -129,8 +131,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
       <form action={formAction} aria-label={e('form')} className="grid gap-4">
         <input type="hidden" name="locale" value={locale} />
         {article ? <input type="hidden" name="id" value={article.id} /> : null}
-        <input type="hidden" name="thBodyHtml" value={bodyOrEmpty(th.bodyHtml)} />
-        <input type="hidden" name="enBodyHtml" value={bodyOrEmpty(en.bodyHtml)} />
+        <input type="hidden" name="thBodyHtml" value={locked.th ? (article?.th.bodyHtml ?? '') : bodyOrEmpty(th.bodyHtml)} />
+        <input type="hidden" name="enBodyHtml" value={locked.en ? (article?.en?.bodyHtml ?? '') : bodyOrEmpty(en.bodyHtml)} />
 
         <div className="flex flex-wrap items-center gap-2.5">
           <a href={`/${locale}/admin/news`} className="inline-flex min-h-11 items-center font-semibold text-ink-2 hover:text-ink">
@@ -233,6 +235,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                   <RichTextEditor
                     label={`${e('bodyLabel')} (${e(code)})`}
                     initialHtml={value.bodyHtml}
+                    onLockedChange={(isLocked) => setLocked((previous) => ({ ...previous, [code]: isLocked }))}
                     onChange={(html) => set((previous) => ({ ...previous, bodyHtml: html }))}
                     searchProducts={searchProducts}
                   />

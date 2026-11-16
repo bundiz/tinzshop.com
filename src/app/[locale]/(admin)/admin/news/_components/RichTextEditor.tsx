@@ -140,6 +140,8 @@ export type RichTextEditorProps = {
   initialHtml: string;
   /** Called with the HTML on every change. */
   onChange: (html: string) => void;
+  /** Called when the guard decides, once the editor exists: true means the body is read-only and must be saved as stored. */
+  onLockedChange?: (locked: boolean) => void;
   /** The product picker's search, for the product-card button. */
   searchProducts: ProductSearch;
 };
@@ -150,7 +152,7 @@ export type RichTextEditorProps = {
  * no upload, no paste or drop of files: the image node is registered only so an imported body's `<img>` survives a save
  * and so a later task can add the control. Client-only: nothing on a storefront page imports this file.
  */
-export default function RichTextEditor({ label, initialHtml, onChange, searchProducts }: RichTextEditorProps) {
+export default function RichTextEditor({ label, initialHtml, onChange, onLockedChange, searchProducts }: RichTextEditorProps) {
   const t = useTranslations('admin.news.editor');
   const [dialog, setDialog] = useState<DialogKind | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -158,6 +160,8 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
   const blockId = useId();
   // The stored body holds something the editor cannot keep: it is shown read-only and saved exactly as stored.
   const [locked, setLocked] = useState(false);
+  // Read by the update handler, which must see the latest value: a locked body never reports a change.
+  const lockedRef = useRef(false);
 
   const editor = useEditor({
     // Rendered on the server as the empty shell; the editor mounts in the browser (avoids a hydration mismatch).
@@ -172,14 +176,20 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
         class: 'min-h-[320px] px-4 py-3 outline-none [&_p]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3]:my-3 [&_h3]:text-lg [&_h3]:font-bold [&_a]:text-brand [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
       },
     },
-    onUpdate: ({ editor: current }) => onChange(current.getHTML()),
+    // Even a selection-only transaction can change the document (the trailing paragraph, a split figure), so a locked body
+    // reports nothing, whatever happens inside it.
+    onUpdate: ({ editor: current }) => {
+      if (!lockedRef.current) onChange(current.getHTML());
+    },
   });
 
   useEffect(() => {
     if (editor === null) return;
     const lossy = wouldLoseContent(initialHtml, editor.getHTML());
     // eslint-disable-next-line react-hooks/set-state-in-effect -- decided once, when the editor first exists
+    lockedRef.current = lossy;
     setLocked(lossy);
+    onLockedChange?.(lossy);
     editor.setEditable(!lossy, false);
     // The body prop is the stored one; later edits must not re-run this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
