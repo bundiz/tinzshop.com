@@ -783,7 +783,7 @@
           "url": "ลิงก์วิดีโอ",
           "ok": "แทรกวิดีโอ",
           "cancel": "ยกเลิก",
-          "invalid": "ใส่ลิงก์วิดีโอ YouTube ให้ถูกต้อง"
+          "invalid": "ใส่ลิงก์ของวิดีโอ YouTube เดี่ยว (watch, youtu.be, embed หรือ shorts) ลิงก์เพลย์ลิสต์ใช้ไม่ได้"
         },
         "productDialog": {
           "title": "แทรกการ์ดสินค้า",

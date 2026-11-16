@@ -7,12 +7,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
 import en from '../../../../../../../messages/en.json';
-import { bodyOrEmpty } from './body-roundtrip';
+import posts from '@/server/adapters/wordpress/__fixtures__/posts-page.json';
+import { bodyOrEmpty, normaliseBody, wouldLoseContent } from './body-roundtrip';
+import { youtubeEmbedFromUrl } from './youtube-embed';
 import RichTextEditor from './RichTextEditor';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-// The shapes an imported WordPress body has, run through the real sanitiser: what is stored.
+// A hand-written body in the shapes an import produces, run through the real sanitiser to give what is stored. The
+// real fixture posts are tested separately below.
 const RAW = `
 <h2>Heading two</h2><h3>Heading three</h3><h4>Heading four</h4>
 <p>Intro with a <a href="https://example.com/x">link</a>, <strong>bold</strong>, <em>italic</em><br>and a break.</p>
@@ -21,7 +24,7 @@ const RAW = `
 <figure class="wp-block-image"><img src="https://old.example/a.jpg" alt="a" width="10"><figcaption>Caption text</figcaption></figure>
 <p><img src="https://old.example/b.jpg" alt="b"></p>
 <iframe width="560" src="http://youtube.com/embed/dQw4w9WgXcQ?si=x" allowfullscreen></iframe>
-<table><thead><tr><th>Name</th><th>Price</th></tr></thead><tbody><tr><td>Switch</td><td>100</td></tr></tbody></table>
+<table><tbody><tr><th>Name</th><th>Price</th></tr><tr><td>Switch</td><td>100</td></tr></tbody></table>
 <h5>Heading five</h5><p>End</p>`;
 const STORED = sanitizeArticleHtml(RAW).html;
 
@@ -66,7 +69,7 @@ describe('editing a stored body', () => {
       'href="https://example.com/x"', '<strong>bold</strong>', '<em>italic</em>', '<br />',
       '<ul>', '<ol>', '<blockquote>', '<figure>', '<figcaption>Caption text</figcaption>',
       'src="https://old.example/a.jpg"', 'src="https://old.example/b.jpg"',
-      '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ', '<table>', '<th>', 'Switch',
+      '<iframe src="https://youtube.com/embed/dQw4w9WgXcQ?si=x" allowfullscreen>', '<table>', '<th>', 'Switch',
     ]) {
       expect(html, part).toContain(part);
     }
@@ -76,10 +79,10 @@ describe('editing a stored body', () => {
     const onChange = vi.fn();
     const first = await mount('<p>Start</p>', onChange);
     await act(async () => {
-      first.chain().focus('end').setYoutubeVideo({ src: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }).run();
+      first.chain().focus('end').insertContent({ type: 'youtube', attrs: { src: youtubeEmbedFromUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ'), fullscreen: true } }).run();
     });
     const saved = sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html;
-    expect(saved).toContain('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ');
+    expect(saved).toContain('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>');
 
     act(() => root.unmount());
     root = createRoot(container);
@@ -108,5 +111,135 @@ describe('bodyOrEmpty', () => {
     expect(bodyOrEmpty('<p> &nbsp; </p>')).toBe('');
     expect(bodyOrEmpty('<p>a</p>')).toBe('<p>a</p>');
     expect(bodyOrEmpty('<p></p><iframe src="https://www.youtube.com/embed/x"></iframe>')).not.toBe('');
+  });
+});
+
+// What the body means, counted without the guard's own normaliser: the independent check on it.
+function facts(html: string) {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const count = (selector: string) => doc.querySelectorAll(selector).length;
+  return {
+    text: (doc.body.textContent ?? '').replace(/[ \t\r\n\f]+/g, ''),
+    tags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'figure', 'figcaption', 'table', 'thead', 'tfoot', 'tr', 'th', 'td', 'strong', 'em', 'br', 'img'].map((tag) => `${tag}:${count(tag)}`),
+    links: [...doc.querySelectorAll('a')].map((a) => `${a.getAttribute('href')}>${a.textContent}`),
+    images: [...doc.querySelectorAll('img')].map((img) => `${img.getAttribute('src')}|${img.getAttribute('alt') ?? ''}`),
+    frames: [...doc.querySelectorAll('iframe')].map((frame) => `${frame.getAttribute('src')}|${frame.hasAttribute('allowfullscreen')}`),
+  };
+}
+
+describe('the real import fixture (posts-page.json), sanitised as the import does', () => {
+  for (const post of posts as { id: number; content: { rendered: string } }[]) {
+    it(`post ${post.id}: round-trips with no loss, edited or not, or the editor locks`, async () => {
+      const stored = sanitizeArticleHtml(post.content.rendered).html;
+      const onChange = vi.fn();
+      const editor = await mount(stored, onChange);
+      const locked = container.querySelector('[role="alert"]') !== null;
+      if (locked) {
+        expect(editor.isEditable).toBe(false);
+        return;
+      }
+      expect(facts(sanitizeArticleHtml(editor.getHTML()).html)).toEqual(facts(stored));
+      await act(async () => {
+        editor.chain().focus('end').insertContent('x').run();
+      });
+      const edited = facts(sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html);
+      const original = facts(stored);
+      expect(edited.text).toBe(`${original.text}x`);
+      expect({ ...edited, text: '' }).toEqual({ ...original, text: '' });
+    });
+  }
+
+  it('posts 5492 and 479 are not locked', async () => {
+    for (const post of (posts as { id: number; content: { rendered: string } }[]).filter((entry) => [5492, 479].includes(entry.id))) {
+      act(() => root.unmount());
+      root = createRoot(container);
+      await mount(sanitizeArticleHtml(post.content.rendered).html);
+      expect(container.querySelector('[role="alert"]'), String(post.id)).toBeNull();
+    }
+  });
+});
+
+describe('embeds, tables and the toolbar link rules (R14)', () => {
+  const lossy = async (stored: string) => {
+    const editor = await mount(stored);
+    return wouldLoseContent(stored, editor.getHTML());
+  };
+  const embed = (src: string) => `<iframe src="${src}" allowfullscreen=""></iframe>`;
+
+  it('keeps a playlist embed and a parameterised embed exactly', async () => {
+    for (const src of ['https://www.youtube.com/embed/videoseries?list=PLabc', 'https://www.youtube.com/embed/abcdefghijk?start=30&amp;end=60&amp;list=PL1&amp;si=zz']) {
+      const stored = sanitizeArticleHtml(embed(src)).html;
+      const editor = await mount(stored);
+      expect(sanitizeArticleHtml(editor.getHTML()).html, src).toBe(stored);
+      expect(container.querySelector('[role="alert"]')).toBeNull();
+      act(() => root.unmount());
+      root = createRoot(container);
+    }
+  });
+
+  it('counts a lost parameter or a nocookie host as loss', () => {
+    const stored = embed('https://www.youtube.com/embed/abcdefghijk?start=30');
+    expect(wouldLoseContent(stored, embed('https://www.youtube.com/embed/abcdefghijk'))).toBe(true);
+    expect(wouldLoseContent(stored, embed('https://www.youtube-nocookie.com/embed/abcdefghijk?start=30'))).toBe(true);
+    expect(wouldLoseContent(stored, stored)).toBe(false);
+  });
+
+  it('keeps an embed and a table inside a figure', async () => {
+    for (const stored of [
+      '<figure><iframe src="https://www.youtube.com/embed/abcdefghijk" allowfullscreen=""></iframe></figure>',
+      '<figure><table><tbody><tr><td>a</td></tr></tbody></table><figcaption>c</figcaption></figure>',
+    ]) {
+      expect(await lossy(stored), stored).toBe(false);
+      act(() => root.unmount());
+      root = createRoot(container);
+    }
+  });
+
+  it('locks a table with a head or foot section instead of reordering its rows', async () => {
+    for (const stored of [
+      '<table><thead><tr><td>H</td></tr></thead><tbody><tr><td>B</td></tr></tbody></table>',
+      '<table><tbody><tr><td>B</td></tr></tbody><tfoot><tr><td>F</td></tr></tfoot></table>',
+      '<table><tfoot><tr><td>F</td></tr></tfoot><tbody><tr><td>B</td></tr></tbody></table>',
+    ]) {
+      await mount(stored);
+      expect(container.querySelector('[role="alert"]'), stored).not.toBeNull();
+      act(() => root.unmount());
+      root = createRoot(container);
+    }
+  });
+
+  it('ignores only harmless differences: mark order, spacing, a lone <p> in a quote or item', () => {
+    expect(normaliseBody('<p><em><strong>x</strong></em></p>')).toBe(normaliseBody('<p><strong><em>x</em></strong></p>'));
+    expect(normaliseBody('<p>a  b\n</p>')).toBe(normaliseBody('<p>a b</p>'));
+    expect(normaliseBody('<blockquote>Q</blockquote><ul><li>One<ul><li>x</li></ul></li></ul>')).toBe(normaliseBody('<blockquote><p>Q</p></blockquote><ul><li><p>One</p><ul><li>x</li></ul></li></ul>'));
+    expect(normaliseBody('<p>a&nbsp;&nbsp;b</p>')).not.toBe(normaliseBody('<p>a b</p>'));
+    expect(normaliseBody('<p><a href="https://x.example/">x</a></p>')).not.toBe(normaliseBody('<p>x</p>'));
+    expect(normaliseBody('<p><strong>a</strong></p>')).not.toBe(normaliseBody('<p>a</p>'));
+  });
+
+  it('accepts only single-video links for the toolbar, and never writes a nocookie host', () => {
+    expect(youtubeEmbedFromUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
+    expect(youtubeEmbedFromUrl('https://youtu.be/dQw4w9WgXcQ?t=42')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ?start=42');
+    expect(youtubeEmbedFromUrl('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
+    expect(youtubeEmbedFromUrl('https://www.youtube.com/shorts/dQw4w9WgXcQ')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
+    expect(youtubeEmbedFromUrl('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')).toBeNull();
+    for (const refused of ['https://www.youtube.com/playlist?list=PLabc', 'https://www.youtube.com/watch?list=PLabc', 'https://www.youtube.com/embed/videoseries?list=PLabc', 'https://example.com/watch?v=dQw4w9WgXcQ', 'javascript:alert(1)', 'nope']) {
+      expect(youtubeEmbedFromUrl(refused), refused).toBeNull();
+    }
+  });
+
+  it('the toolbar dialog refuses a playlist link with a message and inserts nothing', async () => {
+    const onChange = vi.fn();
+    await mount('<p>a</p>', onChange);
+    await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Insert YouTube video"]')!.click());
+    const input = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="url"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'https://www.youtube.com/playlist?list=PLabc');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const ok = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find((button) => button.textContent === 'Insert video')!;
+    await act(async () => ok.click());
+    expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toContain('Playlist links are not accepted');
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

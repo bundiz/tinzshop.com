@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { Editor } from '@tiptap/core';
 import { NextIntlClientProvider } from 'next-intl';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -26,11 +27,11 @@ afterEach(() => {
   container.remove();
 });
 
-async function mount(onChange: (html: string) => void) {
+async function mount(onChange: (html: string) => void, body: string = BODY) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <RichTextEditor label="Body" initialHtml={BODY} onChange={onChange} searchProducts={async () => []} />
+        <RichTextEditor label="Body" initialHtml={body} onChange={onChange} searchProducts={async () => []} />
       </NextIntlClientProvider>,
     );
   });
@@ -38,6 +39,7 @@ async function mount(onChange: (html: string) => void) {
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
   });
+  return (container.querySelector('.ProseMirror') as unknown as { editor: Editor }).editor;
 }
 
 describe('RichTextEditor', () => {
@@ -51,19 +53,26 @@ describe('RichTextEditor', () => {
     expect(container.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it('shows a product card node and keeps it, and an imported image, through an edit (R2, D-237)', async () => {
+  it('shows a stored product card node, and writes one it inserts as the placeholder element (R2)', async () => {
     const onChange = vi.fn();
-    await mount(onChange);
+    const editor = await mount(onChange);
     expect(container.querySelector('tinz-product')?.getAttribute('data-id')).toBe(PRODUCT);
-    expect(container.querySelector('img[src]')?.getAttribute('src')).toBe('https://old.example/a.jpg');
+    // The body sanitiser does not allow <tinz-product> until Task 10, so a stored card makes the guard lock the body.
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    expect(editor.isEditable).toBe(false);
+    editor.commands.insertContentAt(0, { type: 'productCard', attrs: { id: PRODUCT, name: 'Switch' } });
+    expect(editor.getHTML()).toContain(`<tinz-product data-id="${PRODUCT}"></tinz-product>`);
+    expect(editor.getHTML()).not.toContain('Switch');
+  });
 
-    const bullet = container.querySelector<HTMLButtonElement>('button[aria-label="Bulleted list"]')!;
-    await act(async () => bullet.click());
-
+  it('keeps an imported inline image through an edit (D-237)', async () => {
+    const onChange = vi.fn();
+    const editor = await mount(onChange, '<p>Hello</p><p><img src="https://old.example/a.jpg" alt="old"></p>');
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Bulleted list"]')!.click());
     const html = onChange.mock.calls.at(-1)?.[0] as string;
-    expect(html).toContain(`<tinz-product data-id="${PRODUCT}"></tinz-product>`);
     expect(html).toContain('<img src="https://old.example/a.jpg" alt="old">');
     expect(html).toContain('<ul>');
-    expect(html).not.toContain('contenteditable');
+    expect(editor.isEditable).toBe(true);
   });
 });

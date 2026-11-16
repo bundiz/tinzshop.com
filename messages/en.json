@@ -783,7 +783,7 @@
           "url": "Video link",
           "ok": "Insert video",
           "cancel": "Cancel",
-          "invalid": "Enter a valid YouTube video link"
+          "invalid": "Enter a link to a single YouTube video (watch, youtu.be, embed or shorts). Playlist links are not accepted."
         },
         "productDialog": {
           "title": "Insert product card",

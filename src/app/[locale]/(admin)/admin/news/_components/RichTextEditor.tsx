@@ -1,6 +1,5 @@
 'use client';
 
-import { isValidYoutubeUrl } from '@tiptap/extension-youtube';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
@@ -11,6 +10,7 @@ import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { wouldLoseContent } from './body-roundtrip';
 import { buildExtensions } from './editor-extensions';
+import { youtubeEmbedFromUrl } from './youtube-embed';
 import { ProductSearchBox, type ProductSearch } from './ProductPicker';
 
 type BlockKind = 'p' | 'h2' | 'h3' | 'blockquote' | 'other';
@@ -301,9 +301,9 @@ export default function RichTextEditor({ label, initialHtml, onChange, searchPro
           okLabel={t('youtubeDialog.ok')}
           invalidText={t('youtubeDialog.invalid')}
           initial=""
-          validate={(url) => isValidYoutubeUrl(url) !== null}
+          validate={(url) => youtubeEmbedFromUrl(url) !== null}
           onSubmit={(url) => {
-            editor.chain().focus().setYoutubeVideo({ src: url }).run();
+            editor.chain().focus().insertContent({ type: 'youtube', attrs: { src: youtubeEmbedFromUrl(url), fullscreen: true } }).run();
             close();
           }}
           onClose={close}

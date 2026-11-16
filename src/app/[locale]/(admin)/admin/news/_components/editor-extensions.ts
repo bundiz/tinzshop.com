@@ -1,8 +1,9 @@
 import { mergeAttributes, Node, type Extensions } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
-import Youtube, { isValidYoutubeUrl } from '@tiptap/extension-youtube';
 import StarterKit from '@tiptap/starter-kit';
+
+import { isStoredYoutubeEmbed } from './youtube-embed';
 
 /**
  * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as a labelled
@@ -48,7 +49,18 @@ const FigureImage = Image.extend({
   name: 'figureImage',
   group: 'figureContent',
   inline: false,
+  // A picture that links somewhere (`<figure><a href><img></a></figure>`, as WordPress writes it) keeps its link.
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      href: { default: null, parseHTML: (element: HTMLElement) => element.closest('a')?.getAttribute('href') ?? null, rendered: false },
+    };
+  },
   parseHTML: () => [{ tag: 'figure img[src]', priority: 60 }],
+  renderHTML({ node, HTMLAttributes }) {
+    const image = ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)] as const;
+    return node.attrs.href ? ['a', { href: node.attrs.href }, image] : image;
+  },
 });
 
 const Figcaption = Node.create({
@@ -63,27 +75,41 @@ const Figure = Node.create({
   name: 'figure',
   group: 'block',
   content: 'figureContent figcaption?',
+  // The picture's own link is an attribute of the picture: no marks inside a figure.
+  marks: '',
   isolating: true,
   parseHTML: () => [{ tag: 'figure' }],
   renderHTML: () => ['figure', 0],
 });
 
 /**
- * A YouTube video is stored as a bare `<iframe src="https://www.youtube.com/embed/…">`: the sanitiser allows no wrapper
- * `div`. The stock node reads only `div[data-youtube-video] iframe`, so it is extended to read the bare iframe too.
+ * A YouTube video, stored as a bare `<iframe src="https://www.youtube.com/embed/…">` (the sanitiser allows no wrapper). The
+ * node keeps the `src` exactly as loaded, so `?start=`, `?list=` and `/embed/videoseries?list=…` come back unchanged, and
+ * writes only `src` and `allowfullscreen`. It can sit alone or in a `figure`.
  */
-const YoutubeVideo = Youtube.extend({
-  parseHTML() {
-    return [
-      { tag: 'div[data-youtube-video] iframe' },
-      { tag: 'iframe[src]', getAttrs: (element) => (isValidYoutubeUrl(element.getAttribute('src') ?? '') ? null : false) },
-    ];
-  },
-}).configure({ nocookie: false, controls: true, modestBranding: true });
+const YoutubeEmbed = Node.create({
+  name: 'youtube',
+  group: 'block figureContent',
+  atom: true,
+  selectable: true,
+  draggable: true,
+  addAttributes: () => ({ src: { default: null }, fullscreen: { default: true } }),
+  parseHTML: () => [
+    {
+      tag: 'iframe[src]',
+      getAttrs: (element) => {
+        const src = element.getAttribute('src') ?? '';
+        return isStoredYoutubeEmbed(src) ? { src, fullscreen: element.hasAttribute('allowfullscreen') } : false;
+      },
+    },
+  ],
+  renderHTML: ({ node }) => ['iframe', { src: node.attrs.src, ...(node.attrs.fullscreen ? { allowfullscreen: '' } : {}) }],
+});
 
 /**
  * Every node the article body sanitiser keeps can be read by the editor (D-244): paragraphs, headings 1 to 6, bold and
- * italic, links, lists, quotes, line breaks, pictures (inline, and in a figure with its caption), tables, YouTube videos
+ * italic, links, lists, quotes, line breaks, pictures (inline, and in a figure with its caption), tables (one body
+ * section: a table with a head or foot section is locked by the guard), YouTube videos (alone or in a figure)
  * and the product card. The toolbar offers only some of them; the image node has no button, paste or drop (D-237).
  */
 export function buildExtensions(productCardLabel: string): Extensions {
@@ -101,11 +127,11 @@ export function buildExtensions(productCardLabel: string): Extensions {
     FigureImage,
     Figcaption,
     Figure,
-    Table.configure({ resizable: false }),
+    Table.extend({ group: 'block figureContent' }).configure({ resizable: false }),
     TableRow,
     TableHeader,
     TableCell,
-    YoutubeVideo,
+    YoutubeEmbed,
     ProductCard.configure({ label: productCardLabel }),
   ];
 }
