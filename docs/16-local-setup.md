@@ -97,7 +97,7 @@ The pages are empty until you feed data (step 6).
 npm run account:set-role -- you@example.com super_admin
 ```
 
-Use your own address. The command prints the address masked and answers `changed` or `unchanged`; sign in again, and `/th/admin` opens. The roles are `customer`, `blogger`, `sale_manager`, `admin` and `super_admin`.
+Use your own address. The command prints the address masked and answers `changed` or `unchanged`. It is for the first Top-level Admin only: once an unblocked Top-level Admin exists it answers `409 super_admin_exists` and changes nothing, and further changes are made in the back office (it works again if every Top-level Admin is blocked); sign in again, and `/th/admin` opens. The roles are `customer`, `blogger`, `sale_manager`, `admin` and `super_admin`.
 
 ## 6. Feed the data
 

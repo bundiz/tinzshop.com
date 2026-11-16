@@ -253,15 +253,58 @@ Task 9 (the news list, editor and preview) is built (D-244, D-251). Editor: Tipt
 
 Task 10 (product cards in articles, related news on product pages) is built (D-245). The sanitiser (shared with the import and, in the browser, with the editor's lock guard) now keeps `<tinz-product data-id>` only with a uuid id, strips every other attribute, empties the element (sanitize-html's `nonTextTags` does not drop child tags, so a small pass over the balanced output empties each card) and drops an element with a bad id whole. Because the guard runs the same sanitiser, a stored card with a uuid now round-trips unlocked (the Task 9 editor test that expected a lock was changed to expect the opposite) and a card with a bad id locks the body, so nothing is lost silently; the editor node and `normaliseBody` already handled the tag. The article read returns `productCards` (one `findStorefrontCandidates` read for all the cards, filtered by the shop's visibility rule), the admin preview fills them for the saved body, and the product page reads `listRelatedNewsForProduct` only after the product is known to exist (so a malformed id never reaches the database). No new message keys: the related heading reuses `shop.news.related.title`. Integration tests cover the related-news query (live rule, order, other products) and an article with a live and an inactive card. The manual checks (a card in a real article, the sign-in redirect from a card) are still to be run by a person. Fix round 1 (R16): cards are top level only. The editor's document is `(block | topCard)+` and the card node is in its own `topCard` group, so no list item, quote, cell or figure accepts it; the toolbar inserts after the current top-level block. The sanitiser drops a nested card with a depth-tracking pass, so a stored body with one locks in the editor, and `splitAtProductCards` cuts only at top-level cards.
 
-Task 11 (the whole-branch check, 2026-11-16). Checks run on the branch: `npm run typecheck` clean; `npm test` 108 files, 1115 tests passed; `npm run test:integration` 21 files, 150 tests passed (against the local test database, no pending migrations); `npm run build` compiled and lists the new routes `/[locale]/admin`, `/admin/news`, `/admin/news/new`, `/admin/news/[id]`, `/admin/news/[id]/preview`, `/admin/users`, `/admin/no-access` and `/api/jobs/account-role`; `npm audit --omit=dev` found 0 vulnerabilities. The repository has no `lint` or `format` script, so those two items of the pre-merge list could not be run. The pre-merge checklist (`docs/08-security-testing.md`) was walked against the new surface; the result is in the Task 11 report and no item failed. The two checks the checklist leaves to people are open: viewing every screen at 360px in both languages, and the manual checklist above. D-229 to D-251 are unique rows of four cells and D-202 to D-209 are untouched.
+Task 11 (the whole-branch check, 2026-11-16). Checks run on the branch: `npm run typecheck` clean; `npm test` 108 files, 1115 tests passed; `npm run test:integration` 21 files, 150 tests passed (against the local test database, no pending migrations); `npm run build` compiled and lists the new routes `/[locale]/admin`, `/admin/news`, `/admin/news/new`, `/admin/news/[id]`, `/admin/news/[id]/preview`, `/admin/users`, `/admin/no-access` and `/api/jobs/account-role`; `npm audit --omit=dev` found 0 vulnerabilities. The repository has no `lint` or `format` script, so those two items of the pre-merge list could not be run. The pre-merge checklist (`docs/08-security-testing.md`) was walked against the new surface; the result is in the Task 11 report and no item failed. The two checks the checklist leaves to people are open: viewing every screen at 360px in both languages, and the manual checklist above. D-229 to D-252 are unique rows of four cells and D-202 to D-209 are untouched.
 
-**Known follow-ups (minor, deferred in review; none blocks the merge):**
-- Test gaps: link-table cascades and `news_article_product` FK; unblock leaving sessions, the zero-`super_admin` case and demoting a blocked `super_admin`; secret tests for a wrong secret or scheme on the job; no per-tab permission-key test on the accounts page; editor tests for a card at the start, end or adjacent; import test proves idempotence rather than "unchanged versus before".
-- Normalisation: `btrim` strips spaces only, JS `trim` strips tabs and NBSP (tag service); the account search matches one field (a full name "first last" finds nothing); `findAccountByEmail` is a case-insensitive `findFirst`.
-- Concurrency and locking: `FOR UPDATE` could be `FOR NO KEY UPDATE`; the import does not take the slug lock (a race ends as `save_failed`, retried next run); concurrent `replaceRolePermissions` may collide; the log's old value is approximate under a race.
-- Input and limits: runtime filtering of role and permission keys read from the database; unbounded slug length; `watch?v=ID&list=PL` keeps the video and drops the list silently; ragged tables get empty cells on edit.
-- Admin polish: the home page's "more tools later" duplicates the side menu's list; drawer focus and landmark polish; the `guest` Thai label differs from the glossary; a signed-in non-staff visitor can tell an existing admin path from a missing one; a page past the end shows an inconsistent count or empty state; a trashed article's preview is not refused; tab counts fetch rows; the guard test is a substring check and covers only `page.tsx` and `actions.ts`.
-- Code tidiness: `run-job` `maskEmail` shows short local parts; unknown account not logged; `depths()` is quadratic; the tag regexes are duplicated between `sanitize.ts` and `product-card-embed.ts`; a mis-targeted eslint-disable comment near `RichTextEditor` line 189; `Record<string, any>` in a unit test; the product page's related-news read is sequential; glossary lacks `AdminArticleRow`, `ArticleWrite`, `NewsAdminDeps`, `ADMIN_PAGE_SIZE`; D-246 omits `hasContent`; `docs/06-api.md` states planned paths as facts.
+Final review fix wave (2026-11-16, D-252). The import locks the article row before reading `updated_by_staff_id` (an integration test interleaves a staff save with the import); the editor keeps an article's unlisted categories; the account-role job is bootstrap-only (409 `super_admin_exists`, an advisory lock plus the super_admin rows, tested for every target role, for none, for all blocked and for two jobs at once); the gate requires `backoffice.enter`; publish-later needs a date; titles and slugs are capped at 300 and `serverActions.bodySizeLimit` is `4mb`; a new article cannot be created twice; routine saves log at info; the glossary gained five names and the Thai Guest label follows it. Checks after the wave: `npm run typecheck` clean; `npm test` 109 files, 1124 tests; `npm run test:integration` 21 files, 159 tests; `npm run build` compiled.
+
+**Known follow-ups (deferred in review; none blocks the merge).** The final whole-branch review's fixes (the import row lock, unlisted categories kept, the bootstrap-only job, the gate, publish-later, the length caps, double create, info-level logging, the glossary and the Thai Guest label, D-252) are done and are not listed. What remains, by area:
+
+*For the owner to decide*
+- The preview shows the last saved version, not unsaved edits (D-251); the spec's section 8 says "unsaved", so the owner confirms which is meant.
+- The grid can give `account.manage` or `role.manage` to any staff role; whether to restrict it is the owner's call (consider a warning in the grid).
+- There is no optimistic concurrency between two editors of one article: the last save wins.
+
+*Behaviour*
+- `?tab=roles` sends a viewer who holds `account.manage` but not `role.manage` to the no-access page.
+- The client and the server disagree about an empty table in a body (the editor's lock guard and the sanitiser).
+- A trashed article's preview is not refused.
+- `watch?v=ID&list=PL` is accepted as a single video and the list is dropped silently; ragged tables get empty cells filled on edit (no loss).
+- The editor's `normaliseBody` drops `colgroup` and `a[rel]` (the sanitiser never emits them).
+- A signed-in non-staff visitor can tell an existing admin path from a missing one.
+- A list page past the end shows an inconsistent count, pager or empty state; the tab counts fetch rows.
+
+*Concurrency and locking*
+- `FOR UPDATE` in the role guard could be `FOR NO KEY UPDATE`, which would not block foreign-key inserts such as a `customer_session` during a guarded change.
+- The import does not take the slug lock: a race ends as `save_failed` and is retried on the next run.
+- Concurrent `replaceRolePermissions` calls may collide; the log's old value (D-250) is approximate under a race.
+- `raceBehindLock` in the access tests should `Promise.allSettled` the calls in `finally` (only matters on an already-failing path).
+
+*Input and normalisation*
+- Role and permission keys read from the database are cast, not checked against the known lists (`replaceRolePermissions` also drops unknown keys silently; the action validates them).
+- A non-uuid id throws `22P02` in the repository; the job and the actions validate ids as uuids first.
+- `btrim` strips spaces only, while JS `trim` strips tabs and no-break spaces too (tag service).
+- The account search matches one field, so a full name "first last" finds nothing; `findAccountByEmail` is a case-insensitive `findFirst`.
+
+*Tests*
+- Missing: link-table cascades, the `news_article_product` foreign key and `blocked_at` beyond its default; unblock leaving sessions, the zero-`super_admin` case and demoting a blocked `super_admin` through the back office path.
+- The job's secret tests cover a missing header only (add a wrong secret and a wrong scheme); a repository throw in the job is untested and unlogged, and an unknown account is not logged.
+- No test pins the per-tab permission key on the accounts page; the wildcard test is negative-only.
+- No editor tests for a product card at the start, at the end or next to another; the import test proves idempotence, not "unchanged versus before" (D-245 wording).
+- Task 6 test gaps: draft on a published article, a weak `>=` assertion and `updated_at` ordering. The editor DOM test uses `setNodeSelection` for "click a picture" and mutates a module-level article; the Google-sign-in test does not assert that no session row is written (the service test does).
+- `resetDatabase` never restores `role`, `permission` and `role_permission`, so tests that edit grants restore the seed by hand (hard-coded in the access tests).
+- The guard test is a substring check that covers only `page.tsx` and `actions.ts` (a `route.ts` or another action file would escape it).
+- `Record<string, any>` in a unit test; a redundant second render in the signed-out test.
+
+*Code tidiness*
+- The home page's "more tools later" duplicates the side menu's item list (export one helper); drawer focus and landmark polish is left to the manual check.
+- `run-job` `maskEmail` shows short local parts (`ab@x.com` becomes `ab@…`, a three-letter part in full).
+- `depths()` rescans quadratically; the tag regexes are duplicated between `sanitize.ts` and `product-card-embed.ts`; a mis-targeted eslint-disable comment near `RichTextEditor` line 189 and an `img` lint comment on `ArticleProductCard`.
+- `saveOnce` reads the row twice; the product page's related-news read is sequential (a uuid check first would allow parallel reads).
+- `CustomerSessionDeps.find`'s inline type drops `lastName` (harmless).
+- D-246 omits `hasContent` (an `img`, `iframe` or `tinz-product` counts as content) and the `findListedCategoryIds` dependency.
+
+*Documentation*
+- `docs/06-api.md`'s back-office section states planned file paths and error keys as facts; confirm or mark them planned.
 
 **Manual checks still to be run by a person:** every box in the manual test checklist above (11 checks), on the dev pool, plus the sign-in redirect from a product card and the 360px view of each back-office screen in Thai and English.
 

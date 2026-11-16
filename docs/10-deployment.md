@@ -139,7 +139,7 @@ yet made — but these must be true before the shop takes a real order:
 - [ ] Backups running, and **a restore performed and timed**.
 - [ ] The registered tax identification number in place (Q-025) — invoices are not legally correct without it.
 - [ ] Transactional email sending from an authenticated domain (Q-032).
-- [ ] The first Top-level Admin set with the `account-role` job (D-235); other staff signed up like customers and given a role in the back office. No second factor is asked (D-232).
+- [ ] The first Top-level Admin set with the `account-role` job (D-235; it refuses once an unblocked Top-level Admin exists); other staff signed up like customers and given a role in the back office. No second factor is asked (D-232).
 - [ ] Every secret in the platform's secret store, none in the repository.
 - [ ] Error tracking and alerting live, with someone actually receiving the alerts.
 - [ ] Rollback rehearsed.
