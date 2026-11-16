@@ -30,6 +30,7 @@ import {
 } from '@/server/services/auth/customer-session-service';
 import { createAccountRoleJobHandler } from '@/server/controllers/access/account-role-job-controller';
 import {
+  bootstrapAccountRole,
   changeAccountRole,
   findAccountByEmail,
   findAccountState,
@@ -359,7 +360,7 @@ export function getNewsAdminCommands() {
     restore: news.restore,
     searchProducts: (query) => searchProductsForPicker(productSearchDeps, query),
     now: () => new Date(),
-    log: (message, fields) => console.error(message, fields),
+    log: (message, fields) => console.info(message, fields),
   };
   return {
     save: (actor: NewsAdminActor, formData: FormData) => saveArticleCommand(deps, actor, formData),
@@ -425,7 +426,7 @@ export function getAccountRoleHandler(): ReturnType<typeof createAccountRoleJobH
   return createAccountRoleJobHandler({
     jobSecret: () => getAccountRoleJobConfig().jobSecret,
     findAccountByEmail,
-    changeAccountRole,
+    changeAccountRole: bootstrapAccountRole,
     log: (message) => console.info(message),
   });
 }

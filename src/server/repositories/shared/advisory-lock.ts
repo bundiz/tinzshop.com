@@ -7,6 +7,9 @@ export const CATALOGUE_SYNC_LOCK_KEY = 6_251_010n;
 /** Serialises news import runs (plan 012); distinct from the catalogue sync, so the two never block each other. */
 export const NEWS_IMPORT_LOCK_KEY = 6_251_012n;
 
+/** Serialises the account-role job's bootstrap check (plan 016, D-235); held by a transaction, not a session. */
+export const ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY = 6_251_016n;
+
 /**
  * Runs `task` only if the session-level advisory lock is free. The lock lives on a dedicated
  * connection, so it is released on every exit path, including a throwing task.

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getDatabaseUrl } from '@/server/config';
 import {
+  bootstrapAccountRole,
   changeAccountRole,
   findAccountByEmail,
   findAccountState,
@@ -11,6 +12,7 @@ import {
   searchAccounts,
   setAccountBlocked,
 } from '@/server/repositories/access/access-repository';
+import { ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import { resetDatabase } from '../setup/database';
 
 let client: Client;
@@ -163,6 +165,71 @@ describe('access repository guard', () => {
     expect(theirs.rows[0].n).toBe(1);
     expect(await setAccountBlocked(id, true)).toBe('unchanged');
     expect(await setAccountBlocked(id, false)).toBe('changed');
+  });
+});
+
+describe('bootstrapAccountRole (the account-role job, D-235, R18)', () => {
+  async function superAdminCount(): Promise<number> {
+    const result = await client.query(
+      "SELECT count(*)::int AS n FROM customer c JOIN role r ON r.id = c.role_id WHERE r.key = 'super_admin'",
+    );
+    return result.rows[0].n;
+  }
+
+  it('makes the first Top-level Admin when none exists', async () => {
+    const id = await makeAccount('customer');
+    expect(await bootstrapAccountRole(id, 'super_admin')).toBe('changed');
+    expect(await roleOf(id)).toBe('super_admin');
+    expect(await bootstrapAccountRole(id, 'super_admin')).toBe('super_admin_exists');
+  });
+
+  it.each(['super_admin', 'admin', 'customer', 'blogger'] as const)(
+    'refuses every target role (%s) while an unblocked super_admin exists, and changes nothing',
+    async (role) => {
+      await makeAccount('super_admin');
+      const id = await makeAccount('sale_manager');
+      expect(await bootstrapAccountRole(id, role)).toBe('super_admin_exists');
+      expect(await roleOf(id)).toBe('sale_manager');
+    },
+  );
+
+  it('works again when every super_admin is blocked (the way back)', async () => {
+    const blocked = await makeAccount('super_admin', { blocked: true });
+    const id = await makeAccount('customer');
+    expect(await bootstrapAccountRole(id, 'super_admin')).toBe('changed');
+    expect(await roleOf(id)).toBe('super_admin');
+    expect(await roleOf(blocked)).toBe('super_admin');
+  });
+
+  it('reports an unknown account', async () => {
+    expect(await bootstrapAccountRole('00000000-0000-4000-8000-000000000000', 'super_admin')).toBe('unknown_account');
+  });
+
+  it('two jobs at once with no super_admin: exactly one succeeds', async () => {
+    const a = await makeAccount('customer');
+    const b = await makeAccount('customer');
+    const holder = new Client({ connectionString: getDatabaseUrl() });
+    await holder.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query('SELECT pg_advisory_xact_lock($1::bigint)', [ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY.toString()]);
+      const calls = [bootstrapAccountRole(a, 'super_admin'), bootstrapAccountRole(b, 'super_admin')];
+      const deadline = Date.now() + 10_000;
+      for (;;) {
+        const waiting = await client.query<{ n: number }>(
+          "SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'",
+        );
+        if (waiting.rows[0]!.n >= 2) break;
+        if (Date.now() > deadline) throw new Error('the two jobs never both waited on the lock');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      await holder.query('COMMIT');
+      expect([...(await Promise.all(calls))].sort()).toEqual(['changed', 'super_admin_exists']);
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      await holder.end();
+    }
+    expect(await superAdminCount()).toBe(1);
   });
 });
 

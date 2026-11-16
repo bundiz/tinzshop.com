@@ -7,7 +7,7 @@ import { createAccountRoleJobHandler } from './account-role-job-controller';
 const SECRET = 'test-job-secret-0123456789abcdef-xyz';
 const EMAIL = 'first.admin@example.com';
 
-type Change = 'changed' | 'unchanged' | 'last_super_admin' | 'unknown_account';
+type Change = 'changed' | 'unchanged' | 'super_admin_exists' | 'unknown_account';
 
 function setup(options: { account?: { id: string; roleKey: RoleKey } | null; change?: Change } = {}) {
   const account = options.account === undefined ? { id: 'acc-1', roleKey: 'customer' as RoleKey } : options.account;
@@ -68,11 +68,11 @@ describe('createAccountRoleJobHandler', () => {
     expect((await call({ email: EMAIL, role: 'admin' })).status).toBe(404);
   });
 
-  it('answers 409 for the last super_admin', async () => {
-    const { call } = setup({ account: { id: 'acc-1', roleKey: 'super_admin' }, change: 'last_super_admin' });
+  it('answers 409 super_admin_exists when a Top-level Admin already exists', async () => {
+    const { call } = setup({ account: { id: 'acc-1', roleKey: 'super_admin' }, change: 'super_admin_exists' });
     const response = await call({ email: EMAIL, role: 'customer' });
     expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ error: 'last_super_admin' });
+    expect(await response.json()).toEqual({ error: 'super_admin_exists' });
   });
 
   it.each([

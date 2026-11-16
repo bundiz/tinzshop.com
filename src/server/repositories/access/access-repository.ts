@@ -1,6 +1,7 @@
 import { Prisma } from '@/generated/prisma/client';
 
 import { ROLE_KEYS, type PermissionKey, type RoleKey } from '@/server/services/access/permission-keys';
+import { ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 
 export type AccountRow = {
@@ -144,6 +145,33 @@ export async function changeAccountRole(accountId: string, roleKey: RoleKey): Pr
       await tx.customer.update({ where: { id: accountId }, data: { roleId: role.id } });
     },
   );
+}
+
+export type BootstrapResult = 'changed' | 'unchanged' | 'super_admin_exists' | 'unknown_account';
+
+/**
+ * The account-role job's change (D-235, R18): sets the role only while no unblocked super_admin exists, so it can only make
+ * the first Top-level Admin, or the way back after every one is blocked. The check and the change run in one transaction
+ * behind a transaction-level advisory lock, so two jobs at once cannot both pass an empty check; the super_admin rows are
+ * locked too, so a change made in the back office at the same moment is waited for.
+ */
+export async function bootstrapAccountRole(accountId: string, roleKey: RoleKey): Promise<BootstrapResult> {
+  return getPrisma().$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY}::bigint)`;
+    const supers = await tx.$queryRaw<{ id: string }[]>`
+      SELECT c.id FROM customer c JOIN role r ON r.id = c.role_id
+      WHERE r.key = 'super_admin' AND c.blocked_at IS NULL ORDER BY c.id FOR UPDATE OF c`;
+    if (supers.length > 0) return 'super_admin_exists';
+    const targets = await tx.$queryRaw<Target[]>`
+      SELECT c.id, r.key AS role_key, c.blocked_at FROM customer c JOIN role r ON r.id = c.role_id
+      WHERE c.id = ${accountId}::uuid FOR UPDATE OF c`;
+    const target = targets[0];
+    if (target === undefined) return 'unknown_account';
+    if (target.role_key === roleKey) return 'unchanged';
+    const role = await tx.role.findUniqueOrThrow({ where: { key: roleKey }, select: { id: true } });
+    await tx.customer.update({ where: { id: accountId }, data: { roleId: role.id } });
+    return 'changed';
+  });
 }
 
 /** Blocking sets blocked_at and deletes the account's sessions in the same transaction. */
