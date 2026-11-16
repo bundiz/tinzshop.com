@@ -26,10 +26,15 @@ const DETAIL = {
 
 const card = (n: number) => ({ productId: `card-${n}` });
 const catalogue = vi.hoisted(() => ({ bestSellers: [] as { productId: string }[] }));
+const relatedNews = vi.hoisted(() => ({ cards: [] as { slug: string }[], asked: [] as unknown[] }));
 
 vi.mock('@/server/composition-root', () => ({
   getProductDetailReader: () => async (productId: string) => (productId === KNOWN_ID ? DETAIL : null),
   getLandingCatalogueReader: () => async () => ({ bestSellers: catalogue.bestSellers, bundles: [], preOrders: [] }),
+  getRelatedNewsReader: () => async (input: unknown) => {
+    relatedNews.asked.push(input);
+    return relatedNews.cards;
+  },
 }));
 const session = vi.hoisted(() => ({ customer: { id: 'c1', firstName: 'Test', email: 'test@example.test' } as { id: string; firstName: string; email: string } | null }));
 vi.mock('../../../_components/read-current-customer', () => ({ readCurrentCustomer: async () => session.customer }));
@@ -112,6 +117,26 @@ describe('the product page at /product/{id}/detail', () => {
       expect(section!.moreHref).toBe('/th/product?sort=best_selling');
     } finally {
       catalogue.bestSellers = [];
+    }
+  });
+
+  it('lists the related news under ข่าวที่เกี่ยวข้อง, and renders nothing without links', async () => {
+    expect(th.shop.news.related.title).toBe('ข่าวที่เกี่ยวข้อง');
+    const sectionOf = async () =>
+      findElement(
+        await ProductPage({ params: Promise.resolve({ locale: 'th', productId: KNOWN_ID }) }),
+        (props) => props.cards !== undefined && props.columns === undefined,
+      );
+    expect(await sectionOf()).toBeUndefined();
+    relatedNews.cards = [{ slug: 'a' }, { slug: 'b' }, { slug: 'c' }, { slug: 'd' }];
+    relatedNews.asked = [];
+    try {
+      const props = await sectionOf();
+      expect(props).toBeDefined();
+      expect((props!.cards as { slug: string }[]).map((c) => c.slug)).toEqual(['a', 'b', 'c', 'd']);
+      expect(relatedNews.asked).toEqual([{ productId: KNOWN_ID, locale: 'th' }]);
+    } finally {
+      relatedNews.cards = [];
     }
   });
 

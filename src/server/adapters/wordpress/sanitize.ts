@@ -1,5 +1,39 @@
 import sanitizeHtml from "sanitize-html";
 
+/** The product card placeholder's tag (D-245): `<tinz-product data-id="…"></tinz-product>`. Browser-safe: no server imports. */
+export const PRODUCT_CARD_TAG = "tinz-product";
+
+/** A product id as the database stores it: a uuid. Anything else is not a card. */
+export const PRODUCT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Empties every card of already-sanitised (so balanced) HTML: whatever sat inside a card is dropped, and a card
+ * inside a card goes with its parent. The element is only ever a placeholder, drawn from the live product at view time.
+ */
+function emptyProductCards(html: string): string {
+  const tag = /<(\/?)tinz-product(\s[^>]*)?>/g;
+  let out = "";
+  let last = 0;
+  let depth = 0;
+  let openTag = "";
+  for (let match = tag.exec(html); match !== null; match = tag.exec(html)) {
+    const closing = match[1] === "/";
+    if (depth === 0) {
+      if (closing) continue;
+      out += html.slice(last, match.index);
+      openTag = match[0];
+      depth = 1;
+    } else {
+      depth += closing ? -1 : 1;
+      if (depth === 0) {
+        out += `${openTag}</${PRODUCT_CARD_TAG}>`;
+        last = match.index + match[0].length;
+      }
+    }
+  }
+  return out + html.slice(last);
+}
+
 /**
  * The article body allow-list (spec 2026-10-29 §5, D-133). Everything else — every script, style,
  * event handler and other attribute — is stripped. A disallowed tag's text is kept; a script's or
@@ -32,6 +66,7 @@ const ALLOWED_TAGS = [
   "th",
   "td",
   "iframe",
+  PRODUCT_CARD_TAG,
 ];
 
 /** Elements whose removal is counted, so a lost embed never disappears silently (spec §8 risk 2). */
@@ -75,6 +110,7 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
       a: ["href", "rel"],
       img: ["src", "alt"],
       iframe: ["src", "allowfullscreen"],
+      [PRODUCT_CARD_TAG]: ["data-id"],
     },
     allowedSchemes: ["http", "https"],
     allowedSchemesAppliedToAttributes: ["href", "src"],
@@ -100,6 +136,13 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
           ? { tagName, attribs: rest }
           : { tagName, attribs: { ...attribs, src: src?.trim() ?? "" } };
       },
+      // A card keeps `data-id` only when it is a uuid, and nothing else; without one it is dropped below.
+      [PRODUCT_CARD_TAG]: (tagName, attribs) => {
+        const id = attribs["data-id"]?.trim().toLowerCase();
+        const kept: sanitizeHtml.Attributes = {};
+        if (id !== undefined && PRODUCT_ID_PATTERN.test(id)) kept["data-id"] = id;
+        return { tagName, attribs: kept };
+      },
       iframe: (tagName, attribs) => {
         embedsSeen += 1;
         const src = youTubeEmbedSrc(attribs.src);
@@ -111,6 +154,8 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     exclusiveFilter: (frame) => {
       // A link without an accepted href keeps its text and loses the tag.
       if (frame.tag === "a" && frame.attribs.href === undefined) return "excludeTag";
+      // A card without an accepted id is dropped whole, with whatever is inside it.
+      if (frame.tag === PRODUCT_CARD_TAG) return frame.attribs["data-id"] === undefined;
       if (frame.tag === "iframe") {
         if (frame.attribs.src === undefined) return true;
         iframesKept += 1;
@@ -121,7 +166,7 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     },
   });
 
-  return { html: clean, removedEmbeds: embedsSeen - iframesKept };
+  return { html: emptyProductCards(clean), removedEmbeds: embedsSeen - iframesKept };
 }
 
 const NAMED_ENTITIES: Readonly<Record<string, string>> = {

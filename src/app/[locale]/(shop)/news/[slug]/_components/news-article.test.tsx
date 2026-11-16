@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { NewsArticleDetail, NewsCardData } from '@/server/services/news/news-read-service';
 import en from '../../../../../../../messages/en.json';
 import th from '../../../../../../../messages/th.json';
@@ -46,6 +47,7 @@ function detail(overrides: Partial<NewsArticleDetail> = {}): NewsArticleDetail {
       { slug: 'บทความ', name: 'บท<ความ>' },
     ],
     related: [card(1), card(2), card(3)],
+    productCards: [],
     ...overrides,
   };
 }
@@ -161,5 +163,72 @@ describe('SiteHeader news link', () => {
     const onNews = render(<SiteHeader path="/news" activeNav="news" articlesMenu={[]} />, 'en');
     expect(onNews).toMatch(/<a aria-current="page"[^>]*href="\/en\/news"|<a[^>]*href="\/en\/news"[^>]*aria-current="page"/);
     expect(onNews.match(/aria-current="page"/g)).toHaveLength(1);
+  });
+});
+
+describe('product cards in the body (D-245)', () => {
+  const ID = '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60';
+  const OTHER = '11111111-2222-4333-8444-555555555555';
+  const placeholder = (id: string) => `<tinz-product data-id="${id}"></tinz-product>`;
+  const product: LandingProductCard = {
+    productId: ID,
+    name: 'Astro Bot <PS5>',
+    imageUrl: 'https://img.example/a.jpg',
+    priceSatang: 129900n,
+    originalPriceSatang: null,
+    isPriceRange: false,
+    stockStatus: 'in_stock',
+    isKit: false,
+    isPreOrder: false,
+    releaseDate: null,
+  };
+
+  it('renders the live card in place of the placeholder, with the current price, stock and a product link', () => {
+    const html = render(
+      <NewsArticleView
+        article={detail({ bodyHtml: `<p>before</p>${placeholder(ID)}<p>after</p>`, productCards: [product] })}
+        articlesMenu={[]}
+      />,
+    );
+    expect(html).not.toContain('tinz-product');
+    expect(html).toContain(`href="/th/product/${ID}/detail"`);
+    expect(html).toContain('Astro Bot &lt;PS5&gt;');
+    expect(text(html)).toContain('฿1,299');
+    expect(text(html)).toContain(th.shop.product.stock.in_stock);
+    expect(html).toContain('src="https://img.example/a.jpg"');
+    // In place: between the two paragraphs.
+    expect(html.indexOf('<p>before</p>')).toBeLessThan(html.indexOf(`/product/${ID}/detail`));
+    expect(html.indexOf(`/product/${ID}/detail`)).toBeLessThan(html.indexOf('<p>after</p>'));
+  });
+
+  it('shows the out-of-stock status of a product that has sold out', () => {
+    const html = render(
+      <NewsArticleView
+        article={detail({ bodyHtml: placeholder(ID), productCards: [{ ...product, stockStatus: 'out_of_stock' }] })}
+        articlesMenu={[]}
+      />,
+    );
+    expect(text(html)).toContain(th.shop.product.stock.out_of_stock);
+  });
+
+  it('renders nothing for a product that is unknown or inactive (absent from the cards), and keeps the text around it', () => {
+    const html = render(
+      <NewsArticleView article={detail({ bodyHtml: `<p>before</p>${placeholder(OTHER)}<p>after</p>`, productCards: [product] })} articlesMenu={[]} />,
+    );
+    expect(html).not.toContain('tinz-product');
+    expect(html).not.toContain(`/product/${OTHER}/detail`);
+    expect(html).not.toContain(`/product/${ID}/detail`);
+    expect(html).toContain('<p>before</p>');
+    expect(html).toContain('<p>after</p>');
+  });
+
+  it('still lazy-loads and titles iframes in the segments around a card', () => {
+    const html = render(
+      <NewsArticleView
+        article={detail({ bodyHtml: `<iframe src="https://www.youtube.com/embed/a"></iframe>${placeholder(ID)}<iframe src="https://www.youtube.com/embed/b"></iframe>`, productCards: [product] })}
+        articlesMenu={[]}
+      />,
+    );
+    expect(html.match(/<iframe loading="lazy" title="วิดีโอ"/g)).toHaveLength(2);
   });
 });

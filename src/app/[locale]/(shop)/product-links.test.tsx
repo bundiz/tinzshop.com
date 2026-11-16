@@ -72,6 +72,7 @@ const DETAIL: ProductDetail = {
 };
 
 vi.mock('@/server/composition-root', () => ({
+  getRelatedNewsReader: () => async () => [],
   getLandingCatalogueReader: () => async () => ({
     bestSellers: [card(OTHER_ID), card(THIS_ID)],
     bundles: [{ ...card(OTHER_ID), isKit: true }],

@@ -4,7 +4,9 @@ import { getLatestNewsReader, getNewsArticleReader, getNewsReader } from '@/serv
 import { decodeSlugParam, newsArticlePath } from '@/app/[locale]/(shop)/news/news-routes';
 import { countLiveNewsArticlesByCategory } from '@/server/repositories/news/news-repository';
 import { getPrisma } from '@/server/repositories/shared/prisma';
+import { upsertCatalogueItem } from '@/server/repositories/catalogue/catalogue-repository';
 import { resetDatabase } from '../setup/database';
+import { noModelSnapshot } from '../fixtures/snapshots';
 
 beforeEach(async () => {
   await resetDatabase();
@@ -305,5 +307,50 @@ describe('countLiveNewsArticlesByCategory against the database', () => {
       [loopB]: 2,
     });
     expect(counts.has(empty)).toBe(false);
+  });
+});
+
+describe('product cards and related news against the database (D-245, D-239)', () => {
+  it('lists every live article linked to a product, newest first, and no draft, scheduled or deleted one', async () => {
+    const { getRelatedNewsReader } = await import('@/server/composition-root');
+    const productId = (await prisma().product.create({ data: {}, select: { id: true } })).id;
+    const otherId = (await prisma().product.create({ data: {}, select: { id: true } })).id;
+    const link = async (slug: string, id = productId) => {
+      const row = await prisma().newsArticle.findFirstOrThrow({ where: { slug }, select: { id: true } });
+      await prisma().newsArticleProduct.create({ data: { articleId: row.id, productId: id } });
+    };
+    const old = await article([], { publishedAt: new Date('2026-01-01T00:00:00Z') });
+    const recent = await article([], { publishedAt: new Date('2026-03-01T00:00:00Z') });
+    const draft = await article([], { status: 'draft', publishedAt: null });
+    const scheduled = await article([], { publishedAt: new Date('2999-01-01T00:00:00Z') });
+    const deleted = await article([], { deletedAt: new Date('2026-04-01T00:00:00Z') });
+    const unlinked = await article([]);
+    const elsewhere = await article([]);
+    for (const slug of [old, recent, draft, scheduled, deleted]) await link(slug);
+    await link(elsewhere, otherId);
+
+    const cards = await getRelatedNewsReader()({ productId, locale: 'th' });
+    expect(cards.map((card) => card.slug)).toEqual([recent, old]);
+    expect(cards.map((card) => card.slug)).not.toContain(unlinked);
+    expect(await getRelatedNewsReader()({ productId: '00000000-0000-4000-8000-000000000000', locale: 'th' })).toEqual([]);
+  });
+
+  it('gives the article page the live data of its cards in one read, and nothing for an inactive product', async () => {
+    const T = new Date('2026-10-26T01:00:00.000Z');
+    await upsertCatalogueItem(noModelSnapshot(), T);
+    await upsertCatalogueItem(noModelSnapshot({ externalItemId: 901n, parentSku: 'SBX-OFF' }), T);
+    const off = await prisma().product.findFirstOrThrow({ where: { parentSku: 'SBX-OFF' } });
+    const live = await prisma().product.findFirstOrThrow({ where: { parentSku: { not: 'SBX-OFF' } } });
+    await prisma().product.update({ where: { id: live.id }, data: { isActive: true } });
+    await prisma().product.update({ where: { id: off.id }, data: { isActive: false } });
+    const slug = await article([], {
+      bodyHtml: `<p>x</p><tinz-product data-id="${live.id}"></tinz-product><tinz-product data-id="${off.id}"></tinz-product>`,
+    });
+
+    const detail = await getNewsArticle({ locale: 'th', slug });
+
+    expect(detail?.productCards.map((card) => card.productId)).toEqual([live.id]);
+    expect(detail?.productCards[0]?.priceSatang).toBeGreaterThan(0n);
+    expect(['in_stock', 'out_of_stock']).toContain(detail?.productCards[0]?.stockStatus);
   });
 });

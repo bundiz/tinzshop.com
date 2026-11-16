@@ -76,7 +76,7 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
                 />
               )}
               <div className="mt-2">
-                <ArticleBody html={article.bodyHtml} />
+                <ArticleBody html={article.bodyHtml} productCards={article.productCards} />
               </div>
             </div>
           </article>

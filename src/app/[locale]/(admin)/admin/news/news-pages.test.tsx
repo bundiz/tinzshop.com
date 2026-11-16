@@ -46,6 +46,7 @@ vi.mock('next/navigation', async (original) => ({
 vi.mock('@/server/composition-root', async () => {
   const service = await import('@/server/services/news/news-admin-service');
   return {
+    getArticleProductCardsReader: () => async () => [],
     getNewsAdmin: () => ({
       // The real service over a fake repository, so the derived status is the service's own.
       list: (input: Parameters<typeof service.listAdminArticles>[1]) =>

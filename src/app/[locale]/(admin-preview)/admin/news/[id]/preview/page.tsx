@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
-import { getNewsAdmin } from '@/server/composition-root';
+import { getArticleProductCardsReader, getNewsAdmin } from '@/server/composition-root';
 import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import NewsArticleView from '../../../../../(shop)/news/[slug]/_components/NewsArticleView';
 import { readArticlesMenu } from '../../../../../(shop)/_components/read-articles-menu';
@@ -44,6 +44,8 @@ export default async function NewsPreviewPage({ params }: Props) {
       .filter((category) => article.categoryIds.includes(category.id))
       .map((category) => ({ slug: category.slug, name: categoryName(category.names, locale) })),
     related: [],
+    // The saved body's cards, drawn from the live products as a reader will see them (D-245).
+    productCards: await getArticleProductCardsReader()(translation.bodyHtml, locale === 'en' ? 'en' : 'th'),
   };
   const [articlesMenu, customer] = await Promise.all([readArticlesMenu(locale as 'th' | 'en'), readCurrentCustomer()]);
 

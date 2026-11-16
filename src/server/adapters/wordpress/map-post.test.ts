@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { NEWS_CATEGORY_SLUG_RULES, mapWordPressCategories, mapWordPressPost } from "./map-post";
+import { sanitizeArticleHtml } from "./sanitize";
 import { wpCategoryListSchema, wpPostListSchema } from "./schemas";
 
 function fixture(name: string): unknown {
@@ -142,5 +143,16 @@ describe("mapWordPressCategories", () => {
 
   it("keeps the slug rules in one constant", () => {
     expect(NEWS_CATEGORY_SLUG_RULES).toEqual({ excluded: [], unlisted: ["uncategorized", "บทความ"] });
+  });
+});
+
+describe("the import and the product card placeholder (D-245)", () => {
+  it("leaves every fixture body without a card and unchanged by the card rule", () => {
+    for (const post of posts) {
+      const { translation } = mapWordPressPost(post, null, null);
+      expect(translation.bodyHtml, String(post.id)).not.toContain("tinz-product");
+      // Sanitising the stored body again changes nothing: the card rule touches no WordPress element.
+      expect(sanitizeArticleHtml(translation.bodyHtml).html, String(post.id)).toBe(translation.bodyHtml);
+    }
   });
 });

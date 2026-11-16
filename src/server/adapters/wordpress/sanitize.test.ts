@@ -125,3 +125,44 @@ describe("decodeHtmlEntities", () => {
     );
   });
 });
+
+describe("sanitizeArticleHtml: the product card placeholder (D-245)", () => {
+  const ID = "7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60";
+  const CARD = `<tinz-product data-id="${ID}"></tinz-product>`;
+
+  it("keeps a card with a uuid id, between paragraphs", () => {
+    expect(sanitizeArticleHtml(`<p>a</p>${CARD}<p>b</p>`).html).toBe(`<p>a</p>${CARD}<p>b</p>`);
+  });
+
+  it("strips onclick and every other attribute, keeping only data-id", () => {
+    const { html } = sanitizeArticleHtml(
+      `<tinz-product data-id="${ID}" onclick="x()" class="c" style="color:red" data-other="1" href="https://x.test"></tinz-product>`,
+    );
+    expect(html).toBe(CARD);
+  });
+
+  it("drops a card whose id is not a uuid, or that has none", () => {
+    for (const card of [
+      '<tinz-product data-id="123"></tinz-product>',
+      '<tinz-product data-id="<script>"></tinz-product>',
+      "<tinz-product></tinz-product>",
+      `<tinz-product data-id="${ID}x"></tinz-product>`,
+    ]) {
+      expect(sanitizeArticleHtml(`<p>a</p>${card}<p>b</p>`).html, card).toBe("<p>a</p><p>b</p>");
+    }
+  });
+
+  it("keeps the element empty: children and text are dropped", () => {
+    expect(
+      sanitizeArticleHtml(`<tinz-product data-id="${ID}">hello <strong>b</strong><img src="https://x.test/a.png"></tinz-product>`).html,
+    ).toBe(CARD);
+    expect(
+      sanitizeArticleHtml(`<tinz-product data-id="${ID}"><tinz-product data-id="${ID}"></tinz-product></tinz-product><p>z</p>`).html,
+    ).toBe(`${CARD}<p>z</p>`);
+  });
+
+  it("leaves a body without cards unchanged", () => {
+    const body = '<h2>T</h2><p>Text with tinz-product in it &lt;tinz-product&gt;</p>';
+    expect(sanitizeArticleHtml(body).html).toBe(body);
+  });
+});

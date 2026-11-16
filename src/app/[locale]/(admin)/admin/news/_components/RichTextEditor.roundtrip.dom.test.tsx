@@ -105,6 +105,43 @@ describe('editing a stored body', () => {
   });
 });
 
+describe('product cards in a stored body (D-245)', () => {
+  const A = '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60';
+  const B = '11111111-2222-4333-8444-555555555555';
+  const card = (id: string) => `<tinz-product data-id="${id}"></tinz-product>`;
+
+  it('stays unlocked after a one-character edit and saves with both cards', async () => {
+    const stored = sanitizeArticleHtml(`<p>one</p>${card(A)}<p>two</p>${card(B)}<p>three</p>`).html;
+    expect(stored).toContain(card(A));
+    const onChange = vi.fn();
+    const editor = await mount(stored, onChange);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(editor.isEditable).toBe(true);
+    expect(wouldLoseContent(stored, editor.getHTML())).toBe(false);
+    await act(async () => {
+      editor.chain().focus('end').insertContent('x').run();
+    });
+    const saved = sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html;
+    expect(saved).toContain(`<p>two</p>${card(B)}<p>three`);
+    expect(saved).toContain(`<p>one</p>${card(A)}<p>two</p>`);
+    expect(saved.match(/<tinz-product /g)).toHaveLength(2);
+  });
+
+  it('normaliseBody keeps data-id like any other element', () => {
+    expect(normaliseBody(card(A))).toContain(`data-id="${A}"`);
+    expect(normaliseBody(card(A))).not.toBe(normaliseBody(card(B)));
+    expect(normaliseBody(`<p>x</p>${card(A)}`)).not.toBe(normaliseBody('<p>x</p>'));
+  });
+
+  it('locks a body with a card whose id is not a uuid, which the sanitiser would drop, so nothing is lost silently', async () => {
+    const stored = `<p>one</p><tinz-product data-id="123"></tinz-product><p>two</p>`;
+    const editor = await mount(stored);
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    expect(editor.isEditable).toBe(false);
+    expect(wouldLoseContent(stored, editor.getHTML())).toBe(true);
+  });
+});
+
 describe('bodyOrEmpty', () => {
   it('treats a body with no text and no media as empty', () => {
     expect(bodyOrEmpty('<p></p>')).toBe('');

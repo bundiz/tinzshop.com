@@ -77,6 +77,7 @@ import {
   findLiveNewsArticle,
   findArticleSourceStates,
   listLiveNewsArticles,
+  listLiveNewsArticlesForProduct,
   countLiveNewsArticlesByCategory,
   listNewsCategories,
   upsertNewsArticle,
@@ -101,6 +102,7 @@ import { categoriseProducts } from '@/server/repositories/catalogue/categorise-r
 import { activateSyncedProducts } from '@/server/repositories/catalogue/activation-repository';
 import {
   countStorefrontFacets,
+  findStorefrontCandidates,
   findStorefrontProduct,
   listStorefrontCandidates,
   listStorefrontCategories,
@@ -134,6 +136,8 @@ import {
   listLatestNews,
   listListedNewsCategories,
   listNews,
+  listRelatedNewsForProduct,
+  articleProductCards,
   type GetNewsArticleInput,
   type ListedNewsCategory,
   type ListNewsInput,
@@ -225,7 +229,29 @@ export function getNewsReader(): (input: ListNewsInput) => Promise<NewsListPage 
 export function getNewsArticleReader(): (input: GetNewsArticleInput) => Promise<NewsArticleDetail | null> {
   return (input) =>
     getNewsArticle(
-      { news: { listNewsCategories, listLiveNewsArticles, findLiveNewsArticle }, now: () => new Date() },
+      {
+        news: { listNewsCategories, listLiveNewsArticles, findLiveNewsArticle },
+        products: { findProductCandidates: findStorefrontCandidates },
+        now: () => new Date(),
+      },
+      input,
+    );
+}
+
+/**
+ * The live data of the products a body has cards for, in one read (plan 016 Task 10): for the admin preview, which
+ * draws a saved body that is not yet live and so cannot go through the article read.
+ */
+export function getArticleProductCardsReader(): (bodyHtml: string, locale: Locale) => ReturnType<typeof articleProductCards> {
+  return (bodyHtml, locale) =>
+    articleProductCards({ products: { findProductCandidates: findStorefrontCandidates } }, bodyHtml, locale);
+}
+
+/** A product page's related news (plan 016 Task 10): every live article linked to the product, newest first. */
+export function getRelatedNewsReader(): (input: { productId: string; locale: Locale }) => Promise<NewsCardData[]> {
+  return (input) =>
+    listRelatedNewsForProduct(
+      { news: { listNewsCategories, listLiveNewsArticlesForProduct }, now: () => new Date() },
       input,
     );
 }

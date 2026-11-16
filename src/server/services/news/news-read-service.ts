@@ -1,4 +1,11 @@
-import { pickProductName } from '@/server/services/catalogue/landing-catalogue-service';
+import {
+  isStorefrontVisible,
+  pickProductName,
+  toLandingProductCard,
+  type LandingProductCard,
+  type StorefrontCandidate,
+} from '@/server/services/catalogue/landing-catalogue-service';
+import { productIdsIn } from './product-card-embed';
 import type { NewsLocale } from './news-snapshot';
 
 /** Articles per list page (spec 2026-10-29 §6); on page 1 the first 3 are the feature block (ruling R1, D-134). */
@@ -241,6 +248,8 @@ export type NewsArticleReadDeps = {
     /** The live article with this (decoded) slug, or null. */
     findLiveNewsArticle: (slug: string, now: Date) => Promise<NewsArticleDetailRow | null>;
   };
+  /** The mirror's products for these ids in ONE read (the cards in the body); an unknown id is simply absent. */
+  products: { findProductCandidates: (ids: string[]) => Promise<StorefrontCandidate[]> };
   now: () => Date;
 };
 
@@ -260,6 +269,11 @@ export type NewsArticleDetail = {
   categories: { slug: string; name: string }[];
   /** Up to `RELATED_NEWS_LIMIT` other live articles sharing a category, newest first. */
   related: NewsCardData[];
+  /**
+   * The live data of every product the body has a card for (D-245): current name, first image, price range and
+   * stock status. A product that is unknown, inactive or not shown in the shop is absent, and its card renders nothing.
+   */
+  productCards: LandingProductCard[];
 };
 
 export type GetNewsArticleInput = { locale: NewsLocale; slug: string };
@@ -323,7 +337,10 @@ export async function getNewsArticle(
   const useEn = input.locale === 'en' && row.titles.en !== undefined && row.titles.en !== '';
   const fromTranslation = (text: LocalisedText): string => (useEn ? (text.en ?? '') : (text.th ?? text.en ?? ''));
 
-  const related = await relatedArticles(deps, row, byId, tree, now);
+  const [related, productCards] = await Promise.all([
+    relatedArticles(deps, row, byId, tree, now),
+    articleProductCards(deps, fromTranslation(row.bodies), input.locale),
+  ]);
   return {
     slug: row.slug,
     title: fromTranslation(row.titles),
@@ -336,7 +353,48 @@ export async function getNewsArticle(
       .sort((a, b) => a.position - b.position)
       .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) })),
     related: related.map((candidate) => toCard(candidate, byId, tree, input.locale)),
+    productCards,
   };
+}
+
+/**
+ * The cards' products for a body, read once: only those the shop shows today (`isStorefrontVisible`, the same rule
+ * as the listing), as the storefront's product card data. No card in the body reads nothing (D-245).
+ */
+export async function articleProductCards(
+  deps: Pick<NewsArticleReadDeps, 'products'>,
+  bodyHtml: string,
+  locale: NewsLocale,
+): Promise<LandingProductCard[]> {
+  const ids = productIdsIn(bodyHtml);
+  if (ids.length === 0) return [];
+  const candidates = await deps.products.findProductCandidates(ids);
+  return candidates.filter(isStorefrontVisible).map((candidate) => toLandingProductCard(candidate, locale));
+}
+
+export type RelatedNewsDeps = {
+  news: Pick<NewsReadRepository, 'listNewsCategories'> & {
+    /** Every live article linked to the product through `news_article_product`, newest `published_at` first. */
+    listLiveNewsArticlesForProduct: (productId: string, now: Date) => Promise<NewsArticleRow[]>;
+  };
+  now: () => Date;
+};
+
+/**
+ * Every live article linked to the product, newest first, with no limit (D-239): the product page's
+ * "ข่าวที่เกี่ยวข้อง". Live is the article rule (D-130): published, `published_at` reached, not deleted.
+ */
+export async function listRelatedNewsForProduct(
+  deps: RelatedNewsDeps,
+  input: { productId: string; locale: NewsLocale },
+): Promise<NewsCardData[]> {
+  const [categories, rows] = await Promise.all([
+    deps.news.listNewsCategories(),
+    deps.news.listLiveNewsArticlesForProduct(input.productId, deps.now()),
+  ]);
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const tree = subtrees(categories);
+  return rows.map((row) => toCard(row, byId, tree, input.locale));
 }
 
 export type LatestNewsDeps = {

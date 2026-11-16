@@ -8,7 +8,7 @@ import { isStoredYoutubeEmbed } from './youtube-embed';
 /**
  * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as a labelled
  * box (the node view, never saved); the saved HTML is only the element and the id. The storefront draws the live card
- * from it (Task 10), and the sanitiser does not keep the tag until then.
+ * from it (D-245); the sanitiser keeps the tag with a uuid `data-id` and nothing else.
  */
 export const ProductCard = Node.create<{ label: string }>({
   name: 'productCard',

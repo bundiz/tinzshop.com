@@ -57,9 +57,9 @@ describe('RichTextEditor', () => {
     const onChange = vi.fn();
     const editor = await mount(onChange);
     expect(container.querySelector('tinz-product')?.getAttribute('data-id')).toBe(PRODUCT);
-    // The body sanitiser does not allow <tinz-product> until Task 10, so a stored card makes the guard lock the body.
-    expect(container.querySelector('[role="alert"]')).not.toBeNull();
-    expect(editor.isEditable).toBe(false);
+    // The body sanitiser keeps a card with a uuid id (D-245), so a stored card no longer locks the body.
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(editor.isEditable).toBe(true);
     editor.commands.insertContentAt(0, { type: 'productCard', attrs: { id: PRODUCT, name: 'Switch' } });
     expect(editor.getHTML()).toContain(`<tinz-product data-id="${PRODUCT}"></tinz-product>`);
     expect(editor.getHTML()).not.toContain('Switch');

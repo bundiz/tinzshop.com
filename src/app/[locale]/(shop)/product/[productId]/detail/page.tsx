@@ -3,13 +3,14 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { routing } from '@/i18n/routing';
-import { getLandingCatalogueReader } from '@/server/composition-root';
+import { getLandingCatalogueReader, getRelatedNewsReader } from '@/server/composition-root';
 import ProductSection from '../../../_components/ProductSection';
 import SiteFooter from '../../../_components/SiteFooter';
 import SiteHeader from '../../../_components/SiteHeader';
 import { readArticlesMenu } from '../../../_components/read-articles-menu';
 import { requireCustomer } from '../../../_components/require-customer';
 import BuyActions from './_components/BuyActions';
+import RelatedNews from './_components/RelatedNews';
 import Gallery from './_components/Gallery';
 import ProductHeading from './_components/ProductHeading';
 import ProductTabs from './_components/ProductTabs';
@@ -46,6 +47,8 @@ export default async function ProductPage({ params }: Props) {
     readArticlesMenu(locale),
   ]);
   if (product === null) notFound();
+  // Read only for a product that exists: the id is a uuid by now (D-239, every live linked article, no limit).
+  const relatedNews = await getRelatedNewsReader()({ productId: product.productId, locale });
   // Related products: the best sellers, without this one, until categories exist to relate by (D-124).
   const related = catalogue.bestSellers.filter((card) => card.productId !== product.productId).slice(0, RELATED_LIMIT);
 
@@ -105,6 +108,7 @@ export default async function ProductPage({ params }: Props) {
               />
             </div>
           )}
+          {relatedNews.length > 0 && <RelatedNews cards={relatedNews} />}
         </div>
       </main>
       <SiteFooter />

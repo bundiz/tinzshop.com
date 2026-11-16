@@ -76,6 +76,15 @@ async function loadCandidates(ids: string[]): Promise<StorefrontCandidate[]> {
 }
 
 /**
+ * The cards' data for these product ids in ONE read, for the product cards inside a news article (plan 016
+ * Task 10): current names, first image and variants. An unknown id is absent; whether the shop shows the
+ * product is the service's rule (`isStorefrontVisible`), not filtered here.
+ */
+export async function findStorefrontCandidates(ids: string[]): Promise<StorefrontCandidate[]> {
+  return loadCandidates(ids.filter((id) => UUID.test(id)));
+}
+
+/**
  * The landing page's products (plan 013): the 10 best sellers, the 5 best-selling kits and the 4 soonest
  * pre-orders, each sorted and limited in SQL, as one de-duplicated list of at most 19. Ties break by the
  * locale's name (as `pickProductName` picks it) under the database collation, then id, so the read stays

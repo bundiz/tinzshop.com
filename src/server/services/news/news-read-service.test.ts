@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { StorefrontCandidate } from '@/server/services/catalogue/landing-catalogue-service';
+
 import {
   NEWS_PAGE_SIZE,
   RELATED_NEWS_LIMIT,
@@ -7,6 +9,7 @@ import {
   listLatestNews,
   listListedNewsCategories,
   listNews,
+  listRelatedNewsForProduct,
   type NewsArticleDetailRow,
   type NewsArticleRow,
   type NewsCategoryRow,
@@ -228,14 +231,20 @@ function detailRow(n: number, overrides: Partial<NewsArticleDetailRow> = {}): Ne
   return { ...row(n), bodies: { th: `<p>เนื้อหา ${n}</p>` }, ...overrides };
 }
 
-function setupArticle(options: { article?: NewsArticleDetailRow | null; related?: NewsArticleRow[] }) {
+function setupArticle(options: {
+  article?: NewsArticleDetailRow | null;
+  related?: NewsArticleRow[];
+  candidates?: StorefrontCandidate[];
+}) {
+  const findProducts = vi.fn(async (_ids: string[]) => options.candidates ?? []);
   const find = vi.fn(async (_slug: string, _now: Date) => options.article ?? null);
   const list = vi.fn(async (_filter: NewsListFilter) => options.related ?? []);
   const deps = {
     news: { listNewsCategories: async () => CATEGORIES, findLiveNewsArticle: find, listLiveNewsArticles: list },
+    products: { findProductCandidates: findProducts },
     now: () => NOW,
   };
-  return { deps, find, list };
+  return { deps, find, list, findProducts };
 }
 
 describe('getNewsArticle', () => {
@@ -388,5 +397,81 @@ describe('listListedNewsCategories', () => {
       { slug: 'sony', name: 'SONY EN' },
       { slug: 'empty', name: 'ว่าง' },
     ]);
+  });
+});
+
+const P1 = '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60';
+const P2 = '11111111-2222-4333-8444-555555555555';
+
+function candidate(productId: string, overrides: Partial<StorefrontCandidate> = {}): StorefrontCandidate {
+  return {
+    productId,
+    isActive: true,
+    externalStatus: 'NORMAL',
+    names: { th: 'แอสโตร บอท', en: 'Astro Bot' },
+    imageUrl: 'https://img.example/a.jpg',
+    isKit: false,
+    salesCount: null,
+    isPreOrder: false,
+    releaseDate: null,
+    variants: [{ priceSatang: 129900n, originalPriceSatang: 129900n, stockQuantity: 3, isActive: true }],
+    ...overrides,
+  };
+}
+
+describe('getNewsArticle: product cards (D-245)', () => {
+  const card = (id: string) => `<tinz-product data-id="${id}"></tinz-product>`;
+
+  it('loads the cards products in ONE read and returns their current data', async () => {
+    const article = detailRow(1, { bodies: { th: `<p>a</p>${card(P1)}${card(P2)}${card(P1)}` } });
+    const { deps, findProducts } = setupArticle({ article, candidates: [candidate(P1), candidate(P2, { names: { th: 'สอง' } })] });
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-1' });
+    expect(findProducts).toHaveBeenCalledTimes(1);
+    expect(findProducts).toHaveBeenCalledWith([P1, P2]);
+    expect(detail?.productCards.map((c) => [c.productId, c.name, c.priceSatang, c.stockStatus])).toEqual([
+      [P1, 'แอสโตร บอท', 129900n, 'in_stock'],
+      [P2, 'สอง', 129900n, 'in_stock'],
+    ]);
+  });
+
+  it('names the card in the page locale', async () => {
+    const article = detailRow(1, { bodies: { th: card(P1), en: card(P1) }, titles: { th: 'ก', en: 'a' }, excerpts: {} });
+    const { deps } = setupArticle({ article, candidates: [candidate(P1)] });
+    expect((await getNewsArticle(deps, { locale: 'en', slug: 'post-1' }))?.productCards[0]?.name).toBe('Astro Bot');
+  });
+
+  it('leaves out an inactive, hidden or unknown product, and reads nothing for a body with no card', async () => {
+    const article = detailRow(1, { bodies: { th: `${card(P1)}${card(P2)}${card('00000000-0000-4000-8000-000000000000')}` } });
+    const { deps } = setupArticle({
+      article,
+      candidates: [candidate(P1, { isActive: false }), candidate(P2, { externalStatus: 'UNLIST' })],
+    });
+    expect((await getNewsArticle(deps, { locale: 'th', slug: 'post-1' }))?.productCards).toEqual([]);
+
+    const plain = setupArticle({ article: detailRow(2) });
+    expect((await getNewsArticle(plain.deps, { locale: 'th', slug: 'post-2' }))?.productCards).toEqual([]);
+    expect(plain.findProducts).not.toHaveBeenCalled();
+  });
+});
+
+describe('listRelatedNewsForProduct', () => {
+  it('returns every live article linked to the product, as cards, with no limit', async () => {
+    const rows = [row(9), row(8), row(7), row(6), row(5), row(4)];
+    const list = vi.fn(async (_productId: string, _now: Date) => rows);
+    const cards = await listRelatedNewsForProduct(
+      { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticlesForProduct: list }, now: () => NOW },
+      { productId: P1, locale: 'th' },
+    );
+    expect(list).toHaveBeenCalledWith(P1, NOW);
+    expect(cards.map((c) => c.slug)).toEqual(['post-9', 'post-8', 'post-7', 'post-6', 'post-5', 'post-4']);
+    expect(cards[0]).toMatchObject({ title: 'ข่าว 9', categoryName: 'News' });
+  });
+
+  it('returns nothing when no article is linked', async () => {
+    const cards = await listRelatedNewsForProduct(
+      { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticlesForProduct: async () => [] }, now: () => NOW },
+      { productId: P1, locale: 'en' },
+    );
+    expect(cards).toEqual([]);
   });
 });

@@ -393,3 +393,35 @@ export async function findLiveNewsArticle(slug: string, now: Date): Promise<News
     categoryIds: row.categories.map((link) => link.categoryId),
   };
 }
+
+// ---- Read for a product page's related news (plan 016 Task 10) ----
+
+/**
+ * Every live article linked to the product through `news_article_product` (D-239), newest `published_at` first
+ * (then id), with no limit. A product linked twice cannot happen: the link's primary key is the pair.
+ */
+export async function listLiveNewsArticlesForProduct(productId: string, now: Date): Promise<NewsArticleRow[]> {
+  const rows = await getPrisma().newsArticle.findMany({
+    where: { ...liveArticle(now), products: { some: { productId } } },
+    orderBy: [{ publishedAt: 'desc' }, { id: 'asc' }],
+    select: {
+      id: true,
+      slug: true,
+      publishedAt: true,
+      bylineName: true,
+      featuredImageUrl: true,
+      translations: { select: { locale: true, title: true, excerpt: true } },
+      categories: { select: { categoryId: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    publishedAt: row.publishedAt as Date,
+    bylineName: row.bylineName,
+    featuredImageUrl: row.featuredImageUrl,
+    titles: byLocale(row.translations, (t) => t.title),
+    excerpts: byLocale(row.translations, (t) => t.excerpt),
+    categoryIds: row.categories.map((link) => link.categoryId),
+  }));
+}

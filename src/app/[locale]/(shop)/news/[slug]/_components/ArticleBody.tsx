@@ -1,4 +1,7 @@
 import { useTranslations } from 'next-intl';
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
+import { splitAtProductCards } from '@/server/services/news/product-card-embed';
+import ArticleProductCard from './ArticleProductCard';
 
 /**
  * Adds `loading="lazy"` to every `<img>` and `<iframe>` start tag of the stored body, at render time; the
@@ -45,8 +48,28 @@ const PROSE = [
  * The article body: the stored `body_html`, already sanitised to the allow-list at import (D-133, D-135). This is
  * the only place the site renders HTML from data; every other field is escaped text. Its iframes are titled
  * with `shop.news.videoTitle`, and its images and iframes lazy-loaded, at render time.
+ *
+ * A product card placeholder (`<tinz-product data-id>`, D-245) is replaced by an `ArticleProductCard` of the live
+ * product in `productCards`; one with no entry there (unknown, inactive or hidden) renders nothing. The HTML
+ * around the cards is processed segment by segment, exactly as a body without cards is.
  */
-export default function ArticleBody({ html }: { html: string }) {
+export default function ArticleBody({ html, productCards = [] }: { html: string; productCards?: LandingProductCard[] }) {
   const t = useTranslations('shop.news');
-  return <div className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(html, t('videoTitle'))) }} />;
+  const title = t('videoTitle');
+  const byId = new Map(productCards.map((card) => [card.productId, card]));
+  const segments = splitAtProductCards(html);
+  if (!segments.some((segment) => segment.kind === 'product')) {
+    return <div className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(html, title)) }} />;
+  }
+  return (
+    <div>
+      {segments.map((segment, index) => {
+        if (segment.kind === 'html') {
+          return <div key={index} className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(segment.html, title)) }} />;
+        }
+        const card = byId.get(segment.productId);
+        return card === undefined ? null : <ArticleProductCard key={index} card={card} />;
+      })}
+    </div>
+  );
 }
