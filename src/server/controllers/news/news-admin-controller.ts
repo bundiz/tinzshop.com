@@ -17,7 +17,8 @@ export type NewsAdminErrorKey =
   | 'englishIncomplete'
   | 'categories'
   | 'products'
-  | 'publishAtInvalid';
+  | 'publishAtInvalid'
+  | 'publishAtRequired';
 
 /** What a news form shows after it runs (plan 016, Task 9). `saved` carries what the editor needs to move on. */
 export type NewsAdminState =
@@ -42,6 +43,8 @@ const error = (errorKey: NewsAdminErrorKey): NewsAdminState => ({ status: 'error
 
 const uuid = z.uuid();
 const field = z.string().max(200_000);
+/** A title is capped so the slug made from it fits the unique index (D-252). */
+const title = z.string().max(300);
 
 /** The form's text fields; a missing one reads as empty (`FormData.get` gives null). */
 const SaveForm = z.object({
@@ -49,13 +52,14 @@ const SaveForm = z.object({
   action: z.enum(['draft', 'publish', 'unpublish']),
   slug: z.string().max(300),
   bylineName: z.string().max(200),
-  thTitle: field,
+  thTitle: title,
   thExcerpt: field,
   thBodyHtml: field,
-  enTitle: field,
+  enTitle: title,
   enExcerpt: field,
   enBodyHtml: field,
   publishAt: z.string().max(40),
+  when: z.enum(['now', 'later', '']),
   categoryIds: z.array(uuid).max(100),
   productIds: z.array(uuid).max(100),
   tagNames: z.array(z.string().max(100)).max(100),
@@ -132,6 +136,7 @@ export async function saveArticleCommand(
     enExcerpt: readString(formData, 'enExcerpt'),
     enBodyHtml: readString(formData, 'enBodyHtml'),
     publishAt: readString(formData, 'publishAt'),
+    when: readString(formData, 'when'),
     categoryIds: readList(formData, 'categoryId'),
     productIds: readList(formData, 'productId'),
     tagNames: readList(formData, 'tag'),
@@ -146,6 +151,8 @@ export async function saveArticleCommand(
   if (hasEnglish && (english[0] === '' || english[2] === '')) return error('englishIncomplete');
   const publishAt = parsePublishAt(form.publishAt);
   if (publishAt === 'invalid') return error('publishAtInvalid');
+  // "Publish later" chosen with no date is a mistake, not an immediate publish.
+  if (form.action === 'publish' && form.when === 'later' && publishAt === null) return error('publishAtRequired');
 
   const result = await deps.save({
     id: form.id,

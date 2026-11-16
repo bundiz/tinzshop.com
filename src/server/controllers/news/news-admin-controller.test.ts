@@ -97,6 +97,24 @@ describe('saveArticleCommand: validation', () => {
   });
 });
 
+describe('saveArticleCommand: caps', () => {
+  it('refuses a title longer than 300 characters in either language, and accepts exactly 300', async () => {
+    const deps = setup();
+    expect(await saveArticleCommand(deps, ACTOR, form({ thTitle: 'ก'.repeat(301) }))).toEqual({ status: 'error', errorKey: 'invalid' });
+    expect(await saveArticleCommand(deps, ACTOR, form({ enTitle: 'a'.repeat(301), enBodyHtml: '<p>x</p>' }))).toEqual({ status: 'error', errorKey: 'invalid' });
+    expect(deps.save).not.toHaveBeenCalled();
+    expect((await saveArticleCommand(deps, ACTOR, form({ thTitle: 'ก'.repeat(300) }))).status).toBe('saved');
+  });
+
+  it('refuses "publish later" with no date, but not "now" or a draft', async () => {
+    const deps = setup();
+    expect(await saveArticleCommand(deps, ACTOR, form({ action: 'publish', when: 'later', publishAt: '' }))).toEqual({ status: 'error', errorKey: 'publishAtRequired' });
+    expect(deps.save).not.toHaveBeenCalled();
+    expect((await saveArticleCommand(deps, ACTOR, form({ action: 'publish', when: 'now' }))).status).toBe('saved');
+    expect((await saveArticleCommand(deps, ACTOR, form({ action: 'publish', when: 'later', publishAt: '2026-11-20T09:00' }))).status).toBe('saved');
+  });
+});
+
 describe('saveArticleCommand: what reaches the service', () => {
   it('passes the actor, the lists and the Thai-time publish date as UTC', async () => {
     const deps = setup();

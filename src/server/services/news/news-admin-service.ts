@@ -119,6 +119,9 @@ function failure(code: string, message: string, details?: unknown): { ok: false;
 const notFound = () => failure('news.not_found', 'No such article');
 const invalid = (field: string, message: string) => failure('news.invalid', message, { field });
 
+/** A slug is cut at this many characters (code points), so it stays far under the index limit (D-252). */
+const MAX_SLUG_LENGTH = 300;
+
 /**
  * A slug as imported ones look: decoded, lower-cased, whitespace and anything that cannot sit in a URL
  * path segment turned into one hyphen, Thai letters kept. Never empty.
@@ -130,11 +133,16 @@ export function normaliseSlug(text: string): string {
   } catch {
     // Not percent-encoded text (a title with a bare "%"): used as it came.
   }
-  const slug = decoded
-    .toLowerCase()
-    .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
-    .replace(/-{2,}/g, '-')
-    .replace(/^-|-$/g, '');
+  const slug = [
+    ...decoded
+      .toLowerCase()
+      .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-|-$/g, ''),
+  ]
+    .slice(0, MAX_SLUG_LENGTH)
+    .join('')
+    .replace(/-$/, '');
   return slug === '' ? 'news' : slug;
 }
 

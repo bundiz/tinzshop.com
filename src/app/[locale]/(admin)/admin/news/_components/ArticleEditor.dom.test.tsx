@@ -11,6 +11,7 @@ import ArticleEditor, { type EditorArticle } from './ArticleEditor';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: () => {} }) }));
 
+const ARTICLE_ID = '77777777-7777-4777-8777-777777777777';
 const STORED = '<p>Kept</p><dl><dt>Term</dt><dd>Meaning</dd></dl>';
 let article: EditorArticle = {
   id: '44444444-4444-4444-8444-444444444444',
@@ -42,11 +43,14 @@ function withBody(bodyHtml: string): void {
   article = { ...article, th: { ...article.th, bodyHtml } };
 }
 
-async function mount(save: (previous: unknown, formData: FormData) => Promise<never>) {
+async function mount(
+  save: (previous: unknown, formData: FormData) => Promise<never>,
+  options: { article?: EditorArticle | null; categories?: { id: string; name: string; unlisted?: boolean }[] } = {},
+) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <ArticleEditor locale="en" article={article} categories={[]} defaultByline="Nok" actions={{ save: save as never, trash: async () => ({ status: 'idle' }), search: async () => [] }} />
+        <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: async () => ({ status: 'idle' }), search: async () => [] }} />
       </NextIntlClientProvider>,
     );
   });
@@ -99,5 +103,46 @@ describe('ArticleEditor', () => {
     });
     await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
     expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].get('thBodyHtml')).toBe(stored);
+  });
+
+  it('keeps an article\'s unlisted categories: shown checked and marked, submitted unless unticked, never offered otherwise', async () => {
+    const LISTED = '55555555-5555-4555-8555-555555555555';
+    const UNLISTED = '66666666-6666-4666-8666-666666666666';
+    article = { ...article, categoryIds: [UNLISTED] };
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, { categories: [{ id: LISTED, name: 'News' }, { id: UNLISTED, name: 'Uncategorized', unlisted: true }] });
+    const boxes = [...container.querySelectorAll<HTMLInputElement>('input[name="categoryId"]')];
+    expect(boxes.map((box) => [box.value, box.checked])).toEqual([[LISTED, false], [UNLISTED, true]]);
+    expect(container.textContent).toContain('Uncategorized (not listed)');
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].getAll('categoryId')).toEqual([UNLISTED]);
+  });
+
+  it('sends "publish later" with the date left empty, so the server can refuse it, and caps title and slug at 300', async () => {
+    article = { ...article, status: 'draft', categoryIds: [] };
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save);
+    const when = container.querySelector<HTMLSelectElement>('select#when')!;
+    expect(when.name).toBe('when');
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(when, 'later');
+      when.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="publish"]')!.click());
+    const sent = (save.mock.calls[0] as unknown as [unknown, FormData])[1];
+    expect(sent.get('when')).toBe('later');
+    expect(sent.get('publishAt')).toBe('');
+    expect(container.querySelector<HTMLInputElement>('#th-title')!.maxLength).toBe(300);
+    expect(container.querySelector<HTMLInputElement>('#en-title')!.maxLength).toBe(300);
+    expect(container.querySelector<HTMLInputElement>('#slug')!.maxLength).toBe(300);
+  });
+
+  it('keeps the buttons disabled after a new article is created, until the page moves on', async () => {
+    const save = vi.fn(async () => ({ status: 'saved', id: ARTICLE_ID, slug: 's', action: 'draft' }) as never);
+    await mount(save, { article: null });
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(container.querySelector<HTMLButtonElement>('button[value="draft"]')!.disabled).toBe(true);
+    expect(container.querySelector<HTMLButtonElement>('button[value="publish"]')!.disabled).toBe(true);
   });
 });

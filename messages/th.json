@@ -594,7 +594,7 @@
       "enName": "English"
     },
     "role": {
-      "guest": "ผู้เยี่ยมชม",
+      "guest": "ผู้ใช้งานที่ไม่ login",
       "customer": "ลูกค้า",
       "blogger": "Blogger",
       "sale_manager": "Sale-manager",
@@ -805,6 +805,7 @@
         "byline": "ผู้เขียน",
         "featured": "ภาพประกอบเดิมจากเว็บเก่า (แก้ไม่ได้)",
         "categoriesEmpty": "ยังไม่มีหมวดหมู่",
+        "categoryNotListed": "ไม่แสดงในรายการ",
         "tagLabel": "เพิ่มแท็ก",
         "tagPlaceholder": "เพิ่มแท็ก แล้วกด Enter",
         "tagRemove": "ลบแท็ก {name}",
@@ -851,7 +852,8 @@
         "englishIncomplete": "ฉบับภาษาอังกฤษต้องมีทั้งหัวข้อและเนื้อหา หรือเว้นว่างทั้งหมด",
         "categories": "ก่อนเผยแพร่ต้องเลือกอย่างน้อยหนึ่งหมวดหมู่ที่แสดงบนเว็บ",
         "products": "มีสินค้าที่เลือกซึ่งไม่พบในระบบ",
-        "publishAtInvalid": "วันและเวลาที่ตั้งไว้ไม่ถูกต้อง"
+        "publishAtInvalid": "วันและเวลาที่ตั้งไว้ไม่ถูกต้อง",
+        "publishAtRequired": "เลือกวันและเวลาที่จะเผยแพร่ หรือเลือก \"ทันที\""
       }
     }
   }

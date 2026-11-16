@@ -36,8 +36,11 @@ export type EditorArticle = {
 export type ArticleEditorProps = {
   locale: string;
   article: EditorArticle | null;
-  /** The listed categories, named in the viewer's language. */
-  categories: { id: string; name: string }[];
+  /**
+   * The listed categories, named in the viewer's language, then the article's own unlisted ones (`unlisted`, D-141):
+   * those render checked so a save keeps them, and staff may untick but never newly tick one (D-248).
+   */
+  categories: { id: string; name: string; unlisted?: boolean }[];
   /** The byline a new article starts with: the editor's first name. */
   defaultByline: string;
   /** Override the Server Actions in tests. */
@@ -106,6 +109,9 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   useModalDialog({ open: confirmTrash, onClose: () => setConfirmTrash(false), containerRef: trashDialog, returnFocusRef: trashOpener });
 
   const status = article?.status ?? 'draft';
+  // A first save has worked and the page is about to move to the new article: a second submit would create a twin.
+  const created = saved.status === 'saved' && article === null;
+  const busy = saving || created;
   const isPublished = status === 'published' || status === 'scheduled';
   const publishable = !(status === 'published');
 
@@ -149,19 +155,19 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
             ) : null}
             {isPublished ? (
               <>
-                <button type="submit" disabled={saving} name="action" value="unpublish" className={buttonClass({ variant: 'line' })}>
+                <button type="submit" disabled={busy} name="action" value="unpublish" className={buttonClass({ variant: 'line' })}>
                   {e('button.unpublish')}
                 </button>
-                <button type="submit" disabled={saving} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
+                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
                   {e('button.update')}
                 </button>
               </>
             ) : (
               <>
-                <button type="submit" disabled={saving} name="action" value="draft" className={buttonClass({ variant: 'line' })}>
+                <button type="submit" disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line' })}>
                   {e('button.saveDraft')}
                 </button>
-                <button type="submit" disabled={saving} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
+                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
                   {e('button.publish')}
                 </button>
               </>
@@ -211,6 +217,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                       value={value.title}
                       onChange={(event) => set({ ...value, title: event.target.value })}
                       placeholder={e('titlePlaceholder')}
+                      maxLength={300}
                       className="min-h-14 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 font-head text-[22px] font-bold text-ink"
                     />
                   </div>
@@ -249,6 +256,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
               <input
                 id="slug"
                 name="slug"
+                maxLength={300}
                 value={slug}
                 onChange={(event) => setSlug(event.target.value)}
                 aria-describedby="slug-hint"
@@ -284,7 +292,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                       </label>
                     </dt>
                     <dd className="mt-1">
-                      <select id="when" value={when} onChange={(event) => setWhen(event.target.value as 'now' | 'later')} className={INPUT}>
+                      <select id="when" name="when" value={when} onChange={(event) => setWhen(event.target.value as 'now' | 'later')} className={INPUT}>
                         <option value="now">{e('whenNow')}</option>
                         <option value="later">{e('whenLater')}</option>
                       </select>
@@ -343,6 +351,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                           className="size-5 accent-brand"
                         />
                         {category.name}
+                        {category.unlisted ? <span className="text-sm text-muted"> ({e('categoryNotListed')})</span> : null}
                       </label>
                     </li>
                   ))}

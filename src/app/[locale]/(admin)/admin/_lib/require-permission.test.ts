@@ -49,4 +49,9 @@ describe('requirePermission', () => {
     request.customer = blogger;
     await expect(requirePermission('th', '/admin', 'backoffice.enter')).resolves.toBe(blogger);
   });
+
+  it('refuses a role holding the key but not backoffice.enter, for any key', async () => {
+    request.customer = account('blogger', ['news.manage']);
+    expect(await redirectOf(() => requirePermission('en', '/admin/news', 'news.manage'))).toBe('/en/admin/no-access');
+  });
 });

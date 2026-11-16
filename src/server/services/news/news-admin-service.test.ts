@@ -264,6 +264,15 @@ describe('saveArticle: slug', () => {
     expect(written(news).slug).toBe('my-slug');
   });
 
+  it('caps the slug at 300 characters, so it can never outgrow the unique index, and keeps no trailing hyphen', async () => {
+    const { deps, news } = setup();
+    await save(deps, { input: input({ th: { title: `${'ก'.repeat(299)} ${'ข'.repeat(50)}`, excerpt: '', bodyHtml: '<p>x</p>' } }) });
+    expect(written(news).slug).toBe('ก'.repeat(299));
+    const second = setup();
+    await save(second.deps, { input: input({ slug: 'a'.repeat(1000) }) });
+    expect([...(written(second.news).slug ?? '')]).toHaveLength(300);
+  });
+
   it('leaves the slug to the stored one when editing with none given', async () => {
     const { deps, news } = setup(record());
     await save(deps, { id: ARTICLE, input: input({ slug: null }) });

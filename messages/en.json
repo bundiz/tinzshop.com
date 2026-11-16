@@ -805,6 +805,7 @@
         "byline": "Author",
         "featured": "Original picture from the old site (cannot be changed)",
         "categoriesEmpty": "There are no categories yet",
+        "categoryNotListed": "not listed",
         "tagLabel": "Add a tag",
         "tagPlaceholder": "Add a tag, then press Enter",
         "tagRemove": "Remove tag {name}",
@@ -851,7 +852,8 @@
         "englishIncomplete": "The English version needs both a title and a body, or leave all of it empty.",
         "categories": "Choose at least one category that is shown on the site before publishing.",
         "products": "A product you chose was not found.",
-        "publishAtInvalid": "The date and time set are not valid."
+        "publishAtInvalid": "The date and time set are not valid.",
+        "publishAtRequired": "Choose the date and time to publish, or choose Now."
       }
     }
   }
