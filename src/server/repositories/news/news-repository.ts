@@ -160,6 +160,9 @@ export async function upsertNewsArticle(
 ): Promise<NewsArticleUpsertResult> {
   return getPrisma().$transaction(
     async (tx) => {
+      // Lock the row first, so a staff save or trash that is committing now is waited for and seen: the
+      // read below is then taken after it, and a staff edit is never overwritten (D-236).
+      await tx.$queryRaw`SELECT id FROM news_article WHERE source_id = ${snapshot.sourceId} FOR UPDATE`;
       const current = await tx.newsArticle.findUnique({
         where: { sourceId: snapshot.sourceId },
         select: { id: true, sourceModifiedAt: true, deletedAt: true, updatedByStaffId: true },

@@ -1,7 +1,9 @@
+import { Client } from 'pg';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { WordPressClient } from '@/server/adapters/wordpress/client';
 import type { NewsCategorySlugRules } from '@/server/adapters/wordpress/map-post';
+import { getDatabaseUrl } from '@/server/config';
 import { createWordPressNewsSource } from '@/server/adapters/wordpress/news-source';
 import type { WpPost } from '@/server/adapters/wordpress/schemas';
 import { getNewsAdmin } from '@/server/composition-root';
@@ -180,5 +182,41 @@ describe('the import and a staff edit (D-236)', () => {
     const plain = await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 102n }, include: { categories: true } });
     expect(plain.deletedAt).not.toBeNull();
     expect(plain.categories).toHaveLength(0);
+  });
+
+  it('a staff save committing while the import runs is not overwritten (the row is locked first)', async () => {
+    await run([post(101)]);
+    const imported = await prisma().newsArticle.findUniqueOrThrow({ where: { sourceId: 101n }, select: { id: true } });
+    const editorId = await editor();
+
+    const holder = new Client({ connectionString: getDatabaseUrl() });
+    await holder.connect();
+    try {
+      // The "staff save": holds the row, then commits its edit after the import has started.
+      await holder.query('BEGIN');
+      await holder.query('SELECT id FROM news_article WHERE id = $1 FOR UPDATE', [imported.id]);
+      const importing = run([post(101, { modified_gmt: '2026-02-01T00:00:00', title: { rendered: 'จากเว็บเก่า' } })]);
+      const deadline = Date.now() + 10_000;
+      for (;;) {
+        const waiting = await prisma().$queryRaw<{ n: number }[]>`
+          SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'`;
+        if ((waiting[0]?.n ?? 0) >= 1) break;
+        if (Date.now() > deadline) throw new Error('the import never waited on the row');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      await holder.query(
+        `UPDATE news_article_translation SET title = 'แก้โดยทีมงาน' WHERE article_id = $1`,
+        [imported.id],
+      );
+      await holder.query('UPDATE news_article SET updated_by_staff_id = $2 WHERE id = $1', [imported.id, editorId]);
+      await holder.query('COMMIT');
+
+      expect(await importing).toMatchObject({ updated: 0, skippedStaffEdits: 1 });
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      await holder.end();
+    }
+    const kept = await prisma().newsArticle.findUniqueOrThrow({ where: { id: imported.id }, include: { translations: true } });
+    expect(kept.translations[0]?.title).toBe('แก้โดยทีมงาน');
   });
 });
