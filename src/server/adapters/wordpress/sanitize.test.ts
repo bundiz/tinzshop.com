@@ -165,4 +165,22 @@ describe("sanitizeArticleHtml: the product card placeholder (D-245)", () => {
     const body = '<h2>T</h2><p>Text with tinz-product in it &lt;tinz-product&gt;</p>';
     expect(sanitizeArticleHtml(body).html).toBe(body);
   });
+
+  it("drops a card that is not at the top level: in a list item, quote, table cell, paragraph or bold run (R16)", () => {
+    for (const body of [
+      `<ol><li>one</li><li>two${CARD}</li><li>three</li></ol>`,
+      `<blockquote>q ${CARD}</blockquote>`,
+      `<table><tbody><tr><td>a${CARD}</td></tr></tbody></table>`,
+      `<p>a ${CARD} b</p>`,
+      `<p><strong>a${CARD}</strong></p>`,
+      `<figure>${CARD}</figure>`,
+    ]) {
+      expect(sanitizeArticleHtml(body).html, body).not.toContain("tinz-product");
+    }
+    // The rest of the structure is intact, and a top-level card after it stays.
+    expect(sanitizeArticleHtml(`<ol><li>one</li><li>two${CARD}</li></ol>${CARD}<br><img src="https://x.test/a.png"><p>z</p>`).html).toBe(
+      `<ol><li>one</li><li>two</li></ol>${CARD}<br /><img src="https://x.test/a.png" /><p>z</p>`,
+    );
+  });
 });
+

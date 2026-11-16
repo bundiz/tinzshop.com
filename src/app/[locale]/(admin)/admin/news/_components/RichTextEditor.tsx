@@ -325,7 +325,10 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
         <ProductDialog
           search={searchProducts}
           onPick={(hit) => {
-            editor.chain().focus().insertContent({ type: 'productCard', attrs: { id: hit.id, name: hit.name } }).run();
+            // After the current top-level block, never inside a list item, quote or cell (R16).
+            const { $to } = editor.state.selection;
+            const at = $to.depth >= 1 ? $to.after(1) : $to.pos;
+            editor.chain().focus().insertContentAt(at, { type: 'productCard', attrs: { id: hit.id, name: hit.name } }).run();
             close();
           }}
           onClose={close}

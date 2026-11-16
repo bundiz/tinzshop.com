@@ -142,6 +142,49 @@ describe('product cards in a stored body (D-245)', () => {
   });
 });
 
+describe('product cards are top level only (R16)', () => {
+  const A = '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60';
+  const card = `<tinz-product data-id="${A}"></tinz-product>`;
+
+  it('locks a stored body with a card inside a list item, a quote or a cell, instead of changing it silently', async () => {
+    for (const stored of [
+      `<ol><li>one</li><li>two${card}</li></ol>`,
+      `<blockquote><p>q</p>${card}</blockquote>`,
+      `<table><tbody><tr><td>a${card}</td></tr></tbody></table>`,
+    ]) {
+      expect(sanitizeArticleHtml(stored).html, stored).not.toContain('tinz-product');
+      expect(wouldLoseContent(stored, stored), stored).toBe(true);
+      const editor = await mount(stored);
+      expect(container.querySelector('[role="alert"]'), stored).not.toBeNull();
+      expect(editor.isEditable).toBe(false);
+      act(() => root.unmount());
+      root = createRoot(container);
+    }
+  });
+
+  it('cannot create a card inside a list item, a quote or a cell; the toolbar position is after the top-level block', async () => {
+    const editor = await mount('<ul><li>one</li></ul><blockquote><p>q</p></blockquote><p>end</p>');
+    const attrs = { id: A, name: 'Switch' };
+    // The schema refuses a card as a child of a list item, a quote, a table cell or a figure, and accepts it in the document.
+    const { schema } = editor;
+    const cardNode = schema.nodes.productCard!.create(attrs);
+    for (const name of ['listItem', 'blockquote', 'tableCell', 'tableHeader', 'figure']) {
+      expect(schema.nodes[name]!.contentMatch.matchType(cardNode.type), name).toBeNull();
+    }
+    expect(schema.nodes.doc!.contentMatch.matchType(cardNode.type)).not.toBeNull();
+    editor.commands.setTextSelection(3);
+    // After the first top-level block it is accepted, and the saved body keeps list and card as siblings.
+    const { $to } = editor.state.selection;
+    const at = $to.after(1);
+    await act(async () => {
+      editor.chain().focus().insertContentAt(at, { type: 'productCard', attrs }).run();
+    });
+    const saved = sanitizeArticleHtml(editor.getHTML()).html;
+    expect(saved).toContain(`</ul>${card}<blockquote>`);
+    expect(saved).not.toContain('<li>one<tinz-product');
+  });
+});
+
 describe('bodyOrEmpty', () => {
   it('treats a body with no text and no media as empty', () => {
     expect(bodyOrEmpty('<p></p>')).toBe('');

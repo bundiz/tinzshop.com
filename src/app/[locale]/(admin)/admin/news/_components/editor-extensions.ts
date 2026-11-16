@@ -12,7 +12,8 @@ import { isStoredYoutubeEmbed } from './youtube-embed';
  */
 export const ProductCard = Node.create<{ label: string }>({
   name: 'productCard',
-  group: 'block',
+  // Its own group, not 'block': only the document accepts it, so it can never sit in a list item, quote or cell (R16).
+  group: 'topCard',
   atom: true,
   selectable: true,
   draggable: true,
@@ -112,9 +113,14 @@ const YoutubeEmbed = Node.create({
  * section: a table with a head or foot section is locked by the guard), YouTube videos (alone or in a figure)
  * and the product card. The toolbar offers only some of them; the image node has no button, paste or drop (D-237).
  */
+/** The document accepts a product card between its top-level blocks, and nothing else does (R16, D-245). */
+const TopLevelDocument = Node.create({ name: 'doc', topNode: true, content: '(block | topCard)+' });
+
 export function buildExtensions(productCardLabel: string): Extensions {
   return [
+    TopLevelDocument,
     StarterKit.configure({
+      document: false,
       heading: { levels: [1, 2, 3, 4, 5, 6] },
       code: false,
       codeBlock: false,

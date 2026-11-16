@@ -6,30 +6,45 @@ export const PRODUCT_CARD_TAG = "tinz-product";
 /** A product id as the database stores it: a uuid. Anything else is not a card. */
 export const PRODUCT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** A tag of already-sanitised HTML (sanitize-html escapes `<` and `>` inside attribute values, so this never splits one). */
+const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
+const VOID_TAGS = new Set(["br", "img"]);
+
 /**
- * Empties every card of already-sanitised (so balanced) HTML: whatever sat inside a card is dropped, and a card
- * inside a card goes with its parent. The element is only ever a placeholder, drawn from the live product at view time.
+ * Keeps each product card only when it stands at the top level of the body (R16, D-245), and empties it: whatever sat
+ * inside a card is dropped. A card inside any other element (a list item, a quote, a table cell, a paragraph, a bold run)
+ * is dropped, because the article page cuts the body at each card and a cut inside an element would unbalance the rest.
+ * Works on sanitize-html's balanced output, tracking depth.
  */
-function emptyProductCards(html: string): string {
-  const tag = /<(\/?)tinz-product(\s[^>]*)?>/g;
+function keepTopLevelProductCards(html: string): string {
   let out = "";
   let last = 0;
   let depth = 0;
+  let cardDepth = 0;
+  let keep = false;
   let openTag = "";
-  for (let match = tag.exec(html); match !== null; match = tag.exec(html)) {
+  for (let match = TAG.exec(html); match !== null; match = TAG.exec(html)) {
     const closing = match[1] === "/";
-    if (depth === 0) {
-      if (closing) continue;
-      out += html.slice(last, match.index);
-      openTag = match[0];
-      depth = 1;
-    } else {
-      depth += closing ? -1 : 1;
-      if (depth === 0) {
-        out += `${openTag}</${PRODUCT_CARD_TAG}>`;
-        last = match.index + match[0].length;
+    const name = (match[2] ?? "").toLowerCase();
+    if (name === PRODUCT_CARD_TAG) {
+      if (cardDepth === 0) {
+        if (closing) continue;
+        keep = depth === 0;
+        out += html.slice(last, match.index);
+        openTag = match[0];
+        cardDepth = 1;
+      } else {
+        cardDepth += closing ? -1 : 1;
+        if (cardDepth === 0) {
+          if (keep) out += `${openTag}</${PRODUCT_CARD_TAG}>`;
+          last = match.index + match[0].length;
+        }
       }
+      continue;
     }
+    if (cardDepth > 0) continue;
+    if (closing) depth = Math.max(0, depth - 1);
+    else if (!VOID_TAGS.has(name) && !match[0].endsWith("/>")) depth += 1;
   }
   return out + html.slice(last);
 }
@@ -166,7 +181,7 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     },
   });
 
-  return { html: emptyProductCards(clean), removedEmbeds: embedsSeen - iframesKept };
+  return { html: keepTopLevelProductCards(clean), removedEmbeds: embedsSeen - iframesKept };
 }
 
 const NAMED_ENTITIES: Readonly<Record<string, string>> = {

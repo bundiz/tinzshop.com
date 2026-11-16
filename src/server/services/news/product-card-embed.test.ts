@@ -34,4 +34,15 @@ describe('product card placeholder', () => {
     expect(productIdsIn(`${card(A)}<p>x</p>${card(B)}${card(A)}`)).toEqual([A, B]);
     expect(productIdsIn('<p>none</p>')).toEqual([]);
   });
+
+  it('cuts only at top-level cards: a nested one stays in its HTML segment (R16)', () => {
+    const nested = `<ol><li>one</li><li>two${card(A)}</li><li>three</li></ol>`;
+    expect(splitAtProductCards(`${nested}${card(B)}<p>x</p>`)).toEqual([
+      { kind: 'html', html: nested },
+      { kind: 'product', productId: B },
+      { kind: 'html', html: '<p>x</p>' },
+    ]);
+    expect(productIdsIn(nested)).toEqual([]);
+    expect(splitAtProductCards(`<p>a<br>b<img src="x"></p>${card(A)}`).map((s) => s.kind)).toEqual(['html', 'product']);
+  });
 });
