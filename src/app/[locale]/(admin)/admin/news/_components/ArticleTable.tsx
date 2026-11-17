@@ -45,7 +45,7 @@ function RestoreForm({ locale, row, title, action }: { locale: string; row: Arti
     <form action={formAction}>
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="id" value={row.id} />
-      <button type="submit" aria-label={t('restoreLabel', { title })} className={`${buttonClass({ variant: 'line' })} min-h-11 px-3.5 text-sm`}>
+      <button type="submit" aria-label={t('restoreLabel', { title })} className={buttonClass({ variant: 'line', size: 'adminSm' })}>
         {t('restore')}
       </button>
       {state.status === 'error' ? (

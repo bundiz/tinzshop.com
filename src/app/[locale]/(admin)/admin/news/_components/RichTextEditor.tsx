@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } fr
 import type { Editor } from '@tiptap/core';
 
 import { buttonClass } from '@/components/ui/button-class';
+import Icon, { type IconName } from '@/components/ui/Icon';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { wouldLoseContent } from './body-roundtrip';
@@ -37,11 +38,49 @@ function setBlock(editor: Editor, kind: BlockKind): void {
   chain.run();
 }
 
+// The admin mockup's `.tb`, `.tsep` and `.ed-block` (D-257): 38px icon buttons, ink when pressed. Below `sm` each
+// button's tap target is 44px tall (3px above and below); the toolbar's rows are 6px apart there so targets never overlap.
 const TOOL =
-  'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-sm px-2.5 text-[15px] font-semibold text-ink-2 hover:bg-sunk aria-pressed:bg-brand-soft aria-pressed:text-brand-dark';
-const SEP = 'mx-1 h-6 w-px bg-line';
+  'relative grid size-[38px] cursor-pointer place-items-center rounded-sm text-ink-2 transition-colors not-aria-pressed:hover:bg-sunk not-aria-pressed:hover:text-ink aria-pressed:bg-ink aria-pressed:text-white disabled:cursor-not-allowed disabled:opacity-40 max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[3px]';
+const SEP = 'mx-1.5 h-[22px] w-px bg-line';
 
 type DialogKind = 'link' | 'youtube' | 'product';
+
+/**
+ * One toolbar button: an icon, with the action as its accessible name and tooltip. `shortcut` is the letter of a Ctrl
+ * (Cmd on a Mac) shortcut the editor already binds (StarterKit's bold and italic), shown in the tooltip as the mockup
+ * does. `pressed` is given only for a mark or list that can be on, so the video and card buttons are not toggles.
+ */
+function Tool({
+  icon,
+  label,
+  shortcut,
+  pressed,
+  disabled,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  shortcut?: string;
+  pressed?: boolean;
+  disabled: boolean;
+  onClick: (event: { currentTarget: HTMLButtonElement }) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={shortcut === undefined ? label : `${label} (Ctrl+${shortcut})`}
+      aria-keyshortcuts={shortcut === undefined ? undefined : `Control+${shortcut} Meta+${shortcut}`}
+      aria-pressed={pressed}
+      disabled={disabled}
+      onClick={onClick}
+      className={TOOL}
+    >
+      <Icon name={icon} className="size-[18px]" />
+    </button>
+  );
+}
 
 /** A small modal with one URL field (link and YouTube); focus returns to the toolbar button that opened it. */
 function UrlDialog({
@@ -121,10 +160,10 @@ function UrlDialog({
         </div>
         <div className="mt-5 flex flex-wrap justify-end gap-2.5">
           {extra}
-          <button type="button" onClick={onClose} className={buttonClass({ variant: 'line' })}>
+          <button type="button" onClick={onClose} className={buttonClass({ variant: 'line', size: 'admin' })}>
             {t('linkDialog.cancel')}
           </button>
-          <button type="button" onClick={submit} className={buttonClass({ variant: 'brand' })}>
+          <button type="button" onClick={submit} className={buttonClass({ variant: 'brand', size: 'admin' })}>
             {okLabel}
           </button>
         </div>
@@ -219,7 +258,11 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
 
   return (
     <div className="rounded-md border border-line bg-surface">
-      <div role="toolbar" aria-label={t('toolbar.label')} className="flex flex-wrap items-center gap-0.5 border-b border-line p-1.5">
+      <div
+        role="toolbar"
+        aria-label={t('toolbar.label')}
+        className="flex flex-wrap items-center gap-x-0.5 gap-y-1.5 rounded-t-md border-b border-line bg-page/40 px-2.5 py-2 sm:gap-y-0.5"
+      >
         <label htmlFor={blockId} className="sr-only">
           {t('toolbar.block')}
         </label>
@@ -228,7 +271,7 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
           value={block}
           disabled={off}
           onChange={(event) => editor && setBlock(editor, event.target.value as BlockKind)}
-          className="min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-2.5 text-ink"
+          className="min-h-11 rounded-sm border-[1.5px] border-line bg-surface px-2.5 text-sm font-medium text-ink sm:min-h-[38px]"
         >
           {(['p', 'h2', 'h3', 'blockquote'] as const).map((kind) => (
             <option key={kind} value={kind}>
@@ -242,29 +285,15 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
           ) : null}
         </select>
         <span className={SEP} aria-hidden="true" />
-        <button type="button" aria-label={t('toolbar.bold')} aria-pressed={flag(state?.bold)} disabled={off} onClick={() => editor?.chain().focus().toggleBold().run()} className={`${TOOL} font-bold`}>
-          B
-        </button>
-        <button type="button" aria-label={t('toolbar.italic')} aria-pressed={flag(state?.italic)} disabled={off} onClick={() => editor?.chain().focus().toggleItalic().run()} className={`${TOOL} italic`}>
-          I
-        </button>
-        <button type="button" aria-label={t('toolbar.link')} aria-pressed={flag(state?.link)} disabled={off} onClick={open('link')} className={TOOL}>
-          URL
-        </button>
+        <Tool icon="bold" label={t('toolbar.bold')} shortcut="B" pressed={flag(state?.bold)} disabled={off} onClick={() => editor?.chain().focus().toggleBold().run()} />
+        <Tool icon="italic" label={t('toolbar.italic')} shortcut="I" pressed={flag(state?.italic)} disabled={off} onClick={() => editor?.chain().focus().toggleItalic().run()} />
+        <Tool icon="link" label={t('toolbar.link')} pressed={flag(state?.link)} disabled={off} onClick={open('link')} />
         <span className={SEP} aria-hidden="true" />
-        <button type="button" aria-label={t('toolbar.bulletList')} aria-pressed={flag(state?.bulletList)} disabled={off} onClick={() => editor?.chain().focus().toggleBulletList().run()} className={TOOL}>
-          •≡
-        </button>
-        <button type="button" aria-label={t('toolbar.orderedList')} aria-pressed={flag(state?.orderedList)} disabled={off} onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={TOOL}>
-          1.
-        </button>
+        <Tool icon="bulletList" label={t('toolbar.bulletList')} pressed={flag(state?.bulletList)} disabled={off} onClick={() => editor?.chain().focus().toggleBulletList().run()} />
+        <Tool icon="orderedList" label={t('toolbar.orderedList')} pressed={flag(state?.orderedList)} disabled={off} onClick={() => editor?.chain().focus().toggleOrderedList().run()} />
         <span className={SEP} aria-hidden="true" />
-        <button type="button" aria-label={t('toolbar.youtube')} disabled={off} onClick={open('youtube')} className={TOOL}>
-          YouTube
-        </button>
-        <button type="button" aria-label={t('toolbar.product')} disabled={off} onClick={open('product')} className={TOOL}>
-          {cardLabel}
-        </button>
+        <Tool icon="video" label={t('toolbar.youtube')} disabled={off} onClick={open('youtube')} />
+        <Tool icon="cart" label={t('toolbar.product')} disabled={off} onClick={open('product')} />
       </div>
       {locked ? (
         <p role="alert" className="border-b border-line bg-warn-soft p-3 font-medium text-warn">
@@ -295,7 +324,7 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
                   editor.chain().focus().extendMarkRange('link').unsetLink().run();
                   close();
                 }}
-                className={buttonClass({ variant: 'line' })}
+                className={buttonClass({ variant: 'line', size: 'admin' })}
               >
                 {t('linkDialog.remove')}
               </button>
@@ -364,7 +393,7 @@ function ProductDialog({
         <p className="mt-1 mb-3 text-ink-2">{t('productDialog.hint')}</p>
         <ProductSearchBox search={search} onPick={onPick} autoFocus />
         <div className="mt-5 flex justify-end">
-          <button type="button" onClick={onClose} className={buttonClass({ variant: 'line' })}>
+          <button type="button" onClick={onClose} className={buttonClass({ variant: 'line', size: 'admin' })}>
             {t('productDialog.cancel')}
           </button>
         </div>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { DayPicker, TZDate, type ChevronProps, type DayButtonProps, type Matcher } from 'react-day-picker';
 import { th as thaiCalendar } from 'react-day-picker/locale/th';
 
+import { buttonClass } from '@/components/ui/button-class';
 import Icon from '@/components/ui/Icon';
 
 export type DateTimePickerProps = {
@@ -225,10 +226,10 @@ export default function DateTimePicker({ id, name, labelId, locale, value, onCha
             </div>
           </div>
           <div className="mt-3 flex justify-end gap-2 border-t border-line pt-3">
-            <button type="button" onClick={() => onChange('')} className={`${FOOTER_BUTTON} text-ink-2 hover:bg-sunk hover:text-ink`}>
+            <button type="button" onClick={() => onChange('')} className={CLEAR_BUTTON}>
               {t('clear')}
             </button>
-            <button type="button" onClick={() => close(true)} className={`${FOOTER_BUTTON} bg-brand px-4 text-white hover:bg-brand-dark`}>
+            <button type="button" onClick={() => close(true)} className={buttonClass({ variant: 'brand', size: 'adminSm' })}>
               {t('done')}
             </button>
           </div>
@@ -238,7 +239,9 @@ export default function DateTimePicker({ id, name, labelId, locale, value, onCha
   );
 }
 
-const FOOTER_BUTTON = 'inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-semibold transition-colors';
+// The admin mockup's `.btn-text btn-sm` (D-257): 34px, with a 44px tap target below `sm` (D-221).
+const CLEAR_BUTTON =
+  'relative inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-[9px] px-3 text-sm font-semibold text-ink-2 transition-colors hover:bg-sunk hover:text-ink max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
 
 // shadcn's Calendar look on our tokens. Keys are react-day-picker 10's `UI` names; the day's state is drawn by CalendarDayButton.
 const CALENDAR_CLASSES = {

@@ -77,6 +77,14 @@ function toBangkokLocal(iso: string): string {
 
 const INPUT = 'min-h-11 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink';
 const PANEL = 'rounded-md border border-line bg-surface p-4';
+// The admin mockup's `.ltabs` (D-257): a 3px sunk track with 9px corners, 34px tabs with 7px corners, the chosen one
+// white. Below `sm` each tab's tap target is 44px tall (5px above and below, D-221).
+const SEG_TRACK = 'rounded-[9px] bg-sunk p-[3px]';
+const SEG_ITEM =
+  'relative min-h-[34px] cursor-pointer rounded-[7px] px-3.5 text-sm font-semibold text-muted transition-colors hover:text-ink max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
+// The mockup's `.btn-text btn-sm del-link`: a 34px text button in the sale red.
+const TRASH_BUTTON =
+  'relative mt-3 -ml-3 inline-flex min-h-[34px] cursor-pointer items-center rounded-[9px] px-3 text-sm font-semibold text-sale transition-colors hover:bg-sunk max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
 
 /** A red star after a label for a field publishing needs (a draft saves without it), with the words for a screen reader. */
 function RequiredMark({ note }: { note: string }) {
@@ -259,7 +267,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* The content language sits on the buttons' row (owner, 2026-11-17). */}
-          <div role="group" aria-label={e('languagesLabel')} className="inline-flex gap-0.5 rounded-sm bg-sunk p-[3px]">
+          <div role="group" aria-label={e('languagesLabel')} className={`inline-flex ${SEG_TRACK}`}>
             {(['th', 'en'] as const).map((code) => (
               <button
                 key={code}
@@ -267,7 +275,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 lang={code}
                 aria-pressed={language === code}
                 onClick={() => setLanguage(code)}
-                className="min-h-11 min-w-20 cursor-pointer rounded-md px-3 font-semibold text-muted aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-1"
+                className={`${SEG_ITEM} aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-1`}
               >
                 {e(code)}
               </button>
@@ -277,24 +285,24 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
             {savedMessage}
           </p>
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
-            <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line' })}>
+            <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line', size: 'admin' })}>
               {e('button.preview')}
             </button>
             {isPublished ? (
               <>
-                <button type="submit" disabled={busy} name="action" value="unpublish" className={buttonClass({ variant: 'line' })}>
+                <button type="submit" disabled={busy} name="action" value="unpublish" className={buttonClass({ variant: 'line', size: 'admin' })}>
                   {e('button.unpublish')}
                 </button>
-                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
+                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'admin' })}>
                   {e('button.update')}
                 </button>
               </>
             ) : (
               <>
-                <button type="submit" disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line' })}>
+                <button type="submit" disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line', size: 'admin' })}>
                   {e('button.saveDraft')}
                 </button>
-                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy' })}>
+                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'admin' })}>
                   {e('button.publish')}
                 </button>
               </>
@@ -403,11 +411,11 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                     </dt>
                     <dd className="mt-1">
                       {/* Two choices, so a switch like the language toggle above rather than a dropdown; real radios, so the form still sends `when`. */}
-                      <div role="radiogroup" aria-labelledby="when-label" className="grid grid-cols-2 gap-0.5 rounded-sm bg-sunk p-[3px]">
+                      <div role="radiogroup" aria-labelledby="when-label" className={`grid grid-cols-2 ${SEG_TRACK}`}>
                         {(['now', 'later'] as const).map((choice) => (
                           <label
                             key={choice}
-                            className="flex min-h-11 cursor-pointer items-center justify-center rounded-md px-3 font-semibold text-muted transition-colors hover:text-ink has-checked:bg-white has-checked:text-ink has-checked:shadow-1 has-focus-visible:outline-[3px] has-focus-visible:outline-offset-2 has-focus-visible:outline-ps"
+                            className={`${SEG_ITEM} flex items-center justify-center has-checked:bg-white has-checked:text-ink has-checked:shadow-1 has-focus-visible:outline-[3px] has-focus-visible:outline-offset-2 has-focus-visible:outline-ps`}
                           >
                             <input
                               type="radio"
@@ -451,7 +459,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 </figure>
               ) : null}
               {article ? (
-                <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className="mt-3 inline-flex min-h-11 cursor-pointer items-center font-semibold text-sale hover:underline">
+                <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className={TRASH_BUTTON}>
                   {e('button.trash')}
                 </button>
               ) : null}
@@ -464,7 +472,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 <ul className="grid gap-1">
                   {categoryOptions.map((category) => (
                     <li key={category.id}>
-                      <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-ink">
+                      <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-[15px] text-ink sm:min-h-10">
                         <input
                           type="checkbox"
                           name="categoryId"
@@ -510,10 +518,10 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
             </h2>
             <p className="mt-2 text-ink-2">{e('confirm.trashText')}</p>
             <div className="mt-5 flex justify-end gap-2.5">
-              <button type="button" onClick={() => setConfirmTrash(false)} className={buttonClass({ variant: 'line' })}>
+              <button type="button" onClick={() => setConfirmTrash(false)} className={buttonClass({ variant: 'line', size: 'admin' })}>
                 {e('confirm.cancel')}
               </button>
-              <button type="submit" form="trash-form" className={buttonClass({ variant: 'buy' })}>
+              <button type="submit" form="trash-form" className={buttonClass({ variant: 'buy', size: 'admin' })}>
                 {e('confirm.trash')}
               </button>
             </div>

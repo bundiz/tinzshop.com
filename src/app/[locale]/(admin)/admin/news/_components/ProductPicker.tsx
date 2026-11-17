@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useState } from 'react';
 
+import Icon from '@/components/ui/Icon';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 
 export type ProductSearch = (query: string) => Promise<ProductPickerHit[]>;
@@ -132,9 +133,9 @@ export default function ProductPicker({ selected, onChange, search }: ProductPic
                 type="button"
                 aria-label={t('productsRemove', { name: hit.name })}
                 onClick={() => onChange(selected.filter((entry) => entry.id !== hit.id))}
-                className="grid size-11 flex-none cursor-pointer place-items-center rounded-sm text-ink-2 hover:bg-sunk"
+                className="grid size-11 flex-none cursor-pointer place-items-center rounded-sm text-ink-2 transition-colors hover:bg-sunk hover:text-ink sm:size-9"
               >
-                <span aria-hidden="true">×</span>
+                <Icon name="x" className="size-4" />
               </button>
             </li>
           ))}

@@ -13,7 +13,7 @@ export default function NoAccess({ locale }: { locale: string }) {
       <section className="w-full max-w-[480px] rounded-lg border border-line bg-surface p-8 text-center shadow-1">
         <h1 className="font-head text-2xl font-bold text-ink">{t('title')}</h1>
         <p className="mt-2 text-muted">{t('text')}</p>
-        <Link href={`/${locale}`} className={`${buttonClass({ variant: 'brand' })} mt-6`}>
+        <Link href={`/${locale}`} className={`${buttonClass({ variant: 'brand', size: 'admin' })} mt-6`}>
           {t('home')}
         </Link>
       </section>

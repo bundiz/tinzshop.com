@@ -27,7 +27,8 @@ function href(locale: string, params: Record<string, string>): string {
 }
 
 const TAB = 'inline-flex min-h-11 items-center rounded-sm px-4 font-semibold text-ink-2 aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand-dark';
-const FIELD = 'min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink';
+// The admin mockup's filter bar (`.fbar`): 42px fields from `sm`, 44px on a phone (D-221, D-257).
+const FIELD = 'min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink sm:min-h-[42px]';
 
 /**
  * `/{locale}/admin/users` (plan 016, Task 8): two tabs. "All accounts" needs `account.manage`; "Roles and permissions"
@@ -126,7 +127,7 @@ export default async function UsersPage({ params, searchParams }: Props) {
           <option value="active">{t('users.status.active')}</option>
           <option value="blocked">{t('users.status.blocked')}</option>
         </select>
-        <button type="submit" className={buttonClass({ variant: 'brand' })}>
+        <button type="submit" className={buttonClass({ variant: 'brand', size: 'admin' })}>
           {t('users.search.submit')}
         </button>
         <p className="ml-auto text-muted" role="status">
@@ -149,13 +150,13 @@ export default async function UsersPage({ params, searchParams }: Props) {
       {pages > 1 ? (
         <nav aria-label={t('users.pager.label')} className="mt-4 flex items-center justify-center gap-3">
           {current > 1 ? (
-            <Link href={href(locale, { ...keep, page: String(current - 1) })} rel="prev" className={buttonClass({ variant: 'line' })}>
+            <Link href={href(locale, { ...keep, page: String(current - 1) })} rel="prev" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
               {t('users.pager.prev')}
             </Link>
           ) : null}
           <span className="text-muted">{t('users.pager.range', { page: current, pages })}</span>
           {current < pages ? (
-            <Link href={href(locale, { ...keep, page: String(current + 1) })} rel="next" className={buttonClass({ variant: 'line' })}>
+            <Link href={href(locale, { ...keep, page: String(current + 1) })} rel="next" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
               {t('users.pager.next')}
             </Link>
           ) : null}

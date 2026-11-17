@@ -42,4 +42,34 @@ describe('buttonClass', () => {
     expect(plain).not.toContain('min-h-[54px]');
     expect(plain).not.toContain('w-full');
   });
+
+  it('md and lg keep the storefront class sets they had before the back-office sizes (D-257)', () => {
+    const sorted = (value: string) => value.split(' ').sort().join(' ');
+    const before =
+      'inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border-[1.5px] border-transparent px-[22px] font-body text-base leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985]';
+    const brand = 'bg-brand text-white hover:bg-brand-dark';
+    expect(sorted(buttonClass({ variant: 'brand' }))).toBe(sorted(`${before} ${brand}`));
+    expect(sorted(buttonClass({ variant: 'brand', size: 'lg' }))).toBe(sorted(`${before} ${brand} min-h-[54px] text-[17px]`));
+  });
+
+  describe('back-office sizes (the admin mockup, D-257)', () => {
+    it("admin is the mockup's `.adm .btn`: 42px from sm and 44px below it, 16px sides, 15px text, 9px corners", () => {
+      const classes = buttonClass({ variant: 'line', size: 'admin' }).split(' ');
+      expect(classes).toEqual(expect.arrayContaining(['min-h-11', 'sm:min-h-[42px]', 'px-4', 'text-[15px]', 'rounded-[9px]']));
+      for (const storefront of ['min-h-12', 'px-[22px]', 'text-base', 'rounded-sm']) expect(classes).not.toContain(storefront);
+    });
+
+    it("adminSm is the mockup's `.btn-sm`: 34px, 12px sides, 14px text, with a 44px tap target below sm (D-221)", () => {
+      const classes = buttonClass({ variant: 'line', size: 'adminSm' }).split(' ');
+      expect(classes).toEqual(expect.arrayContaining(['min-h-[34px]', 'px-3', 'text-sm', 'rounded-[9px]', 'relative']));
+      // 34px drawn, plus 5px above and below = 44px to tap on a phone; the pseudo-element exists only below sm.
+      expect(classes).toEqual(expect.arrayContaining(['max-sm:after:absolute', 'max-sm:after:inset-x-0', 'max-sm:after:-inset-y-[5px]']));
+      for (const storefront of ['min-h-12', 'min-h-11', 'px-[22px]', 'text-base', 'rounded-sm']) expect(classes).not.toContain(storefront);
+    });
+
+    it('keeps the variant colours and the shared shape', () => {
+      const classes = buttonClass({ variant: 'buy', size: 'admin' }).split(' ');
+      expect(classes).toEqual(expect.arrayContaining(['inline-flex', 'border-[1.5px]', 'font-semibold', 'bg-accent', 'text-ink']));
+    });
+  });
 });

@@ -32,7 +32,8 @@ function href(locale: string, params: Record<string, string>): string {
 
 const TAB =
   'inline-flex min-h-11 items-center gap-1.5 rounded-sm px-4 font-semibold text-ink-2 aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand-dark';
-const FIELD = 'min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink';
+// The admin mockup's filter bar (`.fbar`): 42px fields from `sm`, 44px on a phone (D-221, D-257).
+const FIELD = 'min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink sm:min-h-[42px]';
 
 /**
  * `/{locale}/admin/news` (plan 016, Task 9): the articles by status, with a title search and a category filter. Needs
@@ -74,7 +75,7 @@ export default async function NewsListPage({ params, searchParams }: Props) {
           <h1 className="font-head text-[24px] font-bold text-ink md:text-[28px]">{t('title')}</h1>
           <p className="mt-1 text-muted">{t('subtitle')}</p>
         </div>
-        <Link href={`/${locale}/admin/news/new`} className={buttonClass({ variant: 'brand' })}>
+        <Link href={`/${locale}/admin/news/new`} className={buttonClass({ variant: 'brand', size: 'admin' })}>
           {t('new')}
         </Link>
       </div>
@@ -110,7 +111,7 @@ export default async function NewsListPage({ params, searchParams }: Props) {
             </option>
           ))}
         </select>
-        <button type="submit" className={buttonClass({ variant: 'line' })}>
+        <button type="submit" className={buttonClass({ variant: 'line', size: 'admin' })}>
           {t('search.submit')}
         </button>
         <p className="ml-auto text-muted" role="status">
@@ -139,13 +140,13 @@ export default async function NewsListPage({ params, searchParams }: Props) {
       {pages > 1 ? (
         <nav aria-label={t('pager.label')} className="mt-4 flex items-center justify-center gap-3">
           {current > 1 ? (
-            <Link href={href(locale, { ...keep, page: String(current - 1) })} rel="prev" className={buttonClass({ variant: 'line' })}>
+            <Link href={href(locale, { ...keep, page: String(current - 1) })} rel="prev" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
               {t('pager.prev')}
             </Link>
           ) : null}
           <span className="text-muted">{t('pager.range', { page: current, pages })}</span>
           {current < pages ? (
-            <Link href={href(locale, { ...keep, page: String(current + 1) })} rel="next" className={buttonClass({ variant: 'line' })}>
+            <Link href={href(locale, { ...keep, page: String(current + 1) })} rel="next" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
               {t('pager.next')}
             </Link>
           ) : null}

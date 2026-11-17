@@ -24,6 +24,12 @@ export type IconName =
   | 'wrench'
   | 'globe'
   | 'tag'
+  | 'bold'
+  | 'italic'
+  | 'link'
+  | 'bulletList'
+  | 'orderedList'
+  | 'video'
   | 'artConsole'
   | 'artHandheld'
   | 'artPad'
@@ -145,6 +151,30 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M3.5 12.5V4.5h8l9 9-8 8Z" />
       <circle cx="8" cy="9" r="1.3" />
+    </>
+  ),
+  // The news editor's toolbar: the admin mockup's `post-edit.html` symbols i-bold, i-italic, i-link, i-ul, i-ol, i-video (D-257).
+  bold: <path d="M7 4.5h6a3.5 3.5 0 0 1 0 7H7ZM7 11.5h7a4 4 0 0 1 0 8H7Z" />,
+  italic: <path d="M10 4.5h8M6 19.5h8M14 4.5l-4 15" />,
+  link: (
+    <>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+    </>
+  ),
+  bulletList: (
+    <>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <circle cx="4.5" cy="6" r=".9" />
+      <circle cx="4.5" cy="12" r=".9" />
+      <circle cx="4.5" cy="18" r=".9" />
+    </>
+  ),
+  orderedList: <path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.2V9M3.8 9h2.6M3.8 14.2c.3-.7 2.5-.9 2.4.5-.1 1-2.4 2-2.4 3.3h2.6" />,
+  video: (
+    <>
+      <rect x="3" y="6" width="13" height="12" rx="2" />
+      <path d="m16 10.5 5-3v9l-5-3" />
     </>
   ),
   // Product art (generic, not brand look-alikes); drawn large at strokeWidth 0.9 by ImagePlaceholder.

@@ -53,6 +53,32 @@ describe('RichTextEditor', () => {
     expect(container.querySelector('input[type="file"]')).toBeNull();
   });
 
+  it('draws every toolbar button as a named icon with a tooltip, not a text glyph (D-257)', async () => {
+    await mount(() => {});
+    const toolbar = container.querySelector('[role="toolbar"]')!;
+    const buttons = [...toolbar.querySelectorAll('button')];
+    expect(buttons).toHaveLength(7);
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-label')).toBeTruthy();
+      expect(button.title).toContain(button.getAttribute('aria-label'));
+      expect(button.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+      expect(button.textContent?.trim()).toBe('');
+    }
+    const bold = toolbar.querySelector<HTMLButtonElement>('button[aria-label="Bold"]')!;
+    expect(bold.title).toBe('Bold (Ctrl+B)');
+    expect(bold.getAttribute('aria-keyshortcuts')).toBe('Control+B Meta+B');
+  });
+
+  it('marks bold as pressed while the selection is bold', async () => {
+    const editor = await mount(() => {});
+    const bold = () => container.querySelector<HTMLButtonElement>('button[aria-label="Bold"]')!;
+    expect(bold().getAttribute('aria-pressed')).toBe('false');
+    await act(async () => {
+      editor.chain().focus().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
+    });
+    expect(bold().getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('shows a stored product card node, and writes one it inserts as the placeholder element (R2)', async () => {
     const onChange = vi.fn();
     const editor = await mount(onChange);

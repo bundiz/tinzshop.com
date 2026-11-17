@@ -67,7 +67,7 @@ function RoleForm({ locale, row, action }: { locale: string; row: AccountTableRo
           name="roleKey"
           defaultValue={row.roleKey}
           aria-label={t('users.roleSelect', { name: displayName(row) })}
-          className="min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-2.5 text-ink"
+          className="min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-2.5 text-sm text-ink sm:min-h-9"
         >
           {ASSIGNABLE_ROLE_KEYS.map((roleKey) => (
             <option key={roleKey} value={roleKey}>
@@ -75,7 +75,7 @@ function RoleForm({ locale, row, action }: { locale: string; row: AccountTableRo
             </option>
           ))}
         </select>
-        <button type="submit" className={`${buttonClass({ variant: 'line' })} min-h-11 px-3.5 text-sm`}>
+        <button type="submit" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
           {t('users.saveRole')}
         </button>
       </div>
@@ -107,7 +107,7 @@ function BlockForm({ locale, row, action }: { locale: string; row: AccountTableR
         <input type="hidden" name="accountId" value={row.id} />
         <input type="hidden" name="blocked" value={row.blocked ? 'false' : 'true'} />
       </form>
-      <button ref={opener} type="button" aria-label={`${t(kind)}: ${name}`} onClick={() => setOpen(true)} className={`${buttonClass({ variant: 'line' })} min-h-11 px-3.5 text-sm`}>
+      <button ref={opener} type="button" aria-label={`${t(kind)}: ${name}`} onClick={() => setOpen(true)} className={buttonClass({ variant: 'line', size: 'adminSm' })}>
         {t(kind)}
       </button>
       <ErrorLine state={state} />
@@ -119,10 +119,10 @@ function BlockForm({ locale, row, action }: { locale: string; row: AccountTableR
             </h2>
             <p className="mt-2 text-ink-2">{t(`confirm.${kind}Text`, { name })}</p>
             <div className="mt-5 flex justify-end gap-2.5">
-              <button type="button" onClick={() => setOpen(false)} className={buttonClass({ variant: 'line' })}>
+              <button type="button" onClick={() => setOpen(false)} className={buttonClass({ variant: 'line', size: 'admin' })}>
                 {t('confirm.cancel')}
               </button>
-              <button type="submit" form={formId} className={buttonClass({ variant: row.blocked ? 'brand' : 'buy' })}>
+              <button type="submit" form={formId} className={buttonClass({ variant: row.blocked ? 'brand' : 'buy', size: 'admin' })}>
                 {t(kind)}
               </button>
             </div>

@@ -88,7 +88,7 @@ export default function AddCategory({ locale, create, onAdded }: AddCategoryProp
         aria-expanded={open}
         aria-controls={`${id}-panel`}
         onClick={() => (open ? close() : setOpen(true))}
-        className="inline-flex min-h-11 cursor-pointer items-center gap-1 font-semibold text-brand-dark hover:underline"
+        className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-[15px] font-semibold text-brand-dark hover:underline sm:min-h-[34px]"
       >
         <span aria-hidden="true">+</span>
         {t('open')}
@@ -142,11 +142,11 @@ export default function AddCategory({ locale, create, onAdded }: AddCategoryProp
               type="button"
               disabled={pending}
               onClick={() => void add()}
-              className={`${buttonClass({ variant: 'brand' })} disabled:cursor-not-allowed disabled:opacity-60`}
+              className={`${buttonClass({ variant: 'brand', size: 'adminSm' })} disabled:cursor-not-allowed disabled:opacity-60`}
             >
               {t('submit')}
             </button>
-            <button type="button" onClick={close} className={buttonClass({ variant: 'line' })}>
+            <button type="button" onClick={close} className={buttonClass({ variant: 'line', size: 'adminSm' })}>
               {t('cancel')}
             </button>
           </div>

@@ -105,7 +105,7 @@ export default function RolePermissionGrid({ locale, grants, action = saveRolePe
                       type="submit"
                       form={formId(roleKey)}
                       aria-label={t('roles.saveRole', { role: t(`role.${roleKey}`) })}
-                      className={`${buttonClass({ variant: 'brand' })} min-h-11 px-3.5 text-sm`}
+                      className={buttonClass({ variant: 'brand', size: 'adminSm' })}
                     >
                       {t('roles.save')}
                     </button>
