@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Built and in review (2026-11-16); manual checks not yet run. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
+- **Status:** Built and in review (2026-11-16); the owner's requests of 2026-11-17 (live preview, add a category, required marks) built on 2026-11-17; manual checks not yet run. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
 - **Stage:** payment stage 1 (due 2026-12-15), checks 1.5 to 1.12 of `docs/15-acceptance-criteria.md` (1.5 and 1.6 rewritten by Task 1)
 - **Requirements:** REQ-033, REQ-034, REQ-035, REQ-051 delivered for stage 1; REQ-032 changed (D-232); REQ-047 extended (the staff editor)
 - **Depends on plans:** 012 (news tables, import, pages), 014 (accounts, sessions, sign-in), 015 (tokens, `buttonClass`)
@@ -201,7 +201,7 @@
 - List (from `posts.html`): status tabs ทั้งหมด / เผยแพร่แล้ว / ตั้งเวลา / ฉบับร่าง with counts, plus "ถังขยะ (n)"; search by title; category filter; columns title, categories, author byline, languages present (TH/EN), status, date; row link to the editor; in trash, a restore button instead. Left out: "รอตรวจ" (D-129), reader counts (D-239).
 - Editor (from `post-edit.html`): language switch ไทย/English; title; slug field under it (`/news/`); the rich-text toolbar (paragraph style ย่อหน้า/หัวข้อ 2/หัวข้อ 3/ข้อความอ้างอิง, bold, italic, link, bulleted and numbered list, YouTube, product card); a byline field (ผู้เขียน) prefilled with the editor's first name; side panels การเผยแพร่ (status, publish now or schedule with a date-time), หมวดหมู่ (checkboxes of listed categories), แท็ก (`TagInput`), สินค้าที่เกี่ยวข้อง (`ProductPicker`); buttons ดูตัวอย่าง, บันทึกร่าง, เผยแพร่ (or อัปเดต when published), ยกเลิกการเผยแพร่, ย้ายไปถังขยะ (confirm). Left out: image button and featured-image upload (D-237; an imported article shows its existing featured image read-only), meta description and Google preview, visibility, edit history, ส่งตรวจ.
 - **Editor dependency (D-244):** the builder picks one maintained rich-text library with an MIT or similar licence that outputs plain HTML, supports a custom inline-block node (for the product card) and an image node to enable later; pinned exact version in `package.json`; recorded as D-244 with licence and version. It must not be loaded on any storefront page.
-- Preview (`news/[id]/preview`): renders the saved draft with the storefront's `NewsArticleView`, behind `news.manage`, with `robots: noindex`.
+- Preview (`news/[id]/preview`): renders the saved draft with the storefront's `NewsArticleView`, behind `news.manage`, with `robots: noindex`. *Replaced on 2026-11-17 by the live preview of the unsaved draft at `news/preview?session=…` (D-253); see* Owner requests of 2026-11-17 *below.*
 
 - [x] **Step 1: Write the failing tests:** controller validation (Thai title/body required; English all-or-nothing; a past `publishAt` publishes now; unknown category or product ids refused); each action refuses without `news.manage`; the list derives "ตั้งเวลา" from a future `published_at`; the editor shows no image control; the preview page refuses a Customer.
 - [x] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** `npm test`, typecheck — PASS. **Commit** `feat: add the news list and editor to the back office`
@@ -227,6 +227,24 @@
 - [x] **Step 3:** Confirm every doc listed in spec §12 changed; update `docs/07-frontend-components.md` with the `(admin)` components and `AccountMenu`'s link; update this plan's *Status* and *Outcome*.
 - [x] **Step 4: Commit** `docs: record plan 016's outcome`
 
+## Owner requests of 2026-11-17 (D-253 to D-255)
+
+Three changes the project owner asked for after the review, on the same branch:
+
+- **Live unsaved preview (D-253).** "ดูตัวอย่าง" is now a button on new and saved articles; it opens `/{locale}/admin/news/preview?session={uuid}` in a named tab, and the preview shows the editor's unsaved draft, updating 500 ms after typing stops, without saving or publishing. The two tabs talk over a same-origin `BroadcastChannel`; the preview has each draft drawn on the server by `previewArticleAction` (re-checks `news.manage`, the save's caps and sanitiser, the storefront's `NewsArticleView`), writes nothing and logs nothing. The saved-version route `news/[id]/preview` is deleted.
+- **Create a news category from the editor (D-254).** "+ เพิ่มหมวดหมู่" in the categories panel: Thai name (required) and English name (optional), listed on the site at once and ticked on the article. A Thai name already in use is never made twice (a listed holder is ticked instead; a hidden one is refused). Create only: no rename, hide or reorder page. New advisory lock key `NEWS_CATEGORY_LOCK_KEY` (6251017).
+- **Required marks (D-255).** The Thai summary and the categories panel carry a red star and a screen-reader note "ต้องกรอกก่อนเผยแพร่"; a draft still saves without them. (The side panels also stop overflowing on a narrow screen: `grid-cols-1` and `min-w-0` on the editor's grid and the product picker's lists.)
+
+**Files:** `(admin-preview)/admin/news/preview/page.tsx`, `preview/actions.ts`, `preview/_components/LivePreview.tsx` (+ jsdom test); `(admin)/admin/news/_lib/preview-channel.ts` (+ test); `_components/AddCategory.tsx`; `ArticleEditor.tsx`, `ProductPicker.tsx`, `news/actions.ts`; `news-admin-service.ts` (`createNewsCategory`, `buildArticlePreview`), `news-admin-controller.ts` (`createCategoryCommand`, `previewArticleCommand`), `news-admin-repository.ts` (`createNewsCategory`), `advisory-lock.ts`, `composition-root.ts`; the message files. Removed: `(admin-preview)/admin/news/[id]/preview/page.tsx`.
+
+- [x] Service: `buildArticlePreview` (sanitised body, unknown category ids dropped, position order, byline and date fallbacks, featured image of a saved article) and `createNewsCategory` (trim and collapse, 100 code points, slug from English else Thai, duplicate as `news.category_exists`); unit tests.
+- [x] Controller: `createCategoryCommand` and `previewArticleCommand` (forbidden without `news.manage`, the save's caps, error keys, nothing logged for a preview); unit tests.
+- [x] Repository: `createNewsCategory` under `NEWS_CATEGORY_LOCK_KEY`; integration tests against `tinzshop_test` (listed, last, no source id, both names; `-2`, `-3`; duplicates refused listed or not; creates held behind a table lock and released together: distinct positions, one row per Thai name; both concurrent tests fail with the lock removed).
+- [x] Actions: `createCategoryAction` (permission, revalidation in both languages) and `previewArticleAction`; action tests; `admin-guard.test.ts` covers the new page and action file.
+- [x] Editor: preview channel (jsdom: button on a new article, the named tab, `ready` answered at once, a debounced draft, `closed` on unmount, a locked body sent as stored, a stored session picked up) and the inline add form (jsdom: not a nested form, no `name`, Enter adds and does not submit, ticked and listed, inline alert, Escape and focus, a listed duplicate ticked); `buildPreviewDraft` unit tests.
+- [x] Preview tab: `LivePreview` jsdom tests (`ready` posted, the action's result drawn, a stale answer ignored, closed, failed and no-editor notices); page tests (permission redirects back to the session, the missing-session message, `noindex`).
+- [x] Docs: D-253 to D-255; `05-database.md`, `06-api.md`, `07-frontend-components.md`, `04-tech-stack-and-structure.md`, the glossary.
+
 ## Manual test checklist
 
 Run by a person on the dev pool. Never tick a box for a check nobody performed.
@@ -242,6 +260,12 @@ Run by a person on the dev pool. Never tick a box for a check nobody performed.
 - [ ] Add tags, link two products and insert a product card: the card shows the current price; the product page lists the article under related news.
 - [ ] Edit an imported article, then run `npm run job:news-import` (and `-- --full`): the edit stays, and the summary counts one skipped staff edit.
 - [ ] Everything above works in English (`/en/admin`) and the back office is usable at 1024px wide.
+- [ ] Live preview on a **new** article (D-253): press "ดูตัวอย่าง" before saving; a tab opens with the article as a reader sees it; type in the title and body: the preview follows within about a second. Save the draft: the preview keeps following on the article's own page. Press "ดูตัวอย่าง" again: the same tab is reused.
+- [ ] Live preview on an **existing** published article: change the title without saving; the preview shows the change and the site (`/th/news/…`) does not. Switch to the English tab with an English version: the preview shows English.
+- [ ] Close the editor tab: the preview's bar says the editor was closed and keeps the last version. Open `/th/admin/news/preview` with no session: it says to open it from the editor.
+- [ ] Create a category from the editor (D-254) with a Thai and an English name: it appears ticked in the list; publish an article in it; its tab appears on `/th/news` (a tab shows only once the category has a published article) and `/en/news` shows the English name.
+- [ ] Create a category with a Thai name that already exists (try different case and spaces): no second category is made, and an existing listed one is ticked. Press Enter in the name field: the article is not saved. Press Escape: the form closes.
+- [ ] The Thai summary and the categories heading show a red star (D-255), the English summary does not, and a draft without them still saves.
 
 ## Outcome
 
@@ -257,17 +281,19 @@ Task 11 (the whole-branch check, 2026-11-16). Checks run on the branch: `npm run
 
 Final review fix wave (2026-11-16, D-252). The import locks the article row before reading `updated_by_staff_id` (an integration test interleaves a staff save with the import); the editor keeps an article's unlisted categories; the account-role job is bootstrap-only (409 `super_admin_exists`, an advisory lock plus the super_admin rows, tested for every target role, for none, for all blocked and for two jobs at once); the gate requires `backoffice.enter`; publish-later needs a date; titles and slugs are capped at 300 and `serverActions.bodySizeLimit` is `4mb`; a new article cannot be created twice; routine saves log at info; the glossary gained five names and the Thai Guest label follows it. Checks after the wave: `npm run typecheck` clean; `npm test` 109 files, 1124 tests; `npm run test:integration` 21 files, 159 tests; `npm run build` compiled.
 
+Owner requests of 2026-11-17 (D-253 to D-255). Built as described in the section above. Learned: a concurrent test that races two creates with the same slug passes even without the lock, because the unique slug index and the retry serialise them; only creates with different slugs (distinct positions) or the same Thai name and different English names (one row) prove the lock, and those two fail when the lock line is removed. The preview's Server Action returns a React element (`NewsArticleView`), which only a browser shows end to end, so the manual checks above cover it. A new category gets a news tab only once it holds a live article (tabs list categories with a live article, D-137), so the editor's hint says so. Checks after the change: `npm test` 111 files, 1160 tests; `npm run test:integration` 21 files, 165 tests; `tsc` clean on the source and on the dev server's generated route types (`.next/dev/types`). `npm run typecheck` still reports the deleted `news/[id]/preview` route from `.next/types/validator.ts`, a file the last `next build` generated on 2026-11-16; the next build regenerates it. No build was run (the owner's dev server was running).
+
 **Known follow-ups (deferred in review; none blocks the merge).** The final whole-branch review's fixes (the import row lock, unlisted categories kept, the bootstrap-only job, the gate, publish-later, the length caps, double create, info-level logging, the glossary and the Thai Guest label, D-252) are done and are not listed. What remains, by area:
 
 *For the owner to decide*
-- The preview shows the last saved version, not unsaved edits (D-251); the spec's section 8 says "unsaved", so the owner confirms which is meant.
+- ~~The preview shows the last saved version, not unsaved edits (D-251).~~ Decided 2026-11-17: the preview shows the unsaved draft, live (D-253).
 - The grid can give `account.manage` or `role.manage` to any staff role; whether to restrict it is the owner's call (consider a warning in the grid).
 - There is no optimistic concurrency between two editors of one article: the last save wins.
 
 *Behaviour*
 - `?tab=roles` sends a viewer who holds `account.manage` but not `role.manage` to the no-access page.
 - The client and the server disagree about an empty table in a body (the editor's lock guard and the sanitiser).
-- A trashed article's preview is not refused.
+- ~~A trashed article's preview is not refused.~~ Moot since D-253: the preview draws only what an open editor sends, and a trashed article cannot be opened in the editor.
 - `watch?v=ID&list=PL` is accepted as a single video and the list is dropped silently; ragged tables get empty cells filled on edit (no loss).
 - The editor's `normaliseBody` drops `colgroup` and `a[rel]` (the sanitiser never emits them).
 - A signed-in non-staff visitor can tell an existing admin path from a missing one.
@@ -306,7 +332,7 @@ Final review fix wave (2026-11-16, D-252). The import locks the article row befo
 *Documentation*
 - `docs/06-api.md`'s back-office section states planned file paths and error keys as facts; confirm or mark them planned.
 
-**Manual checks still to be run by a person:** every box in the manual test checklist above (11 checks), on the dev pool, plus the sign-in redirect from a product card and the 360px view of each back-office screen in Thai and English.
+**Manual checks still to be run by a person:** every box in the manual test checklist above (17 checks), on the dev pool, plus the sign-in redirect from a product card and the 360px view of each back-office screen in Thai and English.
 
 ## Not in this plan
 
