@@ -272,6 +272,32 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
     });
     expect(editor.getHTML()).toBe('<p>a</p><p>b</p>');
   });
+  it('lists products in the card dialog before anything is typed, in a scrolling list, and narrows them as you type (D-269)', async () => {
+    const all = [
+      { id: PRODUCT, name: 'Nintendo Switch 2', sku: 'NS2', imageUrl: null },
+      { id: '44444444-4444-4444-8444-444444444444', name: 'Portable SSD', sku: 'SSD', imageUrl: null },
+    ];
+    const search = vi.fn(async (query: string) => all.filter((hit) => hit.name.toLowerCase().includes(query.toLowerCase())));
+    await mount(() => {}, '<p>Hello</p>', { searchProducts: search });
+    await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Insert product card"]')!.click());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(search).toHaveBeenCalledWith('');
+    const names = () => [...document.querySelectorAll('[role="dialog"] li b')].map((name) => name.textContent);
+    expect(names()).toEqual(['Nintendo Switch 2', 'Portable SSD']);
+    expect(document.querySelector('[role="dialog"] ul')!.className).toMatch(/max-h-\S+ .*overflow-y-auto|overflow-y-auto.*max-h-/);
+    const box = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="search"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(box, 'ssd');
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    });
+    expect(names()).toEqual(['Portable SSD']);
+  });
+
   it('reports a product whose last card leaves the body, and comes back with undo (D-268); a second card of it keeps it', async () => {
     const changes = vi.fn();
     const editor = await mount(() => {}, `<p>a</p>${card(PRODUCT)}<p>b</p>${card(PRODUCT)}`, { onProductCardsChange: changes });

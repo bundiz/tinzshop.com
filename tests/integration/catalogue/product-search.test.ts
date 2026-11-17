@@ -43,6 +43,14 @@ describe('searchActiveProducts (the news editor product picker, R3)', () => {
     expect((await searchActiveProducts('sandbox', 10)).map((hit) => hit.name)).toEqual(['Sandbox SSD']);
   });
 
+  it('lists active products for an empty query, up to the limit, inactive ones left out (D-269)', async () => {
+    await getPrisma().product.updateMany({ where: { parentSku: 'SBX-IT-SSD' }, data: { isActive: true } });
+    expect((await searchActiveProducts('', 10)).map((hit) => hit.name)).toEqual(['Sandbox SSD']);
+    await activateAll();
+    expect(await searchActiveProducts('', 10)).toHaveLength(2);
+    expect(await searchActiveProducts('', 1)).toHaveLength(1);
+  });
+
   it('returns at most the limit, and treats % and _ as plain characters', async () => {
     await activateAll();
     expect(await searchActiveProducts('sandbox', 1)).toHaveLength(1);

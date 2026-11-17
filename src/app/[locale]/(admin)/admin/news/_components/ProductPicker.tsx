@@ -22,9 +22,22 @@ function Thumb({ hit }: { hit: ProductPickerHit }) {
 /**
  * A search box over the active products (name or SKU) with its results. Choosing one calls `onPick`. Typing waits a moment
  * before it asks, and an answer that arrives after a newer question is ignored. Used by the side panel and by the toolbar's
- * product-card dialog.
+ * product-card dialog. With `browse` (the dialog, D-269) it lists the first products before anything is typed, and the
+ * results scroll inside a fixed height, like a dropdown; up to twenty either way (the service's limit).
  */
-export function ProductSearchBox({ search, onPick, exclude = [], autoFocus = false }: { search: ProductSearch; onPick: (hit: ProductPickerHit) => void; exclude?: readonly string[]; autoFocus?: boolean }) {
+export function ProductSearchBox({
+  search,
+  onPick,
+  exclude = [],
+  autoFocus = false,
+  browse = false,
+}: {
+  search: ProductSearch;
+  onPick: (hit: ProductPickerHit) => void;
+  exclude?: readonly string[];
+  autoFocus?: boolean;
+  browse?: boolean;
+}) {
   const t = useTranslations('admin.news.editor');
   const inputId = useId();
   const [query, setQuery] = useState('');
@@ -32,13 +45,14 @@ export function ProductSearchBox({ search, onPick, exclude = [], autoFocus = fal
 
   useEffect(() => {
     const text = query.trim();
-    if (text === '') {
+    if (text === '' && !browse) {
       // Nothing typed: no results to show.
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the list when the box is emptied
       setHits(null);
       return;
     }
     let current = true;
+    // The first list (nothing typed yet) comes at once; typing waits a moment.
     const timer = setTimeout(() => {
       search(text).then(
         (found) => {
@@ -48,12 +62,12 @@ export function ProductSearchBox({ search, onPick, exclude = [], autoFocus = fal
           if (current) setHits([]);
         },
       );
-    }, DEBOUNCE_MS);
+    }, text === '' ? 0 : DEBOUNCE_MS);
     return () => {
       current = false;
       clearTimeout(timer);
     };
-  }, [query, search]);
+  }, [query, search, browse]);
 
   const shown = (hits ?? []).filter((hit) => !exclude.includes(hit.id));
   return (
@@ -80,7 +94,7 @@ export function ProductSearchBox({ search, onPick, exclude = [], autoFocus = fal
             {t('productsNone')}
           </p>
         ) : (
-          <ul className="mt-2 grid grid-cols-1 gap-1">
+          <ul className={`mt-2 grid grid-cols-1 gap-1${browse ? ' max-h-[min(360px,50vh)] overflow-y-auto overscroll-contain rounded-sm border border-line p-1' : ''}`}>
             {shown.map((hit) => (
               <li key={hit.id}>
                 <button

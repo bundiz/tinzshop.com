@@ -227,8 +227,8 @@ export function restoreArticleCommand(deps: NewsAdminCommandDeps, actor: NewsAdm
 /** The editor's product picker: up to ten active products, for `news.manage` only; anyone else gets nothing. */
 export async function searchProductsCommand(deps: NewsAdminCommandDeps, actor: NewsAdminActor, query: string): Promise<ProductPickerHit[]> {
   if (!can(actor, 'news.manage')) return [];
-  const text = query.trim();
-  return text === '' ? [] : deps.searchProducts(text);
+  // A blank query lists the first products: the card dialog shows them before anything is typed (D-269).
+  return deps.searchProducts(query.trim());
 }
 
 /** The most cards the editor asks for in one call; it sends a longer body's ids in batches of this size. */

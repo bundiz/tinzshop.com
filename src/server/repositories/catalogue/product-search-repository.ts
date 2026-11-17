@@ -38,15 +38,12 @@ function toHit(row: Row): ProductPickerHit {
  */
 export async function searchActiveProducts(query: string, limit: number): Promise<ProductPickerHit[]> {
   const contains = { contains: escapeLike(query), mode: 'insensitive' } as const;
+  // An empty query lists the active products in the same order, for the card dialog's first view (D-269).
+  const matches = query === ''
+    ? {}
+    : { OR: [{ translations: { some: { name: contains } } }, { parentSku: contains }, { variants: { some: { modelSku: contains } } }] };
   const rows = await getPrisma().product.findMany({
-    where: {
-      isActive: true,
-      OR: [
-        { translations: { some: { name: contains } } },
-        { parentSku: contains },
-        { variants: { some: { modelSku: contains } } },
-      ],
-    },
+    where: { isActive: true, ...matches },
     select: SELECT,
     orderBy: [{ parentSku: 'asc' }, { id: 'asc' }],
     take: limit,

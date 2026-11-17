@@ -205,13 +205,14 @@ describe('trash, restore and the product search', () => {
     expect(await restoreArticleCommand(deps, { id: ACTOR.id, permissions: [] }, form({ id: ARTICLE }))).toEqual({ status: 'error', errorKey: 'forbidden' });
   });
 
-  it('searches products for news.manage only, and returns nothing for a blank query', async () => {
+  it('searches products for news.manage only; a blank query lists the first products (D-269)', async () => {
     const deps = setup();
     expect(await searchProductsCommand(deps, ACTOR, ' switch ')).toHaveLength(1);
     expect(deps.searchProducts).toHaveBeenCalledWith('switch');
-    expect(await searchProductsCommand(deps, ACTOR, '   ')).toEqual([]);
+    expect(await searchProductsCommand(deps, ACTOR, '   ')).toHaveLength(1);
+    expect(deps.searchProducts).toHaveBeenLastCalledWith('');
     expect(await searchProductsCommand(deps, { id: ACTOR.id, permissions: [] }, 'switch')).toEqual([]);
-    expect(deps.searchProducts).toHaveBeenCalledTimes(1);
+    expect(deps.searchProducts).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -493,7 +493,7 @@ function ProductDialog({
           {t('productDialog.title')}
         </h2>
         <p className="mt-1 mb-3 text-ink-2">{t('productDialog.hint')}</p>
-        <ProductSearchBox search={search} onPick={onPick} autoFocus />
+        <ProductSearchBox search={search} onPick={onPick} autoFocus browse />
         <div className="mt-5 flex justify-end">
           <button type="button" onClick={onClose} className={buttonClass({ variant: 'line', size: 'admin' })}>
             {t('productDialog.cancel')}
