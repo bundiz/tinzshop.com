@@ -2,10 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 
 import { buttonClass } from '@/components/ui/button-class';
-import { useModalDialog } from '@/components/ui/use-modal-dialog';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import type { ArticlePreviewDraft, NewsAdminStatus, NewsCategoryOption } from '@/server/services/news/news-admin-service';
@@ -127,7 +127,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const createCategory = actions?.createCategory ?? createCategoryAction;
 
   const [saved, formAction, saving] = useActionState(saveAction, IDLE);
-  const [trashed, trashFormAction] = useActionState(trashAction, IDLE);
+  const [trashed, trashFormAction, trashing] = useActionState(trashAction, IDLE);
   // Articles are written in Thai only for now (D-260). A stored English version is not shown and goes back unchanged.
   const language = 'th';
   const [th, setTh] = useState<Translation>(article?.th ?? EMPTY);
@@ -142,11 +142,9 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const [products, setProducts] = useState<ProductPickerHit[]>(article?.products ?? []);
   const [when, setWhen] = useState<'now' | 'later'>(article?.status === 'scheduled' ? 'later' : 'now');
   const [publishAt, setPublishAt] = useState(article?.publishedAt && article.status === 'scheduled' ? toBangkokLocal(article.publishedAt) : '');
+  // The confirm stays up while the trash runs (its submit button must be in the page when the browser submits); a refusal closes it.
   const [confirmTrash, setConfirmTrash] = useState(false);
-  const trashDialog = useRef<HTMLDivElement>(null);
   const trashOpener = useRef<HTMLButtonElement>(null);
-  const trashTitleId = useId();
-  useModalDialog({ open: confirmTrash, onClose: () => setConfirmTrash(false), containerRef: trashDialog, returnFocusRef: trashOpener });
 
   const status = article?.status ?? 'draft';
   // A first save has worked and the page is about to move to the new article: a second submit would create a twin.
@@ -490,24 +488,19 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
           <input type="hidden" name="id" value={article.id} />
         </form>
       ) : null}
-      {confirmTrash ? (
-        <div className="fixed inset-0 z-60 grid place-items-center bg-ink/50 p-4">
-          <div ref={trashDialog} role="alertdialog" aria-modal="true" aria-labelledby={trashTitleId} className="w-full max-w-[420px] rounded-md bg-surface p-5 shadow-1">
-            <h2 id={trashTitleId} className="font-head text-xl font-bold text-ink">
-              {e('confirm.trashTitle')}
-            </h2>
-            <p className="mt-2 text-ink-2">{e('confirm.trashText')}</p>
-            <div className="mt-5 flex justify-end gap-2.5">
-              <button type="button" onClick={() => setConfirmTrash(false)} className={buttonClass({ variant: 'line', size: 'admin' })}>
-                {e('confirm.cancel')}
-              </button>
-              <button type="submit" form="trash-form" className={buttonClass({ variant: 'buy', size: 'admin' })}>
-                {e('confirm.trash')}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmDialog
+        open={confirmTrash}
+        onClose={() => setConfirmTrash(false)}
+        title={e('confirm.trashTitle')}
+        text={e('confirm.trashText')}
+        confirmLabel={e('confirm.trash')}
+        cancelLabel={e('confirm.cancel')}
+        tone="danger"
+        icon="trash"
+        form="trash-form"
+        pending={trashing}
+        returnFocusRef={trashOpener}
+      />
     </>
   );
 }

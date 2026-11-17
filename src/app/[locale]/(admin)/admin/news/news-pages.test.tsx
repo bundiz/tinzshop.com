@@ -187,10 +187,19 @@ describe('the news list page', () => {
     expect(markup).toContain(`href="/th/admin/news/${ID}"`);
   });
 
-  it('shows a restore button instead of the editor link in the trash', async () => {
+  it('gives each row a "⋯" menu named for the article (D-261)', async () => {
+    request.rows = [listRow()];
+    const markup = html(await NewsListPage({ params: params('th'), searchParams: search() }));
+    expect(markup).toMatch(/aria-label="จัดการ [^"]+" aria-haspopup="menu"/);
+    expect(markup).toContain(`<form id="trash-${ID}"`);
+  });
+
+  it('in the trash, has no editor link and a restore form behind the row menu', async () => {
     request.rows = [listRow({ deletedAt: NOW })];
     const markup = html(await NewsListPage({ params: params('th'), searchParams: search({ status: 'trash' }) }));
-    expect(markup).toContain('กู้คืน');
+    expect(markup).toContain(`<form id="restore-${ID}"`);
+    expect(markup).not.toContain(`<form id="trash-${ID}"`);
+    expect(markup).toContain('aria-haspopup="menu"');
     expect(markup).not.toContain(`href="/th/admin/news/${ID}"`);
   });
 });

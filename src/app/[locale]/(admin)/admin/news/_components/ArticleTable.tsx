@@ -2,12 +2,13 @@
 
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 
-import { buttonClass } from '@/components/ui/button-class';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import RowActionsMenu from '@/components/ui/RowActionsMenu';
 import type { NewsAdminState } from '@/server/controllers/news/news-admin-controller';
 import type { NewsAdminStatus } from '@/server/services/news/news-admin-service';
-import { restoreArticleAction } from '../actions';
+import { restoreArticleAction, trashArticleAction } from '../actions';
 
 /** One list row, serialisable: dates are ISO strings so they cross from the server page. */
 export type ArticleTableRow = {
@@ -25,9 +26,14 @@ export type ArticleTableRow = {
 export type ArticleTableProps = {
   locale: string;
   rows: ArticleTableRow[];
-  /** Override the Server Action in tests. */
-  restore?: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
+  /** Override the Server Actions in tests. */
+  actions?: {
+    trash: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
+    restore: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
+  };
 };
+
+type Actions = NonNullable<ArticleTableProps['actions']>;
 
 const IDLE: NewsAdminState = { status: 'idle' };
 
@@ -37,35 +43,82 @@ const PILL: Record<NewsAdminStatus, string> = {
   draft: 'bg-sunk text-ink-2',
 };
 
-function RestoreForm({ locale, row, title, action }: { locale: string; row: ArticleTableRow; title: string; action: NonNullable<ArticleTableProps['restore']> }) {
+/**
+ * A row's "⋯" menu (D-261): แก้ไข (a link to the editor) and ย้ายไปถังขยะ, which asks in a `ConfirmDialog` with the
+ * editor's copy and then posts the row's trash form; in the trash, only กู้คืน, which posts the restore form at once.
+ */
+function RowActions({ locale, row, title, actions }: { locale: string; row: ArticleTableRow; title: string; actions: Actions }) {
   const t = useTranslations('admin.news');
+  const e = useTranslations('admin.news.editor');
   const errors = useTranslations('admin.news.error');
-  const [state, formAction] = useActionState(action, IDLE);
+  const [trashed, trashAction, trashing] = useActionState(actions.trash, IDLE);
+  const [restored, restoreAction] = useActionState(actions.restore, IDLE);
+  const [confirm, setConfirm] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const restoreForm = useRef<HTMLFormElement>(null);
+  const closeConfirm = useCallback(() => setConfirm(false), []);
+  // The confirm stays up while the action runs, so its submit button is still in the page when the browser submits; it closes on the result.
+  useEffect(() => {
+    if (trashed.status !== 'idle') setConfirm(false);
+  }, [trashed]);
+  const trashFormId = `trash-${row.id}`;
+  const failure = trashed.status === 'error' ? trashed : restored.status === 'error' ? restored : null;
   return (
-    <form action={formAction}>
-      <input type="hidden" name="locale" value={locale} />
-      <input type="hidden" name="id" value={row.id} />
-      <button type="submit" aria-label={t('restoreLabel', { title })} className={buttonClass({ variant: 'line', size: 'adminSm' })}>
-        {t('restore')}
-      </button>
-      {state.status === 'error' ? (
-        <p role="alert" className="mt-1 text-sm font-medium text-sale">
-          {errors(state.errorKey)}
+    <>
+      {row.trashed ? (
+        <form id={`restore-${row.id}`} ref={restoreForm} action={restoreAction}>
+          <input type="hidden" name="locale" value={locale} />
+          <input type="hidden" name="id" value={row.id} />
+        </form>
+      ) : (
+        <form id={trashFormId} action={trashAction}>
+          <input type="hidden" name="locale" value={locale} />
+          <input type="hidden" name="id" value={row.id} />
+        </form>
+      )}
+      <RowActionsMenu
+        label={t('menu.label', { title })}
+        buttonRef={menuButton}
+        items={
+          row.trashed
+            ? [{ key: 'restore', label: t('restore'), icon: 'undo', onSelect: () => restoreForm.current?.requestSubmit() }]
+            : [
+                { key: 'edit', label: t('menu.edit'), icon: 'edit', href: `/${locale}/admin/news/${row.id}` },
+                { key: 'trash', label: e('button.trash'), icon: 'trash', tone: 'danger', onSelect: () => setConfirm(true) },
+              ]
+        }
+      />
+      {failure === null ? null : (
+        <p role="alert" className="mt-1 ml-auto max-w-[260px] text-left text-sm font-medium whitespace-normal text-sale">
+          {errors(failure.errorKey)}
         </p>
-      ) : null}
-    </form>
+      )}
+      <ConfirmDialog
+        open={confirm}
+        onClose={closeConfirm}
+        title={e('confirm.trashTitle')}
+        text={e('confirm.trashText')}
+        confirmLabel={e('confirm.trash')}
+        cancelLabel={e('confirm.cancel')}
+        tone="danger"
+        icon="trash"
+        form={trashFormId}
+        pending={trashing}
+        returnFocusRef={menuButton}
+      />
+    </>
   );
 }
 
 /**
- * The news list (the mockup's `.tbl`): title, categories, author, the languages present, status and date. A row links to
- * the editor; in the trash it has a restore button instead. The mockup's reader counts and its eye and trash icons are
- * left out (plan 016, Task 9; D-239).
+ * The news list (the mockup's `.tbl`): title, categories, author, the languages present, status and date, and a row menu
+ * (D-261). A title links to the editor, except in the trash. The mockup's reader counts and its eye icon are left out
+ * (plan 016, Task 9; D-239).
  */
-export default function ArticleTable({ locale, rows, restore }: ArticleTableProps) {
+export default function ArticleTable({ locale, rows, actions }: ArticleTableProps) {
   const t = useTranslations('admin.news');
   const format = useFormatter();
-  const restoreAction = restore ?? restoreArticleAction;
+  const rowActions: Actions = { trash: actions?.trash ?? trashArticleAction, restore: actions?.restore ?? restoreArticleAction };
 
   return (
     <div className="overflow-x-auto rounded-md border border-line bg-surface">
@@ -77,7 +130,7 @@ export default function ArticleTable({ locale, rows, restore }: ArticleTableProp
                 {t(`columns.${column}`)}
               </th>
             ))}
-            <th scope="col" className="p-3 font-semibold">
+            <th scope="col" className="w-px p-3">
               <span className="sr-only">{t('columns.actions')}</span>
             </th>
           </tr>
@@ -86,7 +139,7 @@ export default function ArticleTable({ locale, rows, restore }: ArticleTableProp
           {rows.map((row) => {
             const title = row.title === '' ? t('untitled') : row.title;
             return (
-              <tr key={row.id} className="border-b border-line align-top last:border-b-0">
+              <tr key={row.id} className="border-b border-line align-middle last:border-b-0">
                 <th scope="row" className="min-w-[280px] p-3 font-semibold text-ink [overflow-wrap:anywhere]">
                   {row.trashed ? (
                     title
@@ -115,7 +168,9 @@ export default function ArticleTable({ locale, rows, restore }: ArticleTableProp
                     ? '—'
                     : format.dateTime(new Date(row.publishedAt), row.status === 'scheduled' ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' })}
                 </td>
-                <td className="p-3">{row.trashed ? <RestoreForm locale={locale} row={row} title={title} action={restoreAction} /> : null}</td>
+                <td className="py-2 pr-2 pl-3 text-right">
+                  <RowActions locale={locale} row={row} title={title} actions={rowActions} />
+                </td>
               </tr>
             );
           })}

@@ -27,38 +27,33 @@ const row: AccountTableRow = {
 };
 
 describe('AccountTable', () => {
-  it('shows the role select, the block button and the action column with account.manage', () => {
-    const out = html(<AccountTable locale="en" rows={[row, { ...row, id: 'x', blocked: true }]} permissions={['backoffice.enter', 'account.manage']} />);
-    expect(out).toContain('role="combobox"');
-    expect(out).toContain('Role of Somchai');
-    expect(out).toContain('>Block<');
-    expect(out).toContain('>Unblock<');
+  it('shows each row a "⋯" menu button named for the account, and the role as text, with account.manage (D-261)', () => {
+    const out = html(<AccountTable locale="en" rows={[row, { ...row, id: 'x', firstName: 'Nok', blocked: true }]} permissions={['backoffice.enter', 'account.manage']} />);
+    expect(out).toContain('aria-label="Manage Somchai"');
+    expect(out).toContain('aria-label="Manage Nok"');
+    expect(out).toContain('aria-haspopup="menu"');
+    expect(out).not.toContain('role="combobox"');
+    expect(out).toContain('>Blogger<');
     expect(out).toContain('somchai@example.com');
+    // The actions column has a heading for screen readers only.
+    expect(out).toContain('<span class="sr-only">Actions</span>');
   });
 
-  it('hides the role select and the row actions without account.manage', () => {
+  it('has no menu and no actions column without account.manage', () => {
     const out = html(<AccountTable locale="en" rows={[row]} permissions={['backoffice.enter']} />);
-    expect(out).not.toContain('role="combobox"');
-    expect(out).not.toContain('>Block<');
+    expect(out).not.toContain('aria-haspopup="menu"');
     expect(out).not.toContain('Actions');
     expect(out).toContain('Blogger');
   });
 
-  // The list's options are checked in AccountTable.dom.test.tsx, where it can be opened (D-258).
-  it('posts the row\'s current role under roleKey before any change', () => {
-    const out = html(<AccountTable locale="en" rows={[row]} permissions={['account.manage']} />);
-    expect(out).toContain('<input type="hidden" name="roleKey" value="blogger"/>');
-    expect(out).not.toContain('<select');
-  });
-
-  it('names the account in the block and unblock buttons', () => {
+  it('posts the row and the opposite of its blocked state from the block form', () => {
     const out = html(<AccountTable locale="en" rows={[row, { ...row, id: 'x', blocked: true }]} permissions={['account.manage']} />);
-    expect(out).toContain('aria-label="Block: Somchai"');
-    expect(out).toContain('aria-label="Unblock: Somchai"');
+    expect(out).toContain(`<form id="block-${row.id}"`);
+    expect(out).toMatch(new RegExp(`<form id="block-${row.id}"[^]*?name="blocked" value="true"`));
+    expect(out).toMatch(/<form id="block-x"[^]*?name="blocked" value="false"/);
   });
 
-  it('shows a short saved line after a successful role change, and the error key text on a refusal', () => {
-    expect(html(<ErrorLine state={{ status: 'ok' }} showSaved />)).toContain('Saved');
+  it('shows the error key text on a refusal, and nothing otherwise', () => {
     expect(html(<ErrorLine state={{ status: 'ok' }} />)).toBe('');
     expect(html(<ErrorLine state={{ status: 'error', errorKey: 'lastSuperAdmin' }} />)).toContain('at least one Top-level Admin');
   });

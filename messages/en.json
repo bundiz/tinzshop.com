@@ -640,7 +640,14 @@
         "created": "Joined",
         "actions": "Actions"
       },
-      "roleSelect": "Role of {name}",
+      "menu": {
+        "label": "Manage {name}",
+        "edit": "Edit"
+      },
+      "edit": {
+        "title": "Edit user",
+        "close": "Close"
+      },
       "saveRole": "Save",
       "block": "Block",
       "unblock": "Unblock",
@@ -667,7 +674,6 @@
       "saveRole": "Save the permissions of {role}",
       "saved": "Permissions saved"
     },
-    "saved": "Saved",
     "permission": {
       "backoffice": {
         "enter": "Open the back office and see its home page"
@@ -728,7 +734,10 @@
       },
       "untitled": "(no title yet)",
       "restore": "Restore",
-      "restoreLabel": "Restore {title}",
+      "menu": {
+        "label": "Manage {title}",
+        "edit": "Edit"
+      },
       "empty": "No articles match.",
       "emptyTrash": "The trash is empty.",
       "pager": {

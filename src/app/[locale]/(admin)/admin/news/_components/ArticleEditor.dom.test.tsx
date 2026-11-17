@@ -49,12 +49,13 @@ async function mount(
     article?: EditorArticle | null;
     categories?: { id: string; name: string; unlisted?: boolean }[];
     createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<never>;
+    trash?: (previous: unknown, formData: FormData) => Promise<never>;
   } = {},
 ) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: async () => ({ status: 'idle' }), search: async () => [], createCategory: options.createCategory }} />
+        <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: async () => [], createCategory: options.createCategory }} />
       </NextIntlClientProvider>,
     );
   });
@@ -227,6 +228,25 @@ function type(input: HTMLInputElement, value: string): Promise<void> {
 
 const previewButton = () => [...container.querySelectorAll('button')].find((button) => button.textContent === 'Preview')!;
 const drafts = (channel: FakeChannel) => channel.posted.filter((message) => (message as { type: string }).type === 'draft') as { draft: Record<string, unknown> }[];
+
+describe('ArticleEditor: move to trash (D-261)', () => {
+  it('asks in the shared confirm dialog, posts the article id from the trash form, and closes on a refusal', async () => {
+    const trash = vi.fn(async () => ({ status: 'error', errorKey: 'notFound' }) as never);
+    await mount(vi.fn(), { trash });
+    const opener = [...container.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === 'Move to trash')!;
+    act(() => opener.click());
+    const dialog = document.querySelector<HTMLElement>('[role="alertdialog"]')!;
+    expect(dialog.textContent).toContain('Move this article to the trash?');
+    expect(dialog.querySelector('[data-confirm-icon]')).not.toBeNull();
+    const confirm = [...dialog.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === 'Move to trash')!;
+    expect(confirm.getAttribute('form')).toBe('trash-form');
+    await act(async () => confirm.click());
+    expect(trash).toHaveBeenCalledTimes(1);
+    expect((trash.mock.calls[0] as unknown as [unknown, FormData])[1].get('id')).toBe(article.id);
+    expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+});
 
 describe('ArticleEditor: the live preview (D-253)', () => {
   let open: ReturnType<typeof vi.fn>;
