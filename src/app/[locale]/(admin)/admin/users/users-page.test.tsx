@@ -31,9 +31,9 @@ function as(permissions: PermissionKey[]): void {
 }
 
 async function render(searchParams: Record<string, string> = {}): Promise<string> {
-  const node = await UsersPage({ params: Promise.resolve({ locale: 'en' }), searchParams: Promise.resolve(searchParams) });
+  const node = await UsersPage({ params: Promise.resolve({ locale: 'th' }), searchParams: Promise.resolve(searchParams) });
   return renderToStaticMarkup(
-    <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
+    <NextIntlClientProvider locale="th" messages={th} timeZone="Asia/Bangkok">
       {node as ReactNode}
     </NextIntlClientProvider>,
   );
@@ -47,21 +47,21 @@ describe('the users page tabs', () => {
   it('shows both tabs to a holder of both keys', async () => {
     as(['backoffice.enter', 'account.manage', 'role.manage']);
     const out = await render();
-    expect(out).toContain('All accounts');
-    expect(out).toContain('Roles and permissions');
+    expect(out).toContain('บัญชีทั้งหมด');
+    expect(out).toContain('ตำแหน่งและสิทธิ์');
   });
 
   it('shows only the accounts tab to account.manage alone', async () => {
     as(['backoffice.enter', 'account.manage']);
     const out = await render();
-    expect(out).toContain('All accounts');
-    expect(out).not.toContain('Roles and permissions</a>');
+    expect(out).toContain('บัญชีทั้งหมด');
+    expect(out).not.toContain('ตำแหน่งและสิทธิ์</a>');
   });
 
   it('opens on the roles tab, and shows only it, for role.manage alone', async () => {
     as(['backoffice.enter', 'role.manage']);
     const out = await render();
-    expect(out).not.toContain('All accounts');
-    expect(out).toContain('Save permissions');
+    expect(out).not.toContain('บัญชีทั้งหมด');
+    expect(out).toContain('บันทึกสิทธิ์');
   });
 });

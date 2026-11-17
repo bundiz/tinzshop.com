@@ -5,10 +5,10 @@ import { adminBreadcrumbs } from './admin-breadcrumbs';
 const ID = '44444444-4444-4444-8444-444444444444';
 
 describe('adminBreadcrumbs', () => {
-  it('names a section page alone, as the current page', () => {
-    expect(adminBreadcrumbs('/th/admin', 'th')).toEqual([{ key: 'nav.dashboard' }]);
-    expect(adminBreadcrumbs('/th/admin/news', 'th')).toEqual([{ key: 'nav.news' }]);
-    expect(adminBreadcrumbs('/en/admin/users', 'en')).toEqual([{ key: 'nav.users' }]);
+  it('gives a section page no trail: its heading already names it', () => {
+    expect(adminBreadcrumbs('/th/admin', 'th')).toEqual([]);
+    expect(adminBreadcrumbs('/th/admin/news', 'th')).toEqual([]);
+    expect(adminBreadcrumbs('/en/admin/users', 'en')).toEqual([]);
   });
 
   it('puts "all articles" (a link to the list) before the new-article and edit pages', () => {

@@ -6,6 +6,9 @@ import type { PermissionKey } from '@/server/services/access/permission-keys';
 import type { CurrentCustomer } from '@/server/services/auth/customer-session-service';
 import { requireCustomer } from '../../../(shop)/_components/require-customer';
 
+/** The back office is Thai only (D-259): its pages, actions and links always use this locale. */
+export const BACK_OFFICE_LOCALE = 'th';
+
 /** The page that says "no access"; it sits outside the gate (its own route group) so it cannot loop. */
 export function noAccessPath(locale: string): string {
   return `/${locale}/admin/no-access`;
@@ -19,6 +22,8 @@ export function noAccessPath(locale: string): string {
  */
 export async function requirePermission(locale: string, path: string, key: PermissionKey): Promise<CurrentCustomer> {
   if (!hasLocale(routing.locales, locale)) notFound();
+  // An English address (a bookmark, an old link) lands on the same Thai page.
+  if (locale !== BACK_OFFICE_LOCALE) redirect(`/${BACK_OFFICE_LOCALE}${path}`);
   const customer = await requireCustomer(locale, path);
   // Entering the back office is itself a key: a role given only `key` (news.manage, say) must not reach a page or an action.
   if (!can(customer, 'backoffice.enter') || !can(customer, key)) redirect(noAccessPath(locale));

@@ -36,7 +36,7 @@ describe('requirePermission', () => {
 
   it('refuses a Customer (no back-office key) with the no-access page', async () => {
     request.customer = account('customer', []);
-    expect(await redirectOf(() => requirePermission('en', '/admin', 'backoffice.enter'))).toBe('/en/admin/no-access');
+    expect(await redirectOf(() => requirePermission('th', '/admin', 'backoffice.enter'))).toBe('/th/admin/no-access');
   });
 
   it('refuses a Blogger a key the role does not hold', async () => {
@@ -52,6 +52,14 @@ describe('requirePermission', () => {
 
   it('refuses a role holding the key but not backoffice.enter, for any key', async () => {
     request.customer = account('blogger', ['news.manage']);
-    expect(await redirectOf(() => requirePermission('en', '/admin/news', 'news.manage'))).toBe('/en/admin/no-access');
+    expect(await redirectOf(() => requirePermission('th', '/admin/news', 'news.manage'))).toBe('/th/admin/no-access');
+  });
+
+  it('sends any English back-office request to the same Thai page, before any other check: the back office is Thai only', async () => {
+    const blogger = account('blogger', ['backoffice.enter', 'news.manage']);
+    request.customer = blogger;
+    expect(await redirectOf(() => requirePermission('en', '/admin/news?status=draft', 'news.manage'))).toBe('/th/admin/news?status=draft');
+    request.customer = null;
+    expect(await redirectOf(() => requirePermission('en', '/admin', 'backoffice.enter'))).toBe('/th/admin');
   });
 });

@@ -74,7 +74,8 @@ export default function AccountMenu({ firstName, canEnterBackOffice = false }: A
       >
         {canEnterBackOffice ? (
           <a
-            href={`/${locale}/admin`}
+            // The back office is Thai only (D-259).
+            href="/th/admin"
             className="flex min-h-11 items-center rounded-sm px-3 text-sm font-medium hover:bg-brand-soft hover:text-brand"
           >
             {t('backOffice')}

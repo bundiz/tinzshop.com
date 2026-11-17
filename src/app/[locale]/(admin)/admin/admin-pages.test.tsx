@@ -71,7 +71,8 @@ describe('the back-office home page', () => {
   it('tells a Sale-manager, whose menu is only the dashboard, that more tools come later', async () => {
     request.customer = account('sale_manager', ['backoffice.enter']);
     expect(html(await AdminHomePage({ params: params('th') }))).toContain('เครื่องมือเพิ่มเติมจะมาในรอบถัดไป');
-    expect(html(await AdminHomePage({ params: params('en') }), 'en')).toContain('More tools arrive in later stages');
+    // The back office is Thai only (D-259): the English address lands on the Thai page.
+    expect(await redirectOf(() => AdminHomePage({ params: params('en') }))).toBe('/th/admin');
   });
 });
 

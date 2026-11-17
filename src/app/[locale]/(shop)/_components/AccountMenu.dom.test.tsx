@@ -122,11 +122,11 @@ describe('AccountMenu', () => {
       expect(panel().querySelector('a')).toBeNull();
     });
 
-    it('reads Back office in English', () => {
+    it('reads Back office in English, and still leads to the Thai back office (D-259)', () => {
       renderMenu(true, 'en');
       const link = panel().querySelector<HTMLAnchorElement>('a')!;
       expect(link.textContent).toBe('Back office');
-      expect(link.getAttribute('href')).toBe('/en/admin');
+      expect(link.getAttribute('href')).toBe('/th/admin');
     });
   });
 });

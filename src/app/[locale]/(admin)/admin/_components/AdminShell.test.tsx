@@ -26,26 +26,29 @@ function render(locale: 'th' | 'en'): string {
   );
 }
 
-describe('the back-office language switch', () => {
-  it('links to the same page in the other locale and keeps the query string', () => {
-    const markup = render('th');
-    expect(markup).toContain('href="/en/admin/news?status=draft&amp;q=%E0%B9%80%E0%B8%81%E0%B8%A1&amp;page=2"');
+describe('the back-office language', () => {
+  it('has no TH/EN switch: the back office is Thai only', () => {
+    expect(render('th')).not.toContain(`aria-label="${th.admin.language.label}"`);
   });
 });
 
 describe('the back-office top row', () => {
-  it('has no header bar of its own: the breadcrumb and the language switch share one row at the top of the page', () => {
+  it('has no header bar: an editor page opens with its trail, before the page itself', () => {
     pathname = '/th/admin/news/new';
     const markup = render('th');
     pathname = '/th/admin/news';
     expect(markup).not.toContain('<header');
     const row = markup.slice(markup.indexOf('<main'));
     const crumbs = row.indexOf('aria-label="เส้นทาง"');
-    const languages = row.indexOf(`aria-label="${th.admin.language.label}"`);
     expect(crumbs).toBeGreaterThan(-1);
-    expect(languages).toBeGreaterThan(crumbs);
     expect(row).toMatch(/<a[^>]*href="\/th\/admin\/news"[^>]*>ข่าวทั้งหมด<\/a>/);
     expect(row).toContain('>เขียนข่าวใหม่</span>');
-    expect(row.indexOf('<p>child</p>')).toBeGreaterThan(languages);
+    expect(row.indexOf('<p>child</p>')).toBeGreaterThan(crumbs);
+  });
+
+  it('shows no trail on a section page, and keeps only the phone menu button there', () => {
+    const row = render('th').slice(0);
+    expect(row).not.toContain('aria-label="เส้นทาง"');
+    expect(row).toMatch(/<div class="[^"]*md:hidden[^"]*"><button[^>]*aria-controls="admin-side-nav"/);
   });
 });
