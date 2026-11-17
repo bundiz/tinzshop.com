@@ -109,17 +109,27 @@ describe('ArticleEditor', () => {
     expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].get('thBodyHtml')).toBe(stored);
   });
 
-  it('marks the fields publishing needs with a red star and a spoken note: the Thai summary and the categories, not the English summary', async () => {
+  it('writes in Thai only (D-260): no language switch, no English fields, and a stored English version is sent back unchanged', async () => {
+    const stored = { title: 'English title', excerpt: 'English summary', bodyHtml: '<p>English body</p>' };
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, { article: { ...article, th: { title: 'T', excerpt: 'E', bodyHtml: '<p>Thai</p>' }, en: stored } });
+    expect(container.querySelector('[aria-label="Article language"], #en-title, #en-excerpt')).toBeNull();
+    expect(container.textContent).not.toContain('English');
+    expect(container.querySelectorAll('.ProseMirror')).toHaveLength(1);
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    const sent = (save.mock.calls[0] as unknown as [unknown, FormData])[1];
+    expect([sent.get('enTitle'), sent.get('enExcerpt'), sent.get('enBodyHtml')]).toEqual([stored.title, stored.excerpt, stored.bodyHtml]);
+  });
+
+  it('marks the fields publishing needs with a red star and a spoken note: the Thai summary and the categories', async () => {
     await mount(vi.fn(async () => ({ status: 'idle' }) as never));
     const note = 'Required to publish';
     const thLabel = container.querySelector('label[for="th-excerpt"]')!;
-    const enLabel = container.querySelector('label[for="en-excerpt"]')!;
     const categoriesHeading = [...container.querySelectorAll('h2')].find((h) => h.textContent?.startsWith('Categories'))!;
     for (const marked of [thLabel, categoriesHeading]) {
       expect(marked.querySelector('[aria-hidden="true"]')?.textContent).toBe('*');
       expect(marked.querySelector('.sr-only')?.textContent).toBe(note);
     }
-    expect(enLabel.textContent).not.toContain('*');
     expect((container.querySelector('#th-excerpt') as HTMLTextAreaElement).required).toBe(false);
   });
 
@@ -171,7 +181,6 @@ describe('ArticleEditor', () => {
     expect(sent.get('when')).toBe('later');
     expect(sent.get('publishAt')).toBe('');
     expect(container.querySelector<HTMLInputElement>('#th-title')!.maxLength).toBe(300);
-    expect(container.querySelector<HTMLInputElement>('#en-title')!.maxLength).toBe(300);
     expect(container.querySelector<HTMLInputElement>('#slug')!.maxLength).toBe(300);
   });
 

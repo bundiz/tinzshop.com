@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Built and in review (2026-11-16); the owner's requests of 2026-11-17 (live preview, add a category, required marks, the publish-later picker, the denser back-office controls, the themed dropdown, the Thai-only back office) built on 2026-11-17; manual checks not yet run. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
+- **Status:** Built and in review (2026-11-16); the owner's requests of 2026-11-17 (live preview, add a category, required marks, the publish-later picker, the denser back-office controls, the themed dropdown, the Thai-only back office, Thai-only articles) built on 2026-11-17; manual checks not yet run. Planned 2026-11-14 on the project owner's decisions and approval of 2026-11-14
 - **Stage:** payment stage 1 (due 2026-12-15), checks 1.5 to 1.12 of `docs/15-acceptance-criteria.md` (1.5 and 1.6 rewritten by Task 1)
 - **Requirements:** REQ-033, REQ-034, REQ-035, REQ-051 delivered for stage 1; REQ-032 changed (D-232); REQ-047 extended (the staff editor)
 - **Depends on plans:** 012 (news tables, import, pages), 014 (accounts, sessions, sign-in), 015 (tokens, `buttonClass`)
@@ -227,7 +227,7 @@
 - [x] **Step 3:** Confirm every doc listed in spec §12 changed; update `docs/07-frontend-components.md` with the `(admin)` components and `AccountMenu`'s link; update this plan's *Status* and *Outcome*.
 - [x] **Step 4: Commit** `docs: record plan 016's outcome`
 
-## Owner requests of 2026-11-17 (D-253 to D-259)
+## Owner requests of 2026-11-17 (D-253 to D-260)
 
 Three changes the project owner asked for after the review, on the same branch, and a fourth, fifth and sixth (the publish-later picker, D-256, the denser back-office controls, D-257, and the themed dropdown, D-258) listed with the checklist below:
 
@@ -248,6 +248,7 @@ Three changes the project owner asked for after the review, on the same branch, 
 - [x] Back-office controls sized to the admin mockup (D-257): `buttonClass` sizes `admin` (42px) and `adminSm` (34px) on every back-office button, the editor toolbar as 38px icon buttons with the mockup's icons, `.ltabs` switches, `.tok` tags, and the filter bar, row actions, pager, category rows and trash link resized; 44px tap targets kept below `sm`; unit tests for the sizes (and that `md` and `lg` are unchanged) and jsdom tests for the toolbar (named icon buttons with tooltips, no glyph text, bold pressed).
 - [x] One themed dropdown, `Select` (`src/components/ui/Select.tsx`, D-258), a select-only combobox with a hidden input for forms and the sizes `md`, `compact`, `small` and `toolbar`, replaces all six native selects with names, values and URLs unchanged: the users page's role and status filters and the news list's category filter (`compact`), the accounts table's row role picker (`small`), the editor's paragraph style (`toolbar`) and the listing sort (`md`); a `check` icon in `Icon`; jsdom tests for the component (ARIA wiring, opening by click and keys, arrows, Home, End, Thai typeahead, Enter, Space, Escape, Tab, outside press, hidden input in `FormData`, form reset, controlled and uncontrolled, disabled, label) and for the call sites (the role picker posts `roleKey` through its Server Action, the block type makes a heading and returns focus to the editor, the sort navigates without scrolling).
 - [x] Back office Thai only (D-259, pending the client in Q-070): no TH/EN switch in `AdminShell`; `requirePermission` sends `/en/admin/…` to the same Thai page (`BACK_OFFICE_LOCALE`); the storefront's "หลังบ้าน" link opens `/th/admin`; section pages show no breadcrumb (editor pages keep "ข่าวทั้งหมด › …"); tests for the redirect, the link, the missing switch and the missing section trail.
+- [x] Articles written in Thai only (D-260): the editor's ไทย/English switch and English fields are gone; a stored English version is submitted back unchanged; jsdom test (no switch, no English fields, one body editor, stored English sent as is).
 
 ## Manual test checklist
 
@@ -274,6 +275,7 @@ Run by a person on the dev pool. Never tick a box for a check nobody performed.
 - [ ] Back office controls match the admin mockup's sizes on desktop and stay ≥44px on a phone (D-257): compare the news list, the editor (buttons, toolbar icons, language and publish-time switches, tags, category rows, ย้ายไปถังขยะ) and the users page with `tinzshop-redesign/admin/`; at 360px every control is easy to tap.
 - [ ] Every dropdown opens the themed list (D-258): the users page's role and status filters, a row's role picker, the news list's category filter, the editor's paragraph style and the listing sort; keyboard and screen reader work (VoiceOver reads the label and the chosen value; arrows, typing a Thai or English letter, Enter and Escape behave as described in 07); at 360px the list fits and options are 44px.
 - [ ] The back office is Thai only: no TH/EN switch; opening `/en/admin/news` lands on `/th/admin/news`; the English storefront's "Back office" link opens the Thai back office; the news list and users pages have no breadcrumb bar, the editor pages do.
+- [ ] The editor shows only Thai fields; editing and saving an article that has an English version keeps that English version on `/en/news/…`.
 
 ## Outcome
 

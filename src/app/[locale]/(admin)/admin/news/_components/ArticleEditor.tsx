@@ -128,11 +128,12 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
 
   const [saved, formAction, saving] = useActionState(saveAction, IDLE);
   const [trashed, trashFormAction] = useActionState(trashAction, IDLE);
-  const [language, setLanguage] = useState<'th' | 'en'>('th');
+  // Articles are written in Thai only for now (D-260). A stored English version is not shown and goes back unchanged.
+  const language = 'th';
   const [th, setTh] = useState<Translation>(article?.th ?? EMPTY);
-  const [en, setEn] = useState<Translation>(article?.en ?? EMPTY);
+  const en: Translation = article?.en ?? EMPTY;
   // A body the editor cannot keep is saved exactly as stored, whatever the editor reports (the lock decides, not onChange).
-  const [locked, setLocked] = useState({ th: false, en: false });
+  const [locked, setLocked] = useState(false);
   const [slug, setSlug] = useState(article?.slug ?? '');
   const [byline, setByline] = useState(article?.bylineName ?? defaultByline);
   const [categoryOptions, setCategoryOptions] = useState(categories);
@@ -154,8 +155,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const isPublished = status === 'published' || status === 'scheduled';
   const publishable = !(status === 'published');
   // What a save sends for each body: a locked one exactly as stored (the lock decides, not the editor's change events).
-  const thBodyHtml = locked.th ? (article?.th.bodyHtml ?? '') : bodyOrEmpty(th.bodyHtml);
-  const enBodyHtml = locked.en ? (article?.en?.bodyHtml ?? '') : bodyOrEmpty(en.bodyHtml);
+  const thBodyHtml = locked ? (article?.th.bodyHtml ?? '') : bodyOrEmpty(th.bodyHtml);
+  const enBodyHtml = en.bodyHtml;
 
   // The live preview (D-253): the draft as a save would send it, over a channel to the preview tab; nothing is saved.
   const draft = buildPreviewDraft({
@@ -263,24 +264,11 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
         <input type="hidden" name="locale" value={locale} />
         {article ? <input type="hidden" name="id" value={article.id} /> : null}
         <input type="hidden" name="thBodyHtml" value={thBodyHtml} />
+        <input type="hidden" name="enTitle" value={en.title} />
+        <input type="hidden" name="enExcerpt" value={en.excerpt} />
         <input type="hidden" name="enBodyHtml" value={enBodyHtml} />
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* The content language sits on the buttons' row (owner, 2026-11-17). */}
-          <div role="group" aria-label={e('languagesLabel')} className={`inline-flex ${SEG_TRACK}`}>
-            {(['th', 'en'] as const).map((code) => (
-              <button
-                key={code}
-                type="button"
-                lang={code}
-                aria-pressed={language === code}
-                onClick={() => setLanguage(code)}
-                className={`${SEG_ITEM} aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-1`}
-              >
-                {e(code)}
-              </button>
-            ))}
-          </div>
           <p role="status" aria-live="polite" className="font-medium text-ok-ink">
             {savedMessage}
           </p>
@@ -318,57 +306,49 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
 
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid min-w-0 gap-3">
-            {language === 'en' ? <p className="text-sm text-muted">{e('enHint')}</p> : null}
-
-            {(['th', 'en'] as const).map((code) => {
-              const value = code === 'th' ? th : en;
-              const set = code === 'th' ? setTh : setEn;
-              return (
-                <div key={code} hidden={language !== code} className="grid gap-3">
-                  <div>
-                    <label htmlFor={`${code}-title`} className="sr-only">
-                      {e('titleLabel')}
-                    </label>
-                    <input
-                      id={`${code}-title`}
-                      name={`${code}Title`}
-                      lang={code}
-                      value={value.title}
-                      onChange={(event) => set({ ...value, title: event.target.value })}
-                      placeholder={e('titlePlaceholder')}
-                      maxLength={300}
-                      className="min-h-14 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 font-head text-[22px] font-bold text-ink"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor={`${code}-excerpt`} className="mb-1 block font-semibold text-ink">
-                      {e('excerptLabel')}
-                      {code === 'th' ? <RequiredMark note={e('requiredToPublish')} /> : null}
-                    </label>
-                    <textarea
-                      id={`${code}-excerpt`}
-                      name={`${code}Excerpt`}
-                      lang={code}
-                      rows={2}
-                      value={value.excerpt}
-                      onChange={(event) => set({ ...value, excerpt: event.target.value })}
-                      aria-describedby={`${code}-excerpt-hint`}
-                      className={`${INPUT} py-2`}
-                    />
-                    <p id={`${code}-excerpt-hint`} className="mt-1 text-sm text-muted">
-                      {e('excerptHint')}
-                    </p>
-                  </div>
-                  <RichTextEditor
-                    label={`${e('bodyLabel')} (${e(code)})`}
-                    initialHtml={value.bodyHtml}
-                    onLockedChange={(isLocked) => setLocked((previous) => ({ ...previous, [code]: isLocked }))}
-                    onChange={(html) => set((previous) => ({ ...previous, bodyHtml: html }))}
-                    searchProducts={searchProducts}
-                  />
-                </div>
-              );
-            })}
+            <div className="grid gap-3">
+              <div>
+                <label htmlFor="th-title" className="sr-only">
+                  {e('titleLabel')}
+                </label>
+                <input
+                  id="th-title"
+                  name="thTitle"
+                  lang="th"
+                  value={th.title}
+                  onChange={(event) => setTh({ ...th, title: event.target.value })}
+                  placeholder={e('titlePlaceholder')}
+                  maxLength={300}
+                  className="min-h-14 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 font-head text-[22px] font-bold text-ink"
+                />
+              </div>
+              <div>
+                <label htmlFor="th-excerpt" className="mb-1 block font-semibold text-ink">
+                  {e('excerptLabel')}
+                  <RequiredMark note={e('requiredToPublish')} />
+                </label>
+                <textarea
+                  id="th-excerpt"
+                  name="thExcerpt"
+                  lang="th"
+                  rows={2}
+                  value={th.excerpt}
+                  onChange={(event) => setTh({ ...th, excerpt: event.target.value })}
+                  aria-describedby="th-excerpt-hint"
+                  className={`${INPUT} py-2`}
+                />
+                <p id="th-excerpt-hint" className="mt-1 text-sm text-muted">
+                  {e('excerptHint')}
+                </p>
+              </div>
+              <RichTextEditor
+                label={e('bodyLabel')}
+                initialHtml={th.bodyHtml}
+                onLockedChange={setLocked}
+                onChange={(html) => setTh((previous) => ({ ...previous, bodyHtml: html }))}
+                searchProducts={searchProducts}
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <label htmlFor="slug" className="font-semibold text-ink-2">
                 {e('slugPrefix')}
@@ -410,7 +390,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                       {e('when')}
                     </dt>
                     <dd className="mt-1">
-                      {/* Two choices, so a switch like the language toggle above rather than a dropdown; real radios, so the form still sends `when`. */}
+                      {/* Two choices, so a segmented switch rather than a dropdown; real radios, so the form still sends `when`. */}
                       <div role="radiogroup" aria-labelledby="when-label" className={`grid grid-cols-2 ${SEG_TRACK}`}>
                         {(['now', 'later'] as const).map((choice) => (
                           <label
