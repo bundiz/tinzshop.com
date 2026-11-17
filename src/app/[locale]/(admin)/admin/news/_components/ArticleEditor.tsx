@@ -6,6 +6,7 @@ import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 
 import { buttonClass } from '@/components/ui/button-class';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/components/ui/Toast';
 import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import type { ArticlePreviewDraft, NewsAdminStatus, NewsCategoryOption } from '@/server/services/news/news-admin-service';
@@ -83,8 +84,11 @@ const SEG_TRACK = 'rounded-[9px] bg-sunk p-[3px]';
 const SEG_ITEM =
   'relative min-h-[34px] cursor-pointer rounded-[7px] px-3.5 text-sm font-semibold text-muted transition-colors hover:text-ink max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
 // The mockup's `.btn-text btn-sm del-link`: a 34px text button in the sale red.
-const TRASH_BUTTON =
-  'relative mt-3 -ml-3 inline-flex min-h-[34px] cursor-pointer items-center rounded-[9px] px-3 text-sm font-semibold text-sale transition-colors hover:bg-sunk max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
+// The panel footer's two text actions: trash (red) and, for a live article, unpublish. 34px, 44px tap target below `sm`.
+const TEXT_ACTION =
+  'relative -mx-2 inline-flex min-h-[34px] cursor-pointer items-center rounded-[9px] px-2 text-sm font-semibold transition-colors hover:bg-sunk disabled:cursor-not-allowed disabled:opacity-50 max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
+const TRASH_BUTTON = `${TEXT_ACTION} ml-auto text-sale`;
+const UNPUBLISH_BUTTON = `${TEXT_ACTION} text-ink-2 hover:text-ink`;
 
 /** A red star after a label for a field publishing needs (a draft saves without it), with the words for a screen reader. */
 function RequiredMark({ note }: { note: string }) {
@@ -126,7 +130,18 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const search = actions?.search ?? searchProductsAction;
   const createCategory = actions?.createCategory ?? createCategoryAction;
 
-  const [saved, formAction, saving] = useActionState(saveAction, IDLE);
+  const toast = useToast();
+  // A save that worked says so in the back office's toast (D-262), which outlives the move to a new article's page.
+  // The message goes by what was asked: a chosen future time schedules.
+  const saveAndAnnounce = async (previous: NewsAdminState, formData: FormData): Promise<NewsAdminState> => {
+    const result = await saveAction(previous, formData);
+    if (result.status === 'saved') {
+      const scheduled = formData.get('when') === 'later' && formData.get('publishAt') !== '';
+      toast.success(e(`saved.${result.action === 'publish' ? (scheduled ? 'scheduled' : 'publish') : result.action}`));
+    }
+    return result;
+  };
+  const [saved, formAction, saving] = useActionState(saveAndAnnounce, IDLE);
   const [trashed, trashFormAction, trashing] = useActionState(trashAction, IDLE);
   // Articles are written in Thai only for now (D-260). A stored English version is not shown and goes back unchanged.
   const language = 'th';
@@ -249,11 +264,6 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   }, [trashed, locale, router]);
 
   const searchProducts = (query: string) => search(query, locale);
-  // After a save the page is read again, so the message goes by what was asked: a chosen future time schedules.
-  const savedMessage =
-    saved.status === 'saved'
-      ? e(`saved.${saved.action === 'publish' ? (when === 'later' && publishAt !== '' ? 'scheduled' : 'publish') : saved.action}`)
-      : null;
   const failure = saved.status === 'error' ? saved : trashed.status === 'error' ? trashed : null;
 
   return (
@@ -265,36 +275,6 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
         <input type="hidden" name="enTitle" value={en.title} />
         <input type="hidden" name="enExcerpt" value={en.excerpt} />
         <input type="hidden" name="enBodyHtml" value={enBodyHtml} />
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <p role="status" aria-live="polite" className="font-medium text-ok-ink">
-            {savedMessage}
-          </p>
-          <div className="ml-auto flex flex-wrap items-center gap-2.5">
-            <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line', size: 'admin' })}>
-              {e('button.preview')}
-            </button>
-            {isPublished ? (
-              <>
-                <button type="submit" disabled={busy} name="action" value="unpublish" className={buttonClass({ variant: 'line', size: 'admin' })}>
-                  {e('button.unpublish')}
-                </button>
-                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'admin' })}>
-                  {e('button.update')}
-                </button>
-              </>
-            ) : (
-              <>
-                <button type="submit" disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line', size: 'admin' })}>
-                  {e('button.saveDraft')}
-                </button>
-                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'admin' })}>
-                  {e('button.publish')}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
 
         {failure ? (
           <p role="alert" className="rounded-sm bg-ns-soft p-3 font-medium text-ns-ink">
@@ -368,26 +348,28 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
           </div>
 
           <aside className="grid min-w-0 grid-cols-1 gap-3">
-            <Panel title={e('panel.publish')}>
-              <dl className="grid gap-3">
-                <div className="flex items-center justify-between gap-2">
-                  <dt className="text-ink-2">{e('state')}</dt>
-                  <dd>
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-1 text-[13px] font-semibold ${
-                        status === 'published' ? 'bg-ok-soft text-ok-ink' : status === 'scheduled' ? 'bg-brand-soft text-brand-dark' : 'bg-sunk text-ink-2'
-                      }`}
-                    >
-                      {t(`status.${status}`)}
-                    </span>
-                  </dd>
-                </div>
+            {/* Publishing: the status beside the title, the two settings, then every action in the panel's footer (owner, 2026-11-17). */}
+            <section aria-labelledby="publish-heading" className="overflow-hidden rounded-md border border-line bg-surface">
+              <div className="flex items-center justify-between gap-3 px-4 pt-4">
+                <h2 id="publish-heading" className="font-head text-base font-bold text-ink">
+                  {e('panel.publish')}
+                </h2>
+                <span
+                  className={`inline-flex h-[26px] items-center rounded-full px-2.5 text-[12.5px] font-semibold ${
+                    status === 'published' ? 'bg-ok-soft text-ok-ink' : status === 'scheduled' ? 'bg-brand-soft text-brand-dark' : 'bg-sunk text-ink-2'
+                  }`}
+                >
+                  <span className="sr-only">{e('state')}: </span>
+                  {t(`status.${status}`)}
+                </span>
+              </div>
+              <dl className="grid gap-4 px-4 pt-4 pb-4">
                 {publishable ? (
                   <div>
-                    <dt id="when-label" className="text-ink-2">
+                    <dt id="when-label" className="text-sm font-medium text-ink-2">
                       {e('when')}
                     </dt>
-                    <dd className="mt-1">
+                    <dd className="mt-1.5">
                       {/* Two choices, so a segmented switch rather than a dropdown; real radios, so the form still sends `when`. */}
                       <div role="radiogroup" aria-labelledby="when-label" className={`grid grid-cols-2 ${SEG_TRACK}`}>
                         {(['now', 'later'] as const).map((choice) => (
@@ -420,28 +402,52 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 ) : null}
                 <div>
                   <dt>
-                    <label htmlFor="byline" className="text-ink-2">
+                    <label htmlFor="byline" className="text-sm font-medium text-ink-2">
                       {e('byline')}
                     </label>
                   </dt>
-                  <dd className="mt-1">
+                  <dd className="mt-1.5">
                     <input id="byline" name="bylineName" value={byline} onChange={(event) => setByline(event.target.value)} maxLength={200} className={INPUT} />
                   </dd>
                 </div>
               </dl>
               {article?.featuredImageUrl ? (
-                <figure className="mt-3">
+                <figure className="px-4 pb-4">
                   {/* eslint-disable-next-line @next/next/no-img-element -- old-site URL, no image pipeline yet (D-127) */}
                   <img src={article.featuredImageUrl} alt="" className="h-auto w-full rounded-sm bg-sunk" />
                   <figcaption className="mt-1 text-sm text-muted">{e('featured')}</figcaption>
                 </figure>
               ) : null}
-              {article ? (
-                <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className={TRASH_BUTTON}>
-                  {e('button.trash')}
+              <div className="grid gap-2 border-t border-line bg-page/40 px-4 py-3">
+                <div className={`grid gap-2 ${isPublished ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line', size: 'admin', block: true })}>
+                    {e('button.preview')}
+                  </button>
+                  {isPublished ? null : (
+                    <button type="submit" disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line', size: 'admin', block: true })}>
+                      {e('button.saveDraft')}
+                    </button>
+                  )}
+                </div>
+                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'admin', block: true })}>
+                  {e(isPublished ? 'button.update' : 'button.publish')}
                 </button>
-              ) : null}
-            </Panel>
+                {isPublished || article ? (
+                  <div className="flex flex-wrap items-center justify-between gap-x-2">
+                    {isPublished ? (
+                      <button type="submit" disabled={busy} name="action" value="unpublish" className={UNPUBLISH_BUTTON}>
+                        {e('button.unpublish')}
+                      </button>
+                    ) : null}
+                    {article ? (
+                      <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className={TRASH_BUTTON}>
+                        {e('button.trash')}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </section>
 
             <Panel title={e('panel.categories')} required={e('requiredToPublish')}>
               {categoryOptions.length === 0 ? (

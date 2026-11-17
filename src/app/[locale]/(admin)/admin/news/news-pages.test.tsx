@@ -2,6 +2,7 @@ import { createTranslator, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToastProvider } from '@/components/ui/Toast';
 
 import type { PermissionKey, RoleKey } from '@/server/services/access/permission-keys';
 import type { CurrentCustomer } from '@/server/services/auth/customer-session-service';
@@ -88,7 +89,7 @@ const blogger = () => account('blogger', ['backoffice.enter', 'news.manage']);
 function html(node: ReactNode, locale: 'th' | 'en' = 'th'): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale={locale} messages={locale === 'th' ? th : en} timeZone="Asia/Bangkok">
-      {node}
+      <ToastProvider closeLabel="ปิด">{node}</ToastProvider>
     </NextIntlClientProvider>,
   );
 }

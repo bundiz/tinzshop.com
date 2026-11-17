@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '../../../../../../../messages/en.json';
+import { ToastProvider } from '@/components/ui/Toast';
 import ArticleEditor, { type EditorArticle } from './ArticleEditor';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -55,7 +56,9 @@ async function mount(
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: async () => [], createCategory: options.createCategory }} />
+        <ToastProvider closeLabel="Close">
+          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: async () => [], createCategory: options.createCategory }} />
+        </ToastProvider>
       </NextIntlClientProvider>,
     );
   });
@@ -65,6 +68,20 @@ async function mount(
 }
 
 describe('ArticleEditor', () => {
+  it('puts the actions in the Publishing panel: status beside its title, preview and save draft, then publish, then trash', async () => {
+    await mount(vi.fn(async () => ({ status: 'saved', id: article.id, slug: 'a', action: 'draft' }) as never));
+    const panel = [...container.querySelectorAll('section')].find((section) => section.querySelector('h2')?.textContent?.startsWith('Publishing'))!;
+    expect(panel.querySelector('h2')!.parentElement!.textContent).toContain('Draft');
+    const buttons = [...panel.querySelectorAll('button')].map((button) => button.textContent?.trim());
+    expect(buttons.indexOf('Preview')).toBeLessThan(buttons.indexOf('Publish'));
+    expect(buttons.indexOf('Save draft')).toBeLessThan(buttons.indexOf('Publish'));
+    expect(buttons.indexOf('Publish')).toBeLessThan(buttons.indexOf('Move to trash'));
+    expect(container.querySelectorAll('button[value="publish"]')).toHaveLength(1);
+    await act(async () => panel.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    // The saved line is the back office's toast now (D-262): its live region says so.
+    expect([...document.body.querySelectorAll('[role="status"]')].map((region) => region.textContent).join(' ')).toContain('Draft saved');
+  });
+
   it('submits a locked body exactly as stored, with the rest of the form editable', async () => {
     const save = vi.fn(async () => ({ status: 'idle' }) as never);
     await mount(save);
