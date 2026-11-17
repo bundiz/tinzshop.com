@@ -803,6 +803,18 @@
         "whenNow": "Now",
         "whenLater": "Schedule",
         "whenAt": "Date and time (Thailand time)",
+        "picker": {
+          "placeholder": "Pick a date and time",
+          "dialog": "Pick the publishing date and time",
+          "previousMonth": "Previous month",
+          "nextMonth": "Next month",
+          "today": "today",
+          "selected": "selected",
+          "hour": "Hour",
+          "minute": "Minute",
+          "clear": "Clear",
+          "done": "Done"
+        },
         "byline": "Author",
         "featured": "Original picture from the old site (cannot be changed)",
         "categoriesEmpty": "There are no categories yet",

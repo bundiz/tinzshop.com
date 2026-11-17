@@ -24,6 +24,7 @@ import {
 } from '../_lib/preview-channel';
 import AddCategory from './AddCategory';
 import { bodyOrEmpty } from './body-roundtrip';
+import DateTimePicker from './DateTimePicker';
 import ProductPicker from './ProductPicker';
 import RichTextEditor from './RichTextEditor';
 import TagInput from './TagInput';
@@ -69,7 +70,7 @@ const IDLE: NewsAdminState = { status: 'idle' };
 const EMPTY: Translation = { title: '', excerpt: '', bodyHtml: '' };
 const BANGKOK_OFFSET_MS = 7 * 3_600_000;
 
-/** An instant as the browser's date-time input wants it: Bangkok local, `YYYY-MM-DDTHH:mm` (Thailand has no daylight saving). */
+/** An instant as `publishAt` carries it: Bangkok local, `YYYY-MM-DDTHH:mm` (Thailand has no daylight saving). */
 function toBangkokLocal(iso: string): string {
   return new Date(new Date(iso).getTime() + BANGKOK_OFFSET_MS).toISOString().slice(0, 16);
 }
@@ -426,10 +427,10 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                       </div>
                       {when === 'later' ? (
                         <div className="mt-2">
-                          <label htmlFor="publish-at" className="mb-1 block text-sm text-ink-2">
+                          <label id="publish-at-label" htmlFor="publish-at" className="mb-1 block text-sm text-ink-2">
                             {e('whenAt')}
                           </label>
-                          <input id="publish-at" name="publishAt" type="datetime-local" value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className={INPUT} />
+                          <DateTimePicker id="publish-at" name="publishAt" labelId="publish-at-label" locale={locale} value={publishAt} onChange={setPublishAt} />
                         </div>
                       ) : null}
                     </dd>

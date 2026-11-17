@@ -43,6 +43,7 @@
     "next-intl": "4.14.9",
     "pg": "8.23.1",
     "react": "19.3.0",
+    "react-day-picker": "10.0.2",
     "react-dom": "19.3.0",
     "sanitize-html": "2.18.1",
     "tailwindcss": "4.3.3",

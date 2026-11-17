@@ -136,6 +136,19 @@ describe('ArticleEditor', () => {
     expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].getAll('categoryId')).toEqual([UNLISTED]);
   });
 
+  it('shows a scheduled article time in Bangkok and submits it unchanged when untouched', async () => {
+    const scheduled: EditorArticle = { ...article, status: 'scheduled', publishedAt: '2026-12-28T02:07:00.000Z', categoryIds: [] };
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, { article: scheduled });
+    const later = container.querySelector<HTMLInputElement>('input[type="radio"][name="when"][value="later"]')!;
+    expect(later.checked).toBe(true);
+    expect(container.querySelector('#publish-at')!.textContent).toContain('28 Dec 2026 · 09:07');
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="publish"]')!.click());
+    const sent = (save.mock.calls[0] as unknown as [unknown, FormData])[1];
+    expect(sent.get('when')).toBe('later');
+    expect(sent.get('publishAt')).toBe('2026-12-28T09:07');
+  });
+
   it('sends "publish later" with the date left empty, so the server can refuse it, and caps title and slug at 300', async () => {
     article = { ...article, status: 'draft', categoryIds: [] };
     const save = vi.fn(async () => ({ status: 'idle' }) as never);
@@ -148,7 +161,11 @@ describe('ArticleEditor', () => {
     expect(container.querySelector('select#when')).toBeNull();
     expect(container.querySelector('#publish-at')).toBeNull();
     await act(async () => choices[1]!.click());
-    expect(container.querySelector('#publish-at')).not.toBeNull();
+    // The date and time come from the calendar popover (DateTimePicker, D-256), not a native date-time input.
+    const picker = container.querySelector<HTMLButtonElement>('#publish-at')!;
+    expect(picker.tagName).toBe('BUTTON');
+    expect(picker.getAttribute('aria-labelledby')).toBe('publish-at-label publish-at');
+    expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
     await act(async () => container.querySelector<HTMLButtonElement>('button[value="publish"]')!.click());
     const sent = (save.mock.calls[0] as unknown as [unknown, FormData])[1];
     expect(sent.get('when')).toBe('later');
