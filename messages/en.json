@@ -739,6 +739,7 @@
       },
       "editor": {
         "back": "All articles",
+        "breadcrumbLabel": "Breadcrumb",
         "form": "Edit article",
         "languagesLabel": "Article language",
         "th": "ไทย",

@@ -39,7 +39,7 @@ export default async function EditNewsPage({ params }: Props) {
 
   return (
     <>
-      <h1 className="mb-4 font-head text-[24px] font-bold text-ink md:text-[28px]">{t('title')}</h1>
+      <h1 className="sr-only">{t('title')}</h1>
       <ArticleEditor locale={locale} article={initial} categories={listedCategoryOptions(categories, locale, article.categoryIds)} defaultByline={editor.firstName} />
     </>
   );

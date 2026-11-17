@@ -173,7 +173,7 @@ export default function DateTimePicker({ id, name, labelId, locale, value, onCha
           role="dialog"
           aria-label={t('dialog')}
           tabIndex={-1}
-          className="absolute top-full right-0 z-40 mt-1.5 max-w-[calc(100vw-2rem)] rounded-md border border-line bg-surface p-3 shadow-1"
+          className="absolute top-full right-0 z-40 mt-1.5 w-max max-w-[calc(100vw-2rem)] rounded-md border border-line bg-surface p-3 shadow-1"
         >
           <div className="flex flex-col gap-3 sm:flex-row">
             <DayPicker
@@ -201,7 +201,7 @@ export default function DateTimePicker({ id, name, labelId, locale, value, onCha
               classNames={CALENDAR_CLASSES}
               components={{ Chevron: CalendarChevron, DayButton: CalendarDayButton }}
             />
-            <div className="grid grid-cols-2 gap-2 border-t border-line pt-3 sm:w-[124px] sm:border-t-0 sm:border-l sm:pt-0 sm:pl-3">
+            <div className="grid grid-cols-2 gap-2 border-t border-line pt-3 sm:w-[148px] sm:border-t-0 sm:border-l sm:pt-0 sm:pl-3">
               <TimeColumn
                 kind="hour"
                 headingId={hourHeadingId}
@@ -252,7 +252,7 @@ const CALENDAR_CLASSES = {
   button_next:
     'inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-ink-2 hover:bg-sunk hover:text-ink aria-disabled:pointer-events-none aria-disabled:opacity-40',
   month_grid: 'col-span-3 border-collapse',
-  weekday: 'h-8 w-9 p-0 text-[13px] font-normal text-muted sm:w-10',
+  weekday: 'h-8 w-9 p-0 text-[13px] font-normal text-muted sm:w-11',
   day: 'p-0 text-center',
   hidden: 'invisible',
 };
@@ -278,7 +278,7 @@ function CalendarDayButton({ day: _day, modifiers, className, ...props }: DayBut
     <button
       ref={ref}
       {...props}
-      className={`${className ?? ''} inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-sm tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent sm:size-10 ${state}`}
+      className={`${className ?? ''} inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-sm tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent sm:size-11 ${state}`}
     />
   );
 }
@@ -305,7 +305,7 @@ function TimeColumn({
 }) {
   return (
     <div className="flex min-w-0 flex-col">
-      <p id={headingId} className="mb-1 text-center text-[13px] text-muted">
+      <p id={headingId} className="mb-1 text-center text-[13px] whitespace-nowrap text-muted">
         {heading}
       </p>
       <div

@@ -739,6 +739,7 @@
       },
       "editor": {
         "back": "ข่าวทั้งหมด",
+        "breadcrumbLabel": "เส้นทาง",
         "form": "แก้ไขข่าว",
         "languagesLabel": "ภาษาของบทความ",
         "th": "ไทย",

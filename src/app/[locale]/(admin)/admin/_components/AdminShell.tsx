@@ -4,9 +4,11 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Icon from '@/components/ui/Icon';
 import { routing } from '@/i18n/routing';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
+import { adminBreadcrumbs } from './admin-breadcrumbs';
 import SideNav from './SideNav';
 
 export type AdminShellProps = {
@@ -37,6 +39,7 @@ export default function AdminShell({ locale, permissions, name, roleLabel, child
   const query = useSearchParams().toString();
   const [open, setOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
+  const crumbs = adminBreadcrumbs(pathname, locale);
 
   useEffect(() => {
     if (!open) return;
@@ -75,47 +78,59 @@ export default function AdminShell({ locale, permissions, name, roleLabel, child
       </nav>
       {open ? <div aria-hidden="true" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-ink/50 md:hidden" /> : null}
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-white/95 px-3 backdrop-blur-[8px] md:px-7">
-          <button
-            ref={menuButton}
-            type="button"
-            aria-controls="admin-side-nav"
-            aria-expanded={open}
-            aria-label={open ? t('nav.close') : t('nav.open')}
-            onClick={() => setOpen((current) => !current)}
-            className="grid size-11 cursor-pointer place-items-center rounded-[9px] text-ink-2 hover:bg-sunk hover:text-ink md:hidden"
-          >
-            <Icon name="menu" className="size-5" />
-          </button>
-          <nav aria-label={t('language.label')} className="ml-auto">
-            <ul className="inline-flex gap-0.5 rounded-sm bg-sunk p-[3px]">
-              {routing.locales.map((target) => (
-                <li key={target}>
-                  {target === locale ? (
-                    <span
-                      aria-current="true"
-                      lang={target}
-                      className="inline-flex min-h-[34px] min-w-11 items-center justify-center rounded-md bg-white px-2.5 text-[13px] leading-none font-semibold text-ink shadow-1"
-                    >
-                      {t(`language.${target}`)}
-                    </span>
-                  ) : (
-                    <Link
-                      href={inLocale(pathname, query, locale, target)}
-                      hrefLang={target}
-                      lang={target}
-                      aria-label={t(`language.${target}Name`)}
-                      className="inline-flex min-h-[34px] min-w-11 items-center justify-center rounded-md px-2.5 text-[13px] leading-none font-semibold text-muted hover:text-ink"
-                    >
-                      {t(`language.${target}`)}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </header>
         <main id="main" className="min-w-0 px-4 pt-[18px] pb-24 md:px-7 md:pt-6 md:pb-14">
+          {/* One row, no header bar of its own (owner, 2026-11-17): the menu button below md, the trail, the TH/EN switch. */}
+          <div className="mb-4 flex items-center gap-2 md:gap-3">
+            <button
+              ref={menuButton}
+              type="button"
+              aria-controls="admin-side-nav"
+              aria-expanded={open}
+              aria-label={open ? t('nav.close') : t('nav.open')}
+              onClick={() => setOpen((current) => !current)}
+              className="grid size-11 flex-none cursor-pointer place-items-center rounded-[9px] text-ink-2 hover:bg-white hover:text-ink md:hidden"
+            >
+              <Icon name="menu" className="size-5" />
+            </button>
+            {crumbs.length > 0 ? (
+              <div className="min-w-0 flex-1">
+                <Breadcrumbs
+                  variant="panel"
+                  label={t('news.editor.breadcrumbLabel')}
+                  items={crumbs.map((crumb) => ({ label: t(crumb.key), href: crumb.href }))}
+                />
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+            <nav aria-label={t('language.label')} className="flex-none">
+              <ul className="inline-flex gap-0.5 rounded-sm border border-line bg-surface p-0.5">
+                {routing.locales.map((target) => (
+                  <li key={target}>
+                    {target === locale ? (
+                      <span
+                        aria-current="true"
+                        lang={target}
+                        className="inline-flex min-h-7 min-w-9 items-center justify-center rounded-[6px] bg-sunk px-2 text-xs leading-none font-semibold text-ink"
+                      >
+                        {t(`language.${target}`)}
+                      </span>
+                    ) : (
+                      <Link
+                        href={inLocale(pathname, query, locale, target)}
+                        hrefLang={target}
+                        lang={target}
+                        aria-label={t(`language.${target}Name`)}
+                        className="inline-flex min-h-7 min-w-9 items-center justify-center rounded-[6px] px-2 text-xs leading-none font-semibold text-muted hover:text-ink"
+                      >
+                        {t(`language.${target}`)}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
           {children}
         </main>
       </div>

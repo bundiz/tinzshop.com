@@ -258,9 +258,21 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
         <input type="hidden" name="enBodyHtml" value={enBodyHtml} />
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <a href={`/${locale}/admin/news`} className="inline-flex min-h-11 items-center font-semibold text-ink-2 hover:text-ink">
-            ‹ {e('back')}
-          </a>
+          {/* The content language sits on the buttons' row (owner, 2026-11-17). */}
+          <div role="group" aria-label={e('languagesLabel')} className="inline-flex gap-0.5 rounded-sm bg-sunk p-[3px]">
+            {(['th', 'en'] as const).map((code) => (
+              <button
+                key={code}
+                type="button"
+                lang={code}
+                aria-pressed={language === code}
+                onClick={() => setLanguage(code)}
+                className="min-h-11 min-w-20 cursor-pointer rounded-md px-3 font-semibold text-muted aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-1"
+              >
+                {e(code)}
+              </button>
+            ))}
+          </div>
           <p role="status" aria-live="polite" className="font-medium text-ok-ink">
             {savedMessage}
           </p>
@@ -298,23 +310,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
 
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid min-w-0 gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div role="group" aria-label={e('languagesLabel')} className="inline-flex gap-0.5 rounded-sm bg-sunk p-[3px]">
-                {(['th', 'en'] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    lang={code}
-                    aria-pressed={language === code}
-                    onClick={() => setLanguage(code)}
-                    className="min-h-11 min-w-20 cursor-pointer rounded-md px-3 font-semibold text-muted aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-1"
-                  >
-                    {e(code)}
-                  </button>
-                ))}
-              </div>
-              {language === 'en' ? <p className="text-sm text-muted">{e('enHint')}</p> : null}
-            </div>
+            {language === 'en' ? <p className="text-sm text-muted">{e('enHint')}</p> : null}
 
             {(['th', 'en'] as const).map((code) => {
               const value = code === 'th' ? th : en;
