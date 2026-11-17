@@ -35,6 +35,11 @@ describe('buttonClass', () => {
     expect(classes).not.toContain('text-white');
   });
 
+  it("danger is the admin mockup's `.btn-danger`: sale red with white text, for a destructive confirm", () => {
+    const classes = buttonClass({ variant: 'danger', size: 'admin' }).split(' ');
+    expect(classes).toEqual(expect.arrayContaining(['bg-sale', 'text-white', 'hover:bg-[#b42318]']));
+  });
+
   it('lg and block add their classes, and md and the default add none', () => {
     const large = buttonClass({ variant: 'buy', size: 'lg', block: true }).split(' ');
     expect(large).toEqual(expect.arrayContaining(['min-h-[54px]', 'text-[17px]', 'w-full']));

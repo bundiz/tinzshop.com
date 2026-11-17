@@ -31,6 +31,11 @@ export type IconName =
   | 'bulletList'
   | 'orderedList'
   | 'video'
+  | 'more'
+  | 'edit'
+  | 'lock'
+  | 'trash'
+  | 'undo'
   | 'artConsole'
   | 'artHandheld'
   | 'artPad'
@@ -180,6 +185,28 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="m16 10.5 5-3v9l-5-3" />
     </>
   ),
+  // The back office's row menu (D-261): the admin mockup's i-more, i-edit, i-lock, i-trash and i-undo symbols.
+  more: (
+    <>
+      <circle cx="5.5" cy="12" r="1.3" />
+      <circle cx="12" cy="12" r="1.3" />
+      <circle cx="18.5" cy="12" r="1.3" />
+    </>
+  ),
+  edit: (
+    <>
+      <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16Z" />
+      <path d="m13.5 6.5 4 4" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="5" y="10.5" width="14" height="10" rx="2" />
+      <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+    </>
+  ),
+  trash: <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" />,
+  undo: <path d="M8 8.5H15a5 5 0 0 1 0 10h-4M8 8.5 11.5 5M8 8.5 11.5 12" />,
   // Product art (generic, not brand look-alikes); drawn large at strokeWidth 0.9 by ImagePlaceholder.
   artConsole: (
     <>

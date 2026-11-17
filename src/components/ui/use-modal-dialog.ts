@@ -22,7 +22,7 @@ function focusableIn(container: HTMLElement): HTMLElement[] {
 
 /**
  * The behaviour of a modal dialog (07 Responsive; plan 015, R8): while `open`, focus moves to the first focusable element
- * inside, Tab and Shift+Tab wrap inside, Escape calls `onClose`, and the page behind does not scroll. When it
+ * inside, Tab and Shift+Tab wrap inside, Escape calls `onClose` (unless a control inside already handled it), and the page behind does not scroll. When it
  * closes, focus returns to `returnFocusRef`.
  */
 export function useModalDialog({ open, onClose, containerRef, returnFocusRef }: UseModalDialogOptions): void {
@@ -42,6 +42,8 @@ export function useModalDialog({ open, onClose, containerRef, returnFocusRef }: 
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        // A control inside that used the Escape itself (an open `Select` or row menu closing) keeps the dialog open.
+        if (event.defaultPrevented) return;
         event.preventDefault();
         onCloseRef.current();
         return;

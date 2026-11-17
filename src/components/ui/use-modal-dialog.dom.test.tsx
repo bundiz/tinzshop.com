@@ -88,4 +88,16 @@ describe('useModalDialog', () => {
     expect(document.activeElement).toBe($('opener'));
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('leaves Escape to a control inside that already handled it (an open dropdown closes, the dialog stays)', () => {
+    act(() => $('opener').click());
+    const handled = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') event.preventDefault();
+    };
+    $('middle').addEventListener('keydown', handled);
+    act(() => $('middle').focus());
+    key('Escape');
+    $('middle').removeEventListener('keydown', handled);
+    expect($('dialog').hidden).toBe(false);
+  });
 });

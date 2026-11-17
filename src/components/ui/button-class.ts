@@ -1,4 +1,4 @@
-export type ButtonVariant = 'buy' | 'brand' | 'line' | 'ghost' | 'lineApp';
+export type ButtonVariant = 'buy' | 'brand' | 'line' | 'ghost' | 'lineApp' | 'danger';
 export type ButtonSize = 'md' | 'lg' | 'admin' | 'adminSm';
 
 // Height, side padding, text size and corners live in SIZE, so a back-office size replaces them rather than competing.
@@ -15,6 +15,8 @@ const VARIANT: Record<ButtonVariant, string> = {
   ghost: 'border-white/28 text-white hover:border-white hover:bg-white/6',
   // The LINE app's green carries ink text, never white (R16).
   lineApp: 'bg-line-app text-ink hover:bg-line-app-hover',
+  // The admin mockup's `.btn-danger` (and its hover): the confirm button of a destructive action (D-261).
+  danger: 'bg-sale text-white hover:bg-[#b42318]',
 };
 
 const SIZE: Record<ButtonSize, string> = {
