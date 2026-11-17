@@ -9,6 +9,14 @@ import en from '../../../../../../../messages/en.json';
 import RichTextEditor from './RichTextEditor';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+// jsdom has no layout: ProseMirror measures a Range when it scrolls the selection into view (after focus() from the block
+// type list), and jsdom's Range has no getClientRects. Give it empty boxes so the scroll is a no-op instead of an
+// uncaught error that fails the run.
+const emptyRect = () => ({ x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, toJSON: () => ({}) }) as DOMRect;
+Range.prototype.getClientRects ??= function getClientRects() {
+  return [] as unknown as DOMRectList;
+};
+Range.prototype.getBoundingClientRect ??= emptyRect;
 
 const PRODUCT = '33333333-3333-4333-8333-333333333333';
 const BODY = `<p>Hello</p><tinz-product data-id="${PRODUCT}"></tinz-product><p><img src="https://old.example/a.jpg" alt="old"></p>`;
