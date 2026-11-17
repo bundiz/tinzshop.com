@@ -4,14 +4,17 @@ import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import type { Editor } from '@tiptap/core';
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 
 import { buttonClass } from '@/components/ui/button-class';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import Select from '@/components/ui/Select';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { wouldLoseContent } from './body-roundtrip';
 import { buildExtensions } from './editor-extensions';
+import { ProductCardsContext, type ProductCards } from './ProductCardView';
 import { youtubeEmbedFromUrl } from './youtube-embed';
 import { ProductSearchBox, type ProductSearch } from './ProductPicker';
 
@@ -46,6 +49,27 @@ const TOOL =
 const SEP = 'mx-1.5 h-[22px] w-px bg-line';
 
 type DialogKind = 'link' | 'youtube' | 'product';
+
+/**
+ * Loads the storefront cards for product ids (D-266): each id maps to its card, or to null where the article page would
+ * draw nothing. An id left out of the answer stays loading. The editor sends at most `PRODUCT_CARDS_BATCH` ids a call.
+ */
+export type ProductCardsLoader = (ids: string[]) => Promise<Record<string, LandingProductCard | null>>;
+
+/** The most ids in one load: `productCardsCommand` refuses a longer list (`PRODUCT_CARDS_LIMIT`). */
+const PRODUCT_CARDS_BATCH = 100;
+
+// The id shape the article page draws a card for (`splitAtProductCards`); any other id is one readers never see.
+const CARD_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The ids of the document's product cards, each once, in order. Cards are top-level only (R16). */
+function cardIdsIn(doc: ProseMirrorNode): string[] {
+  const ids = new Set<string>();
+  doc.forEach((child) => {
+    if (child.type.name === 'productCard' && typeof child.attrs.id === 'string' && child.attrs.id !== '') ids.add(child.attrs.id);
+  });
+  return [...ids];
+}
 
 /**
  * One toolbar button: an icon, with the action as its accessible name and tooltip. `shortcut` is the letter of a Ctrl
@@ -184,6 +208,11 @@ export type RichTextEditorProps = {
   onLockedChange?: (locked: boolean) => void;
   /** The product picker's search, for the product-card button. */
   searchProducts: ProductSearch;
+  /**
+   * Loads the cards the body shows, so each is drawn as readers see it (D-266): once on load for every card in the body,
+   * then for each new one. Without it every card stays the loading skeleton.
+   */
+  loadProductCards?: ProductCardsLoader;
 };
 
 /**
@@ -192,7 +221,7 @@ export type RichTextEditorProps = {
  * no upload, no paste or drop of files: the image node is registered only so an imported body's `<img>` survives a save
  * and so a later task can add the control. Client-only: nothing on a storefront page imports this file.
  */
-export default function RichTextEditor({ label, initialHtml, onChange, onLockedChange, searchProducts }: RichTextEditorProps) {
+export default function RichTextEditor({ label, initialHtml, onChange, onLockedChange, searchProducts, loadProductCards }: RichTextEditorProps) {
   const t = useTranslations('admin.news.editor');
   const [dialog, setDialog] = useState<DialogKind | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -213,7 +242,10 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
         role: 'textbox',
         'aria-multiline': 'true',
         'aria-label': label,
-        class: 'min-h-[320px] px-4 py-3 outline-none [&_p]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3]:my-3 [&_h3]:text-lg [&_h3]:font-bold [&_a]:text-brand [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
+        // The text styles skip the product card's node view (`:not(tinz-product …)`), so its name, price and stock look
+        // exactly as on the storefront card (D-266); links and paragraphs in the article text are unchanged.
+        class:
+          'min-h-[320px] px-4 py-3 outline-none [&_p:not(tinz-product_p)]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3:not(tinz-product_h3)]:my-3 [&_h3:not(tinz-product_h3)]:text-lg [&_h3:not(tinz-product_h3)]:font-bold [&_a:not(tinz-product_a)]:text-brand [&_a:not(tinz-product_a)]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img:not(tinz-product_img)]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
       },
     },
     // Even a selection-only transaction can change the document (the trailing paragraph, a split figure), so a locked body
@@ -233,6 +265,46 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
     editor.setEditable(!lossy, false);
     // The body prop is the stored one; later edits must not re-run this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
+
+  // The product cards' data (D-266), filled by one load for the body's cards and one for each card added later.
+  const [productCards, setProductCards] = useState<ProductCards>({});
+  const loaderRef = useRef(loadProductCards);
+  useEffect(() => {
+    loaderRef.current = loadProductCards;
+  });
+  useEffect(() => {
+    if (editor === null) return;
+    // Asked once each: a failed or refused load leaves the card loading rather than asking again on every keystroke.
+    const asked = new Set<string>();
+    let live = true;
+    const loadNew = () => {
+      const load = loaderRef.current;
+      if (load === undefined) return;
+      const fresh = cardIdsIn(editor.state.doc).filter((id) => !asked.has(id));
+      if (fresh.length === 0) return;
+      for (const id of fresh) asked.add(id);
+      // An id that is not a uuid is dropped by the sanitiser, so readers never see that card.
+      const unseen = fresh.filter((id) => !CARD_ID.test(id));
+      if (unseen.length > 0) setProductCards((known) => ({ ...known, ...Object.fromEntries(unseen.map((id) => [id, null])) }));
+      const ids = fresh.filter((id) => CARD_ID.test(id));
+      for (let start = 0; start < ids.length; start += PRODUCT_CARDS_BATCH) {
+        const batch = ids.slice(start, start + PRODUCT_CARDS_BATCH);
+        load(batch).then(
+          (found) => {
+            const answered = batch.filter((id) => id in found);
+            if (live && answered.length > 0) setProductCards((known) => ({ ...known, ...Object.fromEntries(answered.map((id) => [id, found[id] ?? null])) }));
+          },
+          () => {},
+        );
+      }
+    };
+    loadNew();
+    editor.on('update', loadNew);
+    return () => {
+      live = false;
+      editor.off('update', loadNew);
+    };
   }, [editor]);
 
   const state = useEditorState({
@@ -294,7 +366,9 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
           {t('bodyLocked')}
         </p>
       ) : null}
-      <EditorContent editor={editor} />
+      <ProductCardsContext value={productCards}>
+        <EditorContent editor={editor} />
+      </ProductCardsContext>
 
       {dialog === 'link' && editor ? (
         <UrlDialog

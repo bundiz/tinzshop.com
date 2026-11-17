@@ -49,6 +49,7 @@ import {
 import {
   createCategoryCommand,
   previewArticleCommand,
+  productCardsCommand,
   restoreArticleCommand,
   saveArticleCommand,
   searchProductsCommand,
@@ -144,6 +145,7 @@ import {
   listNews,
   listRelatedNewsForProduct,
   articleProductCards,
+  productCardsByIds,
   type GetNewsArticleInput,
   type ListedNewsCategory,
   type ListNewsInput,
@@ -377,6 +379,7 @@ export function getNewsAdminCommands() {
     createCategory: news.createCategory,
     preview: news.preview,
     searchProducts: (query) => searchProductsForPicker(productSearchDeps, query),
+    productCards: (ids, locale) => productCardsByIds({ products: { findProductCandidates: findStorefrontCandidates } }, ids, locale),
     now: () => new Date(),
     log: (message, fields) => console.info(message, fields),
   };
@@ -385,6 +388,7 @@ export function getNewsAdminCommands() {
     trash: (actor: NewsAdminActor, formData: FormData) => trashArticleCommand(deps, actor, formData),
     restore: (actor: NewsAdminActor, formData: FormData) => restoreArticleCommand(deps, actor, formData),
     searchProducts: (actor: NewsAdminActor, query: string) => searchProductsCommand(deps, actor, query),
+    productCards: (actor: NewsAdminActor, ids: unknown, locale: Locale) => productCardsCommand(deps, actor, ids, locale),
     createCategory: (actor: NewsAdminActor, input: unknown) => createCategoryCommand(deps, actor, input),
     preview: (actor: Parameters<typeof previewArticleCommand>[1], input: unknown, locale: Locale) =>
       previewArticleCommand(deps, actor, input, locale),

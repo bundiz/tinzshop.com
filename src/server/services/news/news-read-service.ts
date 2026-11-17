@@ -366,7 +366,19 @@ export async function articleProductCards(
   bodyHtml: string,
   locale: NewsLocale,
 ): Promise<LandingProductCard[]> {
-  const ids = productIdsIn(bodyHtml);
+  return productCardsByIds(deps, productIdsIn(bodyHtml), locale);
+}
+
+/**
+ * The named products as the article page draws their cards, in one read and with the same rule (`isStorefrontVisible`):
+ * a product the shop does not show today is left out. The body read above goes through it, and so does the editor,
+ * which draws each card in the body as readers will see it (D-266). No ids reads nothing.
+ */
+export async function productCardsByIds(
+  deps: Pick<NewsArticleReadDeps, 'products'>,
+  ids: string[],
+  locale: NewsLocale,
+): Promise<LandingProductCard[]> {
   if (ids.length === 0) return [];
   const candidates = await deps.products.findProductCandidates(ids);
   return candidates.filter(isStorefrontVisible).map((candidate) => toLandingProductCard(candidate, locale));

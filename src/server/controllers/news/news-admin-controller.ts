@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { can } from '@/server/services/access/access-service';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
@@ -52,6 +53,8 @@ export type NewsAdminCommandDeps = {
   trash: (id: string, editorId: string) => Promise<Result<{ id: string }>>;
   restore: (id: string, editorId: string) => Promise<Result<{ id: string }>>;
   searchProducts: (query: string) => Promise<ProductPickerHit[]>;
+  /** The named products' storefront cards, only those a reader sees today (`productCardsByIds`, D-266). */
+  productCards: (ids: string[], locale: NewsLocale) => Promise<LandingProductCard[]>;
   createCategory: (input: { thName: string; enName: string }) => Promise<Result<NewsCategoryOption>>;
   preview: (input: { draft: ArticlePreviewDraft; locale: NewsLocale; editorFirstName: string }) => Promise<NewsArticleDetail>;
   now: () => Date;
@@ -226,6 +229,35 @@ export async function searchProductsCommand(deps: NewsAdminCommandDeps, actor: N
   if (!can(actor, 'news.manage')) return [];
   const text = query.trim();
   return text === '' ? [] : deps.searchProducts(text);
+}
+
+/** The most cards the editor asks for in one call; it sends a longer body's ids in batches of this size. */
+export const PRODUCT_CARDS_LIMIT = 100;
+
+// The id shape the article page draws a card for (`splitAtProductCards`), lower-cased as it reads it.
+const ProductCardIds = z
+  .array(z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i))
+  .max(PRODUCT_CARDS_LIMIT);
+
+/**
+ * The editor's product cards (`news.manage`, D-266): every id asked, deduplicated, maps to its storefront card, or to null
+ * when the article page would draw nothing there (unknown, inactive or not shown). An actor without the key, or a list
+ * that is not up to 100 uuids, gets an empty map and nothing is read; the editor then keeps those cards as loading.
+ */
+export async function productCardsCommand(
+  deps: NewsAdminCommandDeps,
+  actor: NewsAdminActor,
+  input: unknown,
+  locale: NewsLocale,
+): Promise<Record<string, LandingProductCard | null>> {
+  if (!can(actor, 'news.manage')) return {};
+  const parsed = ProductCardIds.safeParse(input);
+  if (!parsed.success) return {};
+  const ids = [...new Set(parsed.data)];
+  if (ids.length === 0) return {};
+  const lower = [...new Set(ids.map((id) => id.toLowerCase()))];
+  const cards = new Map((await deps.productCards(lower, locale)).map((card) => [card.productId, card]));
+  return Object.fromEntries(ids.map((id) => [id, cards.get(id.toLowerCase()) ?? null]));
 }
 
 /** The add-category form's two fields; generous caps here, the service's 100-character rule gives the message. */

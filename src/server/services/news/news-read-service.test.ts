@@ -10,6 +10,7 @@ import {
   listListedNewsCategories,
   listNews,
   listRelatedNewsForProduct,
+  productCardsByIds,
   type NewsArticleDetailRow,
   type NewsArticleRow,
   type NewsCategoryRow,
@@ -451,6 +452,22 @@ describe('getNewsArticle: product cards (D-245)', () => {
     const plain = setupArticle({ article: detailRow(2) });
     expect((await getNewsArticle(plain.deps, { locale: 'th', slug: 'post-2' }))?.productCards).toEqual([]);
     expect(plain.findProducts).not.toHaveBeenCalled();
+  });
+});
+
+describe('productCardsByIds: the editor\'s cards (D-266)', () => {
+  it('reads the named products once, with the article page\'s rule for what a reader sees', async () => {
+    const findProductCandidates = vi.fn(async (_ids: readonly string[]) => [candidate(P1), candidate(P2, { isActive: false })]);
+    const cards = await productCardsByIds({ products: { findProductCandidates } }, [P1, P2], 'en');
+    expect(findProductCandidates).toHaveBeenCalledTimes(1);
+    expect(findProductCandidates).toHaveBeenCalledWith([P1, P2]);
+    expect(cards.map((c) => [c.productId, c.name, c.priceSatang, c.stockStatus])).toEqual([[P1, 'Astro Bot', 129900n, 'in_stock']]);
+  });
+
+  it('reads nothing for no ids', async () => {
+    const findProductCandidates = vi.fn(async () => []);
+    expect(await productCardsByIds({ products: { findProductCandidates } }, [], 'th')).toEqual([]);
+    expect(findProductCandidates).not.toHaveBeenCalled();
   });
 });
 

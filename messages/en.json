@@ -802,6 +802,14 @@
           "cancel": "Cancel"
         },
         "productCard": "Product card",
+        "productCardGone": {
+          "title": "This product is no longer shown on the site",
+          "hint": "The article page shows nothing in its place. You can remove this card."
+        },
+        "productCardRemove": {
+          "named": "Remove product card: {name}",
+          "plain": "Remove product card"
+        },
         "panel": {
           "publish": "Publishing",
           "categories": "Categories",

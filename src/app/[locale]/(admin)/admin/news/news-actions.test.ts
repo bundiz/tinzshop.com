@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   restore: vi.fn(async () => ({ status: 'done' })),
   searchProducts: vi.fn(async () => [{ id: 'p', name: 'Switch', sku: 'NS', imageUrl: null }]),
   createCategory: vi.fn(async () => ({ status: 'created', category: { id: 'c', slug: 'guides', isListed: true, names: { th: 'คู่มือ' } } })),
+  productCards: vi.fn(async () => ({ p: null })),
   revalidatePath: vi.fn(),
 }));
 
@@ -19,10 +20,11 @@ vi.mock('@/server/composition-root', () => ({
     restore: mocks.restore,
     searchProducts: mocks.searchProducts,
     createCategory: mocks.createCategory,
+    productCards: mocks.productCards,
   }),
 }));
 
-const { createCategoryAction, restoreArticleAction, saveArticleAction, searchProductsAction, trashArticleAction } = await import('./actions');
+const { createCategoryAction, productCardsAction, restoreArticleAction, saveArticleAction, searchProductsAction, trashArticleAction } = await import('./actions');
 
 const idle = { status: 'idle' } as const;
 const ACTOR = { id: 'actor-1', permissions: ['backoffice.enter', 'news.manage'] };
@@ -55,6 +57,18 @@ describe('the news Server Actions', () => {
     await expect(searchProductsAction('switch', 'th')).rejects.toThrow('NEXT_REDIRECT');
     expect(mocks.requirePermission).toHaveBeenCalledWith('th', expect.stringContaining('/admin/news'), 'news.manage');
     expect(mocks.searchProducts).not.toHaveBeenCalled();
+  });
+
+  it('productCardsAction checks news.manage and stops when it is refused (D-266)', async () => {
+    mocks.requirePermission.mockRejectedValue(new Error('NEXT_REDIRECT'));
+    await expect(productCardsAction(['p'], 'en')).rejects.toThrow('NEXT_REDIRECT');
+    expect(mocks.requirePermission).toHaveBeenCalledWith('en', expect.stringContaining('/admin/news'), 'news.manage');
+    expect(mocks.productCards).not.toHaveBeenCalled();
+  });
+
+  it('productCardsAction passes the actor, the ids and the locale (Thai for an unknown one) to the controller', async () => {
+    expect(await productCardsAction(['p'], 'xx')).toEqual({ p: null });
+    expect(mocks.productCards).toHaveBeenCalledWith(ACTOR, ['p'], 'th');
   });
 
   it('passes the signed-in actor and the form to the controller, and revalidates the list after a save', async () => {

@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { routing } from '@/i18n/routing';
 import { getNewsAdminCommands } from '@/server/composition-root';
 import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { requirePermission } from '../_lib/require-permission';
 
@@ -49,6 +50,17 @@ export async function restoreArticleAction(_previous: NewsAdminState, formData: 
 export async function searchProductsAction(query: string, locale?: string): Promise<ProductPickerHit[]> {
   const actor = await requirePermission(localeOf(locale), '/admin/news', 'news.manage');
   return getNewsAdminCommands().searchProducts(actor, query);
+}
+
+/**
+ * The editor's product cards (D-266): each id's storefront card, or null where the article page would draw nothing, so
+ * the editor draws every card as readers see it. Returns data, never a rendered element (D-265). Re-checks `news.manage`;
+ * the ids are validated by the controller (up to 100 uuids).
+ */
+export async function productCardsAction(ids: unknown, locale?: string): Promise<Record<string, LandingProductCard | null>> {
+  const pageLocale = typeof locale === 'string' && hasLocale(routing.locales, locale) ? locale : routing.defaultLocale;
+  const actor = await requirePermission(pageLocale, '/admin/news', 'news.manage');
+  return getNewsAdminCommands().productCards(actor, ids, pageLocale);
 }
 
 /**

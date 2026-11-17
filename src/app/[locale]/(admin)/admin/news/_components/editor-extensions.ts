@@ -1,14 +1,16 @@
 import { mergeAttributes, Node, type Extensions } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
+import ProductCardView from './ProductCardView';
 import { isStoredYoutubeEmbed } from './youtube-embed';
 
 /**
- * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as a labelled
- * box (the node view, never saved); the saved HTML is only the element and the id. The storefront draws the live card
- * from it (D-245); the sanitiser keeps the tag with a uuid `data-id` and nothing else.
+ * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as the
+ * storefront's card (`ProductCardView`, never saved, D-266); the saved HTML is only the element and the id. The
+ * storefront draws the live card from it (D-245); the sanitiser keeps the tag with a uuid `data-id` and nothing else.
  */
 export const ProductCard = Node.create<{ label: string }>({
   name: 'productCard',
@@ -24,22 +26,18 @@ export const ProductCard = Node.create<{ label: string }>({
       parseHTML: (element) => element.getAttribute('data-id'),
       renderHTML: (attributes) => (attributes.id ? { 'data-id': attributes.id } : {}),
     },
-    // The name is only for the editor's box: never written into the saved HTML.
+    // The picker's name, only for the editor's accessible name until the card loads: never written into the saved HTML.
     name: { default: null, rendered: false },
   }),
   parseHTML: () => [{ tag: 'tinz-product[data-id]' }],
   renderHTML: ({ HTMLAttributes }) => ['tinz-product', mergeAttributes(HTMLAttributes)],
-  addNodeView() {
-    const label = this.options.label;
-    return ({ node }) => {
-      const dom = document.createElement('tinz-product');
-      dom.setAttribute('data-id', String(node.attrs.id ?? ''));
-      dom.setAttribute('contenteditable', 'false');
-      dom.className = 'my-3 block rounded-sm border-2 border-dashed border-brand bg-brand-soft p-3 font-semibold text-brand-dark';
-      dom.textContent = node.attrs.name ? `${label}: ${node.attrs.name}` : label;
-      return { dom };
-    };
-  },
+  // The storefront card itself, from the live product (D-266); the wrapper is the stored tag with its id, as before.
+  addNodeView: () =>
+    ReactNodeViewRenderer(ProductCardView, {
+      as: 'tinz-product',
+      className: 'block',
+      attrs: ({ node }) => ({ 'data-id': String(node.attrs.id ?? ''), contenteditable: 'false' }),
+    }),
 });
 
 /**

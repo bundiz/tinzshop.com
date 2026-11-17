@@ -38,6 +38,7 @@ vi.mock('./actions', () => ({
   restoreArticleAction: async () => ({ status: 'idle' }),
   searchProductsAction: async () => [],
   createCategoryAction: async () => ({ status: 'error', errorKey: 'invalid' }),
+  productCardsAction: async () => ({}),
 }));
 vi.mock('next/navigation', async (original) => ({
   ...(await original<object>()),

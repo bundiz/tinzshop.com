@@ -51,13 +51,14 @@ async function mount(
     categories?: { id: string; name: string; unlisted?: boolean }[];
     createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<never>;
     trash?: (previous: unknown, formData: FormData) => Promise<never>;
+    productCards?: (ids: string[], locale: string) => Promise<Record<string, null>>;
   } = {},
 ) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
         <ToastProvider closeLabel="Close">
-          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: async () => [], createCategory: options.createCategory }} />
+          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: async () => [], createCategory: options.createCategory, productCards: options.productCards ?? (async () => ({})) }} />
         </ToastProvider>
       </NextIntlClientProvider>,
     );
@@ -68,6 +69,20 @@ async function mount(
 }
 
 describe('ArticleEditor', () => {
+  it('loads the body\'s product cards through the cards action, in the page locale (D-266)', async () => {
+    const id = '33333333-3333-4333-8333-333333333333';
+    withBody(`<p>Kept</p><tinz-product data-id="${id}"></tinz-product>`);
+    const productCards = vi.fn(async (ids: string[]) => Object.fromEntries(ids.map((each) => [each, null])));
+    try {
+      await mount(vi.fn() as never, { productCards });
+      expect(productCards).toHaveBeenCalledTimes(1);
+      expect(productCards).toHaveBeenCalledWith([id], 'en');
+      expect(container.querySelector(`tinz-product[data-id="${id}"]`)?.textContent).toContain('This product is no longer shown on the site');
+    } finally {
+      withBody(STORED);
+    }
+  });
+
   it('puts preview, save draft and publish in the page bar (D-264), tied to the form, and keeps trash in the Publishing panel', async () => {
     const slot = document.createElement('div');
     slot.id = 'admin-page-actions';

@@ -8,10 +8,11 @@ import { buttonClass } from '@/components/ui/button-class';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import type { ArticlePreviewDraft, NewsAdminStatus, NewsCategoryOption } from '@/server/services/news/news-admin-service';
 import PageActions from '../../_components/PageActions';
-import { createCategoryAction, saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
+import { createCategoryAction, productCardsAction, saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
 import { categoryName } from '../_lib/categories';
 import {
   buildPreviewDraft,
@@ -65,6 +66,8 @@ export type ArticleEditorProps = {
     trash: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
     search: (query: string, locale: string) => Promise<ProductPickerHit[]>;
     createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<NewsCategoryState>;
+    /** The body editor's product cards (D-266). */
+    productCards?: (ids: string[], locale: string) => Promise<Record<string, LandingProductCard | null>>;
   };
 };
 
@@ -129,6 +132,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const trashAction = actions?.trash ?? trashArticleAction;
   const search = actions?.search ?? searchProductsAction;
   const createCategory = actions?.createCategory ?? createCategoryAction;
+  const productCards = actions?.productCards ?? productCardsAction;
 
   const toast = useToast();
   // A save that worked says so in the back office's toast (D-262), which outlives the move to a new article's page.
@@ -266,6 +270,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   }, [trashed, locale, router]);
 
   const searchProducts = (query: string) => search(query, locale);
+  const loadProductCards = (ids: string[]) => productCards(ids, locale);
   const failure = saved.status === 'error' ? saved : trashed.status === 'error' ? trashed : null;
 
   return (
@@ -346,6 +351,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 onLockedChange={setLocked}
                 onChange={(html) => setTh((previous) => ({ ...previous, bodyHtml: html }))}
                 searchProducts={searchProducts}
+                loadProductCards={loadProductCards}
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">

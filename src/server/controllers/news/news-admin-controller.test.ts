@@ -1,9 +1,11 @@
 import { describe, expect, it, vi, type Mock } from 'vitest';
 
+import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import { saveArticle, type NewsAdminDeps } from '@/server/services/news/news-admin-service';
 import {
   createCategoryCommand,
   previewArticleCommand,
+  productCardsCommand,
   restoreArticleCommand,
   saveArticleCommand,
   searchProductsCommand,
@@ -16,6 +18,19 @@ const ACTOR = { id: '11111111-1111-4111-8111-111111111111', permissions: ['backo
 const CATEGORY = '22222222-2222-4222-8222-222222222222';
 const PRODUCT = '33333333-3333-4333-8333-333333333333';
 const ARTICLE = '44444444-4444-4444-8444-444444444444';
+const OTHER_PRODUCT = '55555555-5555-4555-8555-555555555555';
+const CARD: LandingProductCard = {
+  productId: PRODUCT,
+  name: 'Switch',
+  imageUrl: null,
+  priceSatang: 1_099_000n,
+  originalPriceSatang: null,
+  isPriceRange: false,
+  stockStatus: 'in_stock',
+  isKit: false,
+  isPreOrder: false,
+  releaseDate: null,
+};
 
 function form(entries: Record<string, string | string[]> = {}): FormData {
   const data = new FormData();
@@ -33,7 +48,7 @@ function form(entries: Record<string, string | string[]> = {}): FormData {
   return data;
 }
 
-type Fakes = NewsAdminCommandDeps & { save: Mock; trash: Mock; restore: Mock; searchProducts: Mock; log: Mock };
+type Fakes = NewsAdminCommandDeps & { save: Mock; trash: Mock; restore: Mock; searchProducts: Mock; productCards: Mock; log: Mock };
 
 function setup(overrides: Partial<NewsAdminCommandDeps> = {}): Fakes {
   const deps = {
@@ -41,6 +56,7 @@ function setup(overrides: Partial<NewsAdminCommandDeps> = {}): Fakes {
     trash: vi.fn(async (id: string) => ({ ok: true as const, data: { id } })),
     restore: vi.fn(async (id: string) => ({ ok: true as const, data: { id } })),
     searchProducts: vi.fn(async () => [{ id: PRODUCT, name: 'Switch', sku: 'NS-1', imageUrl: null }]),
+    productCards: vi.fn(async () => [CARD]),
     now: () => NOW,
     log: vi.fn(),
     ...overrides,
@@ -289,5 +305,37 @@ describe('previewArticleCommand (D-253)', () => {
       expect(await previewArticleCommand(deps, EDITOR, bad, 'th')).toBeNull();
     }
     expect(preview).not.toHaveBeenCalled();
+  });
+});
+
+describe('productCardsCommand: the editor\'s product cards (D-266)', () => {
+  it('maps every asked id to its card, or null when the reader would see nothing, in one read of the deduplicated ids', async () => {
+    const deps = setup();
+    expect(await productCardsCommand(deps, ACTOR, [PRODUCT, OTHER_PRODUCT, PRODUCT], 'th')).toEqual({ [PRODUCT]: CARD, [OTHER_PRODUCT]: null });
+    expect(deps.productCards).toHaveBeenCalledTimes(1);
+    expect(deps.productCards).toHaveBeenCalledWith([PRODUCT, OTHER_PRODUCT], 'th');
+  });
+
+  it('gives nothing to an actor without news.manage, and reads nothing', async () => {
+    const deps = setup();
+    expect(await productCardsCommand(deps, { id: ACTOR.id, permissions: ['backoffice.enter'] }, [PRODUCT], 'th')).toEqual({});
+    expect(deps.productCards).not.toHaveBeenCalled();
+  });
+
+  it('refuses ids that are not uuids, more than 100 ids, or anything but a list, and reads nothing', async () => {
+    const deps = setup();
+    const many = Array.from({ length: 101 }, (_, n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`);
+    for (const input of [['123'], [PRODUCT, 'x'], many, 'nope', null, [42]]) {
+      expect(await productCardsCommand(deps, ACTOR, input, 'th'), JSON.stringify(input)).toEqual({});
+    }
+    expect(deps.productCards).not.toHaveBeenCalled();
+  });
+
+  it('accepts 100 ids, and an empty list reads nothing', async () => {
+    const deps = setup({ productCards: vi.fn(async () => []) });
+    const hundred = Array.from({ length: 100 }, (_, n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`);
+    expect(Object.keys(await productCardsCommand(deps, ACTOR, hundred, 'en'))).toHaveLength(100);
+    expect(await productCardsCommand(deps, ACTOR, [], 'en')).toEqual({});
+    expect(deps.productCards).toHaveBeenCalledTimes(1);
   });
 });
