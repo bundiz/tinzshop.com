@@ -52,3 +52,11 @@ describe('the back-office top row', () => {
     expect(row).toMatch(/<div class="[^"]*md:hidden[^"]*"><button[^>]*aria-controls="admin-side-nav"/);
   });
 });
+
+describe('the back-office toast (D-262)', () => {
+  it('holds the one ToastProvider: a single polite live region, empty until a save', () => {
+    const markup = render('th');
+    expect(markup.match(/role="status"/g)).toHaveLength(1);
+    expect(markup).toContain('<div role="status" aria-live="polite" class="sr-only"></div>');
+  });
+});

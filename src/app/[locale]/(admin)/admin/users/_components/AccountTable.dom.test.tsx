@@ -4,6 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ToastProvider } from '@/components/ui/Toast';
 import type { AccountAdminState } from '@/server/controllers/access/account-admin-controller';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
 import en from '../../../../../../../messages/en.json';
@@ -47,7 +48,9 @@ function render({
   act(() =>
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <AccountTable locale="en" rows={rows} permissions={permissions} actions={{ changeRole, setBlocked }} />
+        <ToastProvider closeLabel="Close">
+          <AccountTable locale="en" rows={rows} permissions={permissions} actions={{ changeRole, setBlocked }} />
+        </ToastProvider>
       </NextIntlClientProvider>,
     ),
   );
@@ -61,6 +64,7 @@ const choose = (label: string) => {
 };
 const drawer = () => document.querySelector<HTMLElement>('[role="dialog"]');
 const confirmDialog = () => document.querySelector<HTMLElement>('[role="alertdialog"]');
+const liveRegion = () => document.querySelector<HTMLElement>('[role="status"][aria-live="polite"]')!;
 const buttonIn = (panel: HTMLElement, text: string) => [...panel.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === text)!;
 
 describe('AccountTable row menu (D-261)', () => {
@@ -112,6 +116,8 @@ describe('AccountTable edit drawer (D-261)', () => {
     // Saved: the drawer closes and focus is back on the row's menu button.
     expect(drawer()).toBeNull();
     expect(document.activeElement).toBe(menuButton());
+    // The success toast is the feedback (D-262); it does not take focus.
+    expect(liveRegion().textContent).toBe('Role saved');
   });
 
   it('keeps a refused change open with the reason inside the drawer, and cancel closes it', async () => {
@@ -121,6 +127,7 @@ describe('AccountTable edit drawer (D-261)', () => {
     await act(async () => buttonIn(drawer()!, 'Save').click());
     const alert = drawer()!.querySelector('[role="alert"]');
     expect(alert?.textContent).toContain('at least one Top-level Admin');
+    expect(liveRegion().textContent).toBe('');
     act(() => buttonIn(drawer()!, 'Cancel').click());
     expect(drawer()).toBeNull();
     // Opened again, the old refusal is gone.
@@ -156,6 +163,7 @@ describe('AccountTable block and unblock (D-261)', () => {
     expect(data.get('accountId')).toBe(row.id);
     expect(confirmDialog()).toBeNull();
     expect(document.activeElement).toBe(menuButton());
+    expect(liveRegion().textContent).toBe('Account blocked');
   });
 
   it('asks to confirm an unblock, then posts blocked=false', async () => {
@@ -165,6 +173,7 @@ describe('AccountTable block and unblock (D-261)', () => {
     expect(confirmDialog()!.textContent).toContain('Unblock this account?');
     await act(async () => buttonIn(confirmDialog()!, 'Unblock').click());
     expect(setBlocked.mock.calls[0]![1].get('blocked')).toBe('false');
+    expect(liveRegion().textContent).toBe('Account unblocked');
   });
 
   it('cancel posts nothing; a refused block shows its reason by the row', async () => {
@@ -177,5 +186,6 @@ describe('AccountTable block and unblock (D-261)', () => {
     await act(async () => buttonIn(confirmDialog()!, 'Block').click());
     expect(confirmDialog()).toBeNull();
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('at least one Top-level Admin');
+    expect(liveRegion().textContent).toBe('');
   });
 });

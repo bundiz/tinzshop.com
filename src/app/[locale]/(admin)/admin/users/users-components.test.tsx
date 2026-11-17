@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
+import { ToastProvider } from '@/components/ui/Toast';
 import type { PermissionKey, RoleKey } from '@/server/services/access/permission-keys';
 import en from '../../../../../../messages/en.json';
 import th from '../../../../../../messages/th.json';
@@ -11,7 +12,7 @@ import RolePermissionGrid from './_components/RolePermissionGrid';
 function html(node: React.ReactNode, locale: 'th' | 'en' = 'en'): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale={locale} messages={locale === 'th' ? th : en} timeZone="Asia/Bangkok">
-      {node}
+      <ToastProvider closeLabel="Close">{node}</ToastProvider>
     </NextIntlClientProvider>,
   );
 }
@@ -54,7 +55,8 @@ describe('AccountTable', () => {
   });
 
   it('shows the error key text on a refusal, and nothing otherwise', () => {
-    expect(html(<ErrorLine state={{ status: 'ok' }} />)).toBe('');
+    // The provider's empty live region is all there is.
+    expect(html(<ErrorLine state={{ status: 'ok' }} />)).toBe('<div role="status" aria-live="polite" class="sr-only"></div>');
     expect(html(<ErrorLine state={{ status: 'error', errorKey: 'lastSuperAdmin' }} />)).toContain('at least one Top-level Admin');
   });
 
@@ -74,7 +76,7 @@ const grants: Record<RoleKey, PermissionKey[]> = {
 
 /** The checkbox inputs of a role's column, in the order the keys are drawn. */
 function boxes(out: string, roleKey: string) {
-  return [...out.matchAll(new RegExp(`<input[^>]*form="role-permissions-${roleKey}"[^>]*>`, 'g'))].map((m) => m[0]);
+  return [...out.matchAll(new RegExp(`<input[^>]*name="keys.${roleKey}"[^>]*>`, 'g'))].map((m) => m[0]);
 }
 
 describe('RolePermissionGrid', () => {
@@ -114,8 +116,16 @@ describe('RolePermissionGrid', () => {
     expect(boxes(out, 'blogger').map((c) => c.includes('checked=""'))).toEqual([true, true, false, false]);
   });
 
-  it('has a save button for each editable role and none for the locked ones', () => {
-    for (const role of ['blogger', 'sale_manager', 'admin']) expect(out).toContain(`form="role-permissions-${role}"`);
-    expect(out.match(/<button/g)).toHaveLength(3);
+  it('is one form with one Save button, listing the three editable roles (D-262)', () => {
+    expect(out.match(/<form/g)).toHaveLength(1);
+    expect(out.match(/<button/g)).toHaveLength(1);
+    expect(out).toMatch(/<button type="submit"[^>]*>Save<\/button>/);
+    expect([...out.matchAll(/<input type="hidden" name="roleKey" value="([a-z_]+)"/g)].map((m) => m[1])).toEqual(['blogger', 'sale_manager', 'admin']);
+  });
+
+  it('names Guest as the glossary does in the Thai notice', () => {
+    const thai = html(<RolePermissionGrid locale="th" grants={grants} />, 'th');
+    expect(thai).toContain('ผู้ใช้งานที่ไม่ login');
+    expect(thai).not.toContain('ผู้เยี่ยมชม');
   });
 });

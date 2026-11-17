@@ -36,6 +36,7 @@ export type IconName =
   | 'lock'
   | 'trash'
   | 'undo'
+  | 'checkCircle'
   | 'artConsole'
   | 'artHandheld'
   | 'artPad'
@@ -207,6 +208,13 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   trash: <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" />,
   undo: <path d="M8 8.5H15a5 5 0 0 1 0 10h-4M8 8.5 11.5 5M8 8.5 11.5 12" />,
+  // A tick in a circle: the back office's success toast (D-262).
+  checkCircle: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.3 12.3 2.5 2.5 4.9-5.1" />
+    </>
+  ),
   // Product art (generic, not brand look-alikes); drawn large at strokeWidth 0.9 by ImagePlaceholder.
   artConsole: (
     <>

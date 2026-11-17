@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ToastProvider } from '@/components/ui/Toast';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
 import type { CurrentCustomer } from '@/server/services/auth/customer-session-service';
 import en from '../../../../../../messages/en.json';
@@ -34,7 +35,8 @@ async function render(searchParams: Record<string, string> = {}): Promise<string
   const node = await UsersPage({ params: Promise.resolve({ locale: 'th' }), searchParams: Promise.resolve(searchParams) });
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="th" messages={th} timeZone="Asia/Bangkok">
-      {node as ReactNode}
+      {/* AdminShell, in the layout, holds the provider in the app. */}
+      <ToastProvider closeLabel="ปิด">{node as ReactNode}</ToastProvider>
     </NextIntlClientProvider>,
   );
 }
@@ -62,6 +64,6 @@ describe('the users page tabs', () => {
     as(['backoffice.enter', 'role.manage']);
     const out = await render();
     expect(out).not.toContain('บัญชีทั้งหมด');
-    expect(out).toContain('บันทึกสิทธิ์');
+    expect(out).toContain(th.admin.roles.hint);
   });
 });

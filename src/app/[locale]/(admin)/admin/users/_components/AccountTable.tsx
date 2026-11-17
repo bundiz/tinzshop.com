@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Drawer from '@/components/ui/Drawer';
 import RowActionsMenu from '@/components/ui/RowActionsMenu';
 import Select from '@/components/ui/Select';
+import { useToast } from '@/components/ui/Toast';
 import type { AccountAdminState } from '@/server/controllers/access/account-admin-controller';
 import { can } from '@/server/services/access/access-service';
 import { ASSIGNABLE_ROLE_KEYS, type PermissionKey, type RoleKey } from '@/server/services/access/permission-keys';
@@ -66,7 +67,8 @@ function StatusPill({ blocked }: { blocked: boolean }) {
 /**
  * The edit drawer (the mockup's `.sheet`): the account read-only and its role as the one editable field, saved through
  * `changeAccountRoleAction`. Mounted only while open, so a refusal from an earlier opening is not shown again. A refusal
- * (the last Top-level Admin guard) shows inside; a saved change closes it, and the revalidated page shows the new role.
+ * (the last Top-level Admin guard) shows inside; a saved change closes it with the success toast (D-262), and the
+ * revalidated page shows the new role.
  */
 function EditDrawer({
   locale,
@@ -83,7 +85,12 @@ function EditDrawer({
 }) {
   const t = useTranslations('admin');
   const format = useFormatter();
-  const [state, formAction, pending] = useActionState(action, IDLE);
+  const toast = useToast();
+  const [state, formAction, pending] = useActionState(async (previous: AccountAdminState, formData: FormData) => {
+    const next = await action(previous, formData);
+    if (next.status === 'ok') toast.success(t('users.toast.roleSaved'));
+    return next;
+  }, IDLE);
   const formId = `edit-${row.id}`;
   const roleId = `${formId}-role`;
   useEffect(() => {
@@ -162,11 +169,18 @@ function EditDrawer({
 
 /**
  * A row's "⋯" menu (D-261): แก้ไข opens the edit drawer; ระงับ (or ยกเลิกการระงับ on a blocked account) asks in a
- * `ConfirmDialog` and then posts the row's block form through `setAccountBlockedAction`.
+ * `ConfirmDialog` and then posts the row's block form through `setAccountBlockedAction`; a done block or unblock shows the
+ * success toast (D-262), a refusal its reason by the row.
  */
 function RowActions({ locale, row, actions }: { locale: string; row: AccountTableRow; actions: Actions }) {
   const t = useTranslations('admin.users');
-  const [state, formAction, pending] = useActionState(actions.setBlocked, IDLE);
+  const toast = useToast();
+  const [state, formAction, pending] = useActionState(async (previous: AccountAdminState, formData: FormData) => {
+    const next = await actions.setBlocked(previous, formData);
+    // Named from what was posted, not from the row, which the revalidated page is about to change.
+    if (next.status === 'ok') toast.success(t(formData.get('blocked') === 'true' ? 'toast.blocked' : 'toast.unblocked'));
+    return next;
+  }, IDLE);
   const [dialog, setDialog] = useState<'edit' | 'block' | null>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const closeDialog = useCallback(() => setDialog(null), []);

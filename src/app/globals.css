@@ -131,6 +131,19 @@
   animation: modal-in 0.2s var(--ease-soft) both;
 }
 
+/* The back office's success toast (D-262): it rises a little and fades in. Leaving is a 150ms opacity transition on the
+   card. The reduced-motion rule below turns both off. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@utility animate-toast-in {
+  animation: toast-in 0.2s var(--ease-soft) both;
+}
+
 @utility animate-fade-in {
   animation: fade-in 0.2s ease-out both;
 }

@@ -664,15 +664,19 @@
         "prev": "Previous",
         "next": "Next",
         "range": "Page {page} of {pages}"
+      },
+      "toast": {
+        "roleSaved": "Role saved",
+        "blocked": "Account blocked",
+        "unblocked": "Account unblocked"
       }
     },
     "roles": {
       "hint": "The Top-level Admin role always holds every permission and cannot be changed. Customers and guests cannot enter the back office and cannot be given these permissions.",
       "permission": "Permission",
       "cell": "{permission} — {role}",
-      "save": "Save permissions",
-      "saveRole": "Save the permissions of {role}",
-      "saved": "Permissions saved"
+      "save": "Save",
+      "saved": "Settings saved"
     },
     "permission": {
       "backoffice": {
@@ -892,6 +896,9 @@
         "categoryNameTooLong": "A category name can be at most 100 characters.",
         "categoryExists": "A category with this name exists but is hidden from the site, so it cannot be chosen. Use another name."
       }
+    },
+    "toast": {
+      "close": "Close"
     }
   }
 }
