@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/app/[locale]/(admin)/admin/news/_components/RichTextEditor.tsx"
+        ],
+        "createdAt": "2026-11-17T06:55:33.795Z",
+        "reason": "binding brand mockup: tinzshop-redesign/css/admin.css:370 styles the editor's blockquote with a 4px accent left rule, matching the storefront ArticleBody quote; a typographic quote mark, not a card"
+      }
+    ]
+  }
+}
