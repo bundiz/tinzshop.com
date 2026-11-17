@@ -38,6 +38,8 @@ this table names the choice, not the number.
 
 Plan 014 (D-172) adds two dependencies to the stack, both published by AWS and installed as exact versions: `@aws-sdk/client-cognito-identity-provider`, imported only by `src/server/adapters/cognito/`, and `aws-jwt-verify`, for ID-token checks. Hosting stays deferred (ADR-0002).
 
+Plan 016 (D-256) adds `react-day-picker` 10.0.2, MIT, installed as an exact version (it brings `date-fns` and `@date-fns/tz`): the month grid of the news editor's "publish later" picker, imported only by `DateTimePicker.tsx` in the back office and styled in-house; it is not a component library.
+
 Adding anything to the left column requires a `D-0NN` row in
 `11-decisions.md` in the same pull request.
 
