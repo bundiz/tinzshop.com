@@ -70,6 +70,31 @@ async function mount(
 }
 
 describe('ArticleEditor', () => {
+  it('drops a product from the related products when its card is deleted, and brings it back with undo; removing it from related keeps the card (D-268)', async () => {
+    const PRODUCT_ID = '88888888-8888-4888-8888-888888888888';
+    const OTHER_ID = '99999999-9999-4999-8999-999999999999';
+    const hit = { id: PRODUCT_ID, name: 'Portable SSD', sku: 'SSD', imageUrl: null };
+    const other = { id: OTHER_ID, name: 'Zelda', sku: 'ZD', imageUrl: null };
+    const body = `<p>Hi</p><tinz-product data-id="${PRODUCT_ID}"></tinz-product><p>end</p>`;
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, { article: { ...article, th: { title: 'T', excerpt: 'E', bodyHtml: body }, products: [other, hit] } });
+    const editor = (container.querySelector('.ProseMirror') as unknown as { editor: Editor }).editor;
+    const related = () => [...container.querySelectorAll<HTMLInputElement>('input[name="productId"]')].map((input) => input.value);
+    expect(related()).toEqual([OTHER_ID, PRODUCT_ID]);
+    await act(async () => {
+      editor.commands.setNodeSelection(4);
+      editor.commands.deleteSelection();
+    });
+    expect(related()).toEqual([OTHER_ID]);
+    await act(async () => {
+      editor.commands.undo();
+    });
+    expect(related()).toEqual([OTHER_ID, PRODUCT_ID]);
+    await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Remove Portable SSD"]')!.click());
+    expect(related()).toEqual([OTHER_ID]);
+    expect(editor.getHTML()).toContain(`data-id="${PRODUCT_ID}"`);
+  });
+
   it('adds the product of a newly inserted card to the related products once (D-267)', async () => {
     const PRODUCT_ID = '88888888-8888-4888-8888-888888888888';
     const hit = { id: PRODUCT_ID, name: 'Portable SSD', sku: 'SSD', imageUrl: null };

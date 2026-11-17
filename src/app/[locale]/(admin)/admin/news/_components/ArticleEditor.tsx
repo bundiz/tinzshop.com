@@ -159,6 +159,25 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const [categoryIds, setCategoryIds] = useState<string[]>(article?.categoryIds ?? []);
   const [tags, setTags] = useState<string[]>(article?.tagNames ?? []);
   const [products, setProducts] = useState<ProductPickerHit[]>(article?.products ?? []);
+  // Products dropped from the related list because their last card was deleted, kept so undo can put them back (D-268).
+  const droppedWithCard = useRef(new Map<string, ProductPickerHit>());
+  const onProductCardsChange = ({ added, removed }: { added: string[]; removed: string[] }) =>
+    setProducts((list) => {
+      let next = list;
+      for (const id of removed) {
+        const product = next.find((item) => item.id === id);
+        if (product === undefined) continue;
+        droppedWithCard.current.set(id, product);
+        next = next.filter((item) => item.id !== id);
+      }
+      for (const id of added) {
+        const product = droppedWithCard.current.get(id);
+        if (product === undefined || next.some((item) => item.id === id)) continue;
+        droppedWithCard.current.delete(id);
+        next = [...next, product];
+      }
+      return next;
+    });
   const [when, setWhen] = useState<'now' | 'later'>(article?.status === 'scheduled' ? 'later' : 'now');
   const [publishAt, setPublishAt] = useState(article?.publishedAt && article.status === 'scheduled' ? toBangkokLocal(article.publishedAt) : '');
   // The confirm stays up while the trash runs (its submit button must be in the page when the browser submits); a refusal closes it.
@@ -352,9 +371,11 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 onChange={(html) => setTh((previous) => ({ ...previous, bodyHtml: html }))}
                 searchProducts={searchProducts}
                 loadProductCards={loadProductCards}
-                // A product shown as a card is related to the article too (owner, 2026-11-17, D-267): added once, never
-                // removed with the card, since staff may keep it related without the card.
+                // A product shown as a card is related to the article too (owner, 2026-11-17, D-267): added once.
                 onProductCardInserted={(hit) => setProducts((list) => (list.some((product) => product.id === hit.id) ? list : [...list, hit]))}
+                // Deleting a product's last card drops it from the related products too; undo brings it back (owner,
+                // 2026-11-17, D-268). Removing it from the related products never touches the card.
+                onProductCardsChange={onProductCardsChange}
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">

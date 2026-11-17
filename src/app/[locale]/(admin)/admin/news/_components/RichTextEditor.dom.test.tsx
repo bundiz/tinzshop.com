@@ -53,7 +53,12 @@ const SWITCH: LandingProductCard = {
 async function mount(
   onChange: (html: string) => void,
   body: string = BODY,
-  options: { loadProductCards?: ProductCardsLoader; searchProducts?: ProductSearch; onProductCardInserted?: (hit: { id: string }) => void } = {},
+  options: {
+    loadProductCards?: ProductCardsLoader;
+    searchProducts?: ProductSearch;
+    onProductCardInserted?: (hit: { id: string }) => void;
+    onProductCardsChange?: (change: { added: string[]; removed: string[] }) => void;
+  } = {},
 ) {
   await act(async () => {
     root.render(
@@ -65,6 +70,7 @@ async function mount(
           searchProducts={options.searchProducts ?? (async () => [])}
           loadProductCards={options.loadProductCards}
           onProductCardInserted={options.onProductCardInserted}
+          onProductCardsChange={options.onProductCardsChange}
         />
       </NextIntlClientProvider>,
     );
@@ -266,6 +272,35 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
     });
     expect(editor.getHTML()).toBe('<p>a</p><p>b</p>');
   });
+  it('reports a product whose last card leaves the body, and comes back with undo (D-268); a second card of it keeps it', async () => {
+    const changes = vi.fn();
+    const editor = await mount(() => {}, `<p>a</p>${card(PRODUCT)}<p>b</p>${card(PRODUCT)}`, { onProductCardsChange: changes });
+    await settle();
+    expect(changes).not.toHaveBeenCalled();
+    const firstCardAt = () => {
+      let at = -1;
+      editor.state.doc.forEach((child, offset) => {
+        if (at === -1 && child.type.name === 'productCard') at = offset;
+      });
+      return at;
+    };
+    await act(async () => {
+      editor.commands.setNodeSelection(firstCardAt());
+      editor.commands.deleteSelection();
+    });
+    expect(changes).not.toHaveBeenCalled();
+    await act(async () => {
+      editor.commands.setNodeSelection(firstCardAt());
+      editor.commands.deleteSelection();
+    });
+    expect(editor.getHTML()).not.toContain('tinz-product');
+    expect(changes).toHaveBeenLastCalledWith({ added: [], removed: [PRODUCT] });
+    await act(async () => {
+      editor.commands.undo();
+    });
+    expect(changes).toHaveBeenLastCalledWith({ added: [PRODUCT], removed: [] });
+  });
+
   it('keeps the writing area\'s text styles off the card, so its name is not drawn as a blue underlined link', async () => {
     await mount(() => {}, `<p>See <a href="https://example.com/x">this</a></p>${card(PRODUCT)}`, { loadProductCards: async () => ({ [PRODUCT]: SWITCH }) });
     await settle();

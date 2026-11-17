@@ -215,6 +215,12 @@ export type RichTextEditorProps = {
   loadProductCards?: ProductCardsLoader;
   /** Called with the product picked for a new card, so the article can add it to its related products (D-267). */
   onProductCardInserted?: (hit: ProductPickerHit) => void;
+  /**
+   * Called when a product's last card leaves the body (`removed`) or a product's card comes back (`added`, by undo or
+   * paste), so the article can keep its related products in step (D-268). Not called for the stored body on load, nor
+   * while the body is locked.
+   */
+  onProductCardsChange?: (change: { added: string[]; removed: string[] }) => void;
 };
 
 /**
@@ -231,6 +237,7 @@ export default function RichTextEditor({
   searchProducts,
   loadProductCards,
   onProductCardInserted,
+  onProductCardsChange,
 }: RichTextEditorProps) {
   const t = useTranslations('admin.news.editor');
   const [dialog, setDialog] = useState<DialogKind | null>(null);
@@ -241,6 +248,12 @@ export default function RichTextEditor({
   const [locked, setLocked] = useState(false);
   // Read by the update handler, which must see the latest value: a locked body never reports a change.
   const lockedRef = useRef(false);
+  // The body's card products as last reported, and the latest callback (the editor's options are fixed at creation).
+  const cardIdsRef = useRef<string[] | null>(null);
+  const cardsChangeRef = useRef(onProductCardsChange);
+  useEffect(() => {
+    cardsChangeRef.current = onProductCardsChange;
+  });
 
   const editor = useEditor({
     // Rendered on the server as the empty shell; the editor mounts in the browser (avoids a hydration mismatch).
@@ -261,7 +274,15 @@ export default function RichTextEditor({
     // Even a selection-only transaction can change the document (the trailing paragraph, a split figure), so a locked body
     // reports nothing, whatever happens inside it.
     onUpdate: ({ editor: current }) => {
-      if (!lockedRef.current) onChange(current.getHTML());
+      if (lockedRef.current) return;
+      onChange(current.getHTML());
+      const before = cardIdsRef.current;
+      if (before === null) return;
+      const now = cardIdsIn(current.state.doc);
+      const added = now.filter((id) => !before.includes(id));
+      const removed = before.filter((id) => !now.includes(id));
+      cardIdsRef.current = now;
+      if (added.length > 0 || removed.length > 0) cardsChangeRef.current?.({ added, removed });
     },
   });
 
@@ -270,6 +291,8 @@ export default function RichTextEditor({
     const lossy = wouldLoseContent(initialHtml, editor.getHTML());
     // eslint-disable-next-line react-hooks/set-state-in-effect -- decided once, when the editor first exists
     lockedRef.current = lossy;
+    // The stored body's cards are the starting point: loading them reports nothing (D-268).
+    cardIdsRef.current = cardIdsIn(editor.state.doc);
     setLocked(lossy);
     onLockedChange?.(lossy);
     editor.setEditable(!lossy, false);
