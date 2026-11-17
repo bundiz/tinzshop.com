@@ -8,6 +8,7 @@ export type IconName =
   | 'chevRight'
   | 'chevLeft'
   | 'chevDown'
+  | 'check'
   | 'menu'
   | 'truck'
   | 'card'
@@ -87,6 +88,8 @@ const PATHS: Record<IconName, ReactNode> = {
   chevRight: <path d="m9 6 6 6-6 6" />,
   chevLeft: <path d="m15 6-6 6 6 6" />,
   chevDown: <path d="m6 9 6 6 6-6" />,
+  // The admin mockup's `i-check` (`post-edit.html`); marks the chosen option in `Select`.
+  check: <path d="m5 12 4.5 4.5L19 7" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   truck: (
     <>
