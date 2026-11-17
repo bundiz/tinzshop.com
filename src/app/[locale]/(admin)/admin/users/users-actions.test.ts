@@ -59,6 +59,16 @@ describe('the accounts and roles Server Actions', () => {
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
+  it('passes the whole grid form to the controller in one call, and revalidates after a save (D-262)', async () => {
+    const data = form({ locale: 'th', roleKey: 'blogger' });
+    data.append('roleKey', 'admin');
+    data.append('keys.admin', 'news.manage');
+    expect(await saveRolePermissionsAction(idle, data)).toEqual({ status: 'ok' });
+    expect(mocks.saveRolePermissions).toHaveBeenCalledTimes(1);
+    expect(mocks.saveRolePermissions).toHaveBeenCalledWith(ACTOR, data);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/th/admin/users');
+  });
+
   it('falls back to Thai for an unknown locale field', async () => {
     await saveRolePermissionsAction(idle, form({ locale: 'xx' }));
     expect(mocks.requirePermission).toHaveBeenCalledWith('th', expect.any(String), 'role.manage');

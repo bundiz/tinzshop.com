@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { can, checkRolePermissions } from '@/server/services/access/access-service';
+import { can, checkRolePermissions, type RoleGrant } from '@/server/services/access/access-service';
 import {
   ASSIGNABLE_ROLE_KEYS,
   PERMISSION_KEYS,
@@ -31,7 +31,8 @@ export type AccountAdminDeps = {
   changeAccountRole: (accountId: string, roleKey: RoleKey) => Promise<ChangeResult>;
   setAccountBlocked: (accountId: string, blocked: boolean) => Promise<ChangeResult>;
   listRoleGrants: () => Promise<Record<RoleKey, PermissionKey[]>>;
-  replaceRolePermissions: (roleKey: RoleKey, keys: readonly PermissionKey[]) => Promise<void>;
+  /** Replaces the grants of every listed role, all in one transaction (D-262). */
+  replaceRolePermissions: (grants: readonly RoleGrant[]) => Promise<void>;
   /** Logs ids, role keys and permission keys only (D-242). */
   log: (message: string, fields: Record<string, unknown>) => void;
 };
@@ -42,7 +43,10 @@ const INVALID = error('invalid');
 const accountId = z.uuid();
 const roleChange = z.object({ accountId, roleKey: z.enum(ASSIGNABLE_ROLE_KEYS) });
 const blockChange = z.object({ accountId, blocked: z.enum(['true', 'false']) });
-const permissionSave = z.object({ roleKey: z.enum(ROLE_KEYS), keys: z.array(z.enum(PERMISSION_KEYS)) });
+const permissionSave = z.array(z.object({ roleKey: z.enum(ROLE_KEYS), keys: z.array(z.enum(PERMISSION_KEYS)) })).min(1);
+
+/** The grid form's fields: each saved role under `roleKey`, its ticked keys under `keys.{roleKey}`. */
+const KEYS_FIELD = 'keys.';
 
 function mapResult(result: ChangeResult): AccountAdminErrorKey | null {
   if (result === 'last_super_admin') return 'lastSuperAdmin';
@@ -89,26 +93,44 @@ export async function setAccountBlockedCommand(
   return { status: 'ok' };
 }
 
-/** Replaces the permissions one role holds (`role.manage`), after the lock rules of spec section 5. */
+/**
+ * Replaces the permissions of every role the grid lists (`role.manage`), all or nothing (D-262). Each role is listed under
+ * `roleKey` and its ticked keys sent under `keys.{roleKey}`, so a role with nothing ticked is still saved, as empty. An unknown
+ * or repeated role, an unknown key, or keys for a role the form does not list refuse the whole save; so does any role that
+ * breaks the lock rules of spec section 5. The Top-level Admin is checked but never written: it always holds every key.
+ */
 export async function saveRolePermissionsCommand(
   deps: AccountAdminDeps,
   actor: AccountAdminActor,
   formData: FormData,
 ): Promise<AccountAdminState> {
   if (!can(actor, 'role.manage')) return error('forbidden');
-  const parsed = permissionSave.safeParse({
-    roleKey: formData.get('roleKey'),
-    keys: formData.getAll('keys'),
-  });
+  // The per-role form before D-262 sent its ticks as bare `keys`; read as this form, they would empty the role, so refuse.
+  if (formData.has('keys')) return INVALID;
+  const listed = formData.getAll('roleKey');
+  const parsed = permissionSave.safeParse(listed.map((roleKey) => ({ roleKey, keys: formData.getAll(`${KEYS_FIELD}${String(roleKey)}`) })));
   if (!parsed.success) return INVALID;
-  const { roleKey } = parsed.data;
-  const keys = PERMISSION_KEYS.filter((key) => parsed.data.keys.includes(key));
+  if (new Set(listed).size !== listed.length) return INVALID;
+  for (const name of new Set(formData.keys())) {
+    if (name.startsWith(KEYS_FIELD) && !listed.includes(name.slice(KEYS_FIELD.length))) return INVALID;
+  }
 
-  const check = checkRolePermissions(roleKey, keys);
-  if (!check.ok) return error(check.reason === 'super_admin_locked' ? 'superAdminLocked' : 'backOfficeKeyForCustomer');
+  const saves = ROLE_KEYS.flatMap((roleKey) => {
+    const entry = parsed.data.find((item) => item.roleKey === roleKey);
+    return entry === undefined ? [] : [{ roleKey, permissionKeys: PERMISSION_KEYS.filter((key) => entry.keys.includes(key)) }];
+  });
+  for (const { roleKey, permissionKeys } of saves) {
+    const check = checkRolePermissions(roleKey, permissionKeys);
+    if (!check.ok) return error(check.reason === 'super_admin_locked' ? 'superAdminLocked' : 'backOfficeKeyForCustomer');
+  }
+  const writes = saves.filter((save) => save.roleKey !== 'super_admin');
+  if (writes.length === 0) return { status: 'ok' };
 
-  const before = (await deps.listRoleGrants())[roleKey];
-  await deps.replaceRolePermissions(roleKey, keys);
-  deps.log('role.permissions_changed', { actor: actor.id, role: roleKey, from: before, to: keys });
+  const before = await deps.listRoleGrants();
+  await deps.replaceRolePermissions(writes);
+  for (const { roleKey, permissionKeys } of writes) {
+    const from = PERMISSION_KEYS.filter((key) => before[roleKey].includes(key));
+    if (from.join() !== permissionKeys.join()) deps.log('role.permissions_changed', { actor: actor.id, role: roleKey, from, to: permissionKeys });
+  }
   return { status: 'ok' };
 }

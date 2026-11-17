@@ -12,6 +12,7 @@ import {
   searchAccounts,
   setAccountBlocked,
 } from '@/server/repositories/access/access-repository';
+import type { PermissionKey, RoleKey } from '@/server/services/access/permission-keys';
 import { ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import { resetDatabase } from '../setup/database';
 
@@ -263,14 +264,76 @@ describe('access repository reads and grants', () => {
     expect(await findAccountByEmail('nobody@example.com')).toBeNull();
   });
 
-  it("replaceRolePermissions replaces the role's grants", async () => {
+  it("replaceRolePermissions replaces every listed role's grants and leaves the others", async () => {
     const before = await listRoleGrants();
     expect([...before.blogger].sort()).toEqual(['backoffice.enter', 'news.manage']);
     expect(before.customer).toEqual([]);
-    await replaceRolePermissions('blogger', ['backoffice.enter', 'role.manage']);
+    await replaceRolePermissions([
+      { roleKey: 'blogger', permissionKeys: ['backoffice.enter', 'role.manage'] },
+      { roleKey: 'sale_manager', permissionKeys: [] },
+    ]);
     const after = await listRoleGrants();
     expect([...after.blogger].sort()).toEqual(['backoffice.enter', 'role.manage']);
+    expect(after.sale_manager).toEqual([]);
     expect([...after.admin].sort()).toEqual(['backoffice.enter', 'news.manage']);
+  });
+
+  it('replaceRolePermissions is all or nothing: a refusal in one role leaves every role unchanged (D-262)', async () => {
+    const before = await listRoleGrants();
+    // blogger is written first, then admin carries a key no permission row has: the whole transaction rolls back.
+    await expect(
+      replaceRolePermissions([
+        { roleKey: 'blogger', permissionKeys: [] },
+        { roleKey: 'admin', permissionKeys: ['backoffice.enter', 'order.refund' as PermissionKey] },
+      ]),
+    ).rejects.toThrow();
+    await expect(
+      replaceRolePermissions([
+        { roleKey: 'blogger', permissionKeys: [] },
+        { roleKey: 'owner' as RoleKey, permissionKeys: [] },
+      ]),
+    ).rejects.toThrow();
+    expect(await listRoleGrants()).toEqual(before);
+  });
+
+  it('two whole-grid saves at once run one after the other: the result is one of them whole, and neither fails (D-262)', async () => {
+    const first = [
+      { roleKey: 'blogger' as const, permissionKeys: ['backoffice.enter', 'news.manage'] as PermissionKey[] },
+      { roleKey: 'admin' as const, permissionKeys: ['backoffice.enter'] as PermissionKey[] },
+    ];
+    const second = [
+      { roleKey: 'blogger' as const, permissionKeys: ['backoffice.enter', 'role.manage'] as PermissionKey[] },
+      { roleKey: 'admin' as const, permissionKeys: ['backoffice.enter', 'account.manage'] as PermissionKey[] },
+    ];
+    // Hold the grant rows so both saves are in flight together before either may write.
+    const holder = new Client({ connectionString: getDatabaseUrl() });
+    await holder.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query(
+        "SELECT rp.role_id FROM role_permission rp JOIN role r ON r.id = rp.role_id WHERE r.key IN ('blogger', 'admin') FOR UPDATE OF rp",
+      );
+      const calls = [replaceRolePermissions(first), replaceRolePermissions(second)];
+      const deadline = Date.now() + 10_000;
+      for (;;) {
+        const waiting = await client.query<{ n: number }>(
+          "SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'",
+        );
+        if (waiting.rows[0]!.n >= 2) break;
+        if (Date.now() > deadline) throw new Error('the two saves never both waited on a lock');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      await holder.query('COMMIT');
+      const results = await Promise.allSettled(calls);
+      expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      await holder.end();
+    }
+    const after = await listRoleGrants();
+    const picked = { blogger: [...after.blogger].sort(), admin: [...after.admin].sort() };
+    const whole = (save: typeof first) => ({ blogger: [...save[0]!.permissionKeys].sort(), admin: [...save[1]!.permissionKeys].sort() });
+    expect([whole(first), whole(second)]).toContainEqual(picked);
   });
 });
 

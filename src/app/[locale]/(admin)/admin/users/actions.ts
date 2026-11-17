@@ -33,7 +33,10 @@ export async function setAccountBlockedAction(_previous: AccountAdminState, form
   return refresh(locale, await getAccountAdmin().setBlocked(actor, formData));
 }
 
-/** Replaces the permissions one role holds. Re-checks `role.manage`. */
+/**
+ * Saves the whole role permissions grid: every editable role's permissions from one form, all or nothing (D-262). Re-checks
+ * `role.manage`.
+ */
 export async function saveRolePermissionsAction(_previous: AccountAdminState, formData: FormData): Promise<AccountAdminState> {
   const locale = localeOf(formData);
   const actor = await requirePermission(locale, '/admin/users?tab=roles', 'role.manage');

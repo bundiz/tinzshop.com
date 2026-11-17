@@ -7,6 +7,9 @@ export type AccessError =
   | 'access.back_office_key_for_customer'
   | 'access.unknown_account';
 
+/** One role's whole permission set, as the role permissions grid saves it (D-262). */
+export type RoleGrant = { roleKey: RoleKey; permissionKeys: PermissionKey[] };
+
 /** Whether the viewer holds the permission. A null viewer (nobody signed in) holds none. */
 export function can(viewer: { permissions: readonly PermissionKey[] } | null, key: PermissionKey): boolean {
   return viewer !== null && viewer.permissions.includes(key);

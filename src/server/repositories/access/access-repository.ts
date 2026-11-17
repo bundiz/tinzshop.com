@@ -1,5 +1,6 @@
 import { Prisma } from '@/generated/prisma/client';
 
+import type { RoleGrant } from '@/server/services/access/access-service';
 import { ROLE_KEYS, type PermissionKey, type RoleKey } from '@/server/services/access/permission-keys';
 import { ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import { getPrisma } from '@/server/repositories/shared/prisma';
@@ -26,15 +27,26 @@ export async function listRoleGrants(): Promise<Record<RoleKey, PermissionKey[]>
   return grants;
 }
 
-/** Replaces the role's grants with exactly these keys, in one transaction. */
-export async function replaceRolePermissions(roleKey: RoleKey, keys: readonly PermissionKey[]): Promise<void> {
+/**
+ * Replaces the grants of every listed role with exactly its keys, all in one transaction (D-262): any failure (an unknown
+ * role or permission key) rolls every role back. The listed role rows are locked first, in id order, so two saves at once
+ * run one after the other instead of mixing or colliding on the primary key. `FOR NO KEY UPDATE` does not conflict with the
+ * key-share lock a customer insert or role change takes on its role, so sign-ups are not held up by a save.
+ */
+export async function replaceRolePermissions(grants: readonly RoleGrant[]): Promise<void> {
+  if (grants.length === 0) return;
   await getPrisma().$transaction(async (tx) => {
-    const role = await tx.role.findUniqueOrThrow({ where: { key: roleKey }, select: { id: true } });
-    const permissions = await tx.permission.findMany({ where: { key: { in: [...keys] } }, select: { id: true } });
-    await tx.rolePermission.deleteMany({ where: { roleId: role.id } });
-    await tx.rolePermission.createMany({
-      data: permissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
-    });
+    const keys = grants.map((grant) => grant.roleKey);
+    await tx.$queryRaw`SELECT id FROM role WHERE key = ANY(${keys}::text[]) ORDER BY id FOR NO KEY UPDATE`;
+    for (const { roleKey, permissionKeys } of grants) {
+      const role = await tx.role.findUniqueOrThrow({ where: { key: roleKey }, select: { id: true } });
+      const permissions = await tx.permission.findMany({ where: { key: { in: [...permissionKeys] } }, select: { id: true } });
+      if (permissions.length !== new Set(permissionKeys).size) throw new Error(`replaceRolePermissions: unknown permission key for ${roleKey}`);
+      await tx.rolePermission.deleteMany({ where: { roleId: role.id } });
+      await tx.rolePermission.createMany({
+        data: permissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
+      });
+    }
   });
 }
 
