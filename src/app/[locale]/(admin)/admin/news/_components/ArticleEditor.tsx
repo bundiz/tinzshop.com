@@ -401,16 +401,29 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 </div>
                 {publishable ? (
                   <div>
-                    <dt>
-                      <label htmlFor="when" className="text-ink-2">
-                        {e('when')}
-                      </label>
+                    <dt id="when-label" className="text-ink-2">
+                      {e('when')}
                     </dt>
                     <dd className="mt-1">
-                      <select id="when" name="when" value={when} onChange={(event) => setWhen(event.target.value as 'now' | 'later')} className={INPUT}>
-                        <option value="now">{e('whenNow')}</option>
-                        <option value="later">{e('whenLater')}</option>
-                      </select>
+                      {/* Two choices, so a switch like the language toggle above rather than a dropdown; real radios, so the form still sends `when`. */}
+                      <div role="radiogroup" aria-labelledby="when-label" className="grid grid-cols-2 gap-0.5 rounded-sm bg-sunk p-[3px]">
+                        {(['now', 'later'] as const).map((choice) => (
+                          <label
+                            key={choice}
+                            className="flex min-h-11 cursor-pointer items-center justify-center rounded-md px-3 font-semibold text-muted transition-colors hover:text-ink has-checked:bg-white has-checked:text-ink has-checked:shadow-1 has-focus-visible:outline-[3px] has-focus-visible:outline-offset-2 has-focus-visible:outline-ps"
+                          >
+                            <input
+                              type="radio"
+                              name="when"
+                              value={choice}
+                              checked={when === choice}
+                              onChange={() => setWhen(choice)}
+                              className="sr-only"
+                            />
+                            {e(choice === 'now' ? 'whenNow' : 'whenLater')}
+                          </label>
+                        ))}
+                      </div>
                       {when === 'later' ? (
                         <div className="mt-2">
                           <label htmlFor="publish-at" className="mb-1 block text-sm text-ink-2">

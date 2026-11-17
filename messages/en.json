@@ -801,7 +801,7 @@
         "state": "Status",
         "when": "Publish time",
         "whenNow": "Now",
-        "whenLater": "Schedule…",
+        "whenLater": "Schedule",
         "whenAt": "Date and time (Thailand time)",
         "byline": "Author",
         "featured": "Original picture from the old site (cannot be changed)",

@@ -140,12 +140,15 @@ describe('ArticleEditor', () => {
     article = { ...article, status: 'draft', categoryIds: [] };
     const save = vi.fn(async () => ({ status: 'idle' }) as never);
     await mount(save);
-    const when = container.querySelector<HTMLSelectElement>('select#when')!;
-    expect(when.name).toBe('when');
-    await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(when, 'later');
-      when.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    // A two-choice switch of radio buttons (no dropdown), "now" picked first, labelled by its group.
+    const group = container.querySelector('[role="radiogroup"]')!;
+    expect(group.getAttribute('aria-labelledby')).not.toBeNull();
+    const choices = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"][name="when"]')];
+    expect(choices.map((choice) => [choice.value, choice.checked])).toEqual([['now', true], ['later', false]]);
+    expect(container.querySelector('select#when')).toBeNull();
+    expect(container.querySelector('#publish-at')).toBeNull();
+    await act(async () => choices[1]!.click());
+    expect(container.querySelector('#publish-at')).not.toBeNull();
     await act(async () => container.querySelector<HTMLButtonElement>('button[value="publish"]')!.click());
     const sent = (save.mock.calls[0] as unknown as [unknown, FormData])[1];
     expect(sent.get('when')).toBe('later');
