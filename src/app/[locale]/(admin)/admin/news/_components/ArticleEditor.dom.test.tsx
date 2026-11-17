@@ -52,13 +52,14 @@ async function mount(
     createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<never>;
     trash?: (previous: unknown, formData: FormData) => Promise<never>;
     productCards?: (ids: string[], locale: string) => Promise<Record<string, null>>;
+    search?: (query: string) => Promise<never>;
   } = {},
 ) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
         <ToastProvider closeLabel="Close">
-          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: async () => [], createCategory: options.createCategory, productCards: options.productCards ?? (async () => ({})) }} />
+          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: (options.search as never) ?? (async () => []), createCategory: options.createCategory, productCards: options.productCards ?? (async () => ({})) }} />
         </ToastProvider>
       </NextIntlClientProvider>,
     );
@@ -69,6 +70,27 @@ async function mount(
 }
 
 describe('ArticleEditor', () => {
+  it('adds the product of a newly inserted card to the related products once (D-267)', async () => {
+    const PRODUCT_ID = '88888888-8888-4888-8888-888888888888';
+    const hit = { id: PRODUCT_ID, name: 'Portable SSD', sku: 'SSD', imageUrl: null };
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, { article: { ...article, th: { title: 'T', excerpt: 'E', bodyHtml: '<p>Hi</p>' } }, search: (async () => [hit]) as never });
+    for (let round = 0; round < 2; round += 1) {
+      await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Insert product card"]')!.click());
+      const box = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="search"]')!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(box, 'ssd');
+        box.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      });
+      await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] li button')!.click());
+    }
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].getAll('productId')).toEqual([PRODUCT_ID]);
+  });
+
   it('loads the body\'s product cards through the cards action, in the page locale (D-266)', async () => {
     const id = '33333333-3333-4333-8333-333333333333';
     withBody(`<p>Kept</p><tinz-product data-id="${id}"></tinz-product>`);

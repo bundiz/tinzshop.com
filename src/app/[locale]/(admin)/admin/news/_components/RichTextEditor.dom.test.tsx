@@ -53,7 +53,7 @@ const SWITCH: LandingProductCard = {
 async function mount(
   onChange: (html: string) => void,
   body: string = BODY,
-  options: { loadProductCards?: ProductCardsLoader; searchProducts?: ProductSearch } = {},
+  options: { loadProductCards?: ProductCardsLoader; searchProducts?: ProductSearch; onProductCardInserted?: (hit: { id: string }) => void } = {},
 ) {
   await act(async () => {
     root.render(
@@ -64,6 +64,7 @@ async function mount(
           onChange={onChange}
           searchProducts={options.searchProducts ?? (async () => [])}
           loadProductCards={options.loadProductCards}
+          onProductCardInserted={options.onProductCardInserted}
         />
       </NextIntlClientProvider>,
     );
@@ -217,9 +218,11 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
   it('draws a card inserted from the picker once its data arrives, and saves only the placeholder element', async () => {
     const load = vi.fn<ProductCardsLoader>(async (ids) => Object.fromEntries(ids.map((id) => [id, id === PRODUCT ? SWITCH : null])));
     const onChange = vi.fn();
+    const inserted = vi.fn();
     const editor = await mount(onChange, '<p>Hello</p>', {
       loadProductCards: load,
       searchProducts: async () => [{ id: PRODUCT, name: 'Nintendo Switch 2', sku: 'NS2', imageUrl: null }],
+      onProductCardInserted: inserted,
     });
     expect(load).not.toHaveBeenCalled();
     await act(async () => {
@@ -239,6 +242,8 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
     await settle();
     expect(load).toHaveBeenCalledTimes(1);
     expect(load.mock.calls[0]![0]).toEqual([PRODUCT]);
+    // The article adds the picked product to its related products (D-267).
+    expect(inserted).toHaveBeenCalledWith({ id: PRODUCT, name: 'Nintendo Switch 2', sku: 'NS2', imageUrl: null });
     expect(view(PRODUCT).querySelector('article')?.textContent).toContain('Nintendo Switch 2');
     // Only the placeholder is saved (the editor adds its usual empty paragraph after a card at the end).
     for (const html of [editor.getHTML(), onChange.mock.calls.at(-1)?.[0] as string]) {

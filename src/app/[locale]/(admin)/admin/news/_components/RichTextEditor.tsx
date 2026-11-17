@@ -213,6 +213,8 @@ export type RichTextEditorProps = {
    * then for each new one. Without it every card stays the loading skeleton.
    */
   loadProductCards?: ProductCardsLoader;
+  /** Called with the product picked for a new card, so the article can add it to its related products (D-267). */
+  onProductCardInserted?: (hit: ProductPickerHit) => void;
 };
 
 /**
@@ -221,7 +223,15 @@ export type RichTextEditorProps = {
  * no upload, no paste or drop of files: the image node is registered only so an imported body's `<img>` survives a save
  * and so a later task can add the control. Client-only: nothing on a storefront page imports this file.
  */
-export default function RichTextEditor({ label, initialHtml, onChange, onLockedChange, searchProducts, loadProductCards }: RichTextEditorProps) {
+export default function RichTextEditor({
+  label,
+  initialHtml,
+  onChange,
+  onLockedChange,
+  searchProducts,
+  loadProductCards,
+  onProductCardInserted,
+}: RichTextEditorProps) {
   const t = useTranslations('admin.news.editor');
   const [dialog, setDialog] = useState<DialogKind | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -426,6 +436,7 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
             const { $to } = editor.state.selection;
             const at = $to.depth >= 1 ? $to.after(1) : $to.pos;
             editor.chain().focus().insertContentAt(at, { type: 'productCard', attrs: { id: hit.id, name: hit.name } }).run();
+            onProductCardInserted?.(hit);
             close();
           }}
           onClose={close}

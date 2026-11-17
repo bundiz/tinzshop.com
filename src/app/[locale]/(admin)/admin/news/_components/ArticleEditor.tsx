@@ -352,6 +352,9 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 onChange={(html) => setTh((previous) => ({ ...previous, bodyHtml: html }))}
                 searchProducts={searchProducts}
                 loadProductCards={loadProductCards}
+                // A product shown as a card is related to the article too (owner, 2026-11-17, D-267): added once, never
+                // removed with the card, since staff may keep it related without the card.
+                onProductCardInserted={(hit) => setProducts((list) => (list.some((product) => product.id === hit.id) ? list : [...list, hit]))}
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
