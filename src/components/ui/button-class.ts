@@ -3,20 +3,22 @@ export type ButtonSize = 'md' | 'lg' | 'admin' | 'adminSm';
 
 // Height, side padding, text size and corners live in SIZE, so a back-office size replaces them rather than competing.
 const BASE =
-  'inline-flex items-center justify-center gap-2 border-[1.5px] border-transparent font-body leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985]';
+  'inline-flex items-center justify-center gap-2 border-[1.5px] font-body leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985]';
 
 const STOREFRONT = 'min-h-12 rounded-sm px-[22px] text-base';
 
+// A filled variant carries a transparent border; `line` and `ghost` carry their own colour. Both in one element would let
+// the later rule in the stylesheet win (the transparent one did, so outlined buttons drew no outline).
 const VARIANT: Record<ButtonVariant, string> = {
-  buy: 'bg-accent text-ink hover:bg-accent-2 hover:shadow-[0_8px_20px_-8px_rgba(254,166,1,.75)] active:bg-accent-press',
+  buy: 'border-transparent bg-accent text-ink hover:bg-accent-2 hover:shadow-[0_8px_20px_-8px_rgba(254,166,1,.75)] active:bg-accent-press',
   // The mockup's `.btn-dark`.
-  brand: 'bg-brand text-white hover:bg-brand-dark',
+  brand: 'border-transparent bg-brand text-white hover:bg-brand-dark',
   line: 'border-line-2 bg-surface text-ink hover:border-ink',
   ghost: 'border-white/28 text-white hover:border-white hover:bg-white/6',
   // The LINE app's green carries ink text, never white (R16).
-  lineApp: 'bg-line-app text-ink hover:bg-line-app-hover',
+  lineApp: 'border-transparent bg-line-app text-ink hover:bg-line-app-hover',
   // The admin mockup's `.btn-danger` (and its hover): the confirm button of a destructive action (D-261).
-  danger: 'bg-sale text-white hover:bg-[#b42318]',
+  danger: 'border-transparent bg-sale text-white hover:bg-[#b42318]',
 };
 
 const SIZE: Record<ButtonSize, string> = {

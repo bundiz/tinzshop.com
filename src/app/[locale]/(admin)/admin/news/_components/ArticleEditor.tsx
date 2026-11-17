@@ -418,7 +418,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                   <figcaption className="mt-1 text-sm text-muted">{e('featured')}</figcaption>
                 </figure>
               ) : null}
-              <div className="grid gap-2 border-t border-line bg-page/40 px-4 py-3">
+              <div className="grid gap-2 border-t border-line px-4 pt-4 pb-3">
                 <div className={`grid gap-2 ${isPublished ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line', size: 'admin', block: true })}>
                     {e('button.preview')}

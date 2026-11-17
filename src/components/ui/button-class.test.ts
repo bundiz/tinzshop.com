@@ -22,6 +22,8 @@ describe('buttonClass', () => {
   it('line is the outlined button', () => {
     const classes = buttonClass({ variant: 'line' }).split(' ');
     expect(classes).toEqual(expect.arrayContaining(['border-line-2', 'bg-surface', 'text-ink', 'hover:border-ink']));
+    // The outline must show: no transparent border may sit beside it, since the later rule in the stylesheet would win.
+    expect(classes).not.toContain('border-transparent');
   });
 
   it('ghost is the outlined button for dark bands', () => {
