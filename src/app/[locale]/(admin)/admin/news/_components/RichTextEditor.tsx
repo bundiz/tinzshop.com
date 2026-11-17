@@ -268,7 +268,7 @@ export default function RichTextEditor({
         // The text styles skip the product card's node view (`:not(tinz-product …)`), so its name, price and stock look
         // exactly as on the storefront card (D-266); links and paragraphs in the article text are unchanged.
         class:
-          'min-h-[320px] px-4 py-3 outline-none [&_p:not(tinz-product_p)]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3:not(tinz-product_h3)]:my-3 [&_h3:not(tinz-product_h3)]:text-lg [&_h3:not(tinz-product_h3)]:font-bold [&_a:not(tinz-product_a)]:text-brand [&_a:not(tinz-product_a)]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img:not(tinz-product_img)]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
+          'min-h-[320px] px-4 py-3 outline-none lg:min-h-[560px] [&_p:not(tinz-product_p)]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3:not(tinz-product_h3)]:my-3 [&_h3:not(tinz-product_h3)]:text-lg [&_h3:not(tinz-product_h3)]:font-bold [&_a:not(tinz-product_a)]:text-brand [&_a:not(tinz-product_a)]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img:not(tinz-product_img)]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
       },
     },
     // Even a selection-only transaction can change the document (the trailing paragraph, a split figure), so a locked body
