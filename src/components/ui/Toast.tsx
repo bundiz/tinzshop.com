@@ -90,7 +90,7 @@ function ToastCard({
 }
 
 /**
- * The back office's success toast (D-262), mounted once in `AdminShell`: a white card at the bottom left with a ticked circle
+ * The back office's success toast (D-262), mounted once in `AdminShell`: a white card at the bottom right with a ticked circle
  * and the message, newest in front and up to two older ones peeking behind it. It rises in over 200ms, leaves itself after
  * about four seconds (paused while the pointer or focus is on it), and fades out over 150ms; a close button shows on hover
  * and focus (always on a phone, which has no hover). It never takes focus. Screen readers hear each message through one
@@ -153,7 +153,7 @@ export function ToastProvider({ closeLabel, children }: { closeLabel: string; ch
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
           }}
-          className="fixed bottom-4 left-4 z-80 grid w-[min(360px,calc(100vw-32px))] md:left-[280px]"
+          className="fixed right-4 bottom-4 z-80 grid w-[min(360px,calc(100vw-32px))] md:right-7"
         >
           {shown.map((toast, depth) => (
             <ToastCard key={toast.id} toast={toast} depth={depth} paused={hovered || focused} closeLabel={closeLabel} onDismiss={dismiss} />

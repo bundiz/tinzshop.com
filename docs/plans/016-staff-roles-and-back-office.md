@@ -279,7 +279,7 @@ Run by a person on the dev pool. Never tick a box for a check nobody performed.
 - [ ] The back office is Thai only: no TH/EN switch; opening `/en/admin/news` lands on `/th/admin/news`; the English storefront's "Back office" link opens the Thai back office; the news list and users pages have no breadcrumb bar, the editor pages do.
 - [ ] The editor shows only Thai fields; editing and saving an article that has an English version keeps that English version on `/en/news/…`.
 - [ ] Users and news rows: ⋯ menu by mouse and keyboard; edit drawer changes a role; block asks to confirm; trash asks to confirm; restore in trash; at 360px the menu and drawer fit (D-261).
-- [ ] Grid: one บันทึก saves all three roles; toast bottom-left; role change and block show a toast; screen reader announces it (D-262).
+- [ ] Grid: one บันทึก saves all three roles; toast bottom-right; role change and block show a toast; screen reader announces it (D-262).
 
 ## Outcome
 
