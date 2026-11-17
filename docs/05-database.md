@@ -251,6 +251,7 @@ Rules:
 
 - **`super_admin` always holds every permission.** Its column is ticked and disabled in the grid, and the server refuses to remove any.
 - **Customer and Guest can never hold a back-office key** (the four above and any later key marked back-office). The grid shows those cells disabled and the server refuses them, so one click can never turn every account into staff.
+- **The grid saves every role at once, in one transaction (D-262).** `replaceRolePermissions` takes each role's whole set, locks the listed `role` rows (`FOR NO KEY UPDATE`, in id order) and then replaces each role's `role_permission` rows; an unknown role or permission key rolls every role back. The lock makes two saves at once run one after the other, rather than mixing their sets or colliding on the primary key; `FOR NO KEY UPDATE` does not block the key-share lock that a new account or a role change takes on its `role` row.
 - **Last-Top-level-Admin guard.** There is always at least one unblocked account with the `super_admin` role. The server refuses a role change or a block that would leave none, inside the same transaction as the change, so two concurrent demotions cannot both pass.
 - **Guest is not assigned to an account** (D-231); no account has `role_id` pointing at it.
 

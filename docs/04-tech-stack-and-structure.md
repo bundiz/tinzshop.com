@@ -91,6 +91,7 @@ tinzshop.com/
 │   │   │                           (buttonClass), Breadcrumbs.tsx and use-modal-dialog.ts (plan 015),
 │   │   │                           Select.tsx, the site's only dropdown (D-258), and the back
 │   │   │                           office's RowActionsMenu.tsx, Drawer.tsx and ConfirmDialog.tsx (D-261)
+│   │   │                           and Toast.tsx, its success toast (D-262)
 │   │   └── domain/               ← tier 2: shared domain components. Includes platform-tone.ts (plan 015)
 │   ├── server/                   ← layered controller → service → repository (D-101)
 │   │   │                           Each layer is split into the same module folders (D-116): catalogue/,
