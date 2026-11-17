@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { requirePermission } from '../../../../(admin)/admin/_lib/require-permission';
+import { readArticlesMenu } from '../../../../(shop)/_components/read-articles-menu';
+import { readCurrentCustomer } from '../../../../(shop)/_components/read-current-customer';
 import { isPreviewSession } from '../../../../(admin)/admin/news/_lib/preview-channel';
 import LivePreview from './_components/LivePreview';
 
@@ -39,5 +41,7 @@ export default async function NewsPreviewPage({ params, searchParams }: Props) {
       </main>
     );
   }
-  return <LivePreview locale={locale} session={session} />;
+  // The storefront header around the article: its articles menu and the signed-in account, read once for the tab.
+  const [articlesMenu, customer] = await Promise.all([readArticlesMenu(locale as 'th' | 'en'), readCurrentCustomer()]);
+  return <LivePreview locale={locale} session={session} articlesMenu={articlesMenu} customer={customer} />;
 }

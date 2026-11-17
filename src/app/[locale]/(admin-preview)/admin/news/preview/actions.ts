@@ -2,26 +2,22 @@
 
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
-import { createElement, type ReactNode } from 'react';
 
 import { routing } from '@/i18n/routing';
 import { getNewsAdminCommands } from '@/server/composition-root';
-import NewsArticleView from '../../../../(shop)/news/[slug]/_components/NewsArticleView';
-import { readArticlesMenu } from '../../../../(shop)/_components/read-articles-menu';
-import { readCurrentCustomer } from '../../../../(shop)/_components/read-current-customer';
+import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import { requirePermission } from '../../../../(admin)/admin/_lib/require-permission';
 
 /**
- * The live preview's render (D-253): the editor's unsaved draft drawn by the storefront's own `NewsArticleView`, returned
- * as a React element for the preview tab to show. Re-checks `news.manage`; the draft is validated with the save's caps
- * (null when it is not valid). Nothing is written, and the draft's text is never logged (D-242).
+ * The live preview's data (D-253): the editor's unsaved draft as the storefront's article page needs it — sanitised body,
+ * live product cards, category names, byline and date — for the preview tab to draw with `NewsArticleView`. It returns
+ * data, never a rendered element: an element would carry client components the preview route does not load, and React
+ * could not find them. Re-checks `news.manage`; the draft is validated with the save's caps (null when it is not valid).
+ * Nothing is written, and the draft's text is never logged (D-242).
  */
-export async function previewArticleAction(locale: string, draft: unknown): Promise<ReactNode> {
+export async function previewArticleAction(locale: string, draft: unknown): Promise<NewsArticleDetail | null> {
   const pageLocale = hasLocale(routing.locales, locale) ? locale : routing.defaultLocale;
   setRequestLocale(pageLocale);
   const editor = await requirePermission(pageLocale, '/admin/news/preview', 'news.manage');
-  const detail = await getNewsAdminCommands().preview(editor, draft, pageLocale);
-  if (detail === null) return null;
-  const [articlesMenu, customer] = await Promise.all([readArticlesMenu(pageLocale), readCurrentCustomer()]);
-  return createElement(NewsArticleView, { article: detail, articlesMenu, customer });
+  return getNewsAdminCommands().preview(editor, draft, pageLocale);
 }

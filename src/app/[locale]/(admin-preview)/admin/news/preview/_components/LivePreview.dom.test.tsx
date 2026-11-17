@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { NextIntlClientProvider } from 'next-intl';
-import { act, type ReactNode } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '../../../../../../../../messages/en.json';
+import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import LivePreview from './LivePreview';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -33,14 +36,14 @@ class FakeChannel {
   }
 }
 
-type Pending = { draft: unknown; resolve: (node: ReactNode) => void; reject: (error: Error) => void };
+type Pending = { draft: unknown; resolve: (detail: NewsArticleDetail | null) => void; reject: (error: Error) => void };
 
 let container: HTMLDivElement;
 let root: Root;
 let pending: Pending[];
 const action = vi.fn(
   (_locale: string, draft: unknown) =>
-    new Promise<ReactNode>((resolve, reject) => {
+    new Promise<NewsArticleDetail | null>((resolve, reject) => {
       pending.push({ draft, resolve, reject });
     }),
 );
@@ -65,7 +68,14 @@ async function mount(): Promise<FakeChannel> {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <LivePreview locale="en" session={SESSION} action={action} />
+        <LivePreview
+          locale="en"
+          session={SESSION}
+          articlesMenu={[]}
+          customer={null}
+          action={action}
+          renderArticle={(detail) => <article>{detail.title}</article>}
+        />
       </NextIntlClientProvider>,
     );
   });
@@ -74,6 +84,8 @@ async function mount(): Promise<FakeChannel> {
 
 const bar = () => container.querySelector('[role="status"]')!.textContent;
 const draft = (title: string) => ({ type: 'draft', draft: { title } });
+/** What the action answers: the article as data (D-253 as fixed on 2026-11-17), drawn in the browser. */
+const detail = (title: string) => ({ title }) as NewsArticleDetail;
 
 describe('LivePreview (D-253)', () => {
   it('joins the session channel and asks the editor for its draft, waiting meanwhile', async () => {
@@ -83,12 +95,12 @@ describe('LivePreview (D-253)', () => {
     expect(bar()).toBe('Waiting for the editor…');
   });
 
-  it('draws each draft through the action, under the unsaved-preview bar', async () => {
+  it('draws each draft from the data the action returns, under the unsaved-preview bar', async () => {
     const channel = await mount();
     await act(async () => channel.receive(draft('One')));
     expect(action).toHaveBeenCalledWith('en', { title: 'One' });
-    await act(async () => pending[0]!.resolve(<article>Drawn One</article>));
-    expect(container.querySelector('article')?.textContent).toBe('Drawn One');
+    await act(async () => pending[0]!.resolve(detail('One')));
+    expect(container.querySelector('article')?.textContent).toBe('One');
     expect(bar()).toBe('Unsaved preview. It follows what you type in the editor; customers cannot see it.');
   });
 
@@ -98,15 +110,15 @@ describe('LivePreview (D-253)', () => {
       channel.receive(draft('Old'));
       channel.receive(draft('New'));
     });
-    await act(async () => pending[1]!.resolve(<article>New</article>));
-    await act(async () => pending[0]!.resolve(<article>Old</article>));
+    await act(async () => pending[1]!.resolve(detail('New')));
+    await act(async () => pending[0]!.resolve(detail('Old')));
     expect(container.querySelector('article')?.textContent).toBe('New');
   });
 
   it('keeps the last version and says so when the editor closes, or when an answer fails', async () => {
     const channel = await mount();
     await act(async () => channel.receive(draft('One')));
-    await act(async () => pending[0]!.resolve(<article>One</article>));
+    await act(async () => pending[0]!.resolve(detail('One')));
 
     await act(async () => channel.receive(draft('Two')));
     await act(async () => pending[1]!.reject(new Error('network')));
@@ -142,5 +154,16 @@ describe('LivePreview (D-253)', () => {
     act(() => root.unmount());
     root = createRoot(container);
     expect(channel.closed).toBe(true);
+  });
+
+  // A Server Action that returned the rendered page sent client components the preview route never loads, so React could
+  // not find them in its client manifest ("Could not find the module … ArticlesMenu.tsx"). The action returns data; the
+  // client draws it with the storefront's own component.
+  it('draws the storefront article page in the browser: the action returns data, never a rendered element', () => {
+    const here = join(process.cwd(), 'src/app/[locale]/(admin-preview)/admin/news/preview');
+    const actions = readFileSync(join(here, 'actions.ts'), 'utf8');
+    const preview = readFileSync(join(here, '_components/LivePreview.tsx'), 'utf8');
+    expect(actions).not.toMatch(/createElement|import NewsArticleView|return\s*\(?\s*<[A-Za-z]/);
+    expect(preview).toMatch(/import NewsArticleView from/);
   });
 });
