@@ -3,7 +3,13 @@ import { z } from 'zod';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { can } from '@/server/services/access/access-service';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
-import type { SaveArticleInput } from '@/server/services/news/news-admin-service';
+import type {
+  ArticlePreviewDraft,
+  NewsCategoryOption,
+  SaveArticleInput,
+} from '@/server/services/news/news-admin-service';
+import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
+import type { NewsLocale } from '@/server/services/news/news-snapshot';
 import type { Result } from '@/server/services/shared/result';
 
 /** A key under `admin.news.error.*` in the message files. */
@@ -18,7 +24,10 @@ export type NewsAdminErrorKey =
   | 'categories'
   | 'products'
   | 'publishAtInvalid'
-  | 'publishAtRequired';
+  | 'publishAtRequired'
+  | 'categoryNameRequired'
+  | 'categoryNameTooLong'
+  | 'categoryExists';
 
 /** What a news form shows after it runs (plan 016, Task 9). `saved` carries what the editor needs to move on. */
 export type NewsAdminState =
@@ -29,11 +38,22 @@ export type NewsAdminState =
 
 export type NewsAdminActor = { id: string; permissions: readonly PermissionKey[] };
 
+/**
+ * What the editor's "add category" form shows after it runs (D-254): the new category, or a listed one that already has
+ * the Thai name (the editor ticks it instead), or an error key under `admin.news.error.*`.
+ */
+export type NewsCategoryState =
+  | { status: 'created'; category: NewsCategoryOption }
+  | { status: 'exists'; category: NewsCategoryOption }
+  | { status: 'error'; errorKey: NewsAdminErrorKey };
+
 export type NewsAdminCommandDeps = {
   save: (request: SaveArticleInput) => Promise<Result<{ id: string; slug: string }>>;
   trash: (id: string, editorId: string) => Promise<Result<{ id: string }>>;
   restore: (id: string, editorId: string) => Promise<Result<{ id: string }>>;
   searchProducts: (query: string) => Promise<ProductPickerHit[]>;
+  createCategory: (input: { thName: string; enName: string }) => Promise<Result<NewsCategoryOption>>;
+  preview: (input: { draft: ArticlePreviewDraft; locale: NewsLocale; editorFirstName: string }) => Promise<NewsArticleDetail>;
   now: () => Date;
   /** Ids and the action only: never a title, an excerpt or body text (D-242). */
   log: (message: string, fields: Record<string, unknown>) => void;
@@ -206,4 +226,58 @@ export async function searchProductsCommand(deps: NewsAdminCommandDeps, actor: N
   if (!can(actor, 'news.manage')) return [];
   const text = query.trim();
   return text === '' ? [] : deps.searchProducts(text);
+}
+
+/** The add-category form's two fields; generous caps here, the service's 100-character rule gives the message. */
+const CategoryForm = z.object({ thName: z.string().max(1_000), enName: z.string().max(1_000) });
+
+/**
+ * Creates a listed news category from the editor (`news.manage`, D-254). A duplicate Thai name is never a second row: a
+ * listed holder comes back as `exists`, so the editor ticks it; an unlisted one, which the editor cannot offer, is
+ * `categoryExists`. Logs ids only.
+ */
+export async function createCategoryCommand(deps: NewsAdminCommandDeps, actor: NewsAdminActor, input: unknown): Promise<NewsCategoryState> {
+  if (!can(actor, 'news.manage')) return { status: 'error', errorKey: 'forbidden' };
+  const parsed = CategoryForm.safeParse(input);
+  if (!parsed.success) return { status: 'error', errorKey: 'invalid' };
+  const result = await deps.createCategory(parsed.data);
+  if (result.ok) {
+    deps.log('news.category_created', { actor: actor.id, category: result.data.id });
+    return { status: 'created', category: result.data };
+  }
+  if (result.error.code === 'news.category_exists') {
+    const { category } = result.error.details as { category: NewsCategoryOption };
+    return category.isListed ? { status: 'exists', category } : { status: 'error', errorKey: 'categoryExists' };
+  }
+  const reason = (result.error.details as { reason?: string } | undefined)?.reason;
+  return { status: 'error', errorKey: reason === 'required' ? 'categoryNameRequired' : reason === 'too_long' ? 'categoryNameTooLong' : 'invalid' };
+}
+
+/** The live preview's draft (D-253), with the same caps as a save (`SaveForm`). */
+const PreviewDraftForm = z.object({
+  articleId: uuid.nullable(),
+  contentLanguage: z.enum(['th', 'en']),
+  slug: z.string().max(300),
+  title,
+  excerpt: field,
+  bodyHtml: field,
+  bylineName: z.string().max(200),
+  categoryIds: z.array(uuid).max(100),
+  publishedAt: z.iso.datetime().nullable(),
+});
+
+/**
+ * The article page's data for the editor's unsaved draft (`news.manage`, D-253), or null for an actor without the key or
+ * a draft that is not valid. Nothing is written and nothing is logged: a draft's title and body never reach a log (D-242).
+ */
+export async function previewArticleCommand(
+  deps: NewsAdminCommandDeps,
+  actor: NewsAdminActor & { firstName: string },
+  input: unknown,
+  locale: NewsLocale,
+): Promise<NewsArticleDetail | null> {
+  if (!can(actor, 'news.manage')) return null;
+  const parsed = PreviewDraftForm.safeParse(input);
+  if (!parsed.success) return null;
+  return deps.preview({ draft: parsed.data, locale, editorFirstName: actor.firstName });
 }

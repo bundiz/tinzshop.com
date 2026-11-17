@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   trash: vi.fn(async () => ({ status: 'done' })),
   restore: vi.fn(async () => ({ status: 'done' })),
   searchProducts: vi.fn(async () => [{ id: 'p', name: 'Switch', sku: 'NS', imageUrl: null }]),
+  createCategory: vi.fn(async () => ({ status: 'created', category: { id: 'c', slug: 'guides', isListed: true, names: { th: 'คู่มือ' } } })),
   revalidatePath: vi.fn(),
 }));
 
@@ -17,10 +18,11 @@ vi.mock('@/server/composition-root', () => ({
     trash: mocks.trash,
     restore: mocks.restore,
     searchProducts: mocks.searchProducts,
+    createCategory: mocks.createCategory,
   }),
 }));
 
-const { restoreArticleAction, saveArticleAction, searchProductsAction, trashArticleAction } = await import('./actions');
+const { createCategoryAction, restoreArticleAction, saveArticleAction, searchProductsAction, trashArticleAction } = await import('./actions');
 
 const idle = { status: 'idle' } as const;
 const ACTOR = { id: 'actor-1', permissions: ['backoffice.enter', 'news.manage'] };
@@ -73,5 +75,30 @@ describe('the news Server Actions', () => {
     expect(mocks.requirePermission).toHaveBeenCalledWith('th', expect.any(String), 'news.manage');
     expect(await searchProductsAction('switch')).toEqual([{ id: 'p', name: 'Switch', sku: 'NS', imageUrl: null }]);
     expect(mocks.searchProducts).toHaveBeenCalledWith(ACTOR, 'switch');
+  });
+
+  it('createCategoryAction checks news.manage and stops when it is refused', async () => {
+    mocks.requirePermission.mockRejectedValue(new Error('NEXT_REDIRECT'));
+    await expect(createCategoryAction('en', { thName: 'คู่มือ', enName: '' })).rejects.toThrow('NEXT_REDIRECT');
+    expect(mocks.requirePermission).toHaveBeenCalledWith('en', expect.stringContaining('/admin/news'), 'news.manage');
+    expect(mocks.createCategory).not.toHaveBeenCalled();
+  });
+
+  it('createCategoryAction passes the actor and the names on, and revalidates the news pages in both languages after a create only', async () => {
+    const input = { thName: 'คู่มือ', enName: 'Guides' };
+    expect(await createCategoryAction('xx', input)).toMatchObject({ status: 'created' });
+    expect(mocks.requirePermission).toHaveBeenCalledWith('th', expect.any(String), 'news.manage');
+    expect(mocks.createCategory).toHaveBeenCalledWith(ACTOR, input);
+    expect(mocks.revalidatePath.mock.calls.map(([path]) => path).sort()).toEqual([
+      '/en/admin/news',
+      '/en/admin/news/new',
+      '/th/admin/news',
+      '/th/admin/news/new',
+    ]);
+
+    mocks.revalidatePath.mockClear();
+    mocks.createCategory.mockResolvedValueOnce({ status: 'error', errorKey: 'categoryExists' } as never);
+    expect(await createCategoryAction('th', input)).toEqual({ status: 'error', errorKey: 'categoryExists' });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

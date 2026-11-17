@@ -45,12 +45,16 @@ function withBody(bodyHtml: string): void {
 
 async function mount(
   save: (previous: unknown, formData: FormData) => Promise<never>,
-  options: { article?: EditorArticle | null; categories?: { id: string; name: string; unlisted?: boolean }[] } = {},
+  options: {
+    article?: EditorArticle | null;
+    categories?: { id: string; name: string; unlisted?: boolean }[];
+    createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<never>;
+  } = {},
 ) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
-        <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: async () => ({ status: 'idle' }), search: async () => [] }} />
+        <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: async () => ({ status: 'idle' }), search: async () => [], createCategory: options.createCategory }} />
       </NextIntlClientProvider>,
     );
   });
@@ -105,6 +109,20 @@ describe('ArticleEditor', () => {
     expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].get('thBodyHtml')).toBe(stored);
   });
 
+  it('marks the fields publishing needs with a red star and a spoken note: the Thai summary and the categories, not the English summary', async () => {
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never));
+    const note = 'Required to publish';
+    const thLabel = container.querySelector('label[for="th-excerpt"]')!;
+    const enLabel = container.querySelector('label[for="en-excerpt"]')!;
+    const categoriesHeading = [...container.querySelectorAll('h2')].find((h) => h.textContent?.startsWith('Categories'))!;
+    for (const marked of [thLabel, categoriesHeading]) {
+      expect(marked.querySelector('[aria-hidden="true"]')?.textContent).toBe('*');
+      expect(marked.querySelector('.sr-only')?.textContent).toBe(note);
+    }
+    expect(enLabel.textContent).not.toContain('*');
+    expect((container.querySelector('#th-excerpt') as HTMLTextAreaElement).required).toBe(false);
+  });
+
   it('keeps an article\'s unlisted categories: shown checked and marked, submitted unless unticked, never offered otherwise', async () => {
     const LISTED = '55555555-5555-4555-8555-555555555555';
     const UNLISTED = '66666666-6666-4666-8666-666666666666';
@@ -144,5 +162,205 @@ describe('ArticleEditor', () => {
     expect(save).toHaveBeenCalledTimes(1);
     expect(container.querySelector<HTMLButtonElement>('button[value="draft"]')!.disabled).toBe(true);
     expect(container.querySelector<HTMLButtonElement>('button[value="publish"]')!.disabled).toBe(true);
+  });
+});
+
+/** A stand-in for the browser's `BroadcastChannel`: records what the editor posts, and lets a test speak as the preview tab. */
+class FakeChannel {
+  static all: FakeChannel[] = [];
+  posted: unknown[] = [];
+  closed = false;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  constructor(readonly name: string) {
+    FakeChannel.all.push(this);
+  }
+  postMessage(data: unknown): void {
+    this.posted.push(data);
+  }
+  close(): void {
+    this.closed = true;
+  }
+  /** A message from the preview tab. */
+  receive(data: unknown): void {
+    this.onmessage?.({ data } as MessageEvent);
+  }
+}
+
+const SESSION = '99999999-9999-4999-8999-999999999999';
+const wait = (ms: number) => act(async () => new Promise((resolve) => setTimeout(resolve, ms)));
+
+function type(input: HTMLInputElement, value: string): Promise<void> {
+  return act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+const previewButton = () => [...container.querySelectorAll('button')].find((button) => button.textContent === 'Preview')!;
+const drafts = (channel: FakeChannel) => channel.posted.filter((message) => (message as { type: string }).type === 'draft') as { draft: Record<string, unknown> }[];
+
+describe('ArticleEditor: the live preview (D-253)', () => {
+  let open: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    FakeChannel.all = [];
+    window.sessionStorage.clear();
+    vi.stubGlobal('BroadcastChannel', FakeChannel);
+    open = vi.fn(() => null);
+    vi.stubGlobal('open', open);
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(SESSION);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('offers "Preview" on a new article as a button, and opens no channel before it is pressed', async () => {
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never), { article: null });
+    expect(previewButton().getAttribute('type')).toBe('button');
+    expect(container.querySelector('a[href*="/preview"]')).toBeNull();
+    expect(FakeChannel.all).toHaveLength(0);
+  });
+
+  it('opens the named preview tab, answers "ready" at once, sends a draft 500 ms after typing stops, and says "closed" on unmount', async () => {
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never), { article: null });
+    await act(async () => previewButton().click());
+    expect(open).toHaveBeenCalledWith(`/en/admin/news/preview?session=${SESSION}`, `tinz-preview-${SESSION}`);
+    const [channel] = FakeChannel.all;
+    expect(channel!.name).toBe(`tinz-news-preview:${SESSION}`);
+    expect(window.sessionStorage.getItem('tinz-news-preview-session')).toBe(SESSION);
+
+    channel!.receive({ type: 'ready' });
+    expect(drafts(channel!)).toEqual([
+      {
+        type: 'draft',
+        draft: { articleId: null, contentLanguage: 'th', slug: '', title: '', excerpt: '', bodyHtml: '', bylineName: 'Nok', categoryIds: [], publishedAt: null },
+      },
+    ]);
+
+    const title = container.querySelector<HTMLInputElement>('#th-title')!;
+    await type(title, 'Hel');
+    await wait(200);
+    await type(title, 'Hello');
+    await wait(200);
+    expect(drafts(channel!)).toHaveLength(1);
+    await wait(450);
+    expect(drafts(channel!)).toHaveLength(2);
+    expect(drafts(channel!)[1]!.draft).toMatchObject({ title: 'Hello', contentLanguage: 'th' });
+
+    // A second press reuses the same session and the same named tab.
+    await act(async () => previewButton().click());
+    expect(open).toHaveBeenLastCalledWith(`/en/admin/news/preview?session=${SESSION}`, `tinz-preview-${SESSION}`);
+    expect(FakeChannel.all).toHaveLength(1);
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    expect(channel!.posted.at(-1)).toEqual({ type: 'closed' });
+    expect(channel!.closed).toBe(true);
+  });
+
+  it('sends a saved article\'s stored body when it is locked, and the article id', async () => {
+    withBody(STORED);
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never));
+    await act(async () => previewButton().click());
+    FakeChannel.all[0]!.receive({ type: 'ready' });
+    expect(drafts(FakeChannel.all[0]!)[0]!.draft).toMatchObject({ articleId: article.id, bodyHtml: STORED, title: 'T' });
+  });
+
+  it('picks up a session made earlier in this browser tab, so an open preview follows the editor to the saved article', async () => {
+    window.sessionStorage.setItem('tinz-news-preview-session', SESSION);
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never));
+    expect(FakeChannel.all.map((channel) => channel.name)).toEqual([`tinz-news-preview:${SESSION}`]);
+    await wait(550);
+    expect(drafts(FakeChannel.all[0]!)).toHaveLength(1);
+    expect(open).not.toHaveBeenCalled();
+  });
+});
+
+describe('ArticleEditor: add a category (D-254)', () => {
+  const LISTED = '55555555-5555-4555-8555-555555555555';
+  const NEW = '88888888-8888-4888-8888-888888888888';
+  const addButton = () => [...container.querySelectorAll('button')].find((button) => button.textContent?.includes('Add category'))!;
+  const fields = () => container.querySelectorAll<HTMLInputElement>('[role="group"][aria-label="Add category"] input');
+
+  function press(input: HTMLInputElement, key: string): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+    act(() => {
+      input.dispatchEvent(event);
+    });
+    return event;
+  }
+
+  beforeEach(() => {
+    article = { ...article, th: { ...article.th, bodyHtml: '<p>Body</p>' }, categoryIds: [] };
+  });
+
+  it('opens an inline form that is not a nested form and posts nothing with the article; Enter adds, lists and ticks the new category', async () => {
+    const created = { status: 'created', category: { id: NEW, slug: 'guides', isListed: true, names: { th: 'คู่มือ', en: 'Guides' } } };
+    const createCategory = vi.fn(async () => created as never);
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, { categories: [{ id: LISTED, name: 'News' }], createCategory });
+
+    expect(addButton().getAttribute('aria-expanded')).toBe('false');
+    await act(async () => addButton().click());
+    expect(addButton().getAttribute('aria-expanded')).toBe('true');
+    const [th, en] = [...fields()];
+    expect(document.activeElement).toBe(th);
+    expect(container.querySelectorAll('form form')).toHaveLength(0);
+    expect([...fields()].every((input) => !input.hasAttribute('name'))).toBe(true);
+    expect(th!.closest('[role="group"]')!.querySelectorAll('button[type="submit"], button:not([type])')).toHaveLength(0);
+
+    await type(th!, ' คู่มือ ');
+    await type(en!, 'Guides');
+    let enter!: KeyboardEvent;
+    await act(async () => {
+      enter = press(en!, 'Enter');
+    });
+    await wait(0);
+    expect(enter.defaultPrevented).toBe(true);
+    expect(createCategory).toHaveBeenCalledWith('en', { thName: ' คู่มือ ', enName: 'Guides' });
+    expect(save).not.toHaveBeenCalled();
+
+    const boxes = [...container.querySelectorAll<HTMLInputElement>('input[name="categoryId"]')];
+    expect(boxes.map((box) => [box.value, box.checked])).toEqual([[LISTED, false], [NEW, true]]);
+    expect(container.textContent).toContain('Guides');
+    expect(fields()).toHaveLength(0);
+    expect(document.activeElement).toBe(addButton());
+    expect(container.textContent).toContain('Added the category “Guides” and chose it for this article.');
+
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+    const sent = (save.mock.calls[0] as unknown as [unknown, FormData])[1];
+    expect(sent.getAll('categoryId')).toEqual([NEW]);
+    expect([...sent.keys()].some((key) => /name/i.test(key) && key !== 'bylineName')).toBe(false);
+  });
+
+  it('shows a refusal inline as an alert and keeps the form open; Escape cancels and returns focus', async () => {
+    const createCategory = vi.fn(async () => ({ status: 'error', errorKey: 'categoryNameRequired' }) as never);
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never), { createCategory });
+    await act(async () => addButton().click());
+    const add = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Add')!;
+    await act(async () => add.click());
+    await wait(0);
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe("Enter the category's Thai name.");
+    expect(fields()).toHaveLength(2);
+
+    press(fields()[0]!, 'Escape');
+    await wait(0);
+    expect(fields()).toHaveLength(0);
+    expect(document.activeElement).toBe(addButton());
+  });
+
+  it('ticks a listed category that already has the name instead of listing it twice', async () => {
+    const existing = { status: 'exists', category: { id: LISTED, slug: 'news', isListed: true, names: { th: 'ข่าว', en: 'News' } } };
+    await mount(vi.fn(async () => ({ status: 'idle' }) as never), {
+      categories: [{ id: LISTED, name: 'News' }],
+      createCategory: vi.fn(async () => existing as never),
+    });
+    await act(async () => addButton().click());
+    await type(fields()[0]!, 'ข่าว');
+    press(fields()[0]!, 'Enter');
+    await wait(0);
+    const boxes = [...container.querySelectorAll<HTMLInputElement>('input[name="categoryId"]')];
+    expect(boxes.map((box) => [box.value, box.checked])).toEqual([[LISTED, true]]);
+    expect(container.textContent).toContain('The category “News” already exists; chose it for this article.');
   });
 });

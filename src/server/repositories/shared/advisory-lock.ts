@@ -10,6 +10,9 @@ export const NEWS_IMPORT_LOCK_KEY = 6_251_012n;
 /** Serialises the account-role job's bootstrap check (plan 016, D-235); held by a transaction, not a session. */
 export const ACCOUNT_ROLE_BOOTSTRAP_LOCK_KEY = 6_251_016n;
 
+/** Serialises staff-made news categories (D-254): the duplicate check, the slug and the position; held by a transaction. */
+export const NEWS_CATEGORY_LOCK_KEY = 6_251_017n;
+
 /**
  * Runs `task` only if the session-level advisory lock is free. The lock lives on a dedicated
  * connection, so it is released on every exit path, including a throwing task.

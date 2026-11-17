@@ -1,6 +1,8 @@
+import { Client } from 'pg';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getNewsAdmin } from '@/server/composition-root';
+import { getDatabaseUrl } from '@/server/config';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 import type { ArticleInput } from '@/server/services/news/news-admin-service';
 import { resetDatabase } from '../setup/database';
@@ -274,5 +276,99 @@ describe('news authoring against the database', () => {
       updatedByStaffId: who,
       createdByStaffId: null,
     });
+  });
+});
+
+describe('staff-made news categories against the database (D-254)', () => {
+  const create = (thName: string, enName = '') => admin.createCategory({ thName, enName });
+
+  it('creates a listed, top-level category last in order, with no source id and both names', async () => {
+    await prisma().newsCategory.create({ data: { slug: 'old', position: 7, sourceId: 12n, translations: { create: { locale: 'th', name: 'เก่า' } } } });
+    const result = await create(' คู่มือ เกม ', 'Game Guides');
+    expect(result).toMatchObject({ ok: true, data: { slug: 'game-guides', isListed: true, names: { th: 'คู่มือ เกม', en: 'Game Guides' } } });
+
+    const row = await prisma().newsCategory.findUniqueOrThrow({ where: { slug: 'game-guides' }, include: { translations: true } });
+    expect(row).toMatchObject({ parentId: null, position: 8, sourceId: null, isListed: true });
+    expect(row.translations.map((t) => [t.locale, t.name]).sort()).toEqual([
+      ['en', 'Game Guides'],
+      ['th', 'คู่มือ เกม'],
+    ]);
+    // It is offered to the editor and the storefront at once: listed, in the category read.
+    expect((await admin.categories()).at(-1)).toMatchObject({ slug: 'game-guides', isListed: true });
+  });
+
+  it('gives a clashing slug -2, -3, from the Thai name when there is no English one', async () => {
+    await prisma().newsCategory.create({ data: { slug: 'guides', position: 1, translations: { create: { locale: 'th', name: 'ไกด์' } } } });
+    expect(await create('คู่มือ', 'Guides')).toMatchObject({ ok: true, data: { slug: 'guides-2' } });
+    expect(await create('คู่มือใหม่', 'Guides')).toMatchObject({ ok: true, data: { slug: 'guides-3' } });
+    expect(await create('รีวิว เกม')).toMatchObject({ ok: true, data: { slug: 'รีวิว-เกม', names: { th: 'รีวิว เกม' } } });
+  });
+
+  it('refuses a Thai name an existing category has, ignoring case and spacing, listed or not, and writes nothing', async () => {
+    const hidden = await prisma().newsCategory.create({
+      data: { slug: 'uncategorized', position: 1, isListed: false, translations: { create: { locale: 'th', name: 'Uncategorized' } } },
+      select: { id: true },
+    });
+    await create('ข่าว  PS5', 'PS5');
+    const before = await prisma().newsCategory.count();
+
+    expect(await create('ข่าว ps5')).toMatchObject({ ok: false, error: { code: 'news.category_exists', details: { category: { slug: 'ps5', isListed: true } } } });
+    expect(await create(' uncategorized ')).toMatchObject({
+      ok: false,
+      error: { code: 'news.category_exists', details: { category: { id: hidden.id, isListed: false } } },
+    });
+    expect(await prisma().newsCategory.count()).toBe(before);
+  });
+
+  /**
+   * Starts the creates while another session holds `news_category_translation` exclusively, waits until all of them are
+   * blocked (on that table, or on the category lock behind it), then lets them go at once. Without the category lock they
+   * would all pass the duplicate check and read the same highest position together.
+   */
+  async function raceCreates<T>(start: () => Promise<T>[]): Promise<T[]> {
+    const holder = new Client({ connectionString: getDatabaseUrl() });
+    const watcher = new Client({ connectionString: getDatabaseUrl() });
+    await Promise.all([holder.connect(), watcher.connect()]);
+    try {
+      await holder.query('BEGIN');
+      await holder.query('LOCK TABLE news_category_translation IN ACCESS EXCLUSIVE MODE');
+      const calls = start();
+      const deadline = Date.now() + 10_000;
+      for (;;) {
+        const waiting = await watcher.query<{ n: number }>(
+          "SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'",
+        );
+        if (waiting.rows[0]!.n >= calls.length) break;
+        if (Date.now() > deadline) throw new Error('the creates never all waited on a lock');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      await holder.query('COMMIT');
+      return await Promise.all(calls);
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      await Promise.all([holder.end(), watcher.end()]);
+    }
+  }
+
+  // Creates with different slugs never meet on the unique slug index, so only the lock keeps them apart.
+  it('creates at once with different slugs take different positions', async () => {
+    const results = await raceCreates(() => [create('หนึ่ง', 'One'), create('สอง', 'Two'), create('สาม', 'Three')]);
+    expect(results.every((result) => result.ok)).toBe(true);
+    const rows = await prisma().newsCategory.findMany({ select: { position: true } });
+    expect(rows.map((row) => row.position).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('creates at once with the same Thai name and different English names make one row; the others are told it exists', async () => {
+    const twins = await raceCreates(() => [create('ซ้ำ', 'Alpha'), create('ซ้ำ', 'Beta'), create('ซ้ำ', 'Gamma')]);
+    expect(twins.filter((result) => result.ok)).toHaveLength(1);
+    expect(twins.filter((result) => !result.ok && result.error.code === 'news.category_exists')).toHaveLength(2);
+    expect(await prisma().newsCategoryTranslation.count({ where: { name: 'ซ้ำ' } })).toBe(1);
+  });
+
+  it('creates at once with the same slug get it and -2', async () => {
+    const [a, b] = await raceCreates(() => [create('ข่าวหนึ่ง', 'Same'), create('ข่าวสอง', 'Same')]);
+    expect(a.ok && b.ok).toBe(true);
+    const rows = await prisma().newsCategory.findMany({ select: { slug: true } });
+    expect(rows.map((row) => row.slug).sort()).toEqual(['same', 'same-2']);
   });
 });

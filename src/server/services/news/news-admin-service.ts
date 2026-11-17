@@ -1,3 +1,6 @@
+import { pickProductName, type LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
+import type { NewsArticleDetail, NewsCategoryRow } from '@/server/services/news/news-read-service';
+import type { NewsLocale } from '@/server/services/news/news-snapshot';
 import type { DomainError, Result } from '@/server/services/shared/result';
 
 /** What the list shows. "Scheduled" is derived, never stored: published with a future `published_at` (D-130). */
@@ -84,6 +87,24 @@ export type ArticleWrite = {
   productIds: string[];
 };
 
+/** A news category's names as staff typed them; English is optional. */
+export type NewsCategoryNames = { th: string; en?: string };
+
+/** One news category as the editor's list needs it after a create (D-254). */
+export type NewsCategoryOption = { id: string; slug: string; isListed: boolean; names: NewsCategoryNames };
+
+/** What the repository writes for a staff-made category: names trimmed, the slug normalised but not yet unique. */
+export type NewsCategoryWrite = {
+  slug: string;
+  th: string;
+  en: string | null;
+  /** The Thai name lower-cased: an existing category whose Thai name has this key is a duplicate. */
+  nameKey: string;
+};
+
+/** A create's outcome: the new row, or the category that already has the Thai name (nothing written). */
+export type NewsCategoryCreateOutcome = { status: 'created' | 'duplicate'; category: NewsCategoryOption };
+
 export type NewsAdminDeps = {
   news: {
     listAdminArticles: (filter: AdminArticleFilter) => Promise<{ total: number; rows: AdminArticleListRecord[] }>;
@@ -97,6 +118,8 @@ export type NewsAdminDeps = {
     saveArticle: (write: ArticleWrite) => Promise<{ id: string; slug: string } | null>;
     /** False when `id` names no article. */
     setArticleDeleted: (id: string, editorId: string, deletedAt: Date | null) => Promise<boolean>;
+    /** Checks the Thai name and writes the row under one lock, so two creates at once never clash (D-254). */
+    createNewsCategory: (write: NewsCategoryWrite) => Promise<NewsCategoryCreateOutcome>;
   };
   /** Wraps the body sanitiser (`sanitizeArticleHtml(html).html`); every body written goes through it. */
   sanitize: (html: string) => string;
@@ -313,4 +336,101 @@ export async function trashArticle(deps: NewsAdminDeps, id: string, editorId: st
 export async function restoreArticle(deps: NewsAdminDeps, id: string, editorId: string): Promise<Result<{ id: string }>> {
   if (!isUuid(id)) return notFound();
   return (await deps.news.setArticleDeleted(id, editorId, null)) ? { ok: true, data: { id } } : notFound();
+}
+
+/** A category name is cut at this many characters (code points), Thai and English alike (D-254). */
+export const MAX_CATEGORY_NAME_LENGTH = 100;
+
+/** Whitespace as tags have it: every run becomes one space, the ends trimmed. */
+function collapseSpaces(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Creates a news category from the editor (D-254): listed at once, top level, last in order, with no `source_id`, so the
+ * import never matches it. The Thai name is required, both names are at most 100 characters, and a category (listed or
+ * not) whose Thai name matches ignoring case and spacing is refused as `news.category_exists`, with that category in
+ * `details`. The slug comes from the English name, else the Thai one; the repository makes it unique.
+ */
+export async function createNewsCategory(
+  deps: Pick<NewsAdminDeps, 'news'>,
+  input: { thName: string; enName: string },
+): Promise<Result<NewsCategoryOption>> {
+  const th = collapseSpaces(input.thName);
+  const en = collapseSpaces(input.enName);
+  if (th === '') return failure('news.invalid', 'The Thai name is required', { field: 'thName', reason: 'required' });
+  if ([...th].length > MAX_CATEGORY_NAME_LENGTH) {
+    return failure('news.invalid', 'The Thai name is too long', { field: 'thName', reason: 'too_long' });
+  }
+  if ([...en].length > MAX_CATEGORY_NAME_LENGTH) {
+    return failure('news.invalid', 'The English name is too long', { field: 'enName', reason: 'too_long' });
+  }
+  const outcome = await deps.news.createNewsCategory({
+    slug: normaliseSlug(en !== '' ? en : th),
+    th,
+    en: en === '' ? null : en,
+    nameKey: th.toLowerCase(),
+  });
+  if (outcome.status === 'duplicate') {
+    return failure('news.category_exists', 'A category with this Thai name exists', { category: outcome.category });
+  }
+  return { ok: true, data: outcome.category };
+}
+
+/** What the editor sends for the live preview (D-253): one language's text as typed, never saved. */
+export type ArticlePreviewDraft = {
+  /** The article being edited, or null for a new one: only its stored featured image is read. */
+  articleId: string | null;
+  /** The language of `title`, `excerpt` and `bodyHtml`. */
+  contentLanguage: NewsLocale;
+  slug: string;
+  title: string;
+  excerpt: string;
+  bodyHtml: string;
+  bylineName: string;
+  categoryIds: string[];
+  /** An ISO instant (a scheduled time, or a live article's date); null means now. */
+  publishedAt: string | null;
+};
+
+export type ArticlePreviewDeps = Pick<NewsAdminDeps, 'sanitize' | 'now'> & {
+  news: Pick<NewsAdminDeps['news'], 'findAdminArticle'> & { listNewsCategories: () => Promise<NewsCategoryRow[]> };
+  /** The live data of the products the body has cards for (`articleProductCards`, D-245). */
+  productCards: (bodyHtml: string, locale: NewsLocale) => Promise<LandingProductCard[]>;
+};
+
+/**
+ * The article page's data for an unsaved draft (D-253), so the storefront's `NewsArticleView` can draw it: the body through
+ * the same sanitiser as a save, the chosen categories that exist (in `position` order, named in `locale`), the byline or
+ * else the editor's first name, the draft's date or else now, and no related articles. Nothing is written.
+ */
+export async function buildArticlePreview(
+  deps: ArticlePreviewDeps,
+  input: { draft: ArticlePreviewDraft; locale: NewsLocale; editorFirstName: string },
+): Promise<NewsArticleDetail> {
+  const { draft, locale } = input;
+  const bodyHtml = deps.sanitize(draft.bodyHtml);
+  const chosen = new Set(draft.categoryIds);
+  const [categories, article, productCards] = await Promise.all([
+    deps.news.listNewsCategories(),
+    draft.articleId !== null && isUuid(draft.articleId) ? deps.news.findAdminArticle(draft.articleId) : Promise.resolve(null),
+    deps.productCards(bodyHtml, draft.contentLanguage),
+  ]);
+  const publishedAt = draft.publishedAt === null ? null : new Date(draft.publishedAt);
+  const title = draft.title.trim();
+  return {
+    slug: normaliseSlug(draft.slug.trim() !== '' ? draft.slug : title),
+    title,
+    excerpt: draft.excerpt.trim(),
+    bylineName: draft.bylineName.trim() !== '' ? draft.bylineName.trim() : input.editorFirstName,
+    publishedAt: publishedAt !== null && !Number.isNaN(publishedAt.getTime()) ? publishedAt : deps.now(),
+    featuredImageUrl: article?.featuredImageUrl ?? null,
+    bodyHtml,
+    categories: [...categories]
+      .sort((a, b) => a.position - b.position)
+      .filter((category) => chosen.has(category.id))
+      .map((category) => ({ slug: category.slug, name: pickProductName({ names: category.names }, locale) })),
+    related: [],
+    productCards,
+  };
 }

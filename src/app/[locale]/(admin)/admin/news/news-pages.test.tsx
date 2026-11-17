@@ -36,6 +36,7 @@ vi.mock('./actions', () => ({
   trashArticleAction: async () => ({ status: 'idle' }),
   restoreArticleAction: async () => ({ status: 'idle' }),
   searchProductsAction: async () => [],
+  createCategoryAction: async () => ({ status: 'error', errorKey: 'invalid' }),
 }));
 vi.mock('next/navigation', async (original) => ({
   ...(await original<object>()),
@@ -69,7 +70,8 @@ vi.mock('@/server/composition-root', async () => {
 const { default: NewsListPage } = await import('./page');
 const { default: NewNewsPage } = await import('./new/page');
 const { default: EditNewsPage } = await import('./[id]/page');
-const { default: PreviewPage } = await import('../../../(admin-preview)/admin/news/[id]/preview/page');
+const previewModule = await import('../../../(admin-preview)/admin/news/preview/page');
+const PreviewPage = previewModule.default;
 
 function params(locale: string): Promise<{ locale: string }>;
 function params(locale: string, id: string): Promise<{ locale: string; id: string }>;
@@ -259,25 +261,37 @@ describe('the news editor pages', () => {
   });
 });
 
-describe('the preview page', () => {
-  it('refuses a Customer and a signed-out visitor', async () => {
-    request.article = record();
+describe('the live preview page (D-253)', () => {
+  const SESSION = '99999999-9999-4999-8999-999999999999';
+  const previewSearch = (session?: string) => Promise.resolve(session === undefined ? {} : { session });
+
+  it('refuses a Customer and sends a signed-out visitor to sign-in and back to the same session', async () => {
     request.customer = account('customer', []);
-    expect(await redirectOf(() => PreviewPage({ params: params('th', ID) }))).toBe('/th/admin/no-access');
+    expect(await redirectOf(() => PreviewPage({ params: params('th'), searchParams: previewSearch(SESSION) }))).toBe('/th/admin/no-access');
     request.customer = null;
-    expect(await redirectOf(() => PreviewPage({ params: params('th', ID) }))).toContain('/th/sign-in');
+    const signIn = await redirectOf(() => PreviewPage({ params: params('th'), searchParams: previewSearch(SESSION) }));
+    expect(signIn).toContain('/th/sign-in');
+    expect(decodeURIComponent(signIn ?? '')).toContain(`/admin/news/preview?session=${SESSION}`);
   });
 
-  it('renders the saved draft with the storefront article view for news.manage', async () => {
-    request.article = record();
-    const markup = html(await PreviewPage({ params: params('th', ID) }));
-    expect(markup).toContain('ข่าวทดสอบ');
-    expect(markup).toContain('<p>เนื้อหา</p>');
-    expect(markup).toContain('รีวิวสินค้า');
+  it('draws the live preview for news.manage: the unsaved-preview bar, waiting for the editor', async () => {
+    const markup = html(await PreviewPage({ params: params('th'), searchParams: previewSearch(SESSION) }));
+    expect(markup).toContain('role="status"');
+    expect(markup).toContain('กำลังรอข้อมูลจากหน้าแก้ไข');
+  });
+
+  it('says to open it from the editor when the session is missing or not a uuid', async () => {
+    for (const session of [undefined, 'not-a-uuid']) {
+      const markup = html(await PreviewPage({ params: params('th'), searchParams: previewSearch(session) }));
+      expect(markup).toContain('เปิดหน้านี้จากปุ่ม');
+      expect(markup).toContain('href="/th/admin/news"');
+      expect(markup).not.toContain('กำลังรอข้อมูลจากหน้าแก้ไข');
+    }
   });
 
   it('marks the page noindex', async () => {
-    const { generateMetadata } = await import('../../../(admin-preview)/admin/news/[id]/preview/page');
-    expect(await generateMetadata({ params: params('th', ID) })).toMatchObject({ robots: { index: false } });
+    expect(await previewModule.generateMetadata({ params: params('th'), searchParams: previewSearch(SESSION) })).toMatchObject({
+      robots: { index: false, follow: false },
+    });
   });
 });

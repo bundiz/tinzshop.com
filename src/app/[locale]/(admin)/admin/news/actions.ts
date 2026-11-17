@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 import { routing } from '@/i18n/routing';
 import { getNewsAdminCommands } from '@/server/composition-root';
-import type { NewsAdminState } from '@/server/controllers/news/news-admin-controller';
+import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { requirePermission } from '../_lib/require-permission';
 
@@ -49,4 +49,21 @@ export async function restoreArticleAction(_previous: NewsAdminState, formData: 
 export async function searchProductsAction(query: string, locale?: string): Promise<ProductPickerHit[]> {
   const actor = await requirePermission(localeOf(locale), '/admin/news', 'news.manage');
   return getNewsAdminCommands().searchProducts(actor, query);
+}
+
+/**
+ * The editor's "add category" (D-254): `{ thName, enName }` from the inline form, not a form post (the editor is one form
+ * already). Re-checks `news.manage`. A new category is listed at once; the storefront's news pages are rendered per
+ * request, so only the back office's own news pages are revalidated, in both languages.
+ */
+export async function createCategoryAction(locale: string, input: { thName: string; enName: string }): Promise<NewsCategoryState> {
+  const actor = await requirePermission(localeOf(locale), '/admin/news', 'news.manage');
+  const state = await getNewsAdminCommands().createCategory(actor, input);
+  if (state.status === 'created') {
+    for (const each of routing.locales) {
+      revalidatePath(`/${each}/admin/news`);
+      revalidatePath(`/${each}/admin/news/new`);
+    }
+  }
+  return state;
 }

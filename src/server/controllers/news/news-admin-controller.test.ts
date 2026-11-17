@@ -2,6 +2,8 @@ import { describe, expect, it, vi, type Mock } from 'vitest';
 
 import { saveArticle, type NewsAdminDeps } from '@/server/services/news/news-admin-service';
 import {
+  createCategoryCommand,
+  previewArticleCommand,
   restoreArticleCommand,
   saveArticleCommand,
   searchProductsCommand,
@@ -194,5 +196,98 @@ describe('trash, restore and the product search', () => {
     expect(await searchProductsCommand(deps, ACTOR, '   ')).toEqual([]);
     expect(await searchProductsCommand(deps, { id: ACTOR.id, permissions: [] }, 'switch')).toEqual([]);
     expect(deps.searchProducts).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createCategoryCommand (D-254)', () => {
+  const option = { id: CATEGORY, slug: 'guides', isListed: true, names: { th: 'คู่มือ', en: 'Guides' } };
+  const failing = (code: string, details: unknown) => async () => ({ ok: false as const, error: { code, message: '', messageKey: '', details } });
+
+  it('refuses an actor without news.manage before anything runs', async () => {
+    const createCategory = vi.fn();
+    const deps = setup({ createCategory });
+    expect(await createCategoryCommand(deps, { id: ACTOR.id, permissions: ['backoffice.enter'] }, { thName: 'คู่มือ', enName: '' })).toEqual({
+      status: 'error',
+      errorKey: 'forbidden',
+    });
+    expect(createCategory).not.toHaveBeenCalled();
+  });
+
+  it('refuses input that is not two strings, and passes the names on', async () => {
+    const createCategory = vi.fn(async () => ({ ok: true as const, data: option }));
+    const deps = setup({ createCategory });
+    expect(await createCategoryCommand(deps, ACTOR, { thName: 1 })).toEqual({ status: 'error', errorKey: 'invalid' });
+    expect(await createCategoryCommand(deps, ACTOR, null)).toEqual({ status: 'error', errorKey: 'invalid' });
+    expect(createCategory).not.toHaveBeenCalled();
+
+    expect(await createCategoryCommand(deps, ACTOR, { thName: 'คู่มือ', enName: 'Guides' })).toEqual({ status: 'created', category: option });
+    expect(createCategory).toHaveBeenCalledWith({ thName: 'คู่มือ', enName: 'Guides' });
+    expect(deps.log).toHaveBeenCalledWith('news.category_created', { actor: ACTOR.id, category: CATEGORY });
+  });
+
+  it('maps the service\'s refusals to message keys: required, too long, and an unlisted duplicate', async () => {
+    const input = { thName: 'x', enName: '' };
+    expect(await createCategoryCommand(setup({ createCategory: failing('news.invalid', { field: 'thName', reason: 'required' }) }), ACTOR, input)).toEqual({
+      status: 'error',
+      errorKey: 'categoryNameRequired',
+    });
+    expect(await createCategoryCommand(setup({ createCategory: failing('news.invalid', { field: 'enName', reason: 'too_long' }) }), ACTOR, input)).toEqual({
+      status: 'error',
+      errorKey: 'categoryNameTooLong',
+    });
+    const hidden = { ...option, isListed: false };
+    expect(await createCategoryCommand(setup({ createCategory: failing('news.category_exists', { category: hidden }) }), ACTOR, input)).toEqual({
+      status: 'error',
+      errorKey: 'categoryExists',
+    });
+  });
+
+  it('answers a listed duplicate with the category itself, so the editor can tick it, and logs nothing', async () => {
+    const deps = setup({ createCategory: failing('news.category_exists', { category: option }) });
+    expect(await createCategoryCommand(deps, ACTOR, { thName: 'คู่มือ', enName: '' })).toEqual({ status: 'exists', category: option });
+    expect(deps.log).not.toHaveBeenCalled();
+  });
+});
+
+describe('previewArticleCommand (D-253)', () => {
+  const EDITOR = { ...ACTOR, firstName: 'Nok' };
+  const draft = {
+    articleId: null,
+    contentLanguage: 'th',
+    slug: '',
+    title: 'ข่าว',
+    excerpt: '',
+    bodyHtml: '<p>x</p>',
+    bylineName: '',
+    categoryIds: [CATEGORY],
+    publishedAt: '2026-12-01T02:00:00.000Z',
+  };
+
+  it('builds the preview for news.manage with the editor\'s first name and the page locale, logging nothing', async () => {
+    const preview = vi.fn(async () => ({ title: 'ข่าว' }));
+    const deps = setup({ preview: preview as never });
+    expect(await previewArticleCommand(deps, EDITOR, draft, 'en')).toEqual({ title: 'ข่าว' });
+    expect(preview).toHaveBeenCalledWith({ draft, locale: 'en', editorFirstName: 'Nok' });
+    expect(deps.log).not.toHaveBeenCalled();
+  });
+
+  it('returns null without news.manage, or for a draft that breaks the save caps or is malformed', async () => {
+    const preview = vi.fn();
+    const deps = setup({ preview });
+    expect(await previewArticleCommand(deps, { ...EDITOR, permissions: ['backoffice.enter'] }, draft, 'th')).toBeNull();
+    for (const bad of [
+      { ...draft, title: 'x'.repeat(301) },
+      { ...draft, bodyHtml: 'x'.repeat(200_001) },
+      { ...draft, bylineName: 'x'.repeat(201) },
+      { ...draft, categoryIds: ['nope'] },
+      { ...draft, categoryIds: Array.from({ length: 101 }, () => CATEGORY) },
+      { ...draft, articleId: 'nope' },
+      { ...draft, contentLanguage: 'fr' },
+      { ...draft, publishedAt: 'tomorrow' },
+      'not an object',
+    ]) {
+      expect(await previewArticleCommand(deps, EDITOR, bad, 'th')).toBeNull();
+    }
+    expect(preview).not.toHaveBeenCalled();
   });
 });

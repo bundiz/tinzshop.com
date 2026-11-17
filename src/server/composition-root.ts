@@ -47,6 +47,8 @@ import {
   type AccountAdminDeps,
 } from '@/server/controllers/access/account-admin-controller';
 import {
+  createCategoryCommand,
+  previewArticleCommand,
   restoreArticleCommand,
   saveArticleCommand,
   searchProductsCommand,
@@ -63,6 +65,7 @@ import {
   NEWS_IMPORT_LOCK_KEY,
 } from '@/server/repositories/shared/advisory-lock';
 import {
+  createNewsCategory as insertNewsCategory,
   findAdminArticle,
   findEditorFirstName,
   findExistingCategoryIds,
@@ -123,6 +126,8 @@ import {
 import { runCatalogueSync, type CatalogueSyncSummary } from '@/server/services/catalogue/catalogue-sync-service';
 import { createChannelAuthorizationService } from '@/server/services/channel/channel-authorization-service';
 import {
+  buildArticlePreview,
+  createNewsCategory,
   getAdminArticle,
   listAdminArticles as listAdminNewsArticles,
   restoreArticle,
@@ -332,9 +337,16 @@ export function getNewsAdmin() {
       findEditorFirstName,
       saveArticle: saveNewsArticle,
       setArticleDeleted,
+      createNewsCategory: insertNewsCategory,
     },
     sanitize: (html) => sanitizeArticleHtml(html).html,
     now: () => new Date(),
+  };
+  const previewDeps = {
+    news: { findAdminArticle, listNewsCategories },
+    productCards: getArticleProductCardsReader(),
+    sanitize: deps.sanitize,
+    now: deps.now,
   };
   return {
     list: (input: Parameters<typeof listAdminNewsArticles>[1]) => listAdminNewsArticles(deps, input),
@@ -342,6 +354,10 @@ export function getNewsAdmin() {
     save: (input: Parameters<typeof saveArticle>[1]) => saveArticle(deps, input),
     trash: (id: string, editorId: string) => trashArticle(deps, id, editorId),
     restore: (id: string, editorId: string) => restoreArticle(deps, id, editorId),
+    /** A listed category made from the editor (D-254). */
+    createCategory: (input: Parameters<typeof createNewsCategory>[1]) => createNewsCategory(deps, input),
+    /** The article page's data for an unsaved draft (D-253); writes nothing. */
+    preview: (input: Parameters<typeof buildArticlePreview>[1]) => buildArticlePreview(previewDeps, input),
     /** Every news category (listed or not), in `position` order: the editor's checkboxes and the list's names. */
     categories: async () => (await listNewsCategories()).sort((a, b) => a.position - b.position),
     /** The products named, for the editor's selected list (a read from the catalogue, R3). */
@@ -358,6 +374,8 @@ export function getNewsAdminCommands() {
     save: (request) => news.save(request),
     trash: news.trash,
     restore: news.restore,
+    createCategory: news.createCategory,
+    preview: news.preview,
     searchProducts: (query) => searchProductsForPicker(productSearchDeps, query),
     now: () => new Date(),
     log: (message, fields) => console.info(message, fields),
@@ -367,6 +385,9 @@ export function getNewsAdminCommands() {
     trash: (actor: NewsAdminActor, formData: FormData) => trashArticleCommand(deps, actor, formData),
     restore: (actor: NewsAdminActor, formData: FormData) => restoreArticleCommand(deps, actor, formData),
     searchProducts: (actor: NewsAdminActor, query: string) => searchProductsCommand(deps, actor, query),
+    createCategory: (actor: NewsAdminActor, input: unknown) => createCategoryCommand(deps, actor, input),
+    preview: (actor: Parameters<typeof previewArticleCommand>[1], input: unknown, locale: Locale) =>
+      previewArticleCommand(deps, actor, input, locale),
   };
 }
 

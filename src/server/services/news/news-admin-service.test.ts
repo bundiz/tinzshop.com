@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  buildArticlePreview,
+  createNewsCategory,
   getAdminArticle,
   listAdminArticles,
   restoreArticle,
@@ -10,6 +12,9 @@ import {
   type AdminArticleListRecord,
   type AdminArticleRecord,
   type ArticleInput,
+  type ArticlePreviewDeps,
+  type ArticlePreviewDraft,
+  type NewsCategoryWrite,
   type NewsAdminDeps,
 } from './news-admin-service';
 
@@ -66,6 +71,10 @@ function setup(existing: AdminArticleRecord | null = null) {
       slug: write.slug ?? 'kept',
     })),
     setArticleDeleted: vi.fn(async () => true),
+    createNewsCategory: vi.fn(async (write: NewsCategoryWrite) => ({
+      status: 'created' as const,
+      category: { id: CATEGORY, slug: write.slug, isListed: true, names: { th: write.th, ...(write.en === null ? {} : { en: write.en }) } },
+    })),
   };
   const deps: NewsAdminDeps = { news, sanitize: vi.fn((html: string) => html), now: () => NOW };
   return { deps, news };
@@ -372,5 +381,127 @@ describe('reads, trash and restore', () => {
     expect(await trashArticle(deps, 'abc', EDITOR)).toMatchObject({ ok: false, error: { code: 'news.not_found' } });
     news.setArticleDeleted.mockResolvedValueOnce(false);
     expect(await restoreArticle(deps, ARTICLE, EDITOR)).toMatchObject({ ok: false, error: { code: 'news.not_found' } });
+  });
+});
+
+describe('createNewsCategory (D-254)', () => {
+  it('trims and collapses the names, makes the slug from the English name, and asks for the Thai name lower-cased as the key', async () => {
+    const { deps, news } = setup();
+    const result = await createNewsCategory(deps, { thName: '  ข่าว\t เกม  ', enName: ' Game   News ' });
+    expect(news.createNewsCategory).toHaveBeenCalledWith({ slug: 'game-news', th: 'ข่าว เกม', en: 'Game News', nameKey: 'ข่าว เกม' });
+    expect(result).toEqual({ ok: true, data: { id: CATEGORY, slug: 'game-news', isListed: true, names: { th: 'ข่าว เกม', en: 'Game News' } } });
+  });
+
+  it('makes the slug from the Thai name when there is no English one, and lower-cases the key', async () => {
+    const { deps, news } = setup();
+    await createNewsCategory(deps, { thName: 'รีวิว PS5', enName: '   ' });
+    expect(news.createNewsCategory).toHaveBeenCalledWith({ slug: 'รีวิว-ps5', th: 'รีวิว PS5', en: null, nameKey: 'รีวิว ps5' });
+  });
+
+  it('requires the Thai name and caps both names at 100 characters (code points), writing nothing', async () => {
+    const { deps, news } = setup();
+    expect(await createNewsCategory(deps, { thName: ' \n ', enName: 'News' })).toMatchObject({
+      ok: false,
+      error: { code: 'news.invalid', details: { field: 'thName', reason: 'required' } },
+    });
+    expect(await createNewsCategory(deps, { thName: 'ก'.repeat(101), enName: '' })).toMatchObject({
+      ok: false,
+      error: { details: { field: 'thName', reason: 'too_long' } },
+    });
+    expect(await createNewsCategory(deps, { thName: 'ข่าว', enName: 'a'.repeat(101) })).toMatchObject({
+      ok: false,
+      error: { details: { field: 'enName', reason: 'too_long' } },
+    });
+    expect(news.createNewsCategory).not.toHaveBeenCalled();
+
+    // 100 Thai characters with combining marks is 100 code points, not more.
+    expect((await createNewsCategory(deps, { thName: 'กิ'.repeat(50), enName: '😀'.repeat(100) })).ok).toBe(true);
+  });
+
+  it('refuses a duplicate Thai name as news.category_exists and returns the category that holds it', async () => {
+    const { deps, news } = setup();
+    const existing = { id: CATEGORY, slug: 'reviews', isListed: true, names: { th: 'รีวิว' } };
+    news.createNewsCategory.mockResolvedValueOnce({ status: 'duplicate', category: existing } as never);
+    expect(await createNewsCategory(deps, { thName: 'รีวิว', enName: '' })).toMatchObject({
+      ok: false,
+      error: { code: 'news.category_exists', details: { category: existing } },
+    });
+  });
+});
+
+describe('buildArticlePreview (D-253)', () => {
+  const LISTED = '55555555-5555-4555-8555-555555555555';
+  const UNKNOWN = '66666666-6666-4666-8666-666666666666';
+
+  function draft(overrides: Partial<ArticlePreviewDraft> = {}): ArticlePreviewDraft {
+    return {
+      articleId: null,
+      contentLanguage: 'th',
+      slug: '',
+      title: '  ข่าว ใหม่ ',
+      excerpt: ' สรุป ',
+      bodyHtml: '<p>เนื้อหา</p>',
+      bylineName: '',
+      categoryIds: [CATEGORY, LISTED, UNKNOWN],
+      publishedAt: null,
+      ...overrides,
+    };
+  }
+
+  function previewSetup(featuredImageUrl: string | null = null) {
+    const deps = {
+      news: {
+        findAdminArticle: vi.fn(async () => record({ featuredImageUrl })),
+        listNewsCategories: vi.fn(async () => [
+          { id: LISTED, slug: 'b', parentId: null, position: 2, names: { th: 'ข่าว', en: 'News' }, isListed: true },
+          { id: CATEGORY, slug: 'a', parentId: null, position: 1, names: { th: 'รีวิว' }, isListed: true },
+        ]),
+      },
+      productCards: vi.fn(async () => []),
+      sanitize: vi.fn((html: string) => `[s]${html}`),
+      now: () => NOW,
+    } satisfies ArticlePreviewDeps;
+    return deps;
+  }
+
+  it('sanitises the body as a save does and reads the product cards for the sanitised body in the content language', async () => {
+    const deps = previewSetup();
+    const detail = await buildArticlePreview(deps, { draft: draft({ contentLanguage: 'en' }), locale: 'th', editorFirstName: 'Nok' });
+    expect(detail.bodyHtml).toBe('[s]<p>เนื้อหา</p>');
+    expect(deps.productCards).toHaveBeenCalledWith('[s]<p>เนื้อหา</p>', 'en');
+    expect(detail).toMatchObject({ title: 'ข่าว ใหม่', excerpt: 'สรุป', slug: 'ข่าว-ใหม่', related: [], featuredImageUrl: null });
+    expect(deps.news.findAdminArticle).not.toHaveBeenCalled();
+  });
+
+  it('keeps the chosen categories that exist, in position order, named in the page language with a Thai fallback', async () => {
+    const deps = previewSetup();
+    const en = await buildArticlePreview(deps, { draft: draft(), locale: 'en', editorFirstName: 'Nok' });
+    expect(en.categories).toEqual([
+      { slug: 'a', name: 'รีวิว' },
+      { slug: 'b', name: 'News' },
+    ]);
+  });
+
+  it('falls back to the editor\'s first name for an empty byline, and to now for no date', async () => {
+    const deps = previewSetup();
+    const fallback = await buildArticlePreview(deps, { draft: draft({ bylineName: '  ' }), locale: 'th', editorFirstName: 'Nok' });
+    expect(fallback.bylineName).toBe('Nok');
+    expect(fallback.publishedAt).toEqual(NOW);
+
+    const given = await buildArticlePreview(deps, {
+      draft: draft({ bylineName: ' Writer ', publishedAt: '2026-12-01T02:00:00.000Z' }),
+      locale: 'th',
+      editorFirstName: 'Nok',
+    });
+    expect(given.bylineName).toBe('Writer');
+    expect(given.publishedAt).toEqual(new Date('2026-12-01T02:00:00.000Z'));
+  });
+
+  it('uses a given slug, and shows an existing article\'s stored featured image', async () => {
+    const deps = previewSetup('https://old-site.test/cover.jpg');
+    const detail = await buildArticlePreview(deps, { draft: draft({ articleId: ARTICLE, slug: 'My Slug' }), locale: 'th', editorFirstName: 'Nok' });
+    expect(detail.slug).toBe('my-slug');
+    expect(detail.featuredImageUrl).toBe('https://old-site.test/cover.jpg');
+    expect(deps.news.findAdminArticle).toHaveBeenCalledWith(ARTICLE);
   });
 });

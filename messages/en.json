@@ -751,6 +751,7 @@
         "slugHint": "Leave empty to make it from the title",
         "excerptLabel": "Summary",
         "excerptHint": "Shown in the article list. Needed before publishing (Thai).",
+        "requiredToPublish": "Required to publish",
         "bodyLabel": "Article body",
         "toolbar": {
           "label": "Format text",
@@ -806,6 +807,17 @@
         "featured": "Original picture from the old site (cannot be changed)",
         "categoriesEmpty": "There are no categories yet",
         "categoryNotListed": "not listed",
+        "addCategory": {
+          "open": "Add category",
+          "thName": "Category name (Thai)",
+          "enName": "English name (optional)",
+          "hint": "A new category is shown on the site at once, and gets a tab on the news page when it holds a published article.",
+          "submit": "Add",
+          "cancel": "Cancel",
+          "added": "Added the category “{name}” and chose it for this article.",
+          "existing": "The category “{name}” already exists; chose it for this article.",
+          "failed": "The category could not be added. Please try again."
+        },
         "tagLabel": "Add a tag",
         "tagPlaceholder": "Add a tag, then press Enter",
         "tagRemove": "Remove tag {name}",
@@ -823,7 +835,6 @@
           "unpublish": "Unpublish",
           "trash": "Move to trash"
         },
-        "previewHint": "The preview shows the last saved version",
         "confirm": {
           "trashTitle": "Move this article to the trash?",
           "trashText": "It leaves the site at once and can be restored from the trash",
@@ -839,8 +850,13 @@
         "bodyLocked": "This body has parts the editor cannot show or keep, so the body cannot be edited here. It will be saved exactly as it is. The title, summary, categories, tags, products and publishing can still be changed."
       },
       "preview": {
-        "banner": "Preview of the saved version. Customers cannot see it yet.",
-        "edit": "Back to editing"
+        "waiting": "Waiting for the editor…",
+        "live": "Unsaved preview. It follows what you type in the editor; customers cannot see it.",
+        "silent": "Nothing has come from the editor. Press “Preview” in the news editor again.",
+        "closed": "The editor was closed. This preview will not update any more.",
+        "failed": "The latest version could not be shown; the previous one is still on screen.",
+        "noSession": "Open this page with the “Preview” button in the news editor.",
+        "backToNews": "Go to all news"
       },
       "error": {
         "forbidden": "You do not have permission to do this.",
@@ -853,7 +869,10 @@
         "categories": "Choose at least one category that is shown on the site before publishing.",
         "products": "A product you chose was not found.",
         "publishAtInvalid": "The date and time set are not valid.",
-        "publishAtRequired": "Choose the date and time to publish, or choose Now."
+        "publishAtRequired": "Choose the date and time to publish, or choose Now.",
+        "categoryNameRequired": "Enter the category's Thai name.",
+        "categoryNameTooLong": "A category name can be at most 100 characters.",
+        "categoryExists": "A category with this name exists but is hidden from the site, so it cannot be chosen. Use another name."
       }
     }
   }

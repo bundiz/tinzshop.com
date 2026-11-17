@@ -79,7 +79,7 @@ export function ProductSearchBox({ search, onPick, exclude = [], autoFocus = fal
             {t('productsNone')}
           </p>
         ) : (
-          <ul className="mt-2 grid gap-1">
+          <ul className="mt-2 grid grid-cols-1 gap-1">
             {shown.map((hit) => (
               <li key={hit.id}>
                 <button
@@ -119,7 +119,7 @@ export default function ProductPicker({ selected, onChange, search }: ProductPic
     <div>
       <p className="mb-2.5 text-[13.5px] text-muted">{t('productsHint')}</p>
       {selected.length > 0 ? (
-        <ul className="mb-2.5 grid gap-1.5">
+        <ul className="mb-2.5 grid grid-cols-1 gap-1.5">
           {selected.map((hit) => (
             <li key={hit.id} className="flex items-center gap-2.5">
               <Thumb hit={hit} />

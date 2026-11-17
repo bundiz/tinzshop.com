@@ -2,14 +2,27 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useId, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { buttonClass } from '@/components/ui/button-class';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
-import type { NewsAdminState } from '@/server/controllers/news/news-admin-controller';
+import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
-import type { NewsAdminStatus } from '@/server/services/news/news-admin-service';
-import { saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
+import type { ArticlePreviewDraft, NewsAdminStatus, NewsCategoryOption } from '@/server/services/news/news-admin-service';
+import { createCategoryAction, saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
+import { categoryName } from '../_lib/categories';
+import {
+  buildPreviewDraft,
+  isPreviewMessage,
+  isPreviewSession,
+  PREVIEW_DEBOUNCE_MS,
+  PREVIEW_SESSION_STORAGE_KEY,
+  previewChannelName,
+  previewPath,
+  previewWindowName,
+  type PreviewMessage,
+} from '../_lib/preview-channel';
+import AddCategory from './AddCategory';
 import { bodyOrEmpty } from './body-roundtrip';
 import ProductPicker from './ProductPicker';
 import RichTextEditor from './RichTextEditor';
@@ -48,6 +61,7 @@ export type ArticleEditorProps = {
     save: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
     trash: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
     search: (query: string, locale: string) => Promise<ProductPickerHit[]>;
+    createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<NewsCategoryState>;
   };
 };
 
@@ -63,10 +77,24 @@ function toBangkokLocal(iso: string): string {
 const INPUT = 'min-h-11 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink';
 const PANEL = 'rounded-md border border-line bg-surface p-4';
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+/** A red star after a label for a field publishing needs (a draft saves without it), with the words for a screen reader. */
+function RequiredMark({ note }: { note: string }) {
+  return (
+    <>
+      {' '}
+      <span aria-hidden="true" className="text-sale">*</span>
+      <span className="sr-only">{note}</span>
+    </>
+  );
+}
+
+function Panel({ title, required, children }: { title: string; required?: string; children: React.ReactNode }) {
   return (
     <section className={PANEL}>
-      <h2 className="mb-3 font-head text-base font-bold text-ink">{title}</h2>
+      <h2 className="mb-3 font-head text-base font-bold text-ink">
+        {title}
+        {required !== undefined ? <RequiredMark note={required} /> : null}
+      </h2>
       {children}
     </section>
   );
@@ -87,6 +115,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const saveAction = actions?.save ?? saveArticleAction;
   const trashAction = actions?.trash ?? trashArticleAction;
   const search = actions?.search ?? searchProductsAction;
+  const createCategory = actions?.createCategory ?? createCategoryAction;
 
   const [saved, formAction, saving] = useActionState(saveAction, IDLE);
   const [trashed, trashFormAction] = useActionState(trashAction, IDLE);
@@ -97,6 +126,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const [locked, setLocked] = useState({ th: false, en: false });
   const [slug, setSlug] = useState(article?.slug ?? '');
   const [byline, setByline] = useState(article?.bylineName ?? defaultByline);
+  const [categoryOptions, setCategoryOptions] = useState(categories);
   const [categoryIds, setCategoryIds] = useState<string[]>(article?.categoryIds ?? []);
   const [tags, setTags] = useState<string[]>(article?.tagNames ?? []);
   const [products, setProducts] = useState<ProductPickerHit[]>(article?.products ?? []);
@@ -114,6 +144,92 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const busy = saving || created;
   const isPublished = status === 'published' || status === 'scheduled';
   const publishable = !(status === 'published');
+  // What a save sends for each body: a locked one exactly as stored (the lock decides, not the editor's change events).
+  const thBodyHtml = locked.th ? (article?.th.bodyHtml ?? '') : bodyOrEmpty(th.bodyHtml);
+  const enBodyHtml = locked.en ? (article?.en?.bodyHtml ?? '') : bodyOrEmpty(en.bodyHtml);
+
+  // The live preview (D-253): the draft as a save would send it, over a channel to the preview tab; nothing is saved.
+  const draft = buildPreviewDraft({
+    articleId: article?.id ?? null,
+    language,
+    th,
+    en,
+    thBodyHtml,
+    enBodyHtml,
+    slug,
+    bylineName: byline,
+    categoryIds,
+    status,
+    storedPublishedAt: article?.publishedAt ?? null,
+    when,
+    publishAt,
+  });
+  const draftKey = JSON.stringify(draft);
+  const latestDraft = useRef<ArticlePreviewDraft>(draft);
+  const previewSession = useRef<string | null>(null);
+  const previewChannel = useRef<BroadcastChannel | null>(null);
+
+  const connectPreview = useCallback((session: string): void => {
+    const channel = new BroadcastChannel(previewChannelName(session));
+    channel.onmessage = (event: MessageEvent) => {
+      if (isPreviewMessage(event.data) && event.data.type === 'ready') {
+        channel.postMessage({ type: 'draft', draft: latestDraft.current } satisfies PreviewMessage);
+      }
+    };
+    previewSession.current = session;
+    previewChannel.current = channel;
+  }, []);
+
+  // A session made earlier in this browser tab is picked up again, so the preview follows a new article to its saved page.
+  useEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = window.sessionStorage.getItem(PREVIEW_SESSION_STORAGE_KEY);
+    } catch {
+      // Storage blocked by the browser: a session lasts as long as this page.
+    }
+    if (previewChannel.current === null && isPreviewSession(stored)) connectPreview(stored);
+    const sayClosed = () => previewChannel.current?.postMessage({ type: 'closed' } satisfies PreviewMessage);
+    window.addEventListener('pagehide', sayClosed);
+    return () => {
+      window.removeEventListener('pagehide', sayClosed);
+      sayClosed();
+      previewChannel.current?.close();
+      previewChannel.current = null;
+      previewSession.current = null;
+    };
+  }, [connectPreview]);
+
+  // Each change goes to the preview 500 ms after typing stops; `draftKey` stands for the draft's content.
+  useEffect(() => {
+    latestDraft.current = draft;
+    const channel = previewChannel.current;
+    if (channel === null) return;
+    const timer = setTimeout(() => channel.postMessage({ type: 'draft', draft } satisfies PreviewMessage), PREVIEW_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the draft is rebuilt each render; its content is the dependency
+  }, [draftKey]);
+
+  function openPreview(): void {
+    let session = previewSession.current;
+    if (session === null) {
+      session = crypto.randomUUID();
+      connectPreview(session);
+      try {
+        window.sessionStorage.setItem(PREVIEW_SESSION_STORAGE_KEY, session);
+      } catch {
+        // Storage blocked by the browser: the preview still works until this page is left.
+      }
+    }
+    window.open(previewPath(locale, session), previewWindowName(session));
+  }
+
+  function addCategory(category: NewsCategoryOption): void {
+    setCategoryOptions((options) =>
+      options.some((option) => option.id === category.id) ? options : [...options, { id: category.id, name: categoryName(category.names, locale) }],
+    );
+    setCategoryIds((ids) => (ids.includes(category.id) ? ids : [...ids, category.id]));
+  }
 
   // A first save moves to the new article's own editor page; a trashed article returns to the list.
   useEffect(() => {
@@ -137,8 +253,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
       <form action={formAction} aria-label={e('form')} className="grid gap-4">
         <input type="hidden" name="locale" value={locale} />
         {article ? <input type="hidden" name="id" value={article.id} /> : null}
-        <input type="hidden" name="thBodyHtml" value={locked.th ? (article?.th.bodyHtml ?? '') : bodyOrEmpty(th.bodyHtml)} />
-        <input type="hidden" name="enBodyHtml" value={locked.en ? (article?.en?.bodyHtml ?? '') : bodyOrEmpty(en.bodyHtml)} />
+        <input type="hidden" name="thBodyHtml" value={thBodyHtml} />
+        <input type="hidden" name="enBodyHtml" value={enBodyHtml} />
 
         <div className="flex flex-wrap items-center gap-2.5">
           <a href={`/${locale}/admin/news`} className="inline-flex min-h-11 items-center font-semibold text-ink-2 hover:text-ink">
@@ -148,11 +264,9 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
             {savedMessage}
           </p>
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
-            {article ? (
-              <a href={`/${locale}/admin/news/${article.id}/preview`} target="_blank" rel="noopener" className={buttonClass({ variant: 'line' })}>
-                {e('button.preview')}
-              </a>
-            ) : null}
+            <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line' })}>
+              {e('button.preview')}
+            </button>
             {isPublished ? (
               <>
                 <button type="submit" disabled={busy} name="action" value="unpublish" className={buttonClass({ variant: 'line' })}>
@@ -181,7 +295,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
           </p>
         ) : null}
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid min-w-0 gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div role="group" aria-label={e('languagesLabel')} className="inline-flex gap-0.5 rounded-sm bg-sunk p-[3px]">
@@ -224,6 +338,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                   <div>
                     <label htmlFor={`${code}-excerpt`} className="mb-1 block font-semibold text-ink">
                       {e('excerptLabel')}
+                      {code === 'th' ? <RequiredMark note={e('requiredToPublish')} /> : null}
                     </label>
                     <textarea
                       id={`${code}-excerpt`}
@@ -269,7 +384,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
             </div>
           </div>
 
-          <aside className="grid gap-3">
+          <aside className="grid min-w-0 grid-cols-1 gap-3">
             <Panel title={e('panel.publish')}>
               <dl className="grid gap-3">
                 <div className="flex items-center justify-between gap-2">
@@ -332,12 +447,12 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
               ) : null}
             </Panel>
 
-            <Panel title={e('panel.categories')}>
-              {categories.length === 0 ? (
+            <Panel title={e('panel.categories')} required={e('requiredToPublish')}>
+              {categoryOptions.length === 0 ? (
                 <p className="text-muted">{e('categoriesEmpty')}</p>
               ) : (
                 <ul className="grid gap-1">
-                  {categories.map((category) => (
+                  {categoryOptions.map((category) => (
                     <li key={category.id}>
                       <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-ink">
                         <input
@@ -357,6 +472,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                   ))}
                 </ul>
               )}
+              <AddCategory locale={locale} create={createCategory} onAdded={addCategory} />
             </Panel>
 
             <Panel title={e('panel.tags')}>

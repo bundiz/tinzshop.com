@@ -1,4 +1,5 @@
 import { Prisma } from '@/generated/prisma/client';
+import { NEWS_CATEGORY_LOCK_KEY } from '@/server/repositories/shared/advisory-lock';
 import { getPrisma } from '@/server/repositories/shared/prisma';
 import type {
   AdminArticleFilter,
@@ -6,6 +7,9 @@ import type {
   AdminArticleRecord,
   ArticleTranslationInput,
   ArticleWrite,
+  NewsCategoryCreateOutcome,
+  NewsCategoryOption,
+  NewsCategoryWrite,
 } from '@/server/services/news/news-admin-service';
 
 const TRANSACTION_TIMEOUT_MS = 20_000;
@@ -260,4 +264,81 @@ export async function setArticleDeleted(id: string, editorId: string, deletedAt:
     data: { deletedAt, updatedByStaffId: editorId },
   });
   return result.count > 0;
+}
+
+/** The `-2`, `-3`, … rule of article slugs, among categories: the first of `base`, `base-2`, … no category holds. */
+async function uniqueCategorySlug(tx: Prisma.TransactionClient, base: string): Promise<string> {
+  const holders = await tx.newsCategory.findMany({ where: { slug: { startsWith: base } }, select: { slug: true } });
+  const taken = new Set(holders.map((row) => row.slug));
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n += 1) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
+}
+
+function categoryOption(row: {
+  id: string;
+  slug: string;
+  isListed: boolean;
+  translations: { locale: 'th' | 'en'; name: string }[];
+}): NewsCategoryOption {
+  const name = (locale: 'th' | 'en') => row.translations.find((t) => t.locale === locale)?.name;
+  const en = name('en');
+  return { id: row.id, slug: row.slug, isListed: row.isListed, names: { th: name('th') ?? '', ...(en === undefined ? {} : { en }) } };
+}
+
+async function createCategoryOnce(write: NewsCategoryWrite): Promise<NewsCategoryCreateOutcome> {
+  return getPrisma().$transaction(
+    async (tx) => {
+      // Two creates at once would both pass the duplicate check and pick the same slug and position; the second waits.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${NEWS_CATEGORY_LOCK_KEY}::bigint)`;
+      // The stored name compared as the service compares a new one: spacing collapsed, trimmed, lower-cased.
+      const [duplicate] = await tx.$queryRaw<{ id: string }[]>`
+        SELECT c.id::text AS id
+        FROM news_category c
+        JOIN news_category_translation t ON t.category_id = c.id AND t.locale = 'th'
+        WHERE lower(btrim(regexp_replace(t.name, '[[:space:]]+', ' ', 'g'))) = ${write.nameKey}
+        ORDER BY c.is_listed DESC, c.position ASC
+        LIMIT 1`;
+      const select = { id: true, slug: true, isListed: true, translations: { select: { locale: true, name: true } } } as const;
+      if (duplicate !== undefined) {
+        const row = await tx.newsCategory.findUniqueOrThrow({ where: { id: duplicate.id }, select });
+        return { status: 'duplicate', category: categoryOption(row) };
+      }
+
+      const slug = await uniqueCategorySlug(tx, write.slug);
+      const { _max } = await tx.newsCategory.aggregate({ _max: { position: true } });
+      const row = await tx.newsCategory.create({
+        data: {
+          slug,
+          parentId: null,
+          position: (_max.position ?? 0) + 1,
+          sourceId: null,
+          isListed: true,
+          translations: {
+            create: [{ locale: 'th', name: write.th }, ...(write.en === null ? [] : [{ locale: 'en' as const, name: write.en }])],
+          },
+        },
+        select,
+      });
+      return { status: 'created', category: categoryOption(row) };
+    },
+    { timeout: TRANSACTION_TIMEOUT_MS },
+  );
+}
+
+/**
+ * Creates a staff-made news category (D-254) in one transaction under `NEWS_CATEGORY_LOCK_KEY`: listed, top level, last
+ * (`position` = the highest + 1), `source_id` null so the import, which matches by `source_id`, never touches it, with its
+ * Thai name and, when given, its English one. A category whose Thai name has `nameKey` is returned as a duplicate and
+ * nothing is written. The slug is `slug`, else `slug-2`, `slug-3`, …; the import does not take this lock, so a slug it
+ * takes at the same moment is a unique violation, and the create is retried.
+ */
+export async function createNewsCategory(write: NewsCategoryWrite): Promise<NewsCategoryCreateOutcome> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await createCategoryOnce(write);
+    } catch (error) {
+      const raceOnSlug = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+      if (!raceOnSlug || attempt >= SAVE_ATTEMPTS) throw error;
+    }
+  }
 }
