@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 44 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 16 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 17 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -613,6 +613,13 @@ Not a question. The client source (`reference/client-summary-th.md`) does not me
 - **Answer:** None yet.
 - **Effect:** Until answered, plan 015 leaves these phrases out and keeps the rest of each block. Each is one message key to add back.
 - **Ask:** project owner (the client for 2 and 3)
+
+### Q-070: Does the client agree that the back office is Thai only?
+- **Status:** UNRESOLVED — raised 2026-11-17 by the project owner's change (D-259)
+- **Question:** REQ-033, confirmed by the client, says the admin panel is usable in both Thai and English. On 2026-11-17 the project owner decided the back office does not need two languages and removed its TH/EN switch (D-259). Does the client agree that staff use the back office in Thai only?
+- **Answer:** None yet.
+- **Effect:** Until answered the back office is Thai only. If the client wants English back, the switch returns and `requirePermission` stops redirecting `/en/admin`; the English messages are still in place.
+- **Ask:** client, via the project owner
 
 ---
 

@@ -141,8 +141,8 @@ A website order never changes stock in the system, so the no-overselling guarant
 ~~Staff sign-in requires a second factor via **email OTP** (D-064, Q-017). No SMS/phone OTP.~~
 Changed on 2026-11-14 at the client's request, relayed by the project owner: staff sign up and sign in like customers, and no emailed code is asked for at sign-in (the sign-up code stays). A staff account is protected by its password or Google account alone. D-232 supersedes D-064; the trade-off is set out in `superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md` §10.
 
-**REQ-033 — Single bilingual admin entry point** · §8 · CONFIRMED
-Staff use one place to sign in, and the admin panel is usable in both Thai and English.
+**REQ-033 — Single ~~bilingual~~ admin entry point** · §8 · CONFIRMED, English half CHANGED pending Q-070 (D-259)
+Staff use one place to sign in~~, and the admin panel is usable in both Thai and English~~. Changed on 2026-11-17 by the project owner: the back office is Thai only (D-259); the client's confirmation is Q-070.
 
 **REQ-034 — Six roles, permission-based access** · §8 · CONFIRMED (rewritten)
 Access is divided among six roles: Blogger, Sale-manager, Admin, Top-level Admin, Customer, and Guest (D-062, Q-015). Customer and Guest are rows in the same `role`/`role_permission` tables as the four staff roles, not a special case. Guest is not an account: its role row describes signed-out visitors (D-231).
