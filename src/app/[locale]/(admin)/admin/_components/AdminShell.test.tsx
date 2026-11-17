@@ -44,6 +44,9 @@ describe('the back-office top row', () => {
     expect(row).toMatch(/<a[^>]*href="\/th\/admin\/news"[^>]*>ข่าวทั้งหมด<\/a>/);
     expect(row).toContain('>เขียนข่าวใหม่</span>');
     expect(row.indexOf('<p>child</p>')).toBeGreaterThan(crumbs);
+    // The page's own actions (the editor's buttons) are portalled into a slot at the bar's right (D-264).
+    expect(row).toMatch(/<div id="admin-page-actions"[^>]*><\/div>/);
+    expect(row.indexOf('id="admin-page-actions"')).toBeGreaterThan(crumbs);
   });
 
   it('shows no trail on a section page, and keeps only the phone menu button there', () => {

@@ -8,13 +8,13 @@ export type BreadcrumbsProps = {
   label: string;
   /** An item with `href` is a link; the last item has none and is the current page. */
   items: readonly BreadcrumbItem[];
-  /** `plain` (default): the storefront's trail above the page. `panel`: a bordered white bar, the back office's. */
-  variant?: 'plain' | 'panel';
+  /** `plain` (default): the storefront's trail above the page. `bar`: the back office's, inside a box its page bar draws. */
+  variant?: 'plain' | 'bar';
 };
 
 const NAV_CLASS = {
   plain: 'pt-[18px] pb-1 text-sm text-muted',
-  panel: 'rounded-md border border-line bg-surface px-4 py-1 text-sm text-muted',
+  bar: 'min-w-0 text-sm text-muted',
 } as const;
 
 /** The mockup's `.crumbs`: a trail of links ending in the current page (plan 015). */
@@ -33,7 +33,7 @@ export default function Breadcrumbs({ label, items, variant = 'plain' }: Breadcr
                 {item.label}
               </Link>
             ) : (
-              <span aria-current="page" className={`[overflow-wrap:anywhere]${variant === 'panel' ? ' text-ink' : ''}`}>
+              <span aria-current="page" className={`[overflow-wrap:anywhere]${variant === 'bar' ? ' text-ink' : ''}`}>
                 {item.label}
               </span>
             )}

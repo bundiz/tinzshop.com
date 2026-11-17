@@ -40,10 +40,10 @@ describe('Breadcrumbs', () => {
     expect(html).toContain('sm:min-h-8');
   });
 
-  it('draws the panel variant as a bordered white bar with the current page in ink, and the plain one without', () => {
-    const panel = renderToStaticMarkup(<Breadcrumbs variant="panel" label="Where you are" items={[{ label: 'News', href: '/th/admin/news' }, { label: 'New article' }]} />);
-    expect(panel).toMatch(/^<nav aria-label="Where you are" class="[^"]*rounded-md border border-line bg-surface/);
-    expect(panel).toMatch(/<span aria-current="page" class="[^"]*text-ink[^"]*">New article<\/span>/);
-    expect(html).not.toContain('border-line');
+  it('draws the bar variant for a box drawn around it: no padding or border of its own, the current page in ink', () => {
+    const bar = renderToStaticMarkup(<Breadcrumbs variant="bar" label="Where you are" items={[{ label: 'News', href: '/th/admin/news' }, { label: 'New article' }]} />);
+    expect(bar).toMatch(/^<nav aria-label="Where you are" class="min-w-0 text-sm text-muted">/);
+    expect(bar).toMatch(/<span aria-current="page" class="[^"]*text-ink[^"]*">New article<\/span>/);
+    expect(html).not.toContain('text-ink"');
   });
 });

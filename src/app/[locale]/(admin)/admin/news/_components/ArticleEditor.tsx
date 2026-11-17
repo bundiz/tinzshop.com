@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { buttonClass } from '@/components/ui/button-class';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/Toast';
 import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import type { ArticlePreviewDraft, NewsAdminStatus, NewsCategoryOption } from '@/server/services/news/news-admin-service';
+import PageActions from '../../_components/PageActions';
 import { createCategoryAction, saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
 import { categoryName } from '../_lib/categories';
 import {
@@ -84,11 +85,10 @@ const SEG_TRACK = 'rounded-[9px] bg-sunk p-[3px]';
 const SEG_ITEM =
   'relative min-h-[34px] cursor-pointer rounded-[7px] px-3.5 text-sm font-semibold text-muted transition-colors hover:text-ink max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
 // The mockup's `.btn-text btn-sm del-link`: a 34px text button in the sale red.
-// The panel footer's two text actions: trash (red) and, for a live article, unpublish. 34px, 44px tap target below `sm`.
+// The Publishing panel's trash action: red text, 34px, a 44px tap target below `sm`.
 const TEXT_ACTION =
   'relative -mx-2 inline-flex min-h-[34px] cursor-pointer items-center rounded-[9px] px-2 text-sm font-semibold transition-colors hover:bg-sunk disabled:cursor-not-allowed disabled:opacity-50 max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[5px]';
-const TRASH_BUTTON = `${TEXT_ACTION} ml-auto text-sale`;
-const UNPUBLISH_BUTTON = `${TEXT_ACTION} text-ink-2 hover:text-ink`;
+const TRASH_BUTTON = `${TEXT_ACTION} text-sale`;
 
 /** A red star after a label for a field publishing needs (a draft saves without it), with the words for a screen reader. */
 function RequiredMark({ note }: { note: string }) {
@@ -160,6 +160,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   // The confirm stays up while the trash runs (its submit button must be in the page when the browser submits); a refusal closes it.
   const [confirmTrash, setConfirmTrash] = useState(false);
   const trashOpener = useRef<HTMLButtonElement>(null);
+  // The page bar's submit buttons sit outside the form and name it (D-264).
+  const formId = useId();
 
   const status = article?.status ?? 'draft';
   // A first save has worked and the page is about to move to the new article: a second submit would create a twin.
@@ -268,13 +270,32 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
 
   return (
     <>
-      <form action={formAction} aria-label={e('form')} className="grid gap-4">
+      <form id={formId} action={formAction} aria-label={e('form')} className="grid gap-4">
         <input type="hidden" name="locale" value={locale} />
         {article ? <input type="hidden" name="id" value={article.id} /> : null}
         <input type="hidden" name="thBodyHtml" value={thBodyHtml} />
         <input type="hidden" name="enTitle" value={en.title} />
         <input type="hidden" name="enExcerpt" value={en.excerpt} />
         <input type="hidden" name="enBodyHtml" value={enBodyHtml} />
+
+        {/* Preview, save draft and publish sit in the page bar beside the breadcrumb (owner, 2026-11-17, D-264). */}
+        <PageActions>
+          <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line', size: 'adminSm' })}>
+            {e('button.preview')}
+          </button>
+          {isPublished ? (
+            <button type="submit" form={formId} disabled={busy} name="action" value="unpublish" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
+              {e('button.unpublish')}
+            </button>
+          ) : (
+            <button type="submit" form={formId} disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
+              {e('button.saveDraft')}
+            </button>
+          )}
+          <button type="submit" form={formId} disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'adminSm' })}>
+            {e(isPublished ? 'button.update' : 'button.publish')}
+          </button>
+        </PageActions>
 
         {failure ? (
           <p role="alert" className="rounded-sm bg-ns-soft p-3 font-medium text-ns-ink">
@@ -418,35 +439,13 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                   <figcaption className="mt-1 text-sm text-muted">{e('featured')}</figcaption>
                 </figure>
               ) : null}
-              <div className="grid gap-2 border-t border-line px-4 pt-4 pb-3">
-                <div className={`grid gap-2 ${isPublished ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                  <button type="button" onClick={openPreview} className={buttonClass({ variant: 'line', size: 'admin', block: true })}>
-                    {e('button.preview')}
+              {article ? (
+                <div className="flex justify-end border-t border-line px-4 py-2">
+                  <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className={TRASH_BUTTON}>
+                    {e('button.trash')}
                   </button>
-                  {isPublished ? null : (
-                    <button type="submit" disabled={busy} name="action" value="draft" className={buttonClass({ variant: 'line', size: 'admin', block: true })}>
-                      {e('button.saveDraft')}
-                    </button>
-                  )}
                 </div>
-                <button type="submit" disabled={busy} name="action" value="publish" className={buttonClass({ variant: 'buy', size: 'admin', block: true })}>
-                  {e(isPublished ? 'button.update' : 'button.publish')}
-                </button>
-                {isPublished || article ? (
-                  <div className="flex flex-wrap items-center justify-between gap-x-2">
-                    {isPublished ? (
-                      <button type="submit" disabled={busy} name="action" value="unpublish" className={UNPUBLISH_BUTTON}>
-                        {e('button.unpublish')}
-                      </button>
-                    ) : null}
-                    {article ? (
-                      <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className={TRASH_BUTTON}>
-                        {e('button.trash')}
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+              ) : null}
             </section>
 
             <Panel title={e('panel.categories')} required={e('requiredToPublish')}>

@@ -9,6 +9,7 @@ import Icon from '@/components/ui/Icon';
 import { ToastProvider } from '@/components/ui/Toast';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
 import { adminBreadcrumbs } from './admin-breadcrumbs';
+import { PAGE_ACTIONS_ID } from './PageActions';
 import SideNav from './SideNav';
 
 export type AdminShellProps = {
@@ -87,12 +88,14 @@ export default function AdminShell({ locale, permissions, name, roleLabel, child
                 <Icon name="menu" className="size-5" />
               </button>
               {crumbs.length > 0 ? (
-                <div className="min-w-0 flex-1">
+                // The page bar: the trail on the left, the page's own actions (PageActions, D-264) on the right.
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-line bg-surface py-1 pr-2 pl-4">
                   <Breadcrumbs
-                    variant="panel"
+                    variant="bar"
                     label={t('news.editor.breadcrumbLabel')}
                     items={crumbs.map((crumb) => ({ label: t(crumb.key), href: crumb.href }))}
                   />
+                  <div id={PAGE_ACTIONS_ID} className="ml-auto flex flex-wrap items-center gap-2 py-1 empty:hidden"></div>
                 </div>
               ) : null}
             </div>

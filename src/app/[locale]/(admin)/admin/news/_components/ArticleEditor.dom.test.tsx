@@ -68,18 +68,28 @@ async function mount(
 }
 
 describe('ArticleEditor', () => {
-  it('puts the actions in the Publishing panel: status beside its title, preview and save draft, then publish, then trash', async () => {
-    await mount(vi.fn(async () => ({ status: 'saved', id: article.id, slug: 'a', action: 'draft' }) as never));
-    const panel = [...container.querySelectorAll('section')].find((section) => section.querySelector('h2')?.textContent?.startsWith('Publishing'))!;
-    expect(panel.querySelector('h2')!.parentElement!.textContent).toContain('Draft');
-    const buttons = [...panel.querySelectorAll('button')].map((button) => button.textContent?.trim());
-    expect(buttons.indexOf('Preview')).toBeLessThan(buttons.indexOf('Publish'));
-    expect(buttons.indexOf('Save draft')).toBeLessThan(buttons.indexOf('Publish'));
-    expect(buttons.indexOf('Publish')).toBeLessThan(buttons.indexOf('Move to trash'));
-    expect(container.querySelectorAll('button[value="publish"]')).toHaveLength(1);
-    await act(async () => panel.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
-    // The saved line is the back office's toast now (D-262): its live region says so.
-    expect([...document.body.querySelectorAll('[role="status"]')].map((region) => region.textContent).join(' ')).toContain('Draft saved');
+  it('puts preview, save draft and publish in the page bar (D-264), tied to the form, and keeps trash in the Publishing panel', async () => {
+    const slot = document.createElement('div');
+    slot.id = 'admin-page-actions';
+    document.body.append(slot);
+    try {
+      const save = vi.fn(async () => ({ status: 'saved', id: article.id, slug: 'a', action: 'draft' }) as never);
+      await mount(save);
+      const inBar = [...slot.querySelectorAll('button')];
+      expect(inBar.map((button) => button.textContent?.trim())).toEqual(['Preview', 'Save draft', 'Publish']);
+      const formId = container.querySelector('form[aria-label]')!.id;
+      expect(formId).not.toBe('');
+      expect(inBar.filter((button) => button.type === 'submit').every((button) => button.getAttribute('form') === formId)).toBe(true);
+      expect(container.querySelector('button[value="publish"]')).toBeNull();
+      const panel = [...container.querySelectorAll('section')].find((section) => section.querySelector('h2')?.textContent?.startsWith('Publishing'))!;
+      expect(panel.querySelector('h2')!.parentElement!.textContent).toContain('Draft');
+      expect(panel.textContent).toContain('Move to trash');
+      await act(async () => slot.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+      expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].get('action')).toBe('draft');
+      expect([...document.body.querySelectorAll('[role="status"]')].map((region) => region.textContent).join(' ')).toContain('Draft saved');
+    } finally {
+      slot.remove();
+    }
   });
 
   it('submits a locked body exactly as stored, with the rest of the form editable', async () => {
