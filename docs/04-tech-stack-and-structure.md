@@ -89,7 +89,8 @@ tinzshop.com/
 │   ├── components/
 │   │   ├── ui/                   ← tier 1: primitives, no domain knowledge. Includes button-class.ts
 │   │   │                           (buttonClass), Breadcrumbs.tsx and use-modal-dialog.ts (plan 015),
-│   │   │                           Select.tsx, the site's only dropdown (D-258), and the back
+│   │   │                           Select.tsx, the site's only dropdown (D-258), with its placement
+│   │   │                           hook use-anchored-popup.ts (D-271), and the back
 │   │   │                           office's RowActionsMenu.tsx, Drawer.tsx and ConfirmDialog.tsx (D-261)
 │   │   │                           and Toast.tsx, its success toast (D-262)
 │   │   └── domain/               ← tier 2: shared domain components. Includes platform-tone.ts (plan 015)

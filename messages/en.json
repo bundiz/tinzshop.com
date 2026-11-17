@@ -852,6 +852,7 @@
         "tagPlaceholder": "Add a tag, then press Enter",
         "tagRemove": "Remove tag {name}",
         "productsHint": "This article will appear on the pages of the products you pick",
+        "productsChoose": "Choose a product",
         "productsSearch": "Search products",
         "productsPlaceholder": "Search by product name or SKU",
         "productsNone": "No products found",

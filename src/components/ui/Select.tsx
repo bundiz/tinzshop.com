@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { createPortal } from 'react-dom';
 
 import Icon from './Icon';
+import { useAnchoredPopup } from './use-anchored-popup';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
@@ -34,11 +35,9 @@ export type SelectProps = {
 };
 
 const MAX_HEIGHT = 280;
-const GAP = 6;
-const MARGIN = 8;
 const TYPEAHEAD_MS = 500;
 
-const BASE =
+const TRIGGER_BASE =
   'relative inline-flex max-w-full min-w-0 cursor-pointer items-center rounded-sm border-[1.5px] bg-surface text-left text-ink transition-colors enabled:hover:border-ink focus-visible:border-ink aria-expanded:border-ink disabled:cursor-not-allowed disabled:opacity-40';
 
 const SIZE: Record<SelectSize, string> = {
@@ -55,6 +54,19 @@ const CHEVRON: Record<SelectSize, string> = {
   small: 'size-4 text-ink',
   toolbar: 'size-3.5 text-muted',
 };
+
+/**
+ * The trigger's classes for a size (the mockup's `.select`), shared with a control that must look like a `Select` but is
+ * not one (the news editor's `ProductCombobox`, D-271). `extra` adds width or margins.
+ */
+export function selectTriggerClass(size: SelectSize = 'md', extra = ''): string {
+  return `${TRIGGER_BASE} ${SIZE[size]} ${extra}`.trim();
+}
+
+/** The chevron's classes for a size, shared as `selectTriggerClass` is. */
+export function selectChevronClass(size: SelectSize = 'md', open = false): string {
+  return `${CHEVRON[size]} transition-transform duration-150 ease-out ${open ? 'rotate-180' : ''}`.trim();
+}
 
 /** The first enabled index from `start` stepping by `step`, or `fallback` when there is none. */
 function enabledFrom(options: readonly SelectOption[], start: number, step: 1 | -1, fallback: number): number {
@@ -222,34 +234,7 @@ export default function Select({
   }, [controlled]);
 
   // Place the list below the trigger, or above it when there is more room there, and keep it placed while anything scrolls.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const place = () => {
-      const button = trigger.current;
-      const popup = list.current;
-      if (button === null || popup === null) return;
-      const rect = button.getBoundingClientRect();
-      const below = window.innerHeight - rect.bottom - GAP - MARGIN;
-      const above = rect.top - GAP - MARGIN;
-      const up = Math.min(MAX_HEIGHT, popup.scrollHeight) > below && above > below;
-      popup.style.minWidth = `${rect.width}px`;
-      popup.style.maxHeight = `${Math.max(0, Math.min(MAX_HEIGHT, up ? above : below))}px`;
-      popup.style.top = up ? '' : `${rect.bottom + GAP}px`;
-      popup.style.bottom = up ? `${window.innerHeight - rect.top + GAP}px` : '';
-      const width = Math.max(popup.offsetWidth, rect.width);
-      popup.style.left = `${Math.max(MARGIN, Math.min(rect.left, window.innerWidth - MARGIN - width))}px`;
-    };
-    place();
-    const onScroll = (event: Event) => {
-      if (event.target !== list.current) place();
-    };
-    window.addEventListener('resize', place);
-    document.addEventListener('scroll', onScroll, true);
-    return () => {
-      window.removeEventListener('resize', place);
-      document.removeEventListener('scroll', onScroll, true);
-    };
-  }, [open]);
+  useAnchoredPopup({ open, anchorRef: trigger, popupRef: list, maxHeight: MAX_HEIGHT });
 
   // Keep the active option in view (on open, the chosen one).
   useLayoutEffect(() => {
@@ -300,7 +285,7 @@ export default function Select({
           if (event.key === ' ') event.preventDefault();
         }}
         onBlur={close}
-        className={`${BASE} ${SIZE[size]} ${className}`}
+        className={selectTriggerClass(size, className)}
       >
         {/* Every label in one grid cell: the trigger is as wide as the longest, and the chosen one shows. */}
         <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)]">
@@ -316,7 +301,7 @@ export default function Select({
             ),
           )}
         </span>
-        <Icon name="chevDown" className={`${CHEVRON[size]} transition-transform duration-150 ease-out ${open ? 'rotate-180' : ''}`} />
+        <Icon name="chevDown" className={selectChevronClass(size, open)} />
       </button>
       {open && typeof document !== 'undefined'
         ? createPortal(

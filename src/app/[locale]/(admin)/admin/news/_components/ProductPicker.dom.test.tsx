@@ -12,9 +12,12 @@ import ProductPicker from './ProductPicker';
 
 const SSD = { id: '11111111-1111-4111-8111-111111111111', name: 'Portable SSD', sku: 'SSD', imageUrl: null };
 const ZELDA = { id: '22222222-2222-4222-8222-222222222222', name: 'Zelda', sku: 'ZD', imageUrl: null };
+const MARIO = { id: '33333333-3333-4333-8333-333333333333', name: 'Mario Kart', sku: 'MK', imageUrl: null };
 
 let container: HTMLDivElement;
 let root: Root;
+const realHeight = window.innerHeight;
+
 beforeEach(() => {
   container = document.createElement('div');
   document.body.append(container);
@@ -23,6 +26,8 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  vi.restoreAllMocks();
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: realHeight });
 });
 
 function Harness({ search, initial }: { search: (query: string) => Promise<ProductPickerHit[]>; initial: ProductPickerHit[] }) {
@@ -31,7 +36,7 @@ function Harness({ search, initial }: { search: (query: string) => Promise<Produ
 }
 
 async function mount(initial: ProductPickerHit[] = []) {
-  const search = vi.fn(async (query: string) => [SSD, ZELDA].filter((hit) => hit.name.toLowerCase().includes(query.toLowerCase())));
+  const search = vi.fn(async (query: string) => [SSD, ZELDA, MARIO].filter((hit) => hit.name.toLowerCase().includes(query.toLowerCase())));
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
@@ -42,47 +47,153 @@ async function mount(initial: ProductPickerHit[] = []) {
   return search;
 }
 
-const box = () => container.querySelector<HTMLInputElement>('input[type="search"]')!;
-const options = () => [...container.querySelectorAll('[role="listbox"] li b')].map((name) => name.textContent);
-const wait = (ms: number) => act(async () => {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-});
+const trigger = () => container.querySelector<HTMLButtonElement>('button[aria-haspopup="listbox"]')!;
+const popup = () => document.querySelector<HTMLElement>('[data-product-combobox-popup]');
+const box = () => popup()!.querySelector<HTMLInputElement>('input')!;
+const listbox = () => document.querySelector<HTMLElement>('[role="listbox"]');
+const options = () => [...document.querySelectorAll('[role="option"] b')].map((name) => name.textContent);
+const chosen = () => [...container.querySelectorAll<HTMLInputElement>('input[name="productId"]')].map((input) => input.value);
+const wait = (ms: number) =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  });
+const key = (target: HTMLElement, name: string) =>
+  act(() => {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }));
+  });
+async function open() {
+  await act(async () => trigger().click());
+  await wait(10);
+}
 
-describe('ProductPicker as a dropdown (D-270)', () => {
-  it('puts the search box above the chosen products, and shows no list until the box is clicked', async () => {
+describe('ProductPicker: a select-style searchable dropdown (D-271)', () => {
+  it('shows a select-style trigger above the chosen products, with no list and no search until it is opened', async () => {
     const search = await mount([SSD]);
-    const chosen = container.querySelector('input[name="productId"]')!;
-    expect(box().compareDocumentPosition(chosen) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(trigger().tagName).toBe('BUTTON');
+    expect(trigger().type).toBe('button');
+    expect(trigger().getAttribute('role')).toBe('combobox');
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    expect(trigger().textContent).toContain('Choose a product');
+    expect(trigger().querySelector('svg')).not.toBeNull();
+    expect(container.querySelector('input[type="search"]')).toBeNull();
+    const firstChosen = container.querySelector('input[name="productId"]')!;
+    expect(trigger().compareDocumentPosition(firstChosen) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await wait(20);
     expect(search).not.toHaveBeenCalled();
-    expect(container.querySelector('[role="listbox"]')).toBeNull();
-    expect(box().getAttribute('aria-expanded')).toBe('false');
+    expect(listbox()).toBeNull();
   });
 
-  it('opens a floating list of products on click (chosen ones left out), narrows it as you type, and closes on a pick', async () => {
+  it('opens a portalled, fixed popup with a focused search box over the first products, the chosen ones left out', async () => {
     const search = await mount([SSD]);
-    await act(async () => box().click());
-    await wait(20);
+    await open();
     expect(search).toHaveBeenCalledWith('');
-    expect(box().getAttribute('aria-expanded')).toBe('true');
-    expect(container.querySelector('[role="listbox"]')!.className).toContain('absolute');
-    expect(options()).toEqual(['Zelda']);
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="listbox"] li button')!.click());
-    expect([...container.querySelectorAll<HTMLInputElement>('input[name="productId"]')].map((input) => input.value)).toEqual([SSD.id, ZELDA.id]);
-    expect(container.querySelector('[role="listbox"]')).toBeNull();
-    expect(box().value).toBe('');
+    expect(trigger().getAttribute('aria-expanded')).toBe('true');
+    expect(popup()).not.toBeNull();
+    expect(container.contains(popup())).toBe(false);
+    expect(popup()!.parentElement).toBe(document.body);
+    expect(popup()!.style.position).toBe('fixed');
+    expect(document.activeElement).toBe(box());
+    expect(box().getAttribute('role')).toBe('combobox');
+    expect(box().getAttribute('aria-controls')).toBe(listbox()!.id);
+    expect(box().placeholder).toBe('Search by product name or SKU');
+    expect(options()).toEqual(['Zelda', 'Mario Kart']);
   });
 
-  it('closes on Escape and on a press outside', async () => {
+  it('lines the search box up with the rows: both full width inside the popup padding, the focus ring drawn inside', async () => {
     await mount();
-    await act(async () => box().click());
-    await wait(20);
-    expect(options()).toEqual(['Portable SSD', 'Zelda']);
-    await act(async () => box().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-    expect(container.querySelector('[role="listbox"]')).toBeNull();
-    await act(async () => box().click());
-    await wait(20);
+    await open();
+    const searchRow = box().parentElement!;
+    expect(searchRow.parentElement).toBe(popup());
+    expect(listbox()!.parentElement).toBe(popup());
+    expect(box().className.split(' ')).toEqual(expect.arrayContaining(['w-full', 'focus-visible:-outline-offset-2']));
+    expect(searchRow.className.split(' ')).toContain('w-full');
+    expect(listbox()!.className.split(' ')).toContain('w-full');
+    for (const option of document.querySelectorAll('[role="option"]')) expect(option.className.split(' ')).toContain('w-full');
+  });
+
+  it('narrows the list as you type, after a short wait', async () => {
+    const search = await mount();
+    await open();
+    await act(async () => {
+      const input = box();
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+      setValue.call(input, 'zel');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(search).not.toHaveBeenCalledWith('zel');
+    await wait(300);
+    expect(search).toHaveBeenCalledWith('zel');
+    expect(options()).toEqual(['Zelda']);
+  });
+
+  it('picks with ArrowDown and Enter: adds a hidden productId, clears, closes and returns focus to the trigger', async () => {
+    await mount([SSD]);
+    await open();
+    expect(box().hasAttribute('aria-activedescendant')).toBe(false);
+    key(box(), 'ArrowDown');
+    key(box(), 'ArrowDown');
+    expect(document.getElementById(box().getAttribute('aria-activedescendant')!)?.textContent).toContain('Mario Kart');
+    key(box(), 'ArrowUp');
+    expect(document.getElementById(box().getAttribute('aria-activedescendant')!)?.getAttribute('aria-selected')).toBe('true');
+    key(box(), 'Enter');
+    expect(chosen()).toEqual([SSD.id, ZELDA.id]);
+    expect(popup()).toBeNull();
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger());
+    await open();
+    expect(box().value).toBe('');
+    expect(options()).toEqual(['Mario Kart']);
+  });
+
+  it('picks with a click on an option', async () => {
+    await mount();
+    await open();
+    await act(async () => document.querySelectorAll<HTMLElement>('[role="option"]')[1]!.click());
+    expect(chosen()).toEqual([ZELDA.id]);
+    expect(popup()).toBeNull();
+  });
+
+  it('opens from the keyboard with Enter, Space or ArrowDown on the trigger', async () => {
+    await mount();
+    for (const name of ['Enter', ' ', 'ArrowDown']) {
+      act(() => trigger().focus());
+      key(trigger(), name);
+      expect(trigger().getAttribute('aria-expanded')).toBe('true');
+      key(box(), 'Escape');
+      expect(popup()).toBeNull();
+    }
+  });
+
+  it('closes on Escape (focus back on the trigger) and on a press outside', async () => {
+    await mount();
+    await open();
+    key(box(), 'Escape');
+    expect(popup()).toBeNull();
+    expect(document.activeElement).toBe(trigger());
+    await open();
+    await act(async () => box().dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+    expect(popup()).not.toBeNull();
     await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
-    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(popup()).toBeNull();
+  });
+
+  it('opens above the trigger when there is no room below', async () => {
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 });
+    await mount();
+    vi.spyOn(trigger(), 'getBoundingClientRect').mockReturnValue({
+      top: 700,
+      bottom: 744,
+      left: 20,
+      right: 300,
+      width: 280,
+      height: 44,
+      x: 20,
+      y: 700,
+      toJSON: () => ({}),
+    } as DOMRect);
+    await open();
+    expect(popup()!.style.top).toBe('');
+    expect(popup()!.style.bottom).toBe(`${768 - 700 + 6}px`);
+    expect(popup()!.style.minWidth).toBe('280px');
   });
 });

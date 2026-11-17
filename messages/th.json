@@ -852,6 +852,7 @@
         "tagPlaceholder": "เพิ่มแท็ก แล้วกด Enter",
         "tagRemove": "ลบแท็ก {name}",
         "productsHint": "ข่าวนี้จะขึ้นในหน้าสินค้าที่เลือก",
+        "productsChoose": "เลือกสินค้า",
         "productsSearch": "ค้นหาสินค้า",
         "productsPlaceholder": "ค้นหาสินค้าหรือ SKU",
         "productsNone": "ไม่พบสินค้า",
