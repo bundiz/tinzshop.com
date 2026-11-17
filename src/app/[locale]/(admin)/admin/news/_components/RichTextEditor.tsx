@@ -16,7 +16,7 @@ import { wouldLoseContent } from './body-roundtrip';
 import { buildExtensions } from './editor-extensions';
 import { ProductCardsContext, type ProductCards } from './ProductCardView';
 import { youtubeEmbedFromUrl } from './youtube-embed';
-import { ProductSearchBox, type ProductSearch } from './ProductPicker';
+import { ProductCombobox, type ProductSearch } from './ProductPicker';
 
 type BlockKind = 'p' | 'h2' | 'h3' | 'blockquote' | 'other';
 
@@ -470,7 +470,7 @@ export default function RichTextEditor({
   );
 }
 
-/** The product-card dialog: search, pick one, and the card is inserted. */
+/** The product-card dialog: the product field (D-272) takes focus; open it, search, pick one, and the card is inserted. */
 function ProductDialog({
   search,
   onPick,
@@ -493,7 +493,7 @@ function ProductDialog({
           {t('productDialog.title')}
         </h2>
         <p className="mt-1 mb-3 text-ink-2">{t('productDialog.hint')}</p>
-        <ProductSearchBox search={search} onPick={onPick} autoFocus browse />
+        <ProductCombobox search={search} onPick={onPick} />
         <div className="mt-5 flex justify-end">
           <button type="button" onClick={onClose} className={buttonClass({ variant: 'line', size: 'admin' })}>
             {t('productDialog.cancel')}

@@ -66,7 +66,7 @@ async function open() {
   await wait(10);
 }
 
-describe('ProductPicker: a select-style searchable dropdown (D-271)', () => {
+describe('ProductPicker: a select-style searchable dropdown (D-271, D-272)', () => {
   it('shows a select-style trigger above the chosen products, with no list and no search until it is opened', async () => {
     const search = await mount([SSD]);
     expect(trigger().tagName).toBe('BUTTON');
@@ -99,16 +99,23 @@ describe('ProductPicker: a select-style searchable dropdown (D-271)', () => {
     expect(options()).toEqual(['Zelda', 'Mario Kart']);
   });
 
-  it('lines the search box up with the rows: both full width inside the popup padding, the focus ring drawn inside', async () => {
+  it('draws the popup as the owner reference: a search row with a magnifier and a borderless box, a full-width divider, then the rows (D-272)', async () => {
     await mount();
     await open();
     const searchRow = box().parentElement!;
     expect(searchRow.parentElement).toBe(popup());
+    expect(searchRow.firstElementChild!.tagName.toLowerCase()).toBe('svg');
+    // The row spans the popup: the popup has no side padding, and the row carries the divider.
+    expect(popup()!.className.split(' ')).toContain('p-0');
+    expect(searchRow.className.split(' ')).toEqual(expect.arrayContaining(['w-full', 'border-b', 'border-line']));
+    // No bordered box inside the popup, and no ring of its own.
+    expect(box().className).not.toMatch(/border-\[|rounded/);
+    expect(box().className.split(' ')).toEqual(expect.arrayContaining(['border-0', 'bg-transparent', 'focus-visible:outline-none']));
+    expect(box().placeholder).toBe('Search by product name or SKU');
     expect(listbox()!.parentElement).toBe(popup());
-    expect(box().className.split(' ')).toEqual(expect.arrayContaining(['w-full', 'focus-visible:-outline-offset-2']));
-    expect(searchRow.className.split(' ')).toContain('w-full');
-    expect(listbox()!.className.split(' ')).toContain('w-full');
-    for (const option of document.querySelectorAll('[role="option"]')) expect(option.className.split(' ')).toContain('w-full');
+    // A product with no image shows its first letter in the thumb.
+    const first = document.querySelector('[role="option"]')!;
+    expect(first.querySelector('[data-product-initial]')?.textContent).toBe('P');
   });
 
   it('narrows the list as you type, after a short wait', async () => {

@@ -102,6 +102,7 @@ describe('ArticleEditor', () => {
     await mount(save, { article: { ...article, th: { title: 'T', excerpt: 'E', bodyHtml: '<p>Hi</p>' } }, search: (async () => [hit]) as never });
     for (let round = 0; round < 2; round += 1) {
       await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Insert product card"]')!.click());
+      await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-haspopup="listbox"]')!.click());
       const box = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="search"]')!;
       await act(async () => {
         Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(box, 'ssd');
@@ -110,7 +111,7 @@ describe('ArticleEditor', () => {
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 300));
       });
-      await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] li button')!.click());
+      await act(async () => document.querySelector<HTMLElement>('[role="dialog"] [role="option"]')!.click());
     }
     await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
     expect((save.mock.calls[0] as unknown as [unknown, FormData])[1].getAll('productId')).toEqual([PRODUCT_ID]);

@@ -20,6 +20,17 @@ Range.prototype.getClientRects ??= function getClientRects() {
 };
 Range.prototype.getBoundingClientRect ??= emptyRect;
 
+/** Types into a search box and waits past its 250 ms pause. */
+async function typeInto(input: HTMLInputElement, text: string) {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  });
+}
+
 const PRODUCT = '33333333-3333-4333-8333-333333333333';
 const BODY = `<p>Hello</p><tinz-product data-id="${PRODUCT}"></tinz-product><p><img src="https://old.example/a.jpg" alt="old"></p>`;
 
@@ -235,16 +246,9 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
       editor.commands.setTextSelection(2);
     });
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Insert product card"]')!.click());
-    const search = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="search"]')!;
-    await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-      setter.call(search, 'switch');
-      search.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    });
-    await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] li button')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-haspopup="listbox"]')!.click());
+    await typeInto(document.querySelector<HTMLInputElement>('[role="dialog"] input[type="search"]')!, 'switch');
+    await act(async () => document.querySelector<HTMLElement>('[role="dialog"] [role="option"]')!.click());
     await settle();
     expect(load).toHaveBeenCalledTimes(1);
     expect(load.mock.calls[0]![0]).toEqual([PRODUCT]);
@@ -272,30 +276,68 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
     });
     expect(editor.getHTML()).toBe('<p>a</p><p>b</p>');
   });
-  it('lists products in the card dialog before anything is typed, in a scrolling list, and narrows them as you type (D-269)', async () => {
+  it('picks the card from a select-style field in the dialog: focused on open, a popup inside the dialog, Escape closes only the popup (D-272)', async () => {
     const all = [
       { id: PRODUCT, name: 'Nintendo Switch 2', sku: 'NS2', imageUrl: null },
       { id: '44444444-4444-4444-8444-444444444444', name: 'Portable SSD', sku: 'SSD', imageUrl: null },
     ];
     const search = vi.fn(async (query: string) => all.filter((hit) => hit.name.toLowerCase().includes(query.toLowerCase())));
-    await mount(() => {}, '<p>Hello</p>', { searchProducts: search });
+    const inserted = vi.fn();
+    const editor = await mount(() => {}, '<p>Hello</p>', { searchProducts: search, onProductCardInserted: inserted });
+    await act(async () => {
+      editor.commands.setTextSelection(2);
+    });
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Insert product card"]')!.click());
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    const field = dialog.querySelector<HTMLButtonElement>('button[aria-haspopup="listbox"]')!;
+    // The field takes focus, closed: nothing is asked and no always-open list shows.
+    expect(document.activeElement).toBe(field);
+    expect(field.getAttribute('aria-expanded')).toBe('false');
+    expect(field.textContent).toContain('Choose a product');
+    expect(document.querySelector('[role="listbox"]')).toBeNull();
+    expect(search).not.toHaveBeenCalled();
+
+    await act(async () => field.click());
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
     expect(search).toHaveBeenCalledWith('');
-    const names = () => [...document.querySelectorAll('[role="dialog"] li b')].map((name) => name.textContent);
+    const popup = document.querySelector<HTMLElement>('[data-product-combobox-popup]')!;
+    // Portalled into the dialog (so it is inside the modal for a screen reader and the focus trap), above it, fixed.
+    expect(dialog.contains(popup)).toBe(true);
+    expect(popup.style.position).toBe('fixed');
+    expect(popup.className.split(' ')).toContain('z-80');
+    const box = popup.querySelector<HTMLInputElement>('input[type="search"]')!;
+    expect(document.activeElement).toBe(box);
+    const names = () => [...document.querySelectorAll('[role="option"] b')].map((name) => name.textContent);
     expect(names()).toEqual(['Nintendo Switch 2', 'Portable SSD']);
-    expect(document.querySelector('[role="dialog"] ul')!.className).toMatch(/max-h-\S+ .*overflow-y-auto|overflow-y-auto.*max-h-/);
-    const box = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="search"]')!;
+
+    // Escape closes the popup, not the dialog; focus goes back to the field.
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(box, 'ssd');
-      box.dispatchEvent(new Event('input', { bubbles: true }));
+      box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     });
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    });
+    expect(document.querySelector('[data-product-combobox-popup]')).toBeNull();
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.activeElement).toBe(field);
+
+    // Open again, narrow, and pick with the keyboard: the card goes in, the callback runs, the dialog closes.
+    await act(async () => field.click());
+    const again = document.querySelector<HTMLInputElement>('[data-product-combobox-popup] input[type="search"]')!;
+    await typeInto(again, 'ssd');
     expect(names()).toEqual(['Portable SSD']);
+    // A press inside the popup is not outside anything: it stays open, focus stays in its search box.
+    await act(async () => again.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+    expect(document.querySelector('[data-product-combobox-popup]')).not.toBeNull();
+    expect(document.activeElement).toBe(again);
+    await act(async () => {
+      again.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    });
+    await act(async () => {
+      again.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    expect(inserted).toHaveBeenCalledWith(all[1]);
+    expect(editor.getHTML()).toContain(`data-id="${all[1]!.id}"`);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it('reports a product whose last card leaves the body, and comes back with undo (D-268); a second card of it keeps it', async () => {

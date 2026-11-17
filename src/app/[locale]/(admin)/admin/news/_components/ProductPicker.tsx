@@ -13,9 +13,12 @@ export type ProductSearch = (query: string) => Promise<ProductPickerHit[]>;
 
 const DEBOUNCE_MS = 250;
 
+/** A product's image, or its first letter on a plain square when it has none. */
 function Thumb({ hit }: { hit: ProductPickerHit }) {
   return hit.imageUrl === null ? (
-    <span aria-hidden="true" className="size-10 flex-none rounded-sm bg-sunk" />
+    <span aria-hidden="true" data-product-initial="" className="grid size-10 flex-none place-items-center rounded-sm bg-sunk text-sm font-semibold text-ink-2">
+      {[...hit.name.trim()][0]?.toLocaleUpperCase() ?? ''}
+    </span>
   ) : (
     // eslint-disable-next-line @next/next/no-img-element -- Shopee image URL, no image pipeline yet
     <img src={hit.imageUrl} alt="" width={40} height={40} className="size-10 flex-none rounded-sm bg-sunk object-cover" />
@@ -23,84 +26,17 @@ function Thumb({ hit }: { hit: ProductPickerHit }) {
 }
 
 /**
- * A search box over the active products (name or SKU) with its results, up to twenty (the service's limit), for the
- * toolbar's card dialog. Choosing one calls `onPick`. Typing waits a moment before it asks, and an answer that arrives
- * after a newer question is ignored. With `browse` (D-269) it lists the first products as soon as it shows, in a list that
- * scrolls; without it, it waits for typing.
+ * Asks `search` for `query` while `active`, and returns the answer (`null` before the first one, or while closed). An empty
+ * query (the first twenty products, D-269) asks at once; typing waits a moment. An answer that arrives after a newer
+ * question is ignored; a failed one shows as no results.
  */
-export function ProductSearchBox({
-  search,
-  onPick,
-  exclude = [],
-  autoFocus = false,
-  browse = false,
-}: {
-  search: ProductSearch;
-  onPick: (hit: ProductPickerHit) => void;
-  exclude?: readonly string[];
-  autoFocus?: boolean;
-  browse?: boolean;
-}) {
-  const t = useTranslations('admin.news.editor');
-  const inputId = useId();
-  const [query, setQuery] = useState('');
-  const hits = useProductSearch(search, query, true, browse);
-  const shown = (hits ?? []).filter((hit) => !exclude.includes(hit.id));
-  return (
-    <div>
-      <label htmlFor={inputId} className="sr-only">
-        {t('productsSearch')}
-      </label>
-      <input
-        id={inputId}
-        type="search"
-        value={query}
-        autoFocus={autoFocus}
-        autoComplete="off"
-        onChange={(event) => setQuery(event.target.value)}
-        onKeyDown={(event) => {
-          // Enter in the box must not submit the article.
-          if (event.key === 'Enter') event.preventDefault();
-        }}
-        placeholder={t('productsPlaceholder')}
-        className="min-h-11 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink"
-      />
-      {hits === null ? null : shown.length === 0 ? (
-        <p role="status" className="mt-2 text-sm text-muted">
-          {t('productsNone')}
-        </p>
-      ) : (
-        <ul className={`mt-2 grid grid-cols-1 gap-1${browse ? ' max-h-[min(360px,50vh)] overflow-y-auto overscroll-contain rounded-sm border border-line p-1' : ''}`}>
-          {shown.map((hit) => (
-            <li key={hit.id}>
-              <button
-                type="button"
-                aria-label={t('productsAdd', { name: hit.name })}
-                onClick={() => onPick(hit)}
-                className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-sm p-1.5 text-left hover:bg-sunk"
-              >
-                <HitText hit={hit} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/**
- * Asks `search` for `query` while `active`, and returns the answer (`null` before the first one, or when there is nothing
- * to ask). An empty query asks at once when `listsWhenEmpty`, and otherwise asks nothing; typing waits a moment. An answer
- * that arrives after a newer question is ignored; a failed one shows as no results.
- */
-function useProductSearch(search: ProductSearch, query: string, active: boolean, listsWhenEmpty: boolean): ProductPickerHit[] | null {
+function useProductSearch(search: ProductSearch, query: string, active: boolean): ProductPickerHit[] | null {
   const [hits, setHits] = useState<ProductPickerHit[] | null>(null);
   useEffect(() => {
     const text = query.trim();
-    if (!active || (text === '' && !listsWhenEmpty)) {
-      // Nothing to ask: no results to show.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the list when the box is emptied or closed
+    if (!active) {
+      // Closed: no results to show.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the list when the popup closes
       setHits(null);
       return;
     }
@@ -123,7 +59,7 @@ function useProductSearch(search: ProductSearch, query: string, active: boolean,
       current = false;
       clearTimeout(timer);
     };
-  }, [query, search, active, listsWhenEmpty]);
+  }, [query, search, active]);
   return hits;
 }
 
@@ -132,7 +68,7 @@ function HitText({ hit }: { hit: ProductPickerHit }) {
   return (
     <>
       <Thumb hit={hit} />
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <b className="block truncate text-sm font-semibold text-ink">{hit.name}</b>
         <small className="block text-[12.5px] text-muted">{hit.sku}</small>
       </span>
@@ -144,16 +80,27 @@ function HitText({ hit }: { hit: ProductPickerHit }) {
 const POPUP_MAX_HEIGHT = 360;
 
 /**
- * The related-products panel's picker (D-271): a trigger that looks like a `Select` (`md`) with a muted "choose a product"
- * and a chevron, opening a popup with a search box at its top and the products under it — the first twenty before
- * anything is typed (the chosen ones left out), narrowed as you type. The popup is drawn in a portal with fixed
- * positioning, below the trigger or above it when it does not fit (`useAnchoredPopup`), so it never makes the page taller.
+ * The news editor's product picker (D-271, D-272), in the related-products panel and the product-card dialog: a trigger
+ * that looks like a `Select` (`md`) with a muted "choose a product" and a chevron, opening a popup whose top row is a
+ * magnifier and a borderless search box, then a full-width line, then the products — the first twenty before anything is
+ * typed (any in `exclude` left out), narrowed as you type. The popup is drawn in a portal with fixed positioning, below the
+ * trigger or above it when it does not fit (`useAnchoredPopup`), so it never makes the page taller. Inside a modal dialog
+ * (`aria-modal`) it is portalled into the dialog, so it stays inside the modal for a screen reader and for the dialog's
+ * focus trap, and a press on it is a press inside the dialog; elsewhere into `document.body`.
  * Keys: Enter, Space or ArrowDown on the trigger open it and focus the search box (a `combobox` whose
  * `aria-activedescendant` is the active option); ArrowDown and ArrowUp move; Enter picks; Escape closes; Tab closes and
  * moves on from the trigger. A pick or Escape returns focus to the trigger; a press outside closes it and leaves focus
  * where the press put it.
  */
-function ProductCombobox({ search, onPick, exclude }: { search: ProductSearch; onPick: (hit: ProductPickerHit) => void; exclude: readonly string[] }) {
+export function ProductCombobox({
+  search,
+  onPick,
+  exclude = [],
+}: {
+  search: ProductSearch;
+  onPick: (hit: ProductPickerHit) => void;
+  exclude?: readonly string[];
+}) {
   const t = useTranslations('admin.news.editor');
   const baseId = useId();
   const inputId = `${baseId}-search`;
@@ -164,9 +111,15 @@ function ProductCombobox({ search, onPick, exclude }: { search: ProductSearch; o
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false);
+  // Where the popup is drawn: the modal dialog around the trigger, if any, else the page's body; found as it opens.
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  const show = () => {
+    setHost(trigger.current?.closest<HTMLElement>('[aria-modal="true"]') ?? document.body);
+    setOpen(true);
+  };
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
-  const hits = useProductSearch(search, query, open, true);
+  const hits = useProductSearch(search, query, open);
   const shown = (hits ?? []).filter((hit) => !exclude.includes(hit.id));
   // A new answer starts with no active option.
   const [answered, setAnswered] = useState(hits);
@@ -229,12 +182,12 @@ function ProductCombobox({ search, onPick, exclude }: { search: ProductSearch; o
         aria-label={t('productsChoose')}
         onClick={() => {
           if (open) close(true);
-          else setOpen(true);
+          else show();
         }}
         onKeyDown={(event) => {
           if (!open && (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown')) {
             event.preventDefault();
-            setOpen(true);
+            show();
           }
         }}
         // Space opens on keydown; stop the button's own Space click on keyup.
@@ -246,68 +199,69 @@ function ProductCombobox({ search, onPick, exclude }: { search: ProductSearch; o
         <span className="min-w-0 flex-1 truncate text-muted">{t('productsChoose')}</span>
         <Icon name="chevDown" className={selectChevronClass('md', open)} />
       </button>
-      {open && typeof document !== 'undefined'
+      {open && host !== null
         ? createPortal(
             <div
               ref={popup}
               data-product-combobox-popup=""
               style={{ position: 'fixed', maxHeight: POPUP_MAX_HEIGHT }}
-              className="z-80 flex w-[min(360px,calc(100vw-16px))] flex-col rounded-md border border-line bg-surface p-2 shadow-1"
+              className="z-80 flex w-[min(360px,calc(100vw-16px))] flex-col overflow-hidden rounded-md border border-line bg-surface p-0 shadow-1"
             >
-              {/* The search box and the rows share the popup's inner padding, so their edges line up; a line under the box. */}
-              <div className="w-full flex-none border-b border-line pb-2">
-              <label htmlFor={inputId} className="sr-only">
-                {t('productsSearch')}
-              </label>
-              <input
-                ref={input}
-                id={inputId}
-                type="search"
-                role="combobox"
-                aria-expanded="true"
-                aria-controls={listId}
-                aria-autocomplete="list"
-                aria-activedescendant={active >= 0 ? optionId(active) : undefined}
-                value={query}
-                autoComplete="off"
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  switch (event.key) {
-                    case 'ArrowDown':
-                      event.preventDefault();
-                      if (shown.length > 0) setActiveIndex(Math.min(active + 1, shown.length - 1));
-                      return;
-                    case 'ArrowUp':
-                      event.preventDefault();
-                      if (shown.length > 0) setActiveIndex(Math.max(active - 1, 0));
-                      return;
-                    case 'Enter': {
-                      // Enter must never submit the article.
-                      event.preventDefault();
-                      const hit = active >= 0 ? shown[active] : undefined;
-                      if (hit !== undefined) pick(hit);
-                      return;
+              {/* The search row is the field: a magnifier and a borderless box across the popup, a full-width line under it. */}
+              <div className="flex w-full flex-none items-center gap-2.5 border-b border-line px-3.5">
+                <Icon name="search" className="size-[18px] flex-none text-muted" />
+                <label htmlFor={inputId} className="sr-only">
+                  {t('productsSearch')}
+                </label>
+                <input
+                  ref={input}
+                  id={inputId}
+                  type="search"
+                  role="combobox"
+                  aria-expanded="true"
+                  aria-controls={listId}
+                  aria-autocomplete="list"
+                  aria-activedescendant={active >= 0 ? optionId(active) : undefined}
+                  value={query}
+                  autoComplete="off"
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    switch (event.key) {
+                      case 'ArrowDown':
+                        event.preventDefault();
+                        if (shown.length > 0) setActiveIndex(Math.min(active + 1, shown.length - 1));
+                        return;
+                      case 'ArrowUp':
+                        event.preventDefault();
+                        if (shown.length > 0) setActiveIndex(Math.max(active - 1, 0));
+                        return;
+                      case 'Enter': {
+                        // Enter must never submit the article.
+                        event.preventDefault();
+                        const hit = active >= 0 ? shown[active] : undefined;
+                        if (hit !== undefined) pick(hit);
+                        return;
+                      }
+                      case 'Escape':
+                        event.preventDefault();
+                        // A dialog around the picker must not close with it.
+                        event.stopPropagation();
+                        close(true);
+                        return;
+                      case 'Tab':
+                        // Focus goes back to the trigger first, so Tab moves on from there, not off the end of the page.
+                        close(true);
+                        return;
+                      default:
                     }
-                    case 'Escape':
-                      event.preventDefault();
-                      // A dialog around the picker must not close with it.
-                      event.stopPropagation();
-                      close(true);
-                      return;
-                    case 'Tab':
-                      // Focus goes back to the trigger first, so Tab moves on from there, not off the end of the page.
-                      close(true);
-                      return;
-                    default:
-                  }
-                }}
-                placeholder={t('productsPlaceholder')}
-                // The focus ring is drawn inside the box (the site's ring sits 2px outside and would stick out of the popup).
-                className="block min-h-11 w-full min-w-0 rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink focus:border-ink focus-visible:outline-2 focus-visible:-outline-offset-2"
-              />
+                  }}
+                  placeholder={t('productsPlaceholder')}
+                  // No box and no ring: the open popup already shows where focus is (owner, 2026-11-17, D-272).
+                  className="block min-h-12 min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] text-ink placeholder:text-muted focus-visible:outline-none"
+                />
               </div>
               {hits === null ? null : shown.length === 0 ? (
-                <p role="status" className="px-1.5 pt-3 pb-1 text-sm text-muted">
+                <p role="status" className="px-3.5 py-3 text-sm text-muted">
                   {t('productsNone')}
                 </p>
               ) : null}
@@ -318,7 +272,7 @@ function ProductCombobox({ search, onPick, exclude }: { search: ProductSearch; o
                 aria-label={t('productsChoose')}
                 // Keep focus in the search box when the list or its scrollbar is pressed.
                 onMouseDown={(event) => event.preventDefault()}
-                className="mt-2 grid min-h-0 w-full flex-1 grid-cols-1 gap-0.5 overflow-y-auto overscroll-contain empty:hidden"
+                className="grid min-h-0 w-full flex-1 grid-cols-1 gap-0.5 overflow-y-auto overscroll-contain p-1.5 empty:hidden"
               >
                 {shown.map((hit, index) => (
                   <li
@@ -331,14 +285,14 @@ function ProductCombobox({ search, onPick, exclude }: { search: ProductSearch; o
                       if (active !== index) setActiveIndex(index);
                     }}
                     onClick={() => pick(hit)}
-                    className={`flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-sm p-1.5 ${index === active ? 'bg-sunk' : ''}`}
+                    className={`flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 ${index === active ? 'bg-sunk' : ''}`}
                   >
                     <HitText hit={hit} />
                   </li>
                 ))}
               </ul>
             </div>,
-            document.body,
+            host,
           )
         : null}
     </>
