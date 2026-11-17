@@ -4,6 +4,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { useActionState, useEffect, useRef, useState } from 'react';
 
 import { buttonClass } from '@/components/ui/button-class';
+import Select from '@/components/ui/Select';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import type { AccountAdminState } from '@/server/controllers/access/account-admin-controller';
 import { can } from '@/server/services/access/access-service';
@@ -63,18 +64,13 @@ function RoleForm({ locale, row, action }: { locale: string; row: AccountTableRo
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="accountId" value={row.id} />
       <div className="flex items-center gap-2">
-        <select
+        <Select
           name="roleKey"
+          size="small"
           defaultValue={row.roleKey}
           aria-label={t('users.roleSelect', { name: displayName(row) })}
-          className="min-h-11 rounded-sm border-[1.5px] border-line-2 bg-surface px-2.5 text-sm text-ink sm:min-h-9"
-        >
-          {ASSIGNABLE_ROLE_KEYS.map((roleKey) => (
-            <option key={roleKey} value={roleKey}>
-              {t(`role.${roleKey}`)}
-            </option>
-          ))}
-        </select>
+          options={ASSIGNABLE_ROLE_KEYS.map((roleKey) => ({ value: roleKey, label: t(`role.${roleKey}`) }))}
+        />
         <button type="submit" className={buttonClass({ variant: 'line', size: 'adminSm' })}>
           {t('users.saveRole')}
         </button>

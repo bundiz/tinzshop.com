@@ -9,6 +9,7 @@ import {
   ListingFilterPanelProvider,
   ListingFilterToggle,
   ListingPriceRange,
+  ListingSortSelect,
 } from './ListingControls';
 
 const push = vi.fn();
@@ -234,5 +235,21 @@ describe('the filter sheet below lg', () => {
     openSheet();
     act(() => panel().querySelector<HTMLButtonElement>('button[aria-label="ปิดตัวกรอง"]')!.click());
     expect(panel().getAttribute('role')).toBe('complementary');
+  });
+});
+
+describe('ListingSortSelect (D-258)', () => {
+  const SORTS = { recommended: 'แนะนำ', best_selling: 'ขายดี', newest: 'มาใหม่', price_asc: 'ราคาต่ำไปสูง', price_desc: 'ราคาสูงไปต่ำ' };
+
+  it('is the themed list, named by its label, and navigates without scrolling on a choice', () => {
+    act(() => root.render(<ListingSortSelect locale="th" active={{ ...DEFAULT_LISTING, category: 'playstation-5' }} label="เรียงตาม" options={SORTS} />));
+    expect(container.querySelector('select')).toBeNull();
+    const trigger = container.querySelector<HTMLButtonElement>('[role="combobox"]')!;
+    expect(trigger.getAttribute('aria-label')).toBe('เรียงตาม');
+    expect(trigger.textContent).toContain('แนะนำ');
+    act(() => trigger.click());
+    expect([...document.querySelectorAll('[role="option"]')].map((option) => option.textContent)).toEqual(Object.values(SORTS));
+    act(() => document.querySelectorAll<HTMLElement>('[role="option"]')[3]!.click());
+    expect(push).toHaveBeenCalledExactlyOnceWith('/th/product?category=playstation-5&sort=price_asc', { scroll: false });
   });
 });

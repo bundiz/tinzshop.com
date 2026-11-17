@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { can } from '@/server/services/access/access-service';
 import { buttonClass } from '@/components/ui/button-class';
+import Select from '@/components/ui/Select';
 import { getAccountAdmin } from '@/server/composition-root';
 import { ROLE_KEYS, type RoleKey } from '@/server/services/access/permission-keys';
 import { readCurrentCustomer } from '../../../(shop)/_components/read-current-customer';
@@ -111,22 +112,27 @@ export default async function UsersPage({ params, searchParams }: Props) {
         <label htmlFor="users-role" className="sr-only">
           {t('users.filter.role')}
         </label>
-        <select id="users-role" name="role" defaultValue={roleKey ?? ''} className={FIELD}>
-          <option value="">{t('users.filter.allRoles')}</option>
-          {ROLE_KEYS.map((key) => (
-            <option key={key} value={key}>
-              {t(`role.${key}`)}
-            </option>
-          ))}
-        </select>
+        <Select
+          id="users-role"
+          name="role"
+          size="compact"
+          defaultValue={roleKey ?? ''}
+          options={[{ value: '', label: t('users.filter.allRoles') }, ...ROLE_KEYS.map((key) => ({ value: key, label: t(`role.${key}`) }))]}
+        />
         <label htmlFor="users-status" className="sr-only">
           {t('users.filter.status')}
         </label>
-        <select id="users-status" name="status" defaultValue={status} className={FIELD}>
-          <option value="">{t('users.filter.allStatuses')}</option>
-          <option value="active">{t('users.status.active')}</option>
-          <option value="blocked">{t('users.status.blocked')}</option>
-        </select>
+        <Select
+          id="users-status"
+          name="status"
+          size="compact"
+          defaultValue={status}
+          options={[
+            { value: '', label: t('users.filter.allStatuses') },
+            { value: 'active', label: t('users.status.active') },
+            { value: 'blocked', label: t('users.status.blocked') },
+          ]}
+        />
         <button type="submit" className={buttonClass({ variant: 'brand', size: 'admin' })}>
           {t('users.search.submit')}
         </button>

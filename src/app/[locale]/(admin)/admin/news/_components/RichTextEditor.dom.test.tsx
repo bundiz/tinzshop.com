@@ -56,7 +56,8 @@ describe('RichTextEditor', () => {
   it('draws every toolbar button as a named icon with a tooltip, not a text glyph (D-257)', async () => {
     await mount(() => {});
     const toolbar = container.querySelector('[role="toolbar"]')!;
-    const buttons = [...toolbar.querySelectorAll('button')];
+    // The block type is the themed Select (D-258), a combobox button with its label as text.
+    const buttons = [...toolbar.querySelectorAll<HTMLButtonElement>('button:not([role="combobox"])')];
     expect(buttons).toHaveLength(7);
     for (const button of buttons) {
       expect(button.getAttribute('aria-label')).toBeTruthy();
@@ -77,6 +78,29 @@ describe('RichTextEditor', () => {
       editor.chain().focus().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
     });
     expect(bold().getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('chooses the block type from the themed list, labelled, and returns focus to the writing area (D-258)', async () => {
+    const onChange = vi.fn();
+    const editor = await mount(onChange, '<p>Hello</p>');
+    const block = container.querySelector<HTMLButtonElement>('[role="toolbar"] [role="combobox"]')!;
+    expect(container.querySelector('select')).toBeNull();
+    expect([...block.labels].map((label) => label.textContent)).toEqual(['Paragraph style']);
+    expect(block.textContent).toContain('Paragraph');
+    await act(async () => {
+      editor.commands.setTextSelection(2);
+    });
+    await act(async () => block.click());
+    expect([...document.querySelectorAll('[role="option"]')].map((option) => option.textContent)).toEqual(['Paragraph', 'Heading 2', 'Heading 3', 'Quote']);
+    await act(async () => document.querySelectorAll<HTMLElement>('[role="option"]')[1]!.click());
+    expect(onChange.mock.calls.at(-1)?.[0]).toContain('<h2>Hello</h2>');
+    expect(document.querySelector('[role="listbox"]')).toBeNull();
+    expect(block.querySelector('[data-select-label]')?.textContent).toBe('Heading 2');
+    // Tiptap moves focus on the next frame.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(container.querySelector('.ProseMirror')!.contains(document.activeElement)).toBe(true);
   });
 
   it('shows a stored product card node, and writes one it inserts as the placeholder element (R2)', async () => {

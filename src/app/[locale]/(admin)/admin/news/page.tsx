@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button-class';
+import Select from '@/components/ui/Select';
 import { getNewsAdmin } from '@/server/composition-root';
 import { ADMIN_PAGE_SIZE, type NewsAdminStatus } from '@/server/services/news/news-admin-service';
 import { requirePermission } from '../_lib/require-permission';
@@ -103,14 +104,13 @@ export default async function NewsListPage({ params, searchParams }: Props) {
         <label htmlFor="news-category" className="sr-only">
           {t('filter.category')}
         </label>
-        <select id="news-category" name="category" defaultValue={categoryId} className={FIELD}>
-          <option value="">{t('filter.allCategories')}</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {name(category.names)}
-            </option>
-          ))}
-        </select>
+        <Select
+          id="news-category"
+          name="category"
+          size="compact"
+          defaultValue={categoryId}
+          options={[{ value: '', label: t('filter.allCategories') }, ...categories.map((category) => ({ value: category.id, label: name(category.names) }))]}
+        />
         <button type="submit" className={buttonClass({ variant: 'line', size: 'admin' })}>
           {t('search.submit')}
         </button>

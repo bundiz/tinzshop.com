@@ -7,6 +7,7 @@ import type { Editor } from '@tiptap/core';
 
 import { buttonClass } from '@/components/ui/button-class';
 import Icon, { type IconName } from '@/components/ui/Icon';
+import Select from '@/components/ui/Select';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { wouldLoseContent } from './body-roundtrip';
@@ -266,24 +267,17 @@ export default function RichTextEditor({ label, initialHtml, onChange, onLockedC
         <label htmlFor={blockId} className="sr-only">
           {t('toolbar.block')}
         </label>
-        <select
+        <Select
           id={blockId}
+          size="toolbar"
           value={block}
           disabled={off}
-          onChange={(event) => editor && setBlock(editor, event.target.value as BlockKind)}
-          className="min-h-11 rounded-sm border-[1.5px] border-line bg-surface px-2.5 text-sm font-medium text-ink sm:min-h-[38px]"
-        >
-          {(['p', 'h2', 'h3', 'blockquote'] as const).map((kind) => (
-            <option key={kind} value={kind}>
-              {t(`block.${kind}`)}
-            </option>
-          ))}
-          {block === 'other' ? (
-            <option value="other" disabled>
-              {t('block.other')}
-            </option>
-          ) : null}
-        </select>
+          onChange={(kind) => editor && setBlock(editor, kind as BlockKind)}
+          options={[
+            ...(['p', 'h2', 'h3', 'blockquote'] as const).map((kind) => ({ value: kind, label: t(`block.${kind}`) })),
+            ...(block === 'other' ? [{ value: 'other', label: t('block.other'), disabled: true }] : []),
+          ]}
+        />
         <span className={SEP} aria-hidden="true" />
         <Tool icon="bold" label={t('toolbar.bold')} shortcut="B" pressed={flag(state?.bold)} disabled={off} onClick={() => editor?.chain().focus().toggleBold().run()} />
         <Tool icon="italic" label={t('toolbar.italic')} shortcut="I" pressed={flag(state?.italic)} disabled={off} onClick={() => editor?.chain().focus().toggleItalic().run()} />

@@ -14,6 +14,7 @@ import {
   type RefObject,
 } from 'react';
 import Icon from '@/components/ui/Icon';
+import Select from '@/components/ui/Select';
 import { buttonClass } from '@/components/ui/button-class';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import {
@@ -194,23 +195,12 @@ export function ListingSortSelect({
 }) {
   const [, go] = useListingNavigation();
   return (
-    <span className="relative inline-flex min-w-0">
-      <select
-        aria-label={label}
-        value={active.sort}
-        onChange={(event) =>
-          go(listingHref(locale, nextListing(active, { sort: event.currentTarget.value as StorefrontListingSort })))
-        }
-        className="min-h-11 min-w-0 cursor-pointer appearance-none rounded-sm border-[1.5px] border-line-2 bg-surface pr-10 pl-3.5 text-[15px]"
-      >
-        {STOREFRONT_LISTING_SORTS.map((sort) => (
-          <option key={sort} value={sort}>
-            {options[sort]}
-          </option>
-        ))}
-      </select>
-      <Icon name="chevDown" className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ink" />
-    </span>
+    <Select
+      aria-label={label}
+      value={active.sort}
+      onChange={(sort) => go(listingHref(locale, nextListing(active, { sort: sort as StorefrontListingSort })))}
+      options={STOREFRONT_LISTING_SORTS.map((sort) => ({ value: sort, label: options[sort] }))}
+    />
   );
 }
 

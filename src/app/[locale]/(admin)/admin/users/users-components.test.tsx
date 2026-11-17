@@ -29,7 +29,7 @@ const row: AccountTableRow = {
 describe('AccountTable', () => {
   it('shows the role select, the block button and the action column with account.manage', () => {
     const out = html(<AccountTable locale="en" rows={[row, { ...row, id: 'x', blocked: true }]} permissions={['backoffice.enter', 'account.manage']} />);
-    expect(out).toContain('<select');
+    expect(out).toContain('role="combobox"');
     expect(out).toContain('Role of Somchai');
     expect(out).toContain('>Block<');
     expect(out).toContain('>Unblock<');
@@ -38,16 +38,17 @@ describe('AccountTable', () => {
 
   it('hides the role select and the row actions without account.manage', () => {
     const out = html(<AccountTable locale="en" rows={[row]} permissions={['backoffice.enter']} />);
-    expect(out).not.toContain('<select');
+    expect(out).not.toContain('role="combobox"');
     expect(out).not.toContain('>Block<');
     expect(out).not.toContain('Actions');
     expect(out).toContain('Blogger');
   });
 
-  it('offers every role but guest in the select', () => {
+  // The list's options are checked in AccountTable.dom.test.tsx, where it can be opened (D-258).
+  it('posts the row\'s current role under roleKey before any change', () => {
     const out = html(<AccountTable locale="en" rows={[row]} permissions={['account.manage']} />);
-    expect(out).not.toContain('value="guest"');
-    for (const key of ['customer', 'blogger', 'sale_manager', 'admin', 'super_admin']) expect(out).toContain(`value="${key}"`);
+    expect(out).toContain('<input type="hidden" name="roleKey" value="blogger"/>');
+    expect(out).not.toContain('<select');
   });
 
   it('names the account in the block and unblock buttons', () => {
