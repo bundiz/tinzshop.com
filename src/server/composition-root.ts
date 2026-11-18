@@ -7,7 +7,15 @@ import { createShopeeCatalogueSource } from '@/server/adapters/shopee/catalogue-
 import { createShopeeClient, type ShopeeClient } from '@/server/adapters/shopee/client';
 import { createShopeeTokenIssuer } from '@/server/adapters/shopee/token-issuer';
 import { createCognitoIdentity } from '@/server/adapters/cognito/client';
-import { getAccountRoleJobConfig, getAuthConfig, getNewsImportJobConfig, getServerConfig } from '@/server/config';
+import { createS3MediaStorage } from '@/server/adapters/s3/media-storage';
+import {
+  getAccountRoleJobConfig,
+  getAuthConfig,
+  getMediaConfig,
+  getNewsImportJobConfig,
+  getServerConfig,
+} from '@/server/config';
+import type { MediaStorage } from '@/server/services/media/media-storage';
 import { createCatalogueCategoriseJobHandler } from '@/server/controllers/catalogue/catalogue-categorise-controller';
 import { createCatalogueActivationJobHandler } from '@/server/controllers/catalogue/catalogue-activation-controller';
 import { createApiDocsHandlers } from '@/server/controllers/api-docs/api-docs-controller';
@@ -393,6 +401,14 @@ export function getNewsAdminCommands() {
     preview: (actor: Parameters<typeof previewArticleCommand>[1], input: unknown, locale: Locale) =>
       previewArticleCommand(deps, actor, input, locale),
   };
+}
+
+let mediaStorage: MediaStorage | undefined;
+
+/** The media storage (plan 017), built on first use so a page that never uploads never reads the bucket settings. */
+export function getMediaStorage(): MediaStorage {
+  mediaStorage ??= createS3MediaStorage(getMediaConfig());
+  return mediaStorage;
 }
 
 let cognitoIdentity: CognitoIdentity | undefined;

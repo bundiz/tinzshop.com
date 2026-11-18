@@ -169,6 +169,75 @@ export function getAuthConfig(): AuthConfig {
   return cachedAuth;
 }
 
+export type MediaConfig = {
+  /** The environment's bucket (D-275). */
+  readonly bucket: string;
+  /** The bucket's region code, `ap-southeast-7` (D-274). */
+  readonly region: string;
+  /** The https address a media key is appended to, no trailing slash (D-277). */
+  readonly publicBaseUrl: string;
+};
+
+// S3's bucket-name rules: 3 to 63 characters of lower case, digits, `.` and `-`, starting and ending with a letter or digit.
+const BUCKET_NAME = /^(?=.{3,63}$)[a-z0-9][a-z0-9.-]*[a-z0-9]$/;
+const REGION_CODE = /^[a-z]{2}(-[a-z]+)+-[0-9]+$/;
+// The base URL is written into an `src` attribute by string (D-138), so only https, a host, an optional port and a
+// plain path are allowed: no user or password, query, fragment, quote, angle bracket or space can reach a page.
+const PUBLIC_BASE_URL = /^https:\/\/[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*(:[0-9]{1,5})?(\/[A-Za-z0-9._~-]+)*$/;
+
+const publicBaseUrlSchema = z
+  .string()
+  .min(1)
+  .transform((value) => value.replace(/\/$/, ''))
+  .refine((value) => PUBLIC_BASE_URL.test(value), 'must be an https URL with no query, fragment, user or password');
+
+const mediaEnvSchema = z.object({
+  MEDIA_S3_BUCKET: z.string().regex(BUCKET_NAME, 'must be an S3 bucket name'),
+  MEDIA_S3_REGION: z.string().regex(REGION_CODE, 'must be a region code such as ap-southeast-7'),
+  MEDIA_PUBLIC_BASE_URL: publicBaseUrlSchema,
+});
+
+/** The media storage settings (plan 017). Credentials are not settings: the AWS SDK reads them itself (D-275). */
+export function parseMediaConfig(env: Readonly<Record<string, string | undefined>>): MediaConfig {
+  const result = mediaEnvSchema.safeParse(env);
+  if (!result.success) {
+    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
+  }
+  return {
+    bucket: result.data.MEDIA_S3_BUCKET,
+    region: result.data.MEDIA_S3_REGION,
+    publicBaseUrl: result.data.MEDIA_PUBLIC_BASE_URL,
+  };
+}
+
+let cachedMedia: MediaConfig | undefined;
+
+/** Read lazily: only an upload needs the bucket settings. */
+export function getMediaConfig(): MediaConfig {
+  cachedMedia ??= parseMediaConfig(process.env);
+  return cachedMedia;
+}
+
+const mediaPublicBaseUrlSchema = z.object({
+  MEDIA_PUBLIC_BASE_URL: z.preprocess(emptyAsUndefined, publicBaseUrlSchema.optional()),
+});
+
+/** Only the base URL, for pages: null when it is unset, so a keyed image is left out rather than drawn broken (D-277). */
+export function parseMediaPublicBaseUrl(env: Readonly<Record<string, string | undefined>>): string | null {
+  const result = mediaPublicBaseUrlSchema.safeParse(env);
+  if (!result.success) {
+    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
+  }
+  return result.data.MEDIA_PUBLIC_BASE_URL ?? null;
+}
+
+let cachedMediaPublicBaseUrl: string | null | undefined;
+
+export function getMediaPublicBaseUrl(): string | null {
+  if (cachedMediaPublicBaseUrl === undefined) cachedMediaPublicBaseUrl = parseMediaPublicBaseUrl(process.env);
+  return cachedMediaPublicBaseUrl;
+}
+
 let cached: ServerConfig | undefined;
 
 export function getServerConfig(): ServerConfig {

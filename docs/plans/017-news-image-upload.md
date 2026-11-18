@@ -86,10 +86,10 @@ These are the planner's defaults, recorded as decisions D-277 to D-280. **The ow
 - Produces: `MediaStorage = { putObject(input: { key: string; body: Uint8Array; contentType: string; cacheControl: string }): Promise<void> }` and `MediaStorageError` (code `media.storage_failed`, no SDK message, no key material).
 - Produces: `createS3MediaStorage({ bucket, region }): MediaStorage`, an `S3Client` with the region only (credentials from the SDK's default chain), sending `PutObjectCommand` with `Bucket`, `Key`, `Body`, `ContentType`, `CacheControl`; no `ACL` (the bucket has ACLs disabled, D-276).
 
-- [ ] **Step 1: Install** `@aws-sdk/client-s3` as an exact version at least 14 days old on the day of install (`npm view @aws-sdk/client-s3 time`). On 2026-11-18 that is 3.1161.0 (published 2026-10-30). From 2026-11-23 on, 3.1165.0 (2026-11-09) qualifies and is preferred, because it is the version of `@aws-sdk/client-cognito-identity-provider` already installed, so the two share their core packages. Record the version in D-280 and in `04-tech-stack-and-structure.md`, as D-172 did.
-- [ ] **Step 2: Write the failing tests.** Config: each variable missing, a bad bucket name, `http://`, a quote, a query and a fragment refused (the error names the variable, never the value); a trailing slash removed. Adapter (with the SDK client's `send` replaced): the command carries exactly the five fields and no `ACL`; an SDK failure becomes `MediaStorageError` whose message holds neither the bucket nor the SDK's text.
-- [ ] **Step 3: Run** `npm test` on those files — expect FAIL. **Step 4: Implement.** **Step 5: Run** — PASS; `npm run typecheck`.
-- [ ] **Step 6: Commit** `feat: add the media config and the S3 storage adapter`
+- [x] **Step 1: Install** `@aws-sdk/client-s3` as an exact version at least 14 days old on the day of install (`npm view @aws-sdk/client-s3 time`). On 2026-11-18 that is 3.1161.0 (published 2026-10-30). From 2026-11-23 on, 3.1165.0 (2026-11-09) qualifies and is preferred, because it is the version of `@aws-sdk/client-cognito-identity-provider` already installed, so the two share their core packages. Record the version in D-280 and in `04-tech-stack-and-structure.md`, as D-172 did.
+- [x] **Step 2: Write the failing tests.** Config: each variable missing, a bad bucket name, `http://`, a quote, a query and a fragment refused (the error names the variable, never the value); a trailing slash removed. Adapter (with the SDK client's `send` replaced): the command carries exactly the five fields and no `ACL`; an SDK failure becomes `MediaStorageError` whose message holds neither the bucket nor the SDK's text.
+- [x] **Step 3: Run** `npm test` on those files — expect FAIL. **Step 4: Implement.** **Step 5: Run** — PASS; `npm run typecheck`.
+- [x] **Step 6: Commit** `feat: add the media config and the S3 storage adapter`
 
 ### Task 3: Checking an image and making its key
 
