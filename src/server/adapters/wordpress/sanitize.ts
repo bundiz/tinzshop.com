@@ -6,6 +6,18 @@ export const PRODUCT_CARD_TAG = "tinz-product";
 /** A product id as the database stores it: a uuid. Anything else is not a card. */
 export const PRODUCT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * An uploaded news image's object key (plan 017, D-278): `news/{yyyy}/{mm}/{uuid}.{ext}`, the uuid a lower-case v4 and
+ * the extension one of the four accepted types. Anchored, so `../`, a query, another prefix or a full URL never match.
+ * Browser-safe: the sanitiser, the editor and the database CHECK share this one shape.
+ */
+export const NEWS_MEDIA_KEY_PATTERN =
+  /^news\/[0-9]{4}\/(0[1-9]|1[0-2])\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|gif)$/;
+
+export function isNewsMediaKey(value: string): boolean {
+  return NEWS_MEDIA_KEY_PATTERN.test(value);
+}
+
 /** The narrowest a product card or a video may be drawn, as a whole-number percentage of the article column (D-273). */
 export const MIN_EMBED_WIDTH = 40;
 /** Full width: the default, never stored (a card or video at 100% has no `data-width`). */
