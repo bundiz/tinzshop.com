@@ -1,8 +1,10 @@
 /**
- * Removes a JPEG's location data before it is stored (plan 017, D-278): every APP1 segment (Exif, which holds GPS, and
- * XMP) is dropped, and when the dropped Exif held a valid orientation a minimal Exif holding only that tag is written
- * back in its place, so the photo is not shown sideways. Every other segment (the colour profile included) and the
- * scan data are kept byte for byte; nothing is re-encoded.
+ * Removes a JPEG's location data before it is stored (plan 017, D-278): every segment is walked from SOI to EOI, the
+ * scans of a progressive JPEG included, and every APP1 (Exif, which holds GPS, and XMP), APP13 (Photoshop and IPTC) and
+ * COM segment is dropped wherever it stands; everything after EOI (a phone's appended second picture or motion-photo
+ * video, which can carry its own GPS) is cut. When the first Exif before the first scan held a valid orientation, a
+ * minimal Exif holding only that tag is written back in its place, so the photo is not shown sideways. Every other
+ * segment (the colour profile included) and the scan data are kept byte for byte; nothing is re-encoded.
  */
 
 const SOI = 0xd8;
@@ -66,9 +68,55 @@ function minimalExif({ littleEndian, value }: Orientation): Uint8Array {
   return Uint8Array.from([0xff, APP1, (length >> 8) & 0xff, length & 0xff, ...payload]);
 }
 
+const APP13 = 0xed;
+const COM = 0xfe;
+
+/** The segments that can hold a place, a person or free text: dropped wherever they stand. */
+function isMetadata(marker: number): boolean {
+  return marker === APP1 || marker === APP13 || marker === COM;
+}
+
 /**
- * The JPEG without its APP1 segments (and with a minimal orientation Exif where the first Exif was, when it held one),
- * or null for a malformed JPEG: no SOI, a byte where a marker should be, a segment running past the end, or no SOS.
+ * The end of a scan's entropy-coded data that starts at `from`: the index of the next real marker's 0xFF. Inside a
+ * scan a 0xFF is followed by 0x00 (a stuffed byte), by RST0 to RST7, or by more 0xFF fill bytes; anything else is a
+ * marker. `bytes.length` when the data runs to the end of the file.
+ */
+function scanEnd(bytes: Uint8Array, from: number): number {
+  let j = from;
+  while (j < bytes.length) {
+    if (bytes[j] !== 0xff) {
+      j += 1;
+      continue;
+    }
+    const next = bytes[j + 1];
+    if (next === 0x00 || (next !== undefined && next >= 0xd0 && next <= 0xd7)) {
+      j += 2;
+      continue;
+    }
+    // A run of 0xFF before a marker: the marker's own 0xFF is the last of the run.
+    if (next === 0xff) {
+      j += 1;
+      continue;
+    }
+    return j;
+  }
+  return bytes.length;
+}
+
+function concat(parts: readonly Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let at = 0;
+  for (const part of parts) {
+    out.set(part, at);
+    at += part.length;
+  }
+  return out;
+}
+
+/**
+ * The JPEG without its metadata segments and without anything after EOI (and with a minimal orientation Exif where the
+ * first Exif was, when it held one), or null for a malformed JPEG: no SOI, a byte where a marker should be, a second SOI,
+ * a segment running past the end, no scan, or no EOI. Every step moves forward, so the walk is linear in the file size.
  */
 export function stripJpegMetadata(bytes: Uint8Array): Uint8Array | null {
   if (bytes[0] !== 0xff || bytes[1] !== SOI) return null;
@@ -76,6 +124,7 @@ export function stripJpegMetadata(bytes: Uint8Array): Uint8Array | null {
   let exifAt: number | null = null;
   let orientation: Orientation | null = null;
   let changed = false;
+  let scanned = false;
   let i = 2;
   while (i < bytes.length) {
     if (bytes[i] !== 0xff) return null;
@@ -83,18 +132,14 @@ export function stripJpegMetadata(bytes: Uint8Array): Uint8Array | null {
     // A marker may be preceded by any number of 0xFF fill bytes.
     while (bytes[markerAt] === 0xff) markerAt += 1;
     const marker = bytes[markerAt];
-    if (marker === undefined || marker === SOI || marker === EOI || marker === 0x00) return null;
-    if (marker === SOS) {
-      kept.push(bytes.subarray(i));
+    if (marker === undefined || marker === SOI || marker === 0x00) return null;
+    if (marker === EOI) {
+      if (!scanned) return null;
+      kept.push(bytes.subarray(i, markerAt + 1));
+      if (markerAt + 1 < bytes.length) changed = true;
       if (!changed) return bytes;
       if (orientation !== null && exifAt !== null) kept.splice(exifAt, 0, minimalExif(orientation));
-      const out = new Uint8Array(kept.reduce((total, part) => total + part.length, 0));
-      let at = 0;
-      for (const part of kept) {
-        out.set(part, at);
-        at += part.length;
-      }
-      return out;
+      return concat(kept);
     }
     if (isStandalone(marker)) {
       kept.push(bytes.subarray(i, markerAt + 1));
@@ -105,16 +150,25 @@ export function stripJpegMetadata(bytes: Uint8Array): Uint8Array | null {
     const length = ((bytes[markerAt + 1] ?? 0) << 8) | (bytes[markerAt + 2] ?? 0);
     const end = markerAt + 1 + length;
     if (length < 2 || end > bytes.length) return null;
-    if (marker === APP1) {
+    if (isMetadata(marker)) {
       changed = true;
-      if (exifAt === null && startsWith(bytes, markerAt + 3, EXIF_HEADER)) {
+      // Only the first Exif before the first scan sets the photo's orientation.
+      if (marker === APP1 && !scanned && exifAt === null && startsWith(bytes, markerAt + 3, EXIF_HEADER)) {
         exifAt = kept.length;
         orientation = readOrientation(bytes, markerAt + 3, end);
       }
-    } else {
-      kept.push(bytes.subarray(i, end));
+      i = end;
+      continue;
     }
+    kept.push(bytes.subarray(i, end));
     i = end;
+    if (marker === SOS) {
+      // The scan's entropy-coded data runs to the next real marker and is kept as it is.
+      scanned = true;
+      const dataEnd = scanEnd(bytes, i);
+      kept.push(bytes.subarray(i, dataEnd));
+      i = dataEnd;
+    }
   }
   return null;
 }

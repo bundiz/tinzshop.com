@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { ICC_APP2, JFIF_APP0, XMP_APP1, exifApp1, includesBytes, jpeg, segment } from './__fixtures__/images';
+import {
+  APP13,
+  COM,
+  FIRST_SCAN_DATA,
+  ICC_APP2,
+  JFIF_APP0,
+  SECOND_SCAN_DATA,
+  XMP_APP1,
+  exifApp1,
+  includesBytes,
+  jpeg,
+  progressiveJpeg,
+  segment,
+} from './__fixtures__/images';
 import { stripJpegMetadata } from './jpeg-metadata';
 
 /** The orientation the stripped image's Exif holds, read back with the fixture's own layout, or null without Exif. */
@@ -87,5 +100,72 @@ describe('stripJpegMetadata', () => {
     const stripped = stripJpegMetadata(jpeg(broken));
     expect(stripped).not.toBeNull();
     expect(orientationOf(stripped as Uint8Array)).toBeNull();
+  });
+
+  it('cuts everything after EOI: an appended second picture with its own GPS is gone', () => {
+    const primary = jpeg(JFIF_APP0, exifApp1({ orientation: 6 }));
+    const secondary = jpeg(exifApp1());
+    const stripped = stripJpegMetadata(Uint8Array.from([...primary, ...secondary]));
+    expect(stripped).not.toBeNull();
+    expect(stripped).toEqual(stripJpegMetadata(primary));
+    expect(includesBytes(stripped as Uint8Array, [0x25, 0x88])).toBe(false);
+    expect([...(stripped as Uint8Array).slice(-2)]).toEqual([0xff, 0xd9]);
+    expect(orientationOf(stripped as Uint8Array)).toMatchObject({ value: 6 });
+  });
+
+  it('cuts a trailing video or any other bytes after EOI', () => {
+    const primary = jpeg(JFIF_APP0);
+    const stripped = stripJpegMetadata(Uint8Array.from([...primary, ...new TextEncoder().encode('ftypmp42 GPS 13.75N')]));
+    expect(stripped).toEqual(primary);
+  });
+
+  it('drops an APP1, an APP13 and a COM between the scans of a progressive JPEG, keeping both scans', () => {
+    const input = progressiveJpeg([JFIF_APP0, exifApp1({ orientation: 8 })], [exifApp1(), XMP_APP1, APP13, COM]);
+    const stripped = stripJpegMetadata(input) as Uint8Array;
+    expect(stripped).not.toBeNull();
+    expect(includesBytes(stripped, [0x25, 0x88])).toBe(false);
+    expect(includesBytes(stripped, 'GPSLatitude')).toBe(false);
+    expect(includesBytes(stripped, 'Photoshop')).toBe(false);
+    expect(includesBytes(stripped, '100.5018E')).toBe(false);
+    expect(includesBytes(stripped, FIRST_SCAN_DATA)).toBe(true);
+    expect(includesBytes(stripped, SECOND_SCAN_DATA)).toBe(true);
+    expect([...stripped.slice(0, 2)]).toEqual([0xff, 0xd8]);
+    expect([...stripped.slice(-2)]).toEqual([0xff, 0xd9]);
+    expect(orientationOf(stripped)).toMatchObject({ value: 8 });
+  });
+
+  it('drops APP13 and COM before the frame too', () => {
+    const stripped = stripJpegMetadata(jpeg(JFIF_APP0, APP13, COM, ICC_APP2)) as Uint8Array;
+    expect(includesBytes(stripped, 'Photoshop')).toBe(false);
+    expect(includesBytes(stripped, 'taken at')).toBe(false);
+    expect(includesBytes(stripped, ICC_APP2)).toBe(true);
+  });
+
+  it('reads stuffed 0xFF00 and restart markers inside a scan as scan data, not as segments', () => {
+    const input = progressiveJpeg([JFIF_APP0], []);
+    expect(stripJpegMetadata(input)).toEqual(input);
+  });
+
+  it.each([
+    ['no EOI', Uint8Array.from([0xff, 0xd8, ...JFIF_APP0, ...segment(0xda, [1, 1, 0, 0, 63, 0]), 0x12, 0x34])],
+    ['EOI before any scan', Uint8Array.from([0xff, 0xd8, ...JFIF_APP0, 0xff, 0xd9])],
+    ['a second SOI inside the scan data', Uint8Array.from([0xff, 0xd8, ...segment(0xda, [1, 1, 0, 0, 63, 0]), 0x12, 0xff, 0xd8, 0xff, 0xd9])],
+  ])('returns null for %s', (_, bytes) => {
+    expect(stripJpegMetadata(bytes)).toBeNull();
+  });
+
+  it('stays linear on hostile 5 MB inputs', () => {
+    const allFf = new Uint8Array(5 * 1024 * 1024).fill(0xff);
+    allFf[1] = 0xd8;
+    const empties = new Uint8Array(5 * 1024 * 1024);
+    empties.set([0xff, 0xd8]);
+    for (let i = 2; i + 4 <= empties.length; i += 4) empties.set([0xff, 0xe1, 0, 2], i);
+    const longScan = new Uint8Array(5 * 1024 * 1024).fill(0xff);
+    longScan.set([0xff, 0xd8, ...segment(0xda, [1, 1, 0, 0, 63, 0])]);
+    const started = Date.now();
+    expect(stripJpegMetadata(allFf)).toBeNull();
+    expect(stripJpegMetadata(empties)).toBeNull();
+    expect(stripJpegMetadata(longScan)).toBeNull();
+    expect(Date.now() - started).toBeLessThan(3_000);
   });
 });

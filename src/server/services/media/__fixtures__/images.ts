@@ -56,6 +56,34 @@ export function exifApp1(options: { order?: ByteOrder; orientation?: number } = 
   return segment(0xe1, [...ascii('Exif'), 0, 0, ...tiff]);
 }
 
+const SOF2 = segment(0xc2, [8, ...u16be(1), ...u16be(1), 1, 1, 0x11, 0]);
+/** One scan: its SOS header, then entropy-coded bytes (which may hold 0xFF00 stuffing and RSTn markers). */
+const scan = (data: readonly number[]): number[] => [...segment(0xda, [1, 1, 0, 0, 63, 0]), ...data];
+/** Scan bytes that look like markers but are not: a stuffed 0xFF00 followed by an APP1 byte, and a restart marker. */
+export const FIRST_SCAN_DATA = [0x12, 0xff, 0x00, 0xe1, 0x00, 0x10, 0x34, 0xff, 0xd0, 0x56];
+export const SECOND_SCAN_DATA = [0x78, 0xff, 0x00, 0xed, 0x9a];
+
+/**
+ * A progressive JPEG (SOF2) with two scans: `head` segments after SOI, and `between` segments between the scans, where
+ * a writer may put tables, and a crafted file metadata.
+ */
+export function progressiveJpeg(head: readonly (readonly number[])[], between: readonly (readonly number[])[]): Uint8Array {
+  return Uint8Array.from([
+    0xff, 0xd8,
+    ...head.flat(),
+    ...DQT, ...SOF2, ...DHT,
+    ...scan(FIRST_SCAN_DATA),
+    ...between.flat(),
+    ...DHT,
+    ...scan(SECOND_SCAN_DATA),
+    0xff, 0xd9,
+  ]);
+}
+
+/** A Photoshop/IPTC block (APP13) and a comment (COM), both naming a place. */
+export const APP13 = segment(0xed, [...ascii('Photoshop 3.0'), 0, ...ascii('8BIM'), 0x04, 0x04, ...ascii('Sub-location: Siam')]);
+export const COM = segment(0xfe, ascii('taken at 13.7563N 100.5018E'));
+
 /** A JPEG made of the given segments between SOI and the frame, then a one-pixel frame and its scan. */
 export function jpeg(...segments: readonly (readonly number[])[]): Uint8Array {
   return Uint8Array.from([0xff, 0xd8, ...segments.flat(), ...DQT, ...SOF0, ...DHT, ...SOS_AND_DATA]);
