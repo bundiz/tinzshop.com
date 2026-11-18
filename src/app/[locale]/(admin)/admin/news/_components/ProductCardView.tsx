@@ -2,11 +2,12 @@
 
 import { NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react';
 import { useTranslations } from 'next-intl';
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 import Icon from '@/components/ui/Icon';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import ArticleProductCard from '../../../../(shop)/news/[slug]/_components/ArticleProductCard';
+import EmbedResizeHandle, { BodyLockedContext, embedFrameStyle, embedWidthOf } from './EmbedResizeHandle';
 
 /**
  * The cards the editor has loaded, by product id (D-266): a card, or null where the article page draws nothing (an
@@ -34,9 +35,11 @@ const REMOVE_HIDDEN =
  * the node, which Delete or Backspace removes. A card-shaped skeleton shows while the data loads, and a muted notice where
  * the article page would draw nothing. The card and the notice carry a remove button inside their top-right corner, shown
  * on hover, focus or selection (always on a touch screen), an ordinary button in the tab order (the node itself is not
- * editable text); it deletes the node in one transaction, so undo brings it back. The saved HTML is untouched: this view is never written.
+ * editable text); it deletes the node in one transaction, so undo brings it back. The card is drawn at its width, centred,
+ * with the corner resize handle (`EmbedResizeHandle`, D-273) while the body is editable. The saved HTML is untouched:
+ * this view is never written.
  */
-export default function ProductCardView({ node, selected, extension, editor, deleteNode }: ReactNodeViewProps) {
+export default function ProductCardView({ node, selected, extension, editor, deleteNode, updateAttributes }: ReactNodeViewProps) {
   const t = useTranslations('admin.news.editor');
   const cards = useContext(ProductCardsContext);
   const id = typeof node.attrs.id === 'string' ? node.attrs.id : '';
@@ -45,6 +48,9 @@ export default function ProductCardView({ node, selected, extension, editor, del
   const name = entry?.name ?? (node.attrs.name as string | null);
   // A read-only (locked) body is saved exactly as stored, so it offers no remove button.
   const removable = entry !== undefined && editor.isEditable;
+  const locked = useContext(BodyLockedContext);
+  const stored = embedWidthOf(node.attrs.width);
+  const [draft, setDraft] = useState<number | null>(null);
 
   return (
     <NodeViewWrapper
@@ -52,7 +58,8 @@ export default function ProductCardView({ node, selected, extension, editor, del
       aria-label={name ? `${label}: ${name}` : label}
       aria-busy={entry === undefined || undefined}
       data-drag-handle=""
-      className={`group/card relative cursor-pointer rounded-[14px] sm:rounded-lg ${selected ? 'outline-2 outline-offset-2 outline-brand' : ''}`}
+      style={embedFrameStyle(draft ?? stored)}
+      className={`group/card group/embed relative cursor-pointer rounded-[14px] sm:rounded-lg ${selected ? 'outline-2 outline-offset-2 outline-brand' : ''}`}
     >
       {entry === undefined ? (
         <div data-card-skeleton="" aria-hidden="true" className={`${FRAME} bg-surface`}>
@@ -89,6 +96,17 @@ export default function ProductCardView({ node, selected, extension, editor, del
         >
           <Icon name="x" className="size-4" />
         </button>
+      ) : null}
+      {editor.isEditable && !locked ? (
+        <EmbedResizeHandle
+          label={t('resize.card')}
+          width={stored}
+          selected={selected}
+          onDraft={setDraft}
+          onCommit={(width) => {
+            if (editor.isEditable) updateAttributes({ width: width < 100 ? width : null });
+          }}
+        />
       ) : null}
     </NodeViewWrapper>
   );

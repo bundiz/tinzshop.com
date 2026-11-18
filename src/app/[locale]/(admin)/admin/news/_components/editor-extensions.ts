@@ -4,13 +4,27 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
+import { parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
 import ProductCardView from './ProductCardView';
 import { isStoredYoutubeEmbed } from './youtube-embed';
+import YoutubeView from './YoutubeView';
+
+/**
+ * The embed width of a card or a video (D-273): read from a valid `data-width` (40 to 99, else none) and written back
+ * after the node's other attributes, as the sanitiser writes it, so a stored body round-trips byte for byte. None (null)
+ * is full width and writes nothing.
+ */
+const embedWidth = {
+  default: null,
+  parseHTML: (element: HTMLElement) => parseEmbedWidth(element.getAttribute('data-width')),
+  renderHTML: (attributes: Record<string, unknown>) => (typeof attributes.width === 'number' ? { 'data-width': String(attributes.width) } : {}),
+};
 
 /**
  * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as the
  * storefront's card (`ProductCardView`, never saved, D-266); the saved HTML is only the element and the id. The
- * storefront draws the live card from it (D-245); the sanitiser keeps the tag with a uuid `data-id` and nothing else.
+ * storefront draws the live card from it (D-245); the sanitiser keeps the tag with a uuid `data-id`, an optional
+ * `data-width` (D-273) and nothing else.
  */
 export const ProductCard = Node.create<{ label: string }>({
   name: 'productCard',
@@ -28,6 +42,7 @@ export const ProductCard = Node.create<{ label: string }>({
     },
     // The picker's name, only for the editor's accessible name until the card loads: never written into the saved HTML.
     name: { default: null, rendered: false },
+    width: embedWidth,
   }),
   parseHTML: () => [{ tag: 'tinz-product[data-id]' }],
   renderHTML: ({ HTMLAttributes }) => ['tinz-product', mergeAttributes(HTMLAttributes)],
@@ -84,7 +99,8 @@ const Figure = Node.create({
 /**
  * A YouTube video, stored as a bare `<iframe src="https://www.youtube.com/embed/…">` (the sanitiser allows no wrapper). The
  * node keeps the `src` exactly as loaded, so `?start=`, `?list=` and `/embed/videoseries?list=…` come back unchanged, and
- * writes only `src` and `allowfullscreen`. It can sit alone or in a `figure`.
+ * writes only `src`, `allowfullscreen` and, at a width under 100%, `data-width` (D-273). It can sit alone or in a
+ * `figure`; only a video at the top level of the body offers the resize handle (`YoutubeView`).
  */
 const YoutubeEmbed = Node.create({
   name: 'youtube',
@@ -92,7 +108,7 @@ const YoutubeEmbed = Node.create({
   atom: true,
   selectable: true,
   draggable: true,
-  addAttributes: () => ({ src: { default: null }, fullscreen: { default: true } }),
+  addAttributes: () => ({ src: { default: null }, fullscreen: { default: true }, width: embedWidth }),
   parseHTML: () => [
     {
       tag: 'iframe[src]',
@@ -102,7 +118,15 @@ const YoutubeEmbed = Node.create({
       },
     },
   ],
-  renderHTML: ({ node }) => ['iframe', { src: node.attrs.src, ...(node.attrs.fullscreen ? { allowfullscreen: '' } : {}) }],
+  renderHTML: ({ node }) => [
+    'iframe',
+    {
+      src: node.attrs.src,
+      ...(node.attrs.fullscreen ? { allowfullscreen: '' } : {}),
+      ...(typeof node.attrs.width === 'number' ? { 'data-width': String(node.attrs.width) } : {}),
+    },
+  ],
+  addNodeView: () => ReactNodeViewRenderer(YoutubeView),
 });
 
 /**

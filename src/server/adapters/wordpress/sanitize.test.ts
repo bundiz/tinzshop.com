@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { decodeHtmlEntities, decodeSlug, htmlToPlainText, sanitizeArticleHtml } from "./sanitize";
+import posts from "./__fixtures__/posts-page.json";
+import { decodeHtmlEntities, decodeSlug, htmlToPlainText, parseEmbedWidth, sanitizeArticleHtml } from "./sanitize";
 
 describe("sanitizeArticleHtml", () => {
   it("sanitises the body to the allow-list", () => {
@@ -184,3 +185,57 @@ describe("sanitizeArticleHtml: the product card placeholder (D-245)", () => {
   });
 });
 
+
+describe("sanitizeArticleHtml: the embed width of a card or a video (D-273)", () => {
+  const ID = "7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60";
+  const SRC = "https://www.youtube.com/embed/dQw4w9WgXcQ";
+
+  it("keeps a whole-number data-width from 40 to 99 on a card, after its id", () => {
+    for (const width of ["40", "60", "99"]) {
+      expect(sanitizeArticleHtml(`<tinz-product data-width="${width}" data-id="${ID}"></tinz-product>`).html, width).toBe(
+        `<tinz-product data-id="${ID}" data-width="${width}"></tinz-product>`,
+      );
+    }
+  });
+
+  it("keeps a whole-number data-width from 40 to 99 on a YouTube iframe, after its other attributes", () => {
+    expect(sanitizeArticleHtml(`<iframe data-width="75" src="${SRC}" allowfullscreen></iframe>`).html).toBe(
+      `<iframe src="${SRC}" allowfullscreen data-width="75"></iframe>`,
+    );
+    expect(sanitizeArticleHtml(`<iframe src="${SRC}" data-width="40"></iframe>`).html).toBe(`<iframe src="${SRC}" data-width="40"></iframe>`);
+  });
+
+  it("drops any other data-width: 100, under 40, a percentage, a decimal, a leading zero, text, empty", () => {
+    for (const width of ["100", "30", "39", "0", "60%", "60.5", "060", " 60", "abc", "", "-50", "1e2", "6O"]) {
+      const card = sanitizeArticleHtml(`<tinz-product data-id="${ID}" data-width="${width}"></tinz-product>`).html;
+      expect(card, width).toBe(`<tinz-product data-id="${ID}"></tinz-product>`);
+      const video = sanitizeArticleHtml(`<iframe src="${SRC}" allowfullscreen data-width="${width}"></iframe>`).html;
+      expect(video, width).toBe(`<iframe src="${SRC}" allowfullscreen></iframe>`);
+    }
+  });
+
+  it("keeps it on no other element, and not on an iframe the sanitiser refuses", () => {
+    const { html, removedEmbeds } = sanitizeArticleHtml(
+      `<p data-width="60">a</p><img src="https://x.test/a.png" data-width="60"><figure data-width="60"><img src="https://x.test/b.png"></figure>` +
+        `<iframe src="https://evil.test/embed/x" data-width="60"></iframe><table data-width="60"><tbody><tr><td>c</td></tr></tbody></table>`,
+    );
+    expect(html).not.toContain("data-width");
+    expect(removedEmbeds).toBe(1);
+  });
+
+  it("adds nothing to an imported body: the fixture posts sanitise with no data-width", () => {
+    for (const post of posts as { id: number; content: { rendered: string } }[]) {
+      expect(sanitizeArticleHtml(post.content.rendered).html, String(post.id)).not.toContain("data-width");
+    }
+  });
+});
+
+describe("parseEmbedWidth (D-273)", () => {
+  it("reads a whole number from 40 to 99, and nothing else", () => {
+    expect(parseEmbedWidth("40")).toBe(40);
+    expect(parseEmbedWidth("99")).toBe(99);
+    for (const value of [undefined, null, "", "100", "39", "60%", "060", "6O", " 60", "60 "]) {
+      expect(parseEmbedWidth(value), String(value)).toBeNull();
+    }
+  });
+});

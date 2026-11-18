@@ -45,4 +45,17 @@ describe('product card placeholder', () => {
     expect(productIdsIn(nested)).toEqual([]);
     expect(splitAtProductCards(`<p>a<br>b<img src="x"></p>${card(A)}`).map((s) => s.kind)).toEqual(['html', 'product']);
   });
+
+  it('carries a stored card width (D-273), and re-checks it: a value the sanitiser would drop is no width', () => {
+    const sized = (id: string, width: string) => `<tinz-product data-id="${id}" data-width="${width}"></tinz-product>`;
+    expect(splitAtProductCards(`<p>a</p>${sized(A, '60')}${card(B)}`)).toEqual([
+      { kind: 'html', html: '<p>a</p>' },
+      { kind: 'product', productId: A, width: 60 },
+      { kind: 'product', productId: B },
+    ]);
+    const segments = splitAtProductCards(`${sized(A, '100')}${sized(B, '30')}`);
+    expect(segments.map((segment) => segment.kind)).toEqual(['product', 'product']);
+    expect(segments.every((segment) => !('width' in segment))).toBe(true);
+    expect(productIdsIn(`${sized(A, '60')}<p>x</p>${sized(A, '45')}`)).toEqual([A]);
+  });
 });

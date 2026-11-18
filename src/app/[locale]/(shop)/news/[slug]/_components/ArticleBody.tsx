@@ -1,4 +1,6 @@
 import { useTranslations } from 'next-intl';
+import type { CSSProperties } from 'react';
+import { parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import { splitAtProductCards } from '@/server/services/news/product-card-embed';
 import ArticleProductCard from './ArticleProductCard';
@@ -11,6 +13,35 @@ import ArticleProductCard from './ArticleProductCard';
 export function lazyEmbeds(html: string): string {
   return html.replace(/<(img|iframe)(?=[\s/>])/gi, '<$1 loading="lazy"');
 }
+
+const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
+const VOID_TAGS = new Set(['br', 'img']);
+
+/**
+ * Gives every top-level `<iframe>` with a valid stored `data-width` (D-273) the style `--embed-w:NN%`, at render time,
+ * for the reading styles' rule (`PROSE`) that draws it centred at that width from `sm`. The width is re-read through
+ * `parseEmbedWidth`, so only a whole number from 40 to 99 ever reaches the style; a video inside a figure, or any other
+ * element, is left as stored. Safe on the same grounds as `lazyEmbeds`: in sanitised HTML a tag never contains `>` or
+ * `<`, and the sanitiser keeps no `style`, so none is doubled.
+ */
+export function sizeEmbeds(html: string): string {
+  let depth = 0;
+  return html.replace(TAG, (tag, slash: string, rawName: string, attributes: string | undefined) => {
+    const name = rawName.toLowerCase();
+    if (slash === '/') {
+      depth = Math.max(0, depth - 1);
+      return tag;
+    }
+    const top = depth === 0;
+    if (!VOID_TAGS.has(name) && !tag.endsWith('/>')) depth += 1;
+    if (!top || name !== 'iframe') return tag;
+    const width = parseEmbedWidth(/\sdata-width="([^"]*)"/.exec(attributes ?? '')?.[1]);
+    return width === null ? tag : `<iframe style="--embed-w:${width}%"${tag.slice('<iframe'.length)}`;
+  });
+}
+
+/** A card or a top-level video with a stored width (D-273): full width below `sm`, centred at `--embed-w` from `sm`. */
+const EMBED_WIDTH = 'sm:mx-auto sm:w-(--embed-w)';
 
 const ATTRIBUTE_ESCAPES: Record<string, string> = { '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' };
 
@@ -38,6 +69,8 @@ const PROSE = [
   '[&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-md',
   '[&_figure]:my-4 [&_figure_img]:my-0 [&_figcaption]:mt-1.5 [&_figcaption]:text-center [&_figcaption]:text-[13px] [&_figcaption]:text-muted',
   '[&_iframe]:my-4 [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-md',
+  // A top-level video given a width by `sizeEmbeds` (the only iframes with a `style`) is centred at it from `sm` (D-273).
+  'sm:[&>iframe[style]]:mx-auto sm:[&>iframe[style]]:w-(--embed-w)',
   '[&_table]:my-4 [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse',
   '[&_td]:border [&_td]:border-line [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-line [&_th]:bg-page [&_th]:px-2 [&_th]:py-1',
   // A cell keeps its words whole; a wide table scrolls sideways inside itself instead.
@@ -51,7 +84,8 @@ const PROSE = [
  *
  * A product card placeholder (`<tinz-product data-id>`, D-245) is replaced by an `ArticleProductCard` of the live
  * product in `productCards`; one with no entry there (unknown, inactive or hidden) renders nothing. The HTML
- * around the cards is processed segment by segment, exactly as a body without cards is.
+ * around the cards is processed segment by segment, exactly as a body without cards is. A card or a top-level video
+ * with a stored width (D-273) is centred at that width from `sm` and full width below it.
  */
 export default function ArticleBody({ html, productCards = [] }: { html: string; productCards?: LandingProductCard[] }) {
   const t = useTranslations('shop.news');
@@ -59,16 +93,22 @@ export default function ArticleBody({ html, productCards = [] }: { html: string;
   const byId = new Map(productCards.map((card) => [card.productId, card]));
   const segments = splitAtProductCards(html);
   if (!segments.some((segment) => segment.kind === 'product')) {
-    return <div className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(html, title)) }} />;
+    return <div className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(sizeEmbeds(html), title)) }} />;
   }
   return (
     <div>
       {segments.map((segment, index) => {
         if (segment.kind === 'html') {
-          return <div key={index} className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(segment.html, title)) }} />;
+          return <div key={index} className={PROSE} dangerouslySetInnerHTML={{ __html: lazyEmbeds(titleIframes(sizeEmbeds(segment.html), title)) }} />;
         }
         const card = byId.get(segment.productId);
-        return card === undefined ? null : <ArticleProductCard key={index} card={card} />;
+        if (card === undefined) return null;
+        if (segment.width === undefined) return <ArticleProductCard key={index} card={card} />;
+        return (
+          <div key={index} className={EMBED_WIDTH} style={{ '--embed-w': `${segment.width}%` } as CSSProperties}>
+            <ArticleProductCard card={card} />
+          </div>
+        );
       })}
     </div>
   );

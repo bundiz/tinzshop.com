@@ -810,6 +810,10 @@
           "named": "Remove product card: {name}",
           "plain": "Remove product card"
         },
+        "resize": {
+          "card": "Resize product card",
+          "video": "Resize video"
+        },
         "panel": {
           "publish": "Publishing",
           "categories": "Categories",

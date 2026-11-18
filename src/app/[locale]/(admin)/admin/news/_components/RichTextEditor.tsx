@@ -14,6 +14,7 @@ import type { LandingProductCard } from '@/server/services/catalogue/landing-cat
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { wouldLoseContent } from './body-roundtrip';
 import { buildExtensions } from './editor-extensions';
+import { BodyLockedContext } from './EmbedResizeHandle';
 import { ProductCardsContext, type ProductCards } from './ProductCardView';
 import { youtubeEmbedFromUrl } from './youtube-embed';
 import { ProductCombobox, type ProductSearch } from './ProductPicker';
@@ -400,7 +401,9 @@ export default function RichTextEditor({
         </p>
       ) : null}
       <ProductCardsContext value={productCards}>
-        <EditorContent editor={editor} />
+        <BodyLockedContext value={locked}>
+          <EditorContent editor={editor} />
+        </BodyLockedContext>
       </ProductCardsContext>
 
       {dialog === 'link' && editor ? (

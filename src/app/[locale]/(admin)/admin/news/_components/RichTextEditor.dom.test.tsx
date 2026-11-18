@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '../../../../../../../messages/en.json';
+import th from '../../../../../../../messages/th.json';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductSearch } from './ProductPicker';
 import RichTextEditor, { type ProductCardsLoader } from './RichTextEditor';
@@ -450,5 +451,136 @@ describe('RichTextEditor: product cards drawn as the storefront card (D-266)', (
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
     expect(view(PRODUCT).querySelector('article')).not.toBeNull();
     expect(view(PRODUCT).querySelector('button')).toBeNull();
+  });
+});
+
+describe('RichTextEditor: resizing a card or a video by its corner (D-273)', () => {
+  const SRC = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+  const card = (width?: number) => `<tinz-product data-id="${PRODUCT}"${width === undefined ? '' : ` data-width="${width}"`}></tinz-product>`;
+  const video = (width?: number) => `<iframe src="${SRC}" allowfullscreen=""${width === undefined ? '' : ` data-width="${width}"`}></iframe>`;
+  const settle = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  const sliders = () => [...container.querySelectorAll<HTMLElement>('.ProseMirror [role="slider"]')];
+  const slider = (name: string) => sliders().find((element) => element.getAttribute('aria-label') === name)!;
+  const press = (element: HTMLElement, key: string) =>
+    act(async () => {
+      element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    });
+  const pointer = (element: HTMLElement, type: string, clientX: number) =>
+    act(async () => {
+      element.dispatchEvent(new MouseEvent(type, { clientX, button: 0, bubbles: true, cancelable: true }));
+    });
+
+  it('offers a focusable slider on a card and a top-level video, at its stored width, named in Thai first', async () => {
+    await mount(() => {}, `<p>a</p>${card(60)}${video()}<figure>${video(50)}</figure>`, { loadProductCards: async () => ({ [PRODUCT]: SWITCH }) });
+    await settle();
+    // Two handles: the card and the top-level video; the video in a figure has none.
+    expect(sliders()).toHaveLength(2);
+    const onCard = slider('Resize product card');
+    expect(onCard.tabIndex).toBe(0);
+    expect(onCard.getAttribute('aria-valuemin')).toBe('40');
+    expect(onCard.getAttribute('aria-valuemax')).toBe('100');
+    expect(onCard.getAttribute('aria-valuenow')).toBe('60');
+    expect(onCard.getAttribute('aria-valuetext')).toBe('60%');
+    expect(onCard.getAttribute('draggable')).toBe('false');
+    expect(slider('Resize video').getAttribute('aria-valuenow')).toBe('100');
+    // The card's frame is drawn at its width, centred; the full-width video has no width of its own.
+    expect(onCard.parentElement!.style.width).toBe('60%');
+    expect(onCard.parentElement!.style.marginInline).toBe('auto');
+    expect(slider('Resize video').parentElement!.style.width).toBe('');
+    // Shown on hover, focus or selection, always on a touch screen, like the card's remove button.
+    expect(onCard.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(['opacity-0', 'group-hover/embed:opacity-100', 'group-focus-within/embed:opacity-100', '[@media(hover:none)]:opacity-100']),
+    );
+    expect(onCard.parentElement!.className).toContain('group/embed');
+    expect((th.admin.news.editor as { resize: { card: string; video: string } }).resize).toEqual({ card: 'ปรับขนาดการ์ดสินค้า', video: 'ปรับขนาดวิดีโอ' });
+  });
+
+  it('changes the width by 5% with the arrow keys and to 40% or 100% with Home and End; 100% writes no attribute', async () => {
+    const onChange = vi.fn();
+    const editor = await mount(onChange, `<p>a</p>${card()}${video(50)}<p>b</p>`, { loadProductCards: async () => ({ [PRODUCT]: SWITCH }) });
+    await settle();
+    const onCard = slider('Resize product card');
+    await press(onCard, 'ArrowLeft');
+    expect(editor.getHTML()).toContain(`data-id="${PRODUCT}" data-width="95"`);
+    await press(slider('Resize product card'), 'ArrowDown');
+    expect(editor.getHTML()).toContain('data-width="90"');
+    await press(slider('Resize product card'), 'ArrowUp');
+    await press(slider('Resize product card'), 'ArrowRight');
+    expect(editor.getHTML()).toContain(`${card()}<iframe`);
+    expect(slider('Resize product card').getAttribute('aria-valuenow')).toBe('100');
+    await press(slider('Resize product card'), 'Home');
+    expect(editor.getHTML()).toContain(card(40));
+    await press(slider('Resize product card'), 'ArrowLeft');
+    expect(editor.getHTML()).toContain(card(40));
+    await press(slider('Resize product card'), 'End');
+    expect(editor.getHTML()).toContain(card());
+    await press(slider('Resize video'), 'ArrowRight');
+    expect(editor.getHTML()).toContain(video(55));
+    await press(slider('Resize video'), 'End');
+    expect(editor.getHTML()).toContain(`${video()}<p>b</p>`);
+    expect(onChange.mock.calls.at(-1)?.[0]).toBe(editor.getHTML());
+  });
+
+  it('resizes on a corner drag, centred, clamped to 40–100% and rounded, in one undoable step', async () => {
+    const editor = await mount(() => {}, `<p>a</p>${video()}<p>b</p>`);
+    const handle = slider('Resize video');
+    const frame = handle.parentElement!;
+    // The column (the node view's own element) is 1000px wide from x = 100: its centre is x = 600.
+    frame.parentElement!.getBoundingClientRect = () => ({ x: 100, y: 0, left: 100, right: 1100, top: 0, bottom: 500, width: 1000, height: 500, toJSON: () => ({}) }) as DOMRect;
+    await pointer(handle, 'pointerdown', 1100);
+    await pointer(handle, 'pointermove', 901);
+    // A live readout while dragging; the document is not changed until the release.
+    expect(frame.style.width).toBe('60%');
+    expect(frame.textContent).toContain('60%');
+    expect(editor.getHTML()).toContain(video());
+    await pointer(handle, 'pointermove', 610);
+    expect(frame.style.width).toBe('40%');
+    await pointer(handle, 'pointermove', 1500);
+    expect(frame.style.width).toBe('');
+    await pointer(handle, 'pointermove', 872.4);
+    await pointer(handle, 'pointerup', 872.4);
+    expect(editor.getHTML()).toContain(video(54));
+    expect(frame.textContent).not.toContain('%');
+    await act(async () => {
+      editor.commands.undo();
+    });
+    expect(editor.getHTML()).toContain(video());
+    // A move with no button pressed first changes nothing.
+    await pointer(slider('Resize video'), 'pointermove', 700);
+    await pointer(slider('Resize video'), 'pointerup', 700);
+    expect(editor.getHTML()).toContain(video());
+  });
+
+  it('keeps the drag away from ProseMirror, so it never starts the node’s drag-to-move', async () => {
+    await mount(() => {}, `<p>a</p>${card()}`, { loadProductCards: async () => ({ [PRODUCT]: SWITCH }) });
+    await settle();
+    const handle = slider('Resize product card');
+    const seen = vi.fn();
+    container.querySelector('.ProseMirror')!.addEventListener('mousedown', seen);
+    container.querySelector('.ProseMirror')!.addEventListener('pointerdown', seen);
+    const down = new MouseEvent('pointerdown', { clientX: 10, button: 0, bubbles: true, cancelable: true });
+    const mouse = new MouseEvent('mousedown', { clientX: 10, button: 0, bubbles: true, cancelable: true });
+    await act(async () => {
+      handle.dispatchEvent(down);
+      handle.dispatchEvent(mouse);
+    });
+    expect(seen).not.toHaveBeenCalled();
+    expect(down.defaultPrevented).toBe(true);
+    const drag = new Event('dragstart', { bubbles: true, cancelable: true });
+    await act(async () => {
+      handle.parentElement!.dispatchEvent(drag);
+    });
+    expect(drag.defaultPrevented).toBe(true);
+    await pointer(handle, 'pointerup', 10);
+  });
+
+  it('offers no handle in a read-only (locked) body', async () => {
+    await mount(() => {}, `<p>x</p>${card(60)}${video(50)}<dl><dt>t</dt><dd>d</dd></dl>`, { loadProductCards: async () => ({ [PRODUCT]: SWITCH }) });
+    await settle();
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    expect(sliders()).toHaveLength(0);
   });
 });

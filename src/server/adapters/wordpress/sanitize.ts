@@ -6,6 +6,22 @@ export const PRODUCT_CARD_TAG = "tinz-product";
 /** A product id as the database stores it: a uuid. Anything else is not a card. */
 export const PRODUCT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The narrowest a product card or a video may be drawn, as a whole-number percentage of the article column (D-273). */
+export const MIN_EMBED_WIDTH = 40;
+/** Full width: the default, never stored (a card or video at 100% has no `data-width`). */
+export const MAX_EMBED_WIDTH = 100;
+
+/**
+ * The embed width stored in `data-width` on a product card or a YouTube iframe (D-273): a whole number from 40 to 99
+ * written as plain digits, or null for anything else (absent, 100, under 40, a percentage, a decimal, a leading zero,
+ * spaces). The sanitiser, the editor and the article page all read it through this one rule.
+ */
+export function parseEmbedWidth(value: string | null | undefined): number | null {
+  if (value === null || value === undefined || !/^[1-9][0-9]$/.test(value)) return null;
+  const width = Number(value);
+  return width >= MIN_EMBED_WIDTH && width < MAX_EMBED_WIDTH ? width : null;
+}
+
 /** A tag of already-sanitised HTML (sanitize-html escapes `<` and `>` inside attribute values, so this never splits one). */
 const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
 const VOID_TAGS = new Set(["br", "img"]);
@@ -124,8 +140,8 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     allowedAttributes: {
       a: ["href", "rel"],
       img: ["src", "alt"],
-      iframe: ["src", "allowfullscreen"],
-      [PRODUCT_CARD_TAG]: ["data-id"],
+      iframe: ["src", "allowfullscreen", "data-width"],
+      [PRODUCT_CARD_TAG]: ["data-id", "data-width"],
     },
     allowedSchemes: ["http", "https"],
     allowedSchemesAppliedToAttributes: ["href", "src"],
@@ -151,11 +167,16 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
           ? { tagName, attribs: rest }
           : { tagName, attribs: { ...attribs, src: src?.trim() ?? "" } };
       },
-      // A card keeps `data-id` only when it is a uuid, and nothing else; without one it is dropped below.
+      // A card keeps `data-id` only when it is a uuid, and then a valid `data-width` (D-273), and nothing else; without an
+      // id it is dropped below.
       [PRODUCT_CARD_TAG]: (tagName, attribs) => {
         const id = attribs["data-id"]?.trim().toLowerCase();
         const kept: sanitizeHtml.Attributes = {};
-        if (id !== undefined && PRODUCT_ID_PATTERN.test(id)) kept["data-id"] = id;
+        if (id !== undefined && PRODUCT_ID_PATTERN.test(id)) {
+          kept["data-id"] = id;
+          const width = parseEmbedWidth(attribs["data-width"]);
+          if (width !== null) kept["data-width"] = String(width);
+        }
         return { tagName, attribs: kept };
       },
       iframe: (tagName, attribs) => {
@@ -163,6 +184,8 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
         const src = youTubeEmbedSrc(attribs.src);
         const kept: Record<string, string> = src === null ? {} : { src };
         if (src !== null && "allowfullscreen" in attribs) kept.allowfullscreen = "";
+        const width = parseEmbedWidth(attribs["data-width"]);
+        if (src !== null && width !== null) kept["data-width"] = String(width);
         return { tagName, attribs: kept };
       },
     },

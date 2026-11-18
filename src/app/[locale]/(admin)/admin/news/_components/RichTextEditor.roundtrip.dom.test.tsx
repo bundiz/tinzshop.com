@@ -323,3 +323,43 @@ describe('embeds, tables and the toolbar link rules (R14)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe('the embed width of a card or a video (D-273)', () => {
+  const A = '7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60';
+  const SRC = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+  const card = (width?: string) => `<tinz-product data-id="${A}"${width === undefined ? '' : ` data-width="${width}"`}></tinz-product>`;
+  const video = (width?: string) => `<iframe src="${SRC}" allowfullscreen${width === undefined ? '' : ` data-width="${width}"`}></iframe>`;
+
+  it('a stored card and video at a width are not locked, and come back byte-identical, edited or not', async () => {
+    const stored = sanitizeArticleHtml(`<p>a</p>${card('60')}${video('75')}<p>b</p>`).html;
+    expect(stored).toBe(`<p>a</p>${card('60')}${video('75')}<p>b</p>`);
+    const onChange = vi.fn();
+    const editor = await mount(stored, onChange);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(editor.isEditable).toBe(true);
+    expect(wouldLoseContent(stored, editor.getHTML())).toBe(false);
+    expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
+    expect(normaliseBody(sanitizeArticleHtml(editor.getHTML()).html)).toBe(normaliseBody(stored));
+    await act(async () => {
+      editor.chain().focus('end').insertContent('x').run();
+    });
+    expect(sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html).toBe(`<p>a</p>${card('60')}${video('75')}<p>bx</p>`);
+  });
+
+  it('keeps a stored width on a video inside a figure, which the editor does not offer to resize', async () => {
+    const stored = sanitizeArticleHtml(`<figure>${video('60')}<figcaption>c</figcaption></figure>`).html;
+    expect(stored).toContain('data-width="60"');
+    const editor = await mount(stored);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
+  });
+
+  it('counts a changed, added or lost width as a difference', () => {
+    expect(normaliseBody(card('60'))).not.toBe(normaliseBody(card()));
+    expect(normaliseBody(card('60'))).not.toBe(normaliseBody(card('45')));
+    expect(normaliseBody(video('60'))).not.toBe(normaliseBody(video()));
+    expect(normaliseBody(video('60'))).not.toBe(normaliseBody(video('45')));
+    expect(wouldLoseContent(card('60'), card())).toBe(true);
+    expect(wouldLoseContent(video('60'), video('60'))).toBe(false);
+  });
+});

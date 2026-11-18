@@ -8,8 +8,8 @@ import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
  * Only differences that change neither meaning nor display are ignored: runs of whitespace (and whitespace at block edges
  * and around a line break), the order of bold, italic and link marks on the same text, the editor's single `<p>` inside
  * a list item, a quote or a table cell, the implicit `<tbody>`, `<br>` against `<br />`, an absent `alt` against an empty
- * one. Everything else counts as a loss, including a table's `<thead>` or `<tfoot>`, an iframe's whole `src`, and its
- * `allowfullscreen`. Browser only (it needs `DOMParser`).
+ * one. Everything else counts as a loss, including a table's `<thead>` or `<tfoot>`, an iframe's whole `src`, its
+ * `allowfullscreen`, and a card's or a video's `data-width` (D-273). Browser only (it needs `DOMParser`).
  */
 
 type Marks = { href: string | null; strong: boolean; em: boolean };
@@ -35,12 +35,18 @@ function wrap(html: string, marks: Marks): string {
   return out;
 }
 
+/** A card's or a video's `data-width` as stored (D-273): a changed, added or lost width is a difference like any other. */
+function widthOf(element: Element): string {
+  const width = element.getAttribute('data-width');
+  return width === null ? '' : ` data-width="${escapeAttr(width)}"`;
+}
+
 function attributesOf(element: Element): string {
   const tag = element.tagName.toLowerCase();
   if (tag === 'img') return ` src="${escapeAttr(element.getAttribute('src') ?? '')}" alt="${escapeAttr(element.getAttribute('alt') ?? '')}"`;
-  if (tag === 'iframe') return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${element.hasAttribute('allowfullscreen') ? ' allowfullscreen' : ''}`;
+  if (tag === 'iframe') return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${element.hasAttribute('allowfullscreen') ? ' allowfullscreen' : ''}${widthOf(element)}`;
   if (tag === 'a') return ` href="${escapeAttr(element.getAttribute('href') ?? '')}"`;
-  if (tag === 'tinz-product') return ` data-id="${escapeAttr(element.getAttribute('data-id') ?? '')}"`;
+  if (tag === 'tinz-product') return ` data-id="${escapeAttr(element.getAttribute('data-id') ?? '')}"${widthOf(element)}`;
   return '';
 }
 

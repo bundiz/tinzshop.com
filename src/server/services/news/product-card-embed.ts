@@ -1,14 +1,16 @@
-import { PRODUCT_CARD_TAG } from '@/server/adapters/wordpress/sanitize';
+import { parseEmbedWidth, PRODUCT_CARD_TAG } from '@/server/adapters/wordpress/sanitize';
 
 export { PRODUCT_CARD_TAG };
 
-export type ArticleSegment = { kind: 'html'; html: string } | { kind: 'product'; productId: string };
+/** A card segment's `width` is its stored embed width (40 to 99, D-273); absent means full width. */
+export type ArticleSegment = { kind: 'html'; html: string } | { kind: 'product'; productId: string; width?: number };
 
 /**
- * The stored form of a card, as the sanitiser writes it (D-245): an empty `tinz-product` whose only attribute is
- * a uuid `data-id`. The body is sanitised before it is stored, so this is the only shape that can occur.
+ * The stored form of a card, as the sanitiser writes it (D-245, D-273): an empty `tinz-product` with a uuid `data-id`
+ * and, optionally, a `data-width` after it. The body is sanitised before it is stored, so this is the only shape that
+ * can occur; the width is still re-read through `parseEmbedWidth`.
  */
-const CARD = /<tinz-product data-id="([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"><\/tinz-product>/gi;
+const CARD = /<tinz-product data-id="([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"(?: data-width="([^"]*)")?><\/tinz-product>/gi;
 
 const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
 const VOID = new Set(['br', 'img']);
@@ -48,7 +50,9 @@ export function splitAtProductCards(html: string): ArticleSegment[] {
   for (const match of html.matchAll(CARD)) {
     if (depthAt(match.index) !== 0) continue;
     if (match.index > last) segments.push({ kind: 'html', html: html.slice(last, match.index) });
-    segments.push({ kind: 'product', productId: (match[1] as string).toLowerCase() });
+    const productId = (match[1] as string).toLowerCase();
+    const width = parseEmbedWidth(match[2]);
+    segments.push(width === null ? { kind: 'product', productId } : { kind: 'product', productId, width });
     last = match.index + match[0].length;
   }
   if (last < html.length) segments.push({ kind: 'html', html: html.slice(last) });
