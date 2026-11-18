@@ -1,6 +1,6 @@
-import { isNewsMediaKey } from '@/server/adapters/wordpress/sanitize';
+import { decodeHtmlEntities, isNewsMediaKey, NEWS_IMAGE_ALT_MAX_LENGTH } from '@/server/adapters/wordpress/sanitize';
 import { pickProductName, type LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
-import { mediaPublicUrl, resolveFeaturedImageUrl } from '@/server/services/media/media-url';
+import { mediaPublicUrl, resolveFeaturedImageUrl, resolveMediaKeys } from '@/server/services/media/media-url';
 import type { NewsArticleDetail, NewsCategoryRow } from '@/server/services/news/news-read-service';
 import type { NewsLocale } from '@/server/services/news/news-snapshot';
 import type { DomainError, Result } from '@/server/services/shared/result';
@@ -217,6 +217,19 @@ function hasContent(html: string): boolean {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, '') !== '' || /<(img|iframe|tinz-product)\b/i.test(html);
 }
 
+/**
+ * Whether every uploaded image in a sanitised body has alt text of 1 to 300 characters (plan 017 call 8): a picture
+ * staff upload is described for people who cannot see it. An imported `<img src>` without alt is left as it is.
+ */
+function keyedImagesHaveAlt(html: string): boolean {
+  for (const tag of html.match(/<img\b[^>]*>/gi) ?? []) {
+    if (!/\sdata-media-key="/.test(tag)) continue;
+    const alt = decodeHtmlEntities(/\salt="([^"]*)"/.exec(tag)?.[1] ?? '').trim();
+    if (alt === '' || [...alt].length > NEWS_IMAGE_ALT_MAX_LENGTH) return false;
+  }
+  return true;
+}
+
 function deriveStatus(row: { status: 'draft' | 'published'; publishedAt: Date | null }, now: Date): NewsAdminStatus {
   if (row.status === 'draft') return 'draft';
   return row.publishedAt !== null && row.publishedAt.getTime() > now.getTime() ? 'scheduled' : 'published';
@@ -284,6 +297,7 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   if (thTitle === '') return invalid('th.title', 'The Thai title is required');
   const thBody = deps.sanitize(input.th.bodyHtml);
   if (!hasContent(thBody)) return invalid('th.bodyHtml', 'The Thai body is required');
+  if (!keyedImagesHaveAlt(thBody)) return invalid('body', 'An uploaded image needs alt text of up to 300 characters');
   const thExcerpt = input.th.excerpt.trim();
   if (action === 'publish' && thExcerpt === '') return invalid('th.excerpt', 'The Thai excerpt is required to publish');
   if (input.featuredImage.kind === 'media' && !isNewsMediaKey(input.featuredImage.key)) {
@@ -296,6 +310,7 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   if (input.en !== null && (enTitle !== '' || enBodyRaw !== '' || input.en.excerpt.trim() !== '')) {
     const enBody = deps.sanitize(input.en.bodyHtml);
     if (enTitle === '' || !hasContent(enBody)) return invalid('en', 'English needs a title and a body, or neither');
+    if (!keyedImagesHaveAlt(enBody)) return invalid('body', 'An uploaded image needs alt text of up to 300 characters');
     en = { title: enTitle, excerpt: input.en.excerpt.trim(), bodyHtml: enBody };
   }
 
@@ -441,13 +456,15 @@ export async function buildArticlePreview(
   input: { draft: ArticlePreviewDraft; locale: NewsLocale; editorFirstName: string },
 ): Promise<NewsArticleDetail> {
   const { draft, locale } = input;
-  const bodyHtml = deps.sanitize(draft.bodyHtml);
+  const sanitized = deps.sanitize(draft.bodyHtml);
   const chosen = new Set(draft.categoryIds);
   const [categories, article, productCards] = await Promise.all([
     deps.news.listNewsCategories(),
     draft.articleId !== null && isUuid(draft.articleId) ? deps.news.findAdminArticle(draft.articleId) : Promise.resolve(null),
-    deps.productCards(bodyHtml, draft.contentLanguage),
+    deps.productCards(sanitized, draft.contentLanguage),
   ]);
+  // Uploaded images are drawn from their keys, as on the article page (D-277).
+  const bodyHtml = resolveMediaKeys(sanitized, deps.mediaBaseUrl);
   const publishedAt = draft.publishedAt === null ? null : new Date(draft.publishedAt);
   const title = draft.title.trim();
   // The cover the editor holds: a new upload or a removal shows before the save; otherwise the stored one.

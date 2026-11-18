@@ -913,7 +913,8 @@
         "imageTooLarge": "The image file is over 5 MB.",
         "imageType": "Only JPEG, PNG, WebP and GIF files are accepted.",
         "imageInvalid": "This file is not a usable image. Please choose another file.",
-        "imageUploadFailed": "The image could not be uploaded. Please try again."
+        "imageUploadFailed": "The image could not be uploaded. Please try again.",
+        "imageAlt": "Every uploaded image needs a description (alt text) of up to 300 characters."
       }
     },
     "toast": {

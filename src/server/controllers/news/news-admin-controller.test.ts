@@ -130,6 +130,13 @@ describe('saveArticleCommand: the cover image (plan 017)', () => {
     expect(sent(deps).input.featuredImage).toEqual(expected);
   });
 
+  it('maps a refused image alt (field body) to imageAlt', async () => {
+    const deps = setup({
+      save: vi.fn(async () => ({ ok: false as const, error: { code: 'news.invalid', message: 'x', messageKey: 'k', details: { field: 'body' } } })),
+    });
+    expect(await saveArticleCommand(deps, ACTOR, form())).toEqual({ status: 'error', errorKey: 'imageAlt' });
+  });
+
   it.each(['remove', 'media:', 'media:../secret.txt', `https://media.example.com/${KEY}`])(
     'refuses featuredImage %j as invalid',
     async (value) => {

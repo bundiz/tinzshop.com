@@ -18,6 +18,9 @@ export function isNewsMediaKey(value: string): boolean {
   return NEWS_MEDIA_KEY_PATTERN.test(value);
 }
 
+/** The longest alt text of an uploaded body image, in characters (plan 017 call 8). */
+export const NEWS_IMAGE_ALT_MAX_LENGTH = 300;
+
 /** The narrowest a product card or a video may be drawn, as a whole-number percentage of the article column (D-273). */
 export const MIN_EMBED_WIDTH = 40;
 /** Full width: the default, never stored (a card or video at 100% has no `data-width`). */
@@ -151,7 +154,7 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     allowedTags: ALLOWED_TAGS,
     allowedAttributes: {
       a: ["href", "rel"],
-      img: ["src", "alt"],
+      img: ["src", "alt", "data-media-key"],
       iframe: ["src", "allowfullscreen", "data-width"],
       [PRODUCT_CARD_TAG]: ["data-id", "data-width"],
     },
@@ -172,12 +175,22 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
         }
         return { tagName, attribs: kept };
       },
-      // An image whose src is not an absolute http/https URL loses it, and is then dropped below.
+      // An uploaded image (plan 017, D-277) keeps only a media key that matches exactly, and its alt: any src beside
+      // it is dropped, since the page builds the URL from the key. Otherwise an image whose src is not an absolute
+      // http/https URL loses it, and is then dropped below; a key that does not match is never kept.
       img: (tagName, attribs) => {
-        const { src, ...rest } = attribs;
-        return absoluteHttpUrl(src) === null
-          ? { tagName, attribs: rest }
-          : { tagName, attribs: { ...attribs, src: src?.trim() ?? "" } };
+        const key = attribs["data-media-key"];
+        if (key !== undefined && isNewsMediaKey(key)) {
+          const keyed: sanitizeHtml.Attributes = { "data-media-key": key };
+          if (attribs.alt !== undefined) keyed.alt = attribs.alt;
+          return { tagName, attribs: keyed };
+        }
+        // Copied so the attributes keep their order (an imported image's output is unchanged).
+        const kept: sanitizeHtml.Attributes = { ...attribs };
+        delete kept["data-media-key"];
+        if (absoluteHttpUrl(attribs.src) === null) delete kept.src;
+        else kept.src = attribs.src?.trim() ?? "";
+        return { tagName, attribs: kept };
       },
       // A card keeps `data-id` only when it is a uuid, and then a valid `data-width` (D-273), and nothing else; without an
       // id it is dropped below.
@@ -211,8 +224,8 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
         iframesKept += 1;
         return false;
       }
-      // An image whose src was refused would render as a broken image.
-      return frame.tag === "img" && frame.attribs.src === undefined;
+      // An image whose src was refused, and that has no media key, would render as a broken image.
+      return frame.tag === "img" && frame.attribs.src === undefined && frame.attribs["data-media-key"] === undefined;
     },
   });
 

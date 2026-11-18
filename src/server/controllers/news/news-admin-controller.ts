@@ -29,7 +29,8 @@ export type NewsAdminErrorKey =
   | 'publishAtRequired'
   | 'categoryNameRequired'
   | 'categoryNameTooLong'
-  | 'categoryExists';
+  | 'categoryExists'
+  | 'imageAlt';
 
 /** What a news form shows after it runs (plan 016, Task 9). `saved` carries what the editor needs to move on. */
 export type NewsAdminState =
@@ -133,6 +134,8 @@ function mapFailure(result: { error: { code: string; details?: unknown } }): New
       return 'categories';
     case 'productIds':
       return 'products';
+    case 'body':
+      return 'imageAlt';
     default:
       return 'invalid';
   }

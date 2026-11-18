@@ -239,3 +239,71 @@ describe("parseEmbedWidth (D-273)", () => {
     }
   });
 });
+
+describe("sanitizeArticleHtml: uploaded images kept as media keys (plan 017, D-277)", () => {
+  const KEY = "news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg";
+
+  it("keeps a valid key and the alt, in that order, with no src", () => {
+    expect(sanitizeArticleHtml(`<p>a</p><img data-media-key="${KEY}" alt="รูปเกม"><p>b</p>`).html).toBe(
+      `<p>a</p><img data-media-key="${KEY}" alt="รูปเกม" /><p>b</p>`,
+    );
+    expect(sanitizeArticleHtml(`<img alt="" data-media-key="${KEY}">`).html).toBe(`<img data-media-key="${KEY}" alt="" />`);
+    expect(sanitizeArticleHtml(`<img data-media-key="${KEY}">`).html).toBe(`<img data-media-key="${KEY}" />`);
+  });
+
+  it("drops any src beside a valid key, a javascript: one included", () => {
+    for (const src of ["https://media.example.com/x.jpg", "javascript:alert(1)", "data:image/png;base64,AAAA"]) {
+      expect(sanitizeArticleHtml(`<img src="${src}" data-media-key="${KEY}" alt="a">`).html).toBe(
+        `<img data-media-key="${KEY}" alt="a" />`,
+      );
+    }
+  });
+
+  it("ends the key at its closing quote, so a quote cannot add an attribute", () => {
+    expect(sanitizeArticleHtml(`<img data-media-key="${KEY}" onerror="alert(1)" alt="a">`).html).toBe(
+      `<img data-media-key="${KEY}" alt="a" />`,
+    );
+  });
+
+  it("strips onerror and every other attribute from a keyed image", () => {
+    const html = sanitizeArticleHtml(
+      `<img data-media-key="${KEY}" alt="a" onerror="alert(1)" class="x" style="color:red" data-x="1" width="10" srcset="a.jpg 1x">`,
+    ).html;
+    expect(html).toBe(`<img data-media-key="${KEY}" alt="a" />`);
+  });
+
+  it.each([
+    ["a parent path", "../secret.txt"],
+    ["a parent path under news/", "news/../secret.txt"],
+    ["a query", `${KEY}?x=1`],
+    ["another prefix", "private/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg"],
+    ["an upper-case uuid", "news/2026/11/0F8FAD5B-D9CB-469F-A165-70867728950E.jpg"],
+    ["an escaped quote inside it", `${KEY}&quot; onerror=&quot;alert(1)`],
+    ["spaces around it", ` ${KEY} `],
+  ])("drops a key with %s, and the image with it when it has no valid src", (_, key) => {
+    expect(sanitizeArticleHtml(`<p>a</p><img data-media-key="${key}" alt="a"><p>b</p>`).html).toBe("<p>a</p><p>b</p>");
+  });
+
+  it("keeps an imported image's absolute src when a bad key sits beside it", () => {
+    expect(sanitizeArticleHtml('<img src="https://old.test/a.jpg" data-media-key="../x" alt="a">').html).toBe(
+      '<img src="https://old.test/a.jpg" alt="a" />',
+    );
+  });
+
+  it("keeps a keyed image inside a figure and a link", () => {
+    expect(
+      sanitizeArticleHtml(`<figure><a href="https://ok.test/"><img data-media-key="${KEY}" alt="a"></a><figcaption>c</figcaption></figure>`).html,
+    ).toBe(`<figure><a href="https://ok.test/" rel="noopener"><img data-media-key="${KEY}" alt="a" /></a><figcaption>c</figcaption></figure>`);
+  });
+
+  it("leaves the imported fixture posts as they were: no data-media-key", () => {
+    for (const post of posts as { id: number; content: { rendered: string } }[]) {
+      expect(sanitizeArticleHtml(post.content.rendered).html, String(post.id)).not.toContain("data-media-key");
+    }
+  });
+
+  it("is stable: a sanitised keyed body sanitises to itself", () => {
+    const once = sanitizeArticleHtml(`<p>x</p><img data-media-key="${KEY}" alt="a &amp; &quot;b&quot;">`).html;
+    expect(sanitizeArticleHtml(once).html).toBe(once);
+  });
+});

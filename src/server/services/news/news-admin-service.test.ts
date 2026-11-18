@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
+
 import {
   buildArticlePreview,
   createNewsCategory,
@@ -385,6 +387,54 @@ describe('saveArticle: the cover image (plan 017, D-277, D-278)', () => {
   });
 });
 
+describe('saveArticle: uploaded images in the body (plan 017)', () => {
+  const realSanitize = (html: string) => sanitizeArticleHtml(html).html;
+
+  it.each([
+    ['no alt', `<img data-media-key="${KEY}">`],
+    ['an empty alt', `<img data-media-key="${KEY}" alt="">`],
+    ['a blank alt', `<img data-media-key="${KEY}" alt="   ">`],
+    ['an alt over 300 characters', `<img data-media-key="${KEY}" alt="${'ก'.repeat(301)}">`],
+  ])('refuses a keyed image with %s', async (_, image) => {
+    const { deps, news } = setup();
+    const result = await save({ ...deps, sanitize: realSanitize }, { input: input({ th: { title: 'ข่าว', excerpt: '', bodyHtml: `<p>x</p>${image}` } }) });
+    expect(result).toMatchObject({ ok: false, error: { code: 'news.invalid', details: { field: 'body' } } });
+    expect(news.saveArticle).not.toHaveBeenCalled();
+  });
+
+  it('refuses one in the English body too', async () => {
+    const { deps } = setup();
+    const result = await save(
+      { ...deps, sanitize: realSanitize },
+      { input: input({ en: { title: 'News', excerpt: '', bodyHtml: `<img data-media-key="${KEY}">` } }) },
+    );
+    expect(result).toMatchObject({ ok: false, error: { details: { field: 'body' } } });
+  });
+
+  it('accepts a keyed image with alt up to 300 characters, entities counted as one', async () => {
+    const { deps, news } = setup();
+    const alt = `${'ก'.repeat(299)}&amp;`;
+    const result = await save({ ...deps, sanitize: realSanitize }, { input: input({ th: { title: 'ข่าว', excerpt: '', bodyHtml: `<img data-media-key="${KEY}" alt="${alt}">` } }) });
+    expect(result.ok).toBe(true);
+    expect(written(news).th.bodyHtml).toBe(`<img data-media-key="${KEY}" alt="${alt}" />`);
+  });
+
+  it('accepts an imported image without alt', async () => {
+    const { deps } = setup();
+    const result = await save({ ...deps, sanitize: realSanitize }, { input: input({ th: { title: 'ข่าว', excerpt: '', bodyHtml: '<img src="https://old.test/a.jpg">' } }) });
+    expect(result.ok).toBe(true);
+  });
+
+  it('stores the key, never a src, for a keyed image the editor sent with a display src', async () => {
+    const { deps, news } = setup();
+    await save(
+      { ...deps, sanitize: realSanitize },
+      { input: input({ th: { title: 'ข่าว', excerpt: '', bodyHtml: `<img src="${MEDIA_BASE}/${KEY}" data-media-key="${KEY}" alt="a">` } }) },
+    );
+    expect(written(news).th.bodyHtml).toBe(`<img data-media-key="${KEY}" alt="a" />`);
+  });
+});
+
 describe('parseFeaturedImage', () => {
   it.each([
     ['', { kind: 'unchanged' }],
@@ -573,6 +623,15 @@ describe('buildArticlePreview (D-253)', () => {
     expect(detail.slug).toBe('my-slug');
     expect(detail.featuredImageUrl).toBe('https://old-site.test/cover.jpg');
     expect(deps.news.findAdminArticle).toHaveBeenCalledWith(ARTICLE);
+  });
+
+  it('draws an uploaded body image from its key, and leaves it out with no base URL', async () => {
+    const deps = { ...previewSetup(), sanitize: (html: string) => sanitizeArticleHtml(html).html };
+    const body = `<p>x</p><img data-media-key="${KEY}" alt="a">`;
+    const detail = await buildArticlePreview(deps, { draft: draft({ bodyHtml: body }), locale: 'th', editorFirstName: 'Nok' });
+    expect(detail.bodyHtml).toBe(`<p>x</p><img src="${MEDIA_BASE}/${KEY}" alt="a" />`);
+    const unset = await buildArticlePreview({ ...deps, mediaBaseUrl: null }, { draft: draft({ bodyHtml: body }), locale: 'th', editorFirstName: 'Nok' });
+    expect(unset.bodyHtml).toBe('<p>x</p>');
   });
 
   it('shows the cover the editor has chosen but not saved: a new upload, none, or the stored keyed one', async () => {

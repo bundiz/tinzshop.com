@@ -264,6 +264,16 @@ describe('the cover image (plan 017, D-277)', () => {
     expect(unset?.items.map((item) => item.featuredImageUrl)).toEqual([null, 'https://old-site.test/c.jpg', null]);
   });
 
+  it('gives the article page a body whose keyed images have a built src and no data-media-key', async () => {
+    const body = `<p>x</p><img data-media-key="${KEY}" alt="a" />`;
+    const { deps } = setupArticle({ article: detailRow(7, { bodies: { th: body } }) });
+    const detail = await getNewsArticle(deps, { locale: 'th', slug: 'post-7' });
+    expect(detail?.bodyHtml).toBe(`<p>x</p><img src="${MEDIA_BASE}/${KEY}" alt="a" />`);
+    expect(detail?.bodyHtml).not.toContain('data-media-key');
+    const unset = await getNewsArticle({ ...deps, mediaBaseUrl: null }, { locale: 'th', slug: 'post-7' });
+    expect(unset?.bodyHtml).toBe('<p>x</p>');
+  });
+
   it('builds the article page\'s cover the same way', async () => {
     const { deps } = setupArticle({ article: detailRow(7, { featuredImageKey: KEY }) });
     expect((await getNewsArticle(deps, { locale: 'th', slug: 'post-7' }))?.featuredImageUrl).toBe(`${MEDIA_BASE}/${KEY}`);

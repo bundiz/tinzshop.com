@@ -5,7 +5,7 @@ import {
   type LandingProductCard,
   type StorefrontCandidate,
 } from '@/server/services/catalogue/landing-catalogue-service';
-import { resolveFeaturedImageUrl } from '@/server/services/media/media-url';
+import { resolveFeaturedImageUrl, resolveMediaKeys } from '@/server/services/media/media-url';
 import { productIdsIn } from './product-card-embed';
 import type { NewsLocale } from './news-snapshot';
 
@@ -356,7 +356,8 @@ export async function getNewsArticle(
     bylineName: row.bylineName,
     publishedAt: row.publishedAt,
     featuredImageUrl: resolveFeaturedImageUrl(row, deps.mediaBaseUrl),
-    bodyHtml: fromTranslation(row.bodies),
+    // The stored body holds uploaded images as keys; the page gets their URLs (D-277).
+    bodyHtml: resolveMediaKeys(fromTranslation(row.bodies), deps.mediaBaseUrl),
     categories: listedCategories(row.categoryIds, byId)
       .sort((a, b) => a.position - b.position)
       .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) })),

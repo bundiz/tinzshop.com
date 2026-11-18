@@ -256,6 +256,14 @@ describe('cover images against the database (plan 017, D-277)', () => {
     expect((await getNewsArticle({ locale: 'th', slug: keyed }))?.featuredImageUrl).toBe(`https://media.example.com/${KEY}`);
   });
 
+  it('gives the article page a body whose uploaded images have a built src and no data-media-key', async () => {
+    vi.stubEnv('MEDIA_PUBLIC_BASE_URL', 'https://media.example.com');
+    const news = await category('news', 'News', 1);
+    const slug = await article([news], { bodyHtml: `<p>x</p><img data-media-key="${KEY}" alt="รูป" />` });
+    const body = (await getNewsArticle({ locale: 'th', slug }))?.bodyHtml;
+    expect(body).toBe(`<p>x</p><img src="https://media.example.com/${KEY}" alt="รูป" />`);
+  });
+
   it('leaves a keyed cover out when MEDIA_PUBLIC_BASE_URL is unset', async () => {
     vi.stubEnv('MEDIA_PUBLIC_BASE_URL', '');
     const news = await category('news', 'News', 1);

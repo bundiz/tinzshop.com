@@ -146,8 +146,8 @@ These are the planner's defaults, recorded as decisions D-277 to D-280. **The ow
 - Produces (save rule): an `img` with `data-media-key` and an empty or missing `alt` refuses the save (`news.invalid`, field `body`, `admin.news.error.imageAlt`); alt over 300 characters likewise.
 - The article page, the news cards and the live preview get bodies already resolved from their services; `ArticleBody` itself does not change. The editor gets the stored body, unresolved.
 
-- [ ] **Step 1: Write the failing tests:** sanitiser — a valid key kept with `alt`; `../`, a query, another prefix, an upper-case uuid dropped (and the image with it when it has no valid `src`); `src` dropped beside a valid key; `onerror` and every other attribute stripped; the two real fixture posts unchanged. `resolveMediaKeys` — one and several images, an image inside a figure and a link, a null base. Save — a keyed image without alt refused; an imported image without alt accepted. Read — the article page's body has the built `src` and no `data-media-key`.
-- [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** unit, integration, typecheck — PASS. **Commit** `feat: keep uploaded images as keys in article bodies and build their URLs on read`
+- [x] **Step 1: Write the failing tests:** sanitiser — a valid key kept with `alt`; `../`, a query, another prefix, an upper-case uuid dropped (and the image with it when it has no valid `src`); `src` dropped beside a valid key; `onerror` and every other attribute stripped; the two real fixture posts unchanged. `resolveMediaKeys` — one and several images, an image inside a figure and a link, a null base. Save — a keyed image without alt refused; an imported image without alt accepted. Read — the article page's body has the built `src` and no `data-media-key`.
+- [x] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** unit, integration, typecheck — PASS. **Commit** `feat: keep uploaded images as keys in article bodies and build their URLs on read`
 
 ### Task 7: The editor's image button and the cover panel
 

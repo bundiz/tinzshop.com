@@ -20,3 +20,22 @@ export function resolveFeaturedImageUrl(
   if (row.featuredImageKey === null) return row.featuredImageUrl;
   return baseUrl === null || !isNewsMediaKey(row.featuredImageKey) ? null : mediaPublicUrl(baseUrl, row.featuredImageKey);
 }
+
+/** An `<img>` start tag of sanitised HTML (sanitize-html escapes `<` and `>` inside attribute values). */
+const IMG_TAG = /<img\b[^>]*>/gi;
+const MEDIA_KEY_ATTRIBUTE = /\sdata-media-key="([^"]*)"/;
+
+/**
+ * A stored, already-sanitised body as a page draws it (D-277): each `<img data-media-key="K">` gets `src="{base}/{K}"`
+ * in place of the key attribute. With no base URL, or a key that does not match (the sanitiser never keeps one), the
+ * image is removed rather than drawn broken. Everything else is returned as it came.
+ */
+export function resolveMediaKeys(html: string, baseUrl: string | null): string {
+  return html.replace(IMG_TAG, (tag) => {
+    const match = MEDIA_KEY_ATTRIBUTE.exec(tag);
+    if (match === null) return tag;
+    const key = match[1] ?? '';
+    if (baseUrl === null || !isNewsMediaKey(key)) return '';
+    return tag.replace(MEDIA_KEY_ATTRIBUTE, ` src="${mediaPublicUrl(baseUrl, key)}"`);
+  });
+}
