@@ -97,7 +97,7 @@ these names (placeholders in `.env.example`):
 | :--- | :--- |
 | `MEDIA_S3_BUCKET` | The environment's bucket name (not a secret, but not committed either) |
 | `MEDIA_S3_REGION` | `ap-southeast-7` |
-| `MEDIA_PUBLIC_BASE_URL` | The address image keys are appended to: `https://<bucket>.s3.ap-southeast-7.amazonaws.com` today, a CloudFront address if one is put in front later (D-277, proposed) |
+| `MEDIA_PUBLIC_BASE_URL` | The address image keys are appended to: `https://<bucket>.s3.ap-southeast-7.amazonaws.com` today, a CloudFront address if one is put in front later (D-277). https only, with no query, fragment, user or password; one trailing `/` is removed. Unset or empty turns image uploads off in the editor and leaves uploaded images out of pages |
 
 Credentials are not settings: the AWS SDK finds them itself. On a developer's
 machine that is `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`,
@@ -138,7 +138,7 @@ a placeholder: the real name goes in `.env` only.
    }
    ```
 
-4. **No CORS configuration.** Browsers only display the images (`<img>`, which needs no CORS); uploads go through the application's server, not from the browser to S3 (D-278, proposed). If D-278 changes to a browser upload, a CORS rule is added here then.
+4. **No CORS configuration.** Browsers only display the images (`<img>`, which needs no CORS); uploads go through the application's server, not from the browser to S3 (D-278). If D-278 changes to a browser upload, a CORS rule is added here then.
 5. **The IAM user `tinzshop-dev`** (IAM → Users): no console access. Attach an **inline** policy, on this bucket only:
 
    ```json
@@ -163,7 +163,7 @@ a placeholder: the real name goes in `.env` only.
 
    Plan 017's application code only writes (`s3:PutObject`); reading back, listing and deleting are there for checks by hand and for a later clean-up job (D-279).
 6. **Access key.** Create one access key for `tinzshop-dev` and put it in `.env` as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. It never goes into the repository, a chat, a screenshot or a log; if it ever does, deactivate it and make a new one.
-7. **Settings.** In `.env`: `MEDIA_S3_BUCKET=<dev-media-bucket>`, `MEDIA_S3_REGION=ap-southeast-7`, `MEDIA_PUBLIC_BASE_URL=https://<dev-media-bucket>.s3.ap-southeast-7.amazonaws.com`.
+7. **Settings.** In `.env`: `MEDIA_S3_BUCKET=<dev-media-bucket>`, `MEDIA_S3_REGION=ap-southeast-7`, `MEDIA_PUBLIC_BASE_URL=https://<dev-media-bucket>.s3.ap-southeast-7.amazonaws.com`. Restart `npm run dev` after changing them: the bucket settings are read once per process (`getMediaConfig`), the base URL on every request. With the base URL set, a missing or malformed bucket or region makes an upload fail loudly (the error names the variable, never its value).
 
 ### The PROD bucket
 

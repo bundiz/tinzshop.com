@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Approved by the project owner on 2026-11-18 with no changes to *My calls*; in progress.
+- **Status:** Approved by the project owner on 2026-11-18 with no changes to *My calls*. Built on 2026-11-18 (Tasks 1 to 8); the manual test checklist has not been run.
 - **Stage:** none of the UAT checks in `docs/15-acceptance-criteria.md` names images; it extends plan 016's editor (stage 1 checks 1.10 to 1.12). Whether a stage 1 check is added for images is the owner's call.
 - **Requirements:** REQ-047 extended (staff add images to their news, D-237's "image upload is added as soon as file storage exists").
 - **Depends on plans:** 012 (news tables, the body sanitiser, the article page), 016 (the back office, `requirePermission`, `news.manage`, the editor).
@@ -167,10 +167,10 @@ These are the planner's defaults, recorded as decisions D-277 to D-280. **The ow
 
 ### Task 8: Whole-branch check and the manual checklist
 
-- [ ] **Step 1:** `npm run typecheck`, `npm test`, `npm run test:integration`; `npm run build` only when no dev server is running (it caused a reload loop beside one); record the counts in *Outcome*. `npm audit --omit=dev`.
-- [ ] **Step 2:** Walk the pre-merge checklist in `docs/08-security-testing.md` for the new action, the sanitiser change and the adapter.
-- [ ] **Step 3:** Confirm `docs/05`, `06`, `07`, `08`, `10`, `12` and `.env.example` match what was built; update this plan's *Status* and *Outcome*.
-- [ ] **Step 4: Commit** `docs: record plan 017's outcome`
+- [x] **Step 1:** `npm run typecheck`, `npm test`, `npm run test:integration`; `npm run build` only when no dev server is running (it caused a reload loop beside one); record the counts in *Outcome*. `npm audit --omit=dev`.
+- [x] **Step 2:** Walk the pre-merge checklist in `docs/08-security-testing.md` for the new action, the sanitiser change and the adapter.
+- [x] **Step 3:** Confirm `docs/05`, `06`, `07`, `08`, `10`, `12` and `.env.example` match what was built; update this plan's *Status* and *Outcome*.
+- [x] **Step 4: Commit** `docs: record plan 017's outcome`
 
 ## Manual test checklist
 
@@ -194,7 +194,28 @@ Run by a person against the DEV bucket, after the set-up in `docs/10-deployment.
 
 ## Outcome
 
-Not started.
+Built on `feat/win/news-image-upload` on 2026-11-18, one commit per task. Not pushed. **The manual test checklist above has not been run**; it needs the DEV bucket and a browser.
+
+**Checks (Task 8).** `npm test`: 129 files, 1516 tests, all pass (exit 0). `npm run test:integration`: 21 files, 180 tests, all pass (the global setup applies the new migration to the test database). `npm run typecheck`: clean except the two known errors in the stale `.next/types/validator.ts` about the deleted `news/[id]/preview` route, which clear on the next build. `npm run build` was **skipped** because the owner's `npm run dev` was running in the same folder (a build beside it caused a reload loop on 2026-11-16). `npm audit --omit=dev`: 3 findings (1 moderate in `next`, 2 high in `picomatch`), the same count as before `@aws-sdk/client-s3` was added. The repository has no `lint` or `format` script, so those were not run.
+
+**D-280:** `@aws-sdk/client-s3` **3.1161.0** (published 2026-10-30), exact; 3.1165.0 was not yet 14 days old.
+
+**Pre-merge checklist (`08-security-testing.md`).** New behaviour has tests (config, adapter, content checks, JPEG stripping, the action and controller, the cover column and CHECKs, the sanitiser, URL building, the save's alt rule, the reads, the editor and the cover panel). None of the four invariants is touched. Inputs: the save's `featuredImage` is a Zod string read by `parseFeaturedImage`; the upload's `file` is checked as a `File`, by declared size and then by content, not by Zod. Permission: `requirePermission` in the action and `can(actor, 'news.manage')` in the controller, before the rate limit and before any byte is read. No secret or real identifier in the diff (placeholders such as `example-media-dev` only). The new log line `news.image_upload` holds the account id, key, size, detected type, an outcome code and, on a storage failure, the SDK's error name and HTTP status; never the file name, bytes or alt. Every new string is a key in both message files. Uploading, empty and error states exist in the dialog and the cover panel. Not done: viewing the screens at 360px in Thai and English, and the manual checklist.
+
+**Corrections to the plan, and why.**
+1. **No display `src` in the editor's HTML (D-281).** Task 7 said a keyed picture is "rendered as `data-media-key` plus a display `src` … which the save's sanitiser then drops", and its test list said "the form posts it with no `src`". The two disagree; the safer reading was built: the HTML has no `src`, and a node view draws the picture from the base URL in the editor only. The sanitiser still drops a `src` beside a key.
+2. **The live preview shows the unsaved cover (Task 5).** The preview's draft carries `featuredImage` (default `unchanged`, so a preview tab from an older page still works); the manual check "Live preview shows an uploaded body image and cover before the article is saved" needed it, and the plan named only the body.
+3. **`mediaPublicUrl` was written in Task 4**, because the upload returns the URL; Task 6 added `resolveMediaKeys` and `resolveFeaturedImageUrl` beside it.
+4. **`getMediaPublicBaseUrl` reads the environment on every call** rather than caching (no module-level state; the integration tests stub the variable). `getMediaConfig` is cached like `getAuthConfig`.
+5. **Header shape checks.** Review Focus 1 asks that a PNG signature followed by HTML be refused; detection by first bytes alone would accept it, so `prepareNewsImage` also requires a PNG's `IHDR`, a GIF's full header, a WebP's `VP8 `/`VP8L`/`VP8X` chunk, and a JPEG that parses to its scan (`media.invalid_image`).
+6. **A missing `featuredImage` field reads as `unchanged`**, so a form from a page loaded before this change saves as before.
+7. **The cover sits in the Publishing panel as the plan says**, drawn as the mockup's `.cover` box; the mockup (`admin/post-edit.html`) puts it in its own "ภาพหน้าปก" panel. Moving it is a one-line layout change if the owner prefers the mockup.
+8. **The save's alt refusal** is `news.invalid` with `details.field = 'body'`, mapped to `admin.news.error.imageAlt`; the editor's old `featured` message ("ภาพประกอบเดิมจากเว็บเก่า (แก้ไม่ได้)") was removed with the read-only figure.
+9. **Test order.** Every unit and jsdom test was run and seen failing before its code. Task 5's integration tests were written before the code but not run red on their own (the migration had been applied first).
+
+**Learned.** ProseMirror adds its own `<img class="ProseMirror-separator">` after an inline node at the end of a paragraph, so editor tests must select `img[data-media-key]`, not the first `img`. Changing `next.config.ts` (the 6mb body limit) restarts a running dev server by itself.
+
+**Before the manual checks, the owner must:** set up the DEV bucket and the `tinzshop-dev` IAM user as in `10-deployment.md#file-storage`; put the five variables in `.env` (`MEDIA_S3_BUCKET`, `MEDIA_S3_REGION=ap-southeast-7`, `MEDIA_PUBLIC_BASE_URL=https://<dev-media-bucket>.s3.ap-southeast-7.amazonaws.com`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`); restart `npm run dev`. The dev database already has the `featured_image_key` migration (applied with `prisma migrate dev`, a nullable column and two CHECKs, no data change).
 
 ## Follow-ups (not in this plan)
 
