@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-11-17T06:55:33.795Z",
         "reason": "binding brand mockup: tinzshop-redesign/css/admin.css:370 styles the editor's blockquote with a 4px accent left rule, matching the storefront ArticleBody quote; a typographic quote mark, not a card"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/app/[locale]/(shop)/news/[slug]/_components/ArticleBody.tsx"
+        ],
+        "createdAt": "2026-11-18T03:57:18.192Z",
+        "reason": "binding brand mockup: the article quote's 4px accent left rule (tinzshop-redesign/css/admin.css:370, matched by the editor, already ignored there); a typographic blockquote mark, not a card"
       }
     ]
   }
