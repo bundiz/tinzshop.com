@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   searchProducts: vi.fn(async () => [{ id: 'p', name: 'Switch', sku: 'NS', imageUrl: null }]),
   createCategory: vi.fn(async () => ({ status: 'created', category: { id: 'c', slug: 'guides', isListed: true, names: { th: 'คู่มือ' } } })),
   productCards: vi.fn(async () => ({ p: null })),
+  uploadImage: vi.fn(async () => ({ status: 'uploaded', key: 'news/k', url: 'https://media.example.com/news/k' })),
   revalidatePath: vi.fn(),
 }));
 
@@ -22,9 +23,18 @@ vi.mock('@/server/composition-root', () => ({
     createCategory: mocks.createCategory,
     productCards: mocks.productCards,
   }),
+  getNewsImageUpload: () => mocks.uploadImage,
 }));
 
-const { createCategoryAction, productCardsAction, restoreArticleAction, saveArticleAction, searchProductsAction, trashArticleAction } = await import('./actions');
+const {
+  createCategoryAction,
+  productCardsAction,
+  restoreArticleAction,
+  saveArticleAction,
+  searchProductsAction,
+  trashArticleAction,
+  uploadNewsImageAction,
+} = await import('./actions');
 
 const idle = { status: 'idle' } as const;
 const ACTOR = { id: 'actor-1', permissions: ['backoffice.enter', 'news.manage'] };
@@ -41,6 +51,22 @@ beforeEach(() => {
 });
 
 describe('the news Server Actions', () => {
+  it('uploadNewsImageAction checks news.manage on the server and stops a signed-out visitor before the upload', async () => {
+    mocks.requirePermission.mockRejectedValue(new Error('NEXT_REDIRECT'));
+    const data = new FormData();
+    data.append('file', new File([new Uint8Array([1])], 'x.png'));
+    await expect(uploadNewsImageAction(data)).rejects.toThrow('NEXT_REDIRECT');
+    expect(mocks.requirePermission).toHaveBeenCalledWith('th', expect.stringContaining('/admin/news'), 'news.manage');
+    expect(mocks.uploadImage).not.toHaveBeenCalled();
+  });
+
+  it('uploadNewsImageAction passes the actor and the form to the controller and returns its state', async () => {
+    const data = new FormData();
+    data.append('file', new File([new Uint8Array([1])], 'x.png'));
+    expect(await uploadNewsImageAction(data)).toEqual({ status: 'uploaded', key: 'news/k', url: 'https://media.example.com/news/k' });
+    expect(mocks.uploadImage).toHaveBeenCalledWith(ACTOR, data);
+  });
+
   it.each([
     ['saveArticleAction', saveArticleAction, mocks.save],
     ['trashArticleAction', trashArticleAction, mocks.trash],

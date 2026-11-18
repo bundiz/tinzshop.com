@@ -4,8 +4,9 @@ import { hasLocale } from 'next-intl';
 import { revalidatePath } from 'next/cache';
 
 import { routing } from '@/i18n/routing';
-import { getNewsAdminCommands } from '@/server/composition-root';
+import { getNewsAdminCommands, getNewsImageUpload } from '@/server/composition-root';
 import type { NewsAdminState, NewsCategoryState } from '@/server/controllers/news/news-admin-controller';
+import type { NewsImageUploadState } from '@/server/controllers/news/news-image-controller';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { requirePermission } from '../_lib/require-permission';
@@ -78,4 +79,14 @@ export async function createCategoryAction(locale: string, input: { thName: stri
     }
   }
   return state;
+}
+
+/**
+ * Stores one news image from the editor (plan 017, D-278): the form's `file` is checked by content on the server and
+ * written to media storage; the editor then puts the returned key in the body or the cover. Not a form action: the
+ * editor is one form already. Re-checks `news.manage`. Writes no article, so nothing is revalidated.
+ */
+export async function uploadNewsImageAction(formData: FormData): Promise<NewsImageUploadState> {
+  const actor = await requirePermission(localeOf(formData.get('locale')), '/admin/news', 'news.manage');
+  return getNewsImageUpload()(actor, formData);
 }

@@ -907,7 +907,13 @@
         "publishAtRequired": "Choose the date and time to publish, or choose Now.",
         "categoryNameRequired": "Enter the category's Thai name.",
         "categoryNameTooLong": "A category name can be at most 100 characters.",
-        "categoryExists": "A category with this name exists but is hidden from the site, so it cannot be chosen. Use another name."
+        "categoryExists": "A category with this name exists but is hidden from the site, so it cannot be chosen. Use another name.",
+        "imageUnavailable": "Image storage is not set up yet, so images cannot be uploaded.",
+        "imageRateLimited": "Too many image uploads in the last hour. Please wait a while and try again.",
+        "imageTooLarge": "The image file is over 5 MB.",
+        "imageType": "Only JPEG, PNG, WebP and GIF files are accepted.",
+        "imageInvalid": "This file is not a usable image. Please choose another file.",
+        "imageUploadFailed": "The image could not be uploaded. Please try again."
       }
     },
     "toast": {

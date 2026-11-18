@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -12,6 +13,7 @@ import {
   getAccountRoleJobConfig,
   getAuthConfig,
   getMediaConfig,
+  getMediaPublicBaseUrl,
   getNewsImportJobConfig,
   getServerConfig,
 } from '@/server/config';
@@ -66,6 +68,7 @@ import {
   type NewsAdminCommandDeps,
 } from '@/server/controllers/news/news-admin-controller';
 import { createNewsImportJobHandler } from '@/server/controllers/news/news-import-controller';
+import { uploadNewsImageCommand, type NewsImageUploadState } from '@/server/controllers/news/news-image-controller';
 import { findProductSummaries, searchActiveProducts } from '@/server/repositories/catalogue/product-search-repository';
 import { productSummariesForPicker, searchProductsForPicker, type ProductSearchDeps } from '@/server/services/catalogue/product-search-service';
 import {
@@ -409,6 +412,28 @@ let mediaStorage: MediaStorage | undefined;
 export function getMediaStorage(): MediaStorage {
   mediaStorage ??= createS3MediaStorage(getMediaConfig());
   return mediaStorage;
+}
+
+/**
+ * The news image upload (plan 017): media is "not configured" while `MEDIA_PUBLIC_BASE_URL` is unset; with it set, the
+ * bucket settings must be valid too, or the upload fails loudly. Logs carry ids, the key, size, type and an outcome.
+ */
+export function getNewsImageUpload(): (actor: NewsAdminActor, formData: FormData) => Promise<NewsImageUploadState> {
+  return (actor, formData) =>
+    uploadNewsImageCommand(
+      {
+        media: () => {
+          if (getMediaPublicBaseUrl() === null) return null;
+          return { storage: getMediaStorage(), publicBaseUrl: getMediaConfig().publicBaseUrl };
+        },
+        hitRateLimit,
+        now: () => new Date(),
+        uuid: () => randomUUID(),
+        log: (message, fields) => console.info(message, fields),
+      },
+      actor,
+      formData,
+    );
 }
 
 let cognitoIdentity: CognitoIdentity | undefined;
