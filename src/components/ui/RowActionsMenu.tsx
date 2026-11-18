@@ -146,7 +146,7 @@ export default function RowActionsMenu({ label, items, buttonRef }: RowActionsMe
   }, [open, close, button]);
 
   const itemClass = (item: RowAction, index: number) =>
-    `flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-[7px] px-3 py-1 text-left text-[14.5px] leading-[1.45] sm:min-h-9 ${
+    `flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[6px] px-2.5 py-1 text-left text-sm leading-[1.45] sm:min-h-8 ${
       item.tone === 'danger' ? 'text-sale' : 'text-ink'
     } ${index === active ? 'bg-sunk' : ''}`;
 
@@ -182,12 +182,12 @@ export default function RowActionsMenu({ label, items, buttonRef }: RowActionsMe
               aria-label={label}
               onKeyDown={onMenuKeyDown}
               style={{ position: 'fixed' }}
-              className="z-80 w-max max-w-[calc(100vw-16px)] min-w-[180px] rounded-md border border-line bg-surface p-1 shadow-1"
+              className="z-80 w-max max-w-[calc(100vw-16px)] min-w-[152px] rounded-md border border-line bg-surface p-1 shadow-1"
             >
               {items.map((item, index) => {
                 const content = (
                   <>
-                    <Icon name={item.icon} className="size-[18px]" />
+                    <Icon name={item.icon} className="size-4" />
                     <span className="min-w-0 flex-1">{item.label}</span>
                   </>
                 );
