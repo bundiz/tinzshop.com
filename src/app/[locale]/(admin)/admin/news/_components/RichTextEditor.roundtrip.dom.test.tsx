@@ -363,3 +363,39 @@ describe('the embed width of a card or a video (D-273)', () => {
     expect(wouldLoseContent(video('60'), video('60'))).toBe(false);
   });
 });
+
+describe('uploaded images in a stored body (plan 017, D-277)', () => {
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const KEY2 = 'news/2026/12/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed.png';
+
+  it('a stored body with keyed images, inline and in a figure, is not locked and comes back byte for byte, edited or not', async () => {
+    const stored = sanitizeArticleHtml(
+      `<p>a</p><p><img data-media-key="${KEY}" alt="รูป"></p><figure><img data-media-key="${KEY2}" alt="b"><figcaption>c</figcaption></figure><p>b</p>`,
+    ).html;
+    expect(stored).toContain(`<img data-media-key="${KEY}" alt="รูป" />`);
+    const onChange = vi.fn();
+    const editor = await mount(stored, onChange);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(editor.isEditable).toBe(true);
+    expect(wouldLoseContent(stored, editor.getHTML())).toBe(false);
+    expect(editor.getHTML()).not.toContain('src=');
+    expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
+    await act(async () => {
+      editor.chain().focus('end').insertContent('x').run();
+    });
+    expect(sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html).toBe(stored.replace('<p>b</p>', '<p>bx</p>'));
+  });
+
+  it('counts a lost or changed key as a difference', () => {
+    const keyed = `<p><img data-media-key="${KEY}" alt="a" /></p>`;
+    expect(normaliseBody(keyed)).not.toBe(normaliseBody('<p><img alt="a" /></p>'));
+    expect(normaliseBody(keyed)).not.toBe(normaliseBody(`<p><img data-media-key="${KEY2}" alt="a" /></p>`));
+    expect(wouldLoseContent(keyed, keyed)).toBe(false);
+  });
+
+  it('still keeps an imported image\'s src exactly', async () => {
+    const stored = sanitizeArticleHtml('<p><img src="https://old.example/b.jpg" alt="b"></p>').html;
+    const editor = await mount(stored);
+    expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
+  });
+});

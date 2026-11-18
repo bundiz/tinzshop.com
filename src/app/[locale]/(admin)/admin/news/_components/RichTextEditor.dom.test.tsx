@@ -9,6 +9,7 @@ import en from '../../../../../../../messages/en.json';
 import th from '../../../../../../../messages/th.json';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductSearch } from './ProductPicker';
+import type { ImageUpload } from './ImageDialog';
 import RichTextEditor, { type ProductCardsLoader } from './RichTextEditor';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -95,13 +96,12 @@ async function mount(
 }
 
 describe('RichTextEditor', () => {
-  it('offers the brief toolbar and no image control', async () => {
+  it('offers the brief toolbar plus the image button (plan 017), and no file field until the image dialog opens', async () => {
     await mount(() => {});
     const labels = [...container.querySelectorAll('button')].map((button) => button.getAttribute('aria-label'));
     expect(labels).toEqual(
-      expect.arrayContaining(['Bold', 'Italic', 'Insert link', 'Bulleted list', 'Numbered list', 'Insert YouTube video', 'Insert product card']),
+      expect.arrayContaining(['Bold', 'Italic', 'Insert link', 'Bulleted list', 'Numbered list', 'Insert YouTube video', 'Image', 'Insert product card']),
     );
-    expect(labels.join(' ').toLowerCase()).not.toContain('image');
     expect(container.querySelector('input[type="file"]')).toBeNull();
   });
 
@@ -110,7 +110,7 @@ describe('RichTextEditor', () => {
     const toolbar = container.querySelector('[role="toolbar"]')!;
     // The block type is the themed Select (D-258), a combobox button with its label as text.
     const buttons = [...toolbar.querySelectorAll<HTMLButtonElement>('button:not([role="combobox"])')];
-    expect(buttons).toHaveLength(7);
+    expect(buttons).toHaveLength(8);
     for (const button of buttons) {
       expect(button.getAttribute('aria-label')).toBeTruthy();
       expect(button.title).toContain(button.getAttribute('aria-label'));
@@ -582,5 +582,155 @@ describe('RichTextEditor: resizing a card or a video by its corner (D-273)', () 
     await settle();
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
     expect(sliders()).toHaveLength(0);
+  });
+});
+
+describe('RichTextEditor: images (plan 017, D-277, D-278)', () => {
+  const BASE = 'https://media.example.com';
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  type Upload = ImageUpload;
+
+  async function mountWithImages(
+    body: string,
+    options: { upload?: Upload; mediaBaseUrl?: string | null; onChange?: (html: string) => void } = {},
+  ) {
+    await act(async () => {
+      root.render(
+        <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
+          <RichTextEditor
+            label="Body"
+            initialHtml={body}
+            onChange={options.onChange ?? (() => {})}
+            searchProducts={async () => []}
+            mediaBaseUrl={options.mediaBaseUrl === undefined ? BASE : options.mediaBaseUrl}
+            uploadImage={options.upload ?? (async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }))}
+          />
+        </NextIntlClientProvider>,
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    return (container.querySelector('.ProseMirror') as unknown as { editor: Editor }).editor;
+  }
+
+  const imageButton = () => container.querySelector<HTMLButtonElement>('[role="toolbar"] button[aria-label="Image"]')!;
+  const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]');
+  const insertButton = () => [...dialog()!.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === 'Insert image')!;
+
+  async function chooseFile(file: File) {
+    const input = dialog()!.querySelector<HTMLInputElement>('input[type="file"]')!;
+    await act(async () => {
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  async function typeAlt(text: string) {
+    const input = dialog()!.querySelector<HTMLInputElement>('input[name="alt"], #image-alt, input[type="text"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+
+  const jpeg = () => new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], 'photo.jpg', { type: 'image/jpeg' });
+
+  it('opens the image dialog from a button that never submits a form', async () => {
+    await mountWithImages('<p>Hello</p>');
+    expect(imageButton().type).toBe('button');
+    expect(imageButton().disabled).toBe(false);
+    await act(async () => imageButton().click());
+    expect(dialog()).not.toBeNull();
+    expect(dialog()!.querySelector<HTMLInputElement>('input[type="file"]')!.accept).toBe('image/jpeg,image/png,image/webp,image/gif');
+    // The dialog's fields are never posted with the article.
+    expect(dialog()!.querySelector('input[type="file"]')!.hasAttribute('name')).toBe(false);
+  });
+
+  it('keeps "Insert image" disabled until a file and an alt text are given', async () => {
+    await mountWithImages('<p>Hello</p>');
+    await act(async () => imageButton().click());
+    expect(insertButton().disabled).toBe(true);
+    await chooseFile(jpeg());
+    expect(insertButton().disabled).toBe(true);
+    await typeAlt('   ');
+    expect(insertButton().disabled).toBe(true);
+    await typeAlt('A game box');
+    expect(insertButton().disabled).toBe(false);
+  });
+
+  it.each([
+    ['a file over 5 MB', new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' }), 'The image file is over 5 MB.'],
+    ['an SVG', new File(['<svg/>'], 'logo.svg', { type: 'image/svg+xml' }), 'Only JPEG, PNG, WebP and GIF files are accepted.'],
+  ])('refuses %s in the browser with its message, without calling the upload', async (_, file, message) => {
+    const upload = vi.fn<Upload>();
+    await mountWithImages('<p>Hello</p>', { upload });
+    await act(async () => imageButton().click());
+    await chooseFile(file);
+    await typeAlt('alt');
+    expect(dialog()!.querySelector('[role="alert"]')?.textContent).toBe(message);
+    expect(insertButton().disabled).toBe(true);
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it('uploads, then inserts the picture as its own paragraph after the current block, stored as a key with no src', async () => {
+    const upload = vi.fn<Upload>(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }));
+    const onChange = vi.fn();
+    const editor = await mountWithImages('<p>Hello</p><p>World</p>', { upload, onChange });
+    await act(async () => {
+      editor.commands.setTextSelection(3);
+    });
+    await act(async () => imageButton().click());
+    await chooseFile(jpeg());
+    await typeAlt('ภาพปกเกม');
+    await act(async () => insertButton().click());
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect((upload.mock.calls[0]![0].get('file') as File).name).toBe('photo.jpg');
+    expect(dialog()).toBeNull();
+    const html = editor.getHTML();
+    expect(html).toBe(`<p>Hello</p><p><img data-media-key="${KEY}" alt="ภาพปกเกม"></p><p>World</p>`);
+    expect(onChange.mock.calls.at(-1)?.[0]).toBe(html);
+    // The editor shows it from the built URL, which is never saved.
+    // (ProseMirror adds its own separator <img> after an inline node, hence the attribute in the selector.)
+    expect(container.querySelector('.ProseMirror img[data-media-key]')?.getAttribute('src')).toBe(`${BASE}/${KEY}`);
+  });
+
+  it('shows an upload refusal and inserts nothing; a rejected call shows the upload failure', async () => {
+    const upload = vi.fn<Upload>(async () => ({ status: 'error', errorKey: 'imageType' }));
+    const editor = await mountWithImages('<p>Hello</p>', { upload });
+    await act(async () => imageButton().click());
+    await chooseFile(jpeg());
+    await typeAlt('alt');
+    await act(async () => insertButton().click());
+    expect(dialog()!.querySelector('[role="alert"]')?.textContent).toBe('Only JPEG, PNG, WebP and GIF files are accepted.');
+    upload.mockRejectedValueOnce(new Error('network'));
+    await act(async () => insertButton().click());
+    expect(dialog()!.querySelector('[role="alert"]')?.textContent).toBe('The image could not be uploaded. Please try again.');
+    expect(editor.getHTML()).toBe('<p>Hello</p>');
+  });
+
+  it('edits the alt text of a selected picture, without uploading', async () => {
+    const upload = vi.fn<Upload>();
+    const editor = await mountWithImages(`<p>a</p><p><img data-media-key="${KEY}" alt="old"></p>`, { upload });
+    let at = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'image') at = pos;
+    });
+    await act(async () => {
+      editor.commands.setNodeSelection(at);
+    });
+    await act(async () => imageButton().click());
+    expect(dialog()!.querySelector('input[type="file"]')).toBeNull();
+    await typeAlt('new words');
+    const save = [...dialog()!.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === 'Save')!;
+    await act(async () => save.click());
+    expect(editor.getHTML()).toBe(`<p>a</p><p><img data-media-key="${KEY}" alt="new words"></p>`);
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it('disables the image button when media storage is not configured, and says why', async () => {
+    await mountWithImages('<p>Hello</p>', { mediaBaseUrl: null });
+    expect(imageButton().disabled).toBe(true);
+    expect(imageButton().title).toContain('Image storage is not set up');
   });
 });

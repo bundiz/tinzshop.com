@@ -1,10 +1,10 @@
-import { mergeAttributes, Node, type Extensions } from '@tiptap/core';
+import { mergeAttributes, Node, type Extensions, type NodeViewRenderer } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-import { parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
+import { isNewsMediaKey, parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
 import ProductCardView from './ProductCardView';
 import { isStoredYoutubeEmbed } from './youtube-embed';
 import YoutubeView from './YoutubeView';
@@ -19,6 +19,63 @@ const embedWidth = {
   parseHTML: (element: HTMLElement) => parseEmbedWidth(element.getAttribute('data-width')),
   renderHTML: (attributes: Record<string, unknown>) => (typeof attributes.width === 'number' ? { 'data-width': String(attributes.width) } : {}),
 };
+
+/**
+ * An uploaded picture (plan 017, D-277) is stored as `<img data-media-key="news/…" alt="…">`, with no `src`. `mediaKey`
+ * comes first, so the editor writes `data-media-key` before `alt`, as the sanitiser does; a keyed picture writes no `src`
+ * (one loaded with a display `src` keeps it only in memory), so the article form never posts a URL to the bucket.
+ */
+const mediaKeyAttribute = {
+  default: null,
+  parseHTML: (element: HTMLElement) => {
+    const key = element.getAttribute('data-media-key');
+    return key !== null && isNewsMediaKey(key) ? key : null;
+  },
+  renderHTML: (attributes: Record<string, unknown>) =>
+    typeof attributes.mediaKey === 'string' ? { 'data-media-key': attributes.mediaKey } : {},
+};
+
+const srcAttribute = {
+  default: null,
+  parseHTML: (element: HTMLElement) => element.getAttribute('src'),
+  renderHTML: (attributes: Record<string, unknown>) =>
+    typeof attributes.mediaKey === 'string' || typeof attributes.src !== 'string' ? {} : { src: attributes.src },
+};
+
+/**
+ * Draws a picture in the editor: an uploaded one from `{base}/{key}` (never saved; with no base URL it shows no picture),
+ * an imported one from its `src`. A figure's picture that links somewhere is drawn inside its link, as `renderHTML` writes it.
+ */
+function imageView(mediaBaseUrl: string | null): NodeViewRenderer {
+  return ({ node, HTMLAttributes }) => {
+    const img = document.createElement('img');
+    for (const [name, value] of Object.entries(HTMLAttributes)) {
+      if (value !== null && value !== undefined) img.setAttribute(name, String(value));
+    }
+    const key = node.attrs.mediaKey;
+    if (typeof key === 'string' && mediaBaseUrl !== null) img.setAttribute('src', `${mediaBaseUrl}/${key}`);
+    const href = node.attrs.href;
+    if (typeof href !== 'string' || href === '') return { dom: img };
+    const link = document.createElement('a');
+    link.setAttribute('href', href);
+    link.append(img);
+    return { dom: link };
+  };
+}
+
+/** The inline picture, with the media key (plan 017). */
+function inlineImage(mediaBaseUrl: string | null) {
+  return Image.extend({
+    addAttributes() {
+      return { mediaKey: mediaKeyAttribute, ...this.parent?.(), src: srcAttribute };
+    },
+    // A keyed picture has no `src`, so the base rule (`img[src]`) would not read it.
+    parseHTML() {
+      return [...(this.parent?.() ?? []), { tag: 'img[data-media-key]' }];
+    },
+    addNodeView: () => imageView(mediaBaseUrl),
+  }).configure({ inline: true, allowBase64: false });
+}
 
 /**
  * The product card: `<tinz-product data-id="…"></tinz-product>`, an atom block (R2). The editor draws it as the
@@ -59,23 +116,31 @@ export const ProductCard = Node.create<{ label: string }>({
  * `<figure>` with one picture and an optional `<figcaption>`, as an imported body has them (the sanitiser allows both
  * tags). The picture inside is its own block node, so the ordinary inline image keeps working inside a paragraph.
  */
-const FigureImage = Image.extend({
-  name: 'figureImage',
-  group: 'figureContent',
-  inline: false,
-  // A picture that links somewhere (`<figure><a href><img></a></figure>`, as WordPress writes it) keeps its link.
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      href: { default: null, parseHTML: (element: HTMLElement) => element.closest('a')?.getAttribute('href') ?? null, rendered: false },
-    };
-  },
-  parseHTML: () => [{ tag: 'figure img[src]', priority: 60 }],
-  renderHTML({ node, HTMLAttributes }) {
-    const image = ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)] as const;
-    return node.attrs.href ? ['a', { href: node.attrs.href }, image] : image;
-  },
-});
+function figureImage(mediaBaseUrl: string | null) {
+  return Image.extend({
+    name: 'figureImage',
+    group: 'figureContent',
+    inline: false,
+    // A picture that links somewhere (`<figure><a href><img></a></figure>`, as WordPress writes it) keeps its link.
+    addAttributes() {
+      return {
+        mediaKey: mediaKeyAttribute,
+        ...this.parent?.(),
+        src: srcAttribute,
+        href: { default: null, parseHTML: (element: HTMLElement) => element.closest('a')?.getAttribute('href') ?? null, rendered: false },
+      };
+    },
+    parseHTML: () => [
+      { tag: 'figure img[src]', priority: 60 },
+      { tag: 'figure img[data-media-key]', priority: 60 },
+    ],
+    renderHTML({ node, HTMLAttributes }) {
+      const image = ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)] as const;
+      return node.attrs.href ? ['a', { href: node.attrs.href }, image] : image;
+    },
+    addNodeView: () => imageView(mediaBaseUrl),
+  });
+}
 
 const Figcaption = Node.create({
   name: 'figcaption',
@@ -133,12 +198,14 @@ const YoutubeEmbed = Node.create({
  * Every node the article body sanitiser keeps can be read by the editor (D-244): paragraphs, headings 1 to 6, bold and
  * italic, links, lists, quotes, line breaks, pictures (inline, and in a figure with its caption), tables (one body
  * section: a table with a head or foot section is locked by the guard), YouTube videos (alone or in a figure)
- * and the product card. The toolbar offers only some of them; the image node has no button, paste or drop (D-237).
+ * and the product card. The toolbar offers only some of them; pictures come from the image button's upload (plan 017),
+ * never from paste or drop of a file (D-237).
  */
 /** The document accepts a product card between its top-level blocks, and nothing else does (R16, D-245). */
 const TopLevelDocument = Node.create({ name: 'doc', topNode: true, content: '(block | topCard)+' });
 
-export function buildExtensions(productCardLabel: string): Extensions {
+/** `mediaBaseUrl` draws uploaded pictures in the editor (`MEDIA_PUBLIC_BASE_URL`, or null when storage is not set up). */
+export function buildExtensions(productCardLabel: string, mediaBaseUrl: string | null = null): Extensions {
   return [
     TopLevelDocument,
     StarterKit.configure({
@@ -151,8 +218,8 @@ export function buildExtensions(productCardLabel: string): Extensions {
       horizontalRule: false,
       link: { openOnClick: false, autolink: false, linkOnPaste: false, protocols: ['http', 'https'], HTMLAttributes: { rel: 'noopener', target: null, class: null } },
     }),
-    Image.configure({ inline: true, allowBase64: false }),
-    FigureImage,
+    inlineImage(mediaBaseUrl),
+    figureImage(mediaBaseUrl),
     Figcaption,
     Figure,
     Table.extend({ group: 'block figureContent' }).configure({ resizable: false }),

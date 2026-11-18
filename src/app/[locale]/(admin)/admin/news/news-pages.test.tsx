@@ -39,6 +39,7 @@ vi.mock('./actions', () => ({
   searchProductsAction: async () => [],
   createCategoryAction: async () => ({ status: 'error', errorKey: 'invalid' }),
   productCardsAction: async () => ({}),
+  uploadNewsImageAction: async () => ({ status: 'error', errorKey: 'imageUnavailable' }),
 }));
 vi.mock('next/navigation', async (original) => ({
   ...(await original<object>()),
@@ -223,12 +224,16 @@ describe('the news editor pages', () => {
     expect(markup).not.toContain('ย้ายไปถังขยะ');
   });
 
-  it('shows no image control: no image button, no file input, no cover upload, no left-out panels', async () => {
+  it('shows the cover image panel and the image button, both off while media storage is not set up (plan 017), and no left-out panels', async () => {
+    vi.stubEnv('MEDIA_PUBLIC_BASE_URL', '');
     request.article = record();
     const markup = html(await EditNewsPage({ params: params('th', ID) }));
-    expect(markup).not.toContain('type="file"');
-    expect(markup).not.toContain('รูปภาพ');
-    expect(markup).not.toContain('ภาพหน้าปก');
+    vi.unstubAllEnvs();
+    expect(markup).toContain('รูปหน้าปก');
+    expect(markup).toContain('name="featuredImage" value="unchanged"');
+    expect(markup).toContain('ยังไม่ได้ตั้งค่าที่เก็บรูป');
+    expect(markup).toMatch(/<button[^>]*aria-label="รูปภาพ"[^>]*disabled=""/);
+    expect(markup).not.toMatch(/<input[^>]*type="file"[^>]*name=/);
     expect(markup).not.toContain('Meta description');
     expect(markup).not.toContain('ส่งตรวจ');
     expect(markup).not.toContain('ประวัติการแก้ไข');

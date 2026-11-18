@@ -31,6 +31,7 @@ export type IconName =
   | 'bulletList'
   | 'orderedList'
   | 'video'
+  | 'image'
   | 'more'
   | 'edit'
   | 'lock'
@@ -184,6 +185,14 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <rect x="3" y="6" width="13" height="12" rx="2" />
       <path d="m16 10.5 5-3v9l-5-3" />
+    </>
+  ),
+  // The admin mockup's i-image (plan 017: the editor's image button and the empty cover box).
+  image: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <circle cx="9" cy="10" r="1.8" />
+      <path d="m4 18 5-5 3.5 3.5L15 14l5 4.5" />
     </>
   ),
   // The back office's row menu (D-261): the admin mockup's i-more, i-edit, i-lock, i-trash and i-undo symbols.

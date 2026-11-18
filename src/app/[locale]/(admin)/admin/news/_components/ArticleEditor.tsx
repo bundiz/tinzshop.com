@@ -12,7 +12,14 @@ import type { LandingProductCard } from '@/server/services/catalogue/landing-cat
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import type { ArticlePreviewDraft, NewsAdminStatus, NewsCategoryOption } from '@/server/services/news/news-admin-service';
 import PageActions from '../../_components/PageActions';
-import { createCategoryAction, productCardsAction, saveArticleAction, searchProductsAction, trashArticleAction } from '../actions';
+import {
+  createCategoryAction,
+  productCardsAction,
+  saveArticleAction,
+  searchProductsAction,
+  trashArticleAction,
+  uploadNewsImageAction,
+} from '../actions';
 import { categoryName } from '../_lib/categories';
 import {
   buildPreviewDraft,
@@ -26,8 +33,10 @@ import {
   type PreviewMessage,
 } from '../_lib/preview-channel';
 import AddCategory from './AddCategory';
+import CoverImagePanel, { type CoverState } from './CoverImagePanel';
 import { bodyOrEmpty } from './body-roundtrip';
 import DateTimePicker from './DateTimePicker';
+import type { ImageUpload } from './ImageDialog';
 import ProductPicker from './ProductPicker';
 import RichTextEditor from './RichTextEditor';
 import TagInput from './TagInput';
@@ -42,6 +51,7 @@ export type EditorArticle = {
   status: NewsAdminStatus;
   publishedAt: string | null;
   bylineName: string;
+  /** The cover to show: an uploaded one's built URL, or an imported one's old-site URL (D-277, D-127). */
   featuredImageUrl: string | null;
   th: Translation;
   en: Translation | null;
@@ -60,6 +70,8 @@ export type ArticleEditorProps = {
   categories: { id: string; name: string; unlisted?: boolean }[];
   /** The byline a new article starts with: the editor's first name. */
   defaultByline: string;
+  /** `MEDIA_PUBLIC_BASE_URL`, or null when media storage is not set up: image uploads are then off (plan 017). */
+  mediaPublicBaseUrl: string | null;
   /** Override the Server Actions in tests. */
   actions?: {
     save: (previous: NewsAdminState, formData: FormData) => Promise<NewsAdminState>;
@@ -68,6 +80,8 @@ export type ArticleEditorProps = {
     createCategory?: (locale: string, input: { thName: string; enName: string }) => Promise<NewsCategoryState>;
     /** The body editor's product cards (D-266). */
     productCards?: (ids: string[], locale: string) => Promise<Record<string, LandingProductCard | null>>;
+    /** The image upload (plan 017). */
+    uploadImage?: ImageUpload;
   };
 };
 
@@ -119,11 +133,11 @@ function Panel({ title, required, children }: { title: string; required?: string
 /**
  * The news editor (the mockup's `.ed`): the Thai and English versions, the body editor and the side panels for publishing,
  * categories, tags and related products. One form: the buttons submit with their `action` (R7: a published or scheduled
- * article gets "Update" and "Unpublish", never "Save draft", because a draft save would take it off the site). Left out
- * of the mockup: the image button, the cover upload, the meta description and Google preview, visibility, the edit history
- * and "send for review" (plan 016, Task 9; D-237, D-129).
+ * article gets "Update" and "Unpublish", never "Save draft", because a draft save would take it off the site). The image
+ * button and the cover image came with plan 017. Left out of the mockup: the meta description and Google preview,
+ * visibility, the edit history and "send for review" (plan 016, Task 9; D-129).
  */
-export default function ArticleEditor({ locale, article, categories, defaultByline, actions }: ArticleEditorProps) {
+export default function ArticleEditor({ locale, article, categories, defaultByline, mediaPublicBaseUrl, actions }: ArticleEditorProps) {
   const t = useTranslations('admin.news');
   const e = useTranslations('admin.news.editor');
   const errors = useTranslations('admin.news.error');
@@ -133,6 +147,12 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const search = actions?.search ?? searchProductsAction;
   const createCategory = actions?.createCategory ?? createCategoryAction;
   const productCards = actions?.productCards ?? productCardsAction;
+  const uploadAction = actions?.uploadImage ?? uploadNewsImageAction;
+  // The action reads the page locale from the form, as every back-office action does.
+  const uploadImage: ImageUpload = (formData) => {
+    formData.append('locale', locale);
+    return uploadAction(formData);
+  };
 
   const toast = useToast();
   // A save that worked says so in the back office's toast (D-262), which outlives the move to a new article's page.
@@ -158,6 +178,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
   const [categoryOptions, setCategoryOptions] = useState(categories);
   const [categoryIds, setCategoryIds] = useState<string[]>(article?.categoryIds ?? []);
   const [tags, setTags] = useState<string[]>(article?.tagNames ?? []);
+  // The cover is kept until staff change it, and saved with the article (plan 017, D-278).
+  const [cover, setCover] = useState<CoverState>({ value: 'unchanged', url: article?.featuredImageUrl ?? null });
   const [products, setProducts] = useState<ProductPickerHit[]>(article?.products ?? []);
   // Products dropped from the related list because their last card was deleted, kept so undo can put them back (D-268).
   const droppedWithCard = useRef(new Map<string, ProductPickerHit>());
@@ -211,7 +233,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
     storedPublishedAt: article?.publishedAt ?? null,
     when,
     publishAt,
-    featuredImage: 'unchanged',
+    featuredImage: cover.value,
   });
   const draftKey = JSON.stringify(draft);
   const latestDraft = useRef<ArticlePreviewDraft>(draft);
@@ -372,6 +394,8 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                 onChange={(html) => setTh((previous) => ({ ...previous, bodyHtml: html }))}
                 searchProducts={searchProducts}
                 loadProductCards={loadProductCards}
+                mediaBaseUrl={mediaPublicBaseUrl}
+                uploadImage={uploadImage}
                 // A product shown as a card is related to the article too (owner, 2026-11-17, D-267): added once.
                 onProductCardInserted={(hit) => setProducts((list) => (list.some((product) => product.id === hit.id) ? list : [...list, hit]))}
                 // Deleting a product's last card drops it from the related products too; undo brings it back (owner,
@@ -463,13 +487,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
                   </dd>
                 </div>
               </dl>
-              {article?.featuredImageUrl ? (
-                <figure className="px-4 pb-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- old-site URL, no image pipeline yet (D-127) */}
-                  <img src={article.featuredImageUrl} alt="" className="h-auto w-full rounded-sm bg-sunk" />
-                  <figcaption className="mt-1 text-sm text-muted">{e('featured')}</figcaption>
-                </figure>
-              ) : null}
+              <CoverImagePanel cover={cover} onChange={setCover} upload={uploadImage} mediaConfigured={mediaPublicBaseUrl !== null} />
               {article ? (
                 <div className="flex justify-end border-t border-line px-4 py-2">
                   <button ref={trashOpener} type="button" onClick={() => setConfirmTrash(true)} className={TRASH_BUTTON}>

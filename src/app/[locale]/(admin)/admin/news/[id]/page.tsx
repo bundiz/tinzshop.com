@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 
 import { getNewsAdmin } from '@/server/composition-root';
+import { getMediaPublicBaseUrl } from '@/server/config';
 import { requirePermission } from '../../_lib/require-permission';
 import ArticleEditor, { type EditorArticle } from '../_components/ArticleEditor';
 import { listedCategoryOptions } from '../_lib/categories';
@@ -40,7 +41,7 @@ export default async function EditNewsPage({ params }: Props) {
   return (
     <>
       <h1 className="sr-only">{t('title')}</h1>
-      <ArticleEditor locale={locale} article={initial} categories={listedCategoryOptions(categories, locale, article.categoryIds)} defaultByline={editor.firstName} />
+      <ArticleEditor locale={locale} article={initial} categories={listedCategoryOptions(categories, locale, article.categoryIds)} defaultByline={editor.firstName} mediaPublicBaseUrl={getMediaPublicBaseUrl()} />
     </>
   );
 }

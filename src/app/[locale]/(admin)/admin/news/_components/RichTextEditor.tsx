@@ -15,6 +15,7 @@ import type { ProductPickerHit } from '@/server/services/catalogue/product-searc
 import { wouldLoseContent } from './body-roundtrip';
 import { buildExtensions } from './editor-extensions';
 import { BodyLockedContext } from './EmbedResizeHandle';
+import ImageDialog, { type ImageUpload } from './ImageDialog';
 import { ProductCardsContext, type ProductCards } from './ProductCardView';
 import { youtubeEmbedFromUrl } from './youtube-embed';
 import { ProductCombobox, type ProductSearch } from './ProductPicker';
@@ -49,7 +50,7 @@ const TOOL =
   'relative grid size-[38px] cursor-pointer place-items-center rounded-sm text-ink-2 transition-colors not-aria-pressed:hover:bg-sunk not-aria-pressed:hover:text-ink aria-pressed:bg-ink aria-pressed:text-white disabled:cursor-not-allowed disabled:opacity-40 max-sm:after:absolute max-sm:after:inset-x-0 max-sm:after:-inset-y-[3px]';
 const SEP = 'mx-1.5 h-[22px] w-px bg-line';
 
-type DialogKind = 'link' | 'youtube' | 'product';
+type DialogKind = 'link' | 'youtube' | 'product' | 'image';
 
 /**
  * Loads the storefront cards for product ids (D-266): each id maps to its card, or to null where the article page would
@@ -81,6 +82,7 @@ function Tool({
   icon,
   label,
   shortcut,
+  note,
   pressed,
   disabled,
   onClick,
@@ -88,15 +90,19 @@ function Tool({
   icon: IconName;
   label: string;
   shortcut?: string;
+  /** Why the button is off, added to its tooltip and its description. */
+  note?: string;
   pressed?: boolean;
   disabled: boolean;
   onClick: (event: { currentTarget: HTMLButtonElement }) => void;
 }) {
+  const title = shortcut === undefined ? label : `${label} (Ctrl+${shortcut})`;
   return (
     <button
       type="button"
       aria-label={label}
-      title={shortcut === undefined ? label : `${label} (Ctrl+${shortcut})`}
+      aria-description={note}
+      title={note === undefined ? title : `${title} — ${note}`}
       aria-keyshortcuts={shortcut === undefined ? undefined : `Control+${shortcut} Meta+${shortcut}`}
       aria-pressed={pressed}
       disabled={disabled}
@@ -222,13 +228,20 @@ export type RichTextEditorProps = {
    * while the body is locked.
    */
   onProductCardsChange?: (change: { added: string[]; removed: string[] }) => void;
+  /**
+   * `MEDIA_PUBLIC_BASE_URL` (plan 017): uploaded pictures are drawn from it in the editor. Null (or absent) means media
+   * storage is not set up, and the image button is off.
+   */
+  mediaBaseUrl?: string | null;
+  /** Uploads one picture (`uploadNewsImageAction`); without it the image button is off. */
+  uploadImage?: ImageUpload;
 };
 
 /**
- * The article body editor (D-244): Tiptap on ProseMirror, writing plain HTML. Its toolbar is exactly the brief's:
- * paragraph style, bold, italic, link, the two lists, a YouTube video and a product card. There is no image button,
- * no upload, no paste or drop of files: the image node is registered only so an imported body's `<img>` survives a save
- * and so a later task can add the control. Client-only: nothing on a storefront page imports this file.
+ * The article body editor (D-244): Tiptap on ProseMirror, writing plain HTML. Its toolbar: paragraph style, bold, italic,
+ * link, the two lists, a YouTube video, a picture (plan 017: uploaded through `ImageDialog`, with required alt text,
+ * stored as its media key, D-277) and a product card. Paste and drop of image files stay off (D-237), so every picture
+ * passes the alt dialog. Client-only: nothing on a storefront page imports this file.
  */
 export default function RichTextEditor({
   label,
@@ -239,6 +252,8 @@ export default function RichTextEditor({
   loadProductCards,
   onProductCardInserted,
   onProductCardsChange,
+  mediaBaseUrl = null,
+  uploadImage,
 }: RichTextEditorProps) {
   const t = useTranslations('admin.news.editor');
   const [dialog, setDialog] = useState<DialogKind | null>(null);
@@ -259,7 +274,7 @@ export default function RichTextEditor({
   const editor = useEditor({
     // Rendered on the server as the empty shell; the editor mounts in the browser (avoids a hydration mismatch).
     immediatelyRender: false,
-    extensions: buildExtensions(cardLabel),
+    extensions: buildExtensions(cardLabel, mediaBaseUrl),
     content: initialHtml,
     editorProps: {
       attributes: {
@@ -349,6 +364,9 @@ export default function RichTextEditor({
       link: current?.isActive('link') ?? false,
       bulletList: current?.isActive('bulletList') ?? false,
       orderedList: current?.isActive('orderedList') ?? false,
+      // A selected picture: the image button then edits its alt text.
+      imageType: current?.isActive('figureImage') ? 'figureImage' : current?.isActive('image') ? 'image' : null,
+      imageAlt: String((current?.isActive('figureImage') ? current.getAttributes('figureImage').alt : current?.getAttributes('image').alt) ?? ''),
       block: blockOf(current),
     }),
   });
@@ -362,6 +380,7 @@ export default function RichTextEditor({
   const block = state?.block ?? 'p';
   const flag = (value: boolean | undefined) => value === true;
   const off = editor === null || locked;
+  const mediaReady = mediaBaseUrl !== null && uploadImage !== undefined;
 
   return (
     <div className="rounded-md border border-line bg-surface">
@@ -393,6 +412,13 @@ export default function RichTextEditor({
         <Tool icon="orderedList" label={t('toolbar.orderedList')} pressed={flag(state?.orderedList)} disabled={off} onClick={() => editor?.chain().focus().toggleOrderedList().run()} />
         <span className={SEP} aria-hidden="true" />
         <Tool icon="video" label={t('toolbar.youtube')} disabled={off} onClick={open('youtube')} />
+        <Tool
+          icon="image"
+          label={t('toolbar.image')}
+          note={mediaReady ? undefined : t('mediaUnavailable')}
+          disabled={off || !mediaReady}
+          onClick={open('image')}
+        />
         <Tool icon="cart" label={t('toolbar.product')} disabled={off} onClick={open('product')} />
       </div>
       {locked ? (
@@ -447,6 +473,30 @@ export default function RichTextEditor({
           validate={(url) => youtubeEmbedFromUrl(url) !== null}
           onSubmit={(url) => {
             editor.chain().focus().insertContent({ type: 'youtube', attrs: { src: youtubeEmbedFromUrl(url), fullscreen: true } }).run();
+            close();
+          }}
+          onClose={close}
+          returnFocusRef={opener}
+        />
+      ) : null}
+
+      {dialog === 'image' && editor && uploadImage ? (
+        <ImageDialog
+          mode={state?.imageType ? { kind: 'alt', alt: state.imageAlt } : { kind: 'insert' }}
+          upload={uploadImage}
+          onInsert={(key, alt) => {
+            // Its own paragraph after the current top-level block, as a card is (R16).
+            const { $to } = editor.state.selection;
+            const at = $to.depth >= 1 ? $to.after(1) : $to.pos;
+            editor
+              .chain()
+              .focus()
+              .insertContentAt(at, { type: 'paragraph', content: [{ type: 'image', attrs: { mediaKey: key, alt } }] })
+              .run();
+            close();
+          }}
+          onSaveAlt={(alt) => {
+            if (state?.imageType) editor.chain().focus().updateAttributes(state.imageType, { alt }).run();
             close();
           }}
           onClose={close}

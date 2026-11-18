@@ -53,13 +53,15 @@ async function mount(
     trash?: (previous: unknown, formData: FormData) => Promise<never>;
     productCards?: (ids: string[], locale: string) => Promise<Record<string, null>>;
     search?: (query: string) => Promise<never>;
+    uploadImage?: (formData: FormData) => Promise<never>;
+    mediaPublicBaseUrl?: string | null;
   } = {},
 ) {
   await act(async () => {
     root.render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Bangkok">
         <ToastProvider closeLabel="Close">
-          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: (options.search as never) ?? (async () => []), createCategory: options.createCategory, productCards: options.productCards ?? (async () => ({})) }} />
+          <ArticleEditor locale="en" article={options.article === undefined ? article : options.article} categories={options.categories ?? []} defaultByline="Nok" actions={{ save: save as never, trash: (options.trash as never) ?? (async () => ({ status: 'idle' })), search: (options.search as never) ?? (async () => []), createCategory: options.createCategory, productCards: options.productCards ?? (async () => ({})), uploadImage: options.uploadImage as never }} mediaPublicBaseUrl={options.mediaPublicBaseUrl === undefined ? 'https://media.example.com' : options.mediaPublicBaseUrl} />
         </ToastProvider>
       </NextIntlClientProvider>,
     );
@@ -501,5 +503,116 @@ describe('ArticleEditor: add a category (D-254)', () => {
     const boxes = [...container.querySelectorAll<HTMLInputElement>('input[name="categoryId"]')];
     expect(boxes.map((box) => [box.value, box.checked])).toEqual([[LISTED, true]]);
     expect(container.textContent).toContain('The category “News” already exists; chose it for this article.');
+  });
+});
+
+describe('ArticleEditor: the cover image and uploaded body images (plan 017)', () => {
+  const BASE = 'https://media.example.com';
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const KEY2 = 'news/2026/12/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed.png';
+  const panel = () => container.querySelector<HTMLElement>('[aria-labelledby="cover-heading"]')!;
+  const button = (name: string) => [...panel().querySelectorAll<HTMLButtonElement>('button')].find((each) => each.textContent === name);
+  const posted = (save: { mock: { calls: unknown[][] } }, index = 0) => (save.mock.calls[index] as [unknown, FormData])[1];
+
+  async function chooseCoverFile() {
+    const input = panel().querySelector<HTMLInputElement>('input[type="file"]')!;
+    expect(input.hasAttribute('name')).toBe(false);
+    await act(async () => {
+      Object.defineProperty(input, 'files', { value: [new File([new Uint8Array([0xff, 0xd8, 0xff])], 'cover.jpg', { type: 'image/jpeg' })], configurable: true });
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  async function saveDraft() {
+    await act(async () => container.querySelector<HTMLButtonElement>('button[value="draft"]')!.click());
+  }
+
+  it('uploads a cover at once, shows it, and saves it with the article as media:{key}; remove sends none', async () => {
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    const upload = vi.fn(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }) as never);
+    await mount(save, { article: { ...article, th: { ...article.th, bodyHtml: '<p>x</p>' } }, uploadImage: upload });
+    expect(panel().querySelector('img')).toBeNull();
+    expect(panel().textContent).toContain('Saved with the article');
+    await saveDraft();
+    expect(posted(save).get('featuredImage')).toBe('unchanged');
+
+    await chooseCoverFile();
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect((upload.mock.calls[0] as unknown as [FormData])[0].get('locale')).toBe('en');
+    expect(panel().querySelector('img')?.getAttribute('src')).toBe(`${BASE}/${KEY}`);
+    await saveDraft();
+    expect(posted(save, 1).get('featuredImage')).toBe(`media:${KEY}`);
+
+    await act(async () => button('Remove image')!.click());
+    expect(panel().querySelector('img')).toBeNull();
+    await saveDraft();
+    expect(posted(save, 2).get('featuredImage')).toBe('none');
+
+    upload.mockResolvedValueOnce({ status: 'uploaded', key: KEY2, url: `${BASE}/${KEY2}` } as never);
+    await act(async () => button('Upload a cover image')!.click());
+    await chooseCoverFile();
+    await saveDraft();
+    expect(posted(save, 3).get('featuredImage')).toBe(`media:${KEY2}`);
+  });
+
+  it('replaces and removes an imported article\'s cover', async () => {
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    const upload = vi.fn(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }) as never);
+    await mount(save, {
+      article: { ...article, featuredImageUrl: 'https://old-site.test/c.jpg', th: { ...article.th, bodyHtml: '<p>x</p>' } },
+      uploadImage: upload,
+    });
+    expect(panel().querySelector('img')?.getAttribute('src')).toBe('https://old-site.test/c.jpg');
+    expect(button('Change image')).toBeDefined();
+    await chooseCoverFile();
+    expect(panel().querySelector('img')?.getAttribute('src')).toBe(`${BASE}/${KEY}`);
+    await act(async () => button('Remove image')!.click());
+    await saveDraft();
+    expect(posted(save).get('featuredImage')).toBe('none');
+  });
+
+  it('shows an upload refusal and keeps the cover as it was', async () => {
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    const upload = vi.fn(async () => ({ status: 'error', errorKey: 'imageTooLarge' }) as never);
+    await mount(save, { article: { ...article, th: { ...article.th, bodyHtml: '<p>x</p>' } }, uploadImage: upload });
+    await chooseCoverFile();
+    expect(panel().querySelector('[role="alert"]')?.textContent).toBe('The image file is over 5 MB.');
+    await saveDraft();
+    expect(posted(save).get('featuredImage')).toBe('unchanged');
+  });
+
+  it('disables uploading without a media base URL, but still lets staff remove a cover', async () => {
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    await mount(save, {
+      article: { ...article, featuredImageUrl: 'https://old-site.test/c.jpg', th: { ...article.th, bodyHtml: '<p>x</p>' } },
+      mediaPublicBaseUrl: null,
+    });
+    expect(button('Change image')!.disabled).toBe(true);
+    expect(panel().textContent).toContain('Image storage is not set up');
+    expect(container.querySelector<HTMLButtonElement>('[role="toolbar"] button[aria-label="Image"]')!.disabled).toBe(true);
+    expect(button('Remove image')!.disabled).toBe(false);
+  });
+
+  it('posts a body with an uploaded image as its key and alt, never a src, and the image button submits nothing', async () => {
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    const body = `<p>a</p><p><img data-media-key="${KEY}" alt="รูป"></p>`;
+    await mount(save, { article: { ...article, th: { ...article.th, bodyHtml: body } } });
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="toolbar"] button[aria-label="Image"]')!.click());
+    expect(save).not.toHaveBeenCalled();
+    await act(async () => [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find((each) => each.textContent === 'Cancel')!.click());
+    await saveDraft();
+    const sent = posted(save).get('thBodyHtml') as string;
+    expect(sent).toContain(`data-media-key="${KEY}"`);
+    expect(sent).toContain('alt="รูป"');
+    expect(sent).not.toContain('src=');
+  });
+
+  it('sends the cover the editor holds to the live preview', async () => {
+    const save = vi.fn(async () => ({ status: 'idle' }) as never);
+    const upload = vi.fn(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }) as never);
+    await mount(save, { article: { ...article, th: { ...article.th, bodyHtml: '<p>x</p>' } }, uploadImage: upload });
+    await chooseCoverFile();
+    // The hidden field and the preview draft carry the same value.
+    expect(container.querySelector<HTMLInputElement>('input[name="featuredImage"]')!.value).toBe(`media:${KEY}`);
   });
 });

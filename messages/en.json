@@ -772,6 +772,7 @@
           "bulletList": "Bulleted list",
           "orderedList": "Numbered list",
           "youtube": "Insert YouTube video",
+          "image": "Image",
           "product": "Insert product card"
         },
         "block": {
@@ -800,6 +801,19 @@
           "title": "Insert product card",
           "hint": "The card shows the chosen product's latest price and stock status",
           "cancel": "Cancel"
+        },
+        "imageDialog": {
+          "title": "Insert image",
+          "altTitle": "Edit image description",
+          "file": "Image file",
+          "fileHint": "JPEG, PNG, WebP or GIF, up to 5 MB",
+          "previewAlt": "Preview of the chosen image",
+          "alt": "Image description",
+          "altHint": "This is read aloud to people who cannot see the picture: say briefly what it shows (up to 300 characters).",
+          "insert": "Insert image",
+          "save": "Save",
+          "cancel": "Cancel",
+          "uploading": "Uploading…"
         },
         "productCard": "Product card",
         "productCardGone": {
@@ -838,7 +852,17 @@
           "done": "Done"
         },
         "byline": "Author",
-        "featured": "Original picture from the old site (cannot be changed)",
+        "cover": {
+          "title": "Cover image",
+          "empty": "No cover image yet",
+          "upload": "Upload a cover image",
+          "replace": "Change image",
+          "remove": "Remove image",
+          "uploading": "Uploading…",
+          "savedWithArticle": "Saved with the article.",
+          "file": "Choose a cover image file"
+        },
+        "mediaUnavailable": "Image storage is not set up yet.",
         "categoriesEmpty": "There are no categories yet",
         "categoryNotListed": "not listed",
         "addCategory": {

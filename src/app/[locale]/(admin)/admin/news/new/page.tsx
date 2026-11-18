@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { getNewsAdmin } from '@/server/composition-root';
+import { getMediaPublicBaseUrl } from '@/server/config';
 import { requirePermission } from '../../_lib/require-permission';
 import ArticleEditor from '../_components/ArticleEditor';
 import { listedCategoryOptions } from '../_lib/categories';
@@ -18,7 +19,7 @@ export default async function NewNewsPage({ params }: Props) {
   return (
     <>
       <h1 className="sr-only">{t('new')}</h1>
-      <ArticleEditor locale={locale} article={null} categories={categories} defaultByline={editor.firstName} />
+      <ArticleEditor locale={locale} article={null} categories={categories} defaultByline={editor.firstName} mediaPublicBaseUrl={getMediaPublicBaseUrl()} />
     </>
   );
 }
