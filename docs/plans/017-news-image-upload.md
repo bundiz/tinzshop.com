@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** Planned (2026-11-18), awaiting the project owner's approval. **Build nothing from it until the owner approves**; the owner may change any of *My calls* at review.
+- **Status:** Approved by the project owner on 2026-11-18 with no changes to *My calls*; in progress.
 - **Stage:** none of the UAT checks in `docs/15-acceptance-criteria.md` names images; it extends plan 016's editor (stage 1 checks 1.10 to 1.12). Whether a stage 1 check is added for images is the owner's call.
 - **Requirements:** REQ-047 extended (staff add images to their news, D-237's "image upload is added as soon as file storage exists").
 - **Depends on plans:** 012 (news tables, the body sanitiser, the article page), 016 (the back office, `requirePermission`, `news.manage`, the editor).
-- **Blocked by:** the owner's approval of this plan. Not blocked by Q-063: its storage part is answered (D-274). Q-071 (backing up the images) blocks nothing here, because this plan deletes nothing (D-279).
+- **Blocked by:** nothing (approved 2026-11-18). Not blocked by Q-063: its storage part is answered (D-274). Q-071 (backing up the images) blocks nothing here, because this plan deletes nothing (D-279).
 - **Owner decisions:** of 2026-11-18, recorded as D-274 to D-276 (below).
-- **Branch:** not cut yet; builds on `feat/win/staff-back-office` (plan 016).
+- **Branch:** `feat/win/news-image-upload`, cut from `feat/win/staff-back-office` (plan 016).
 
 **Goal:** Staff with `news.manage` upload a picture into an article's body (with required alt text) and set, replace or remove an article's cover image; the files are stored in Amazon S3 in `ap-southeast-7` and readers load them from a plain public URL.
 
@@ -28,7 +28,7 @@
 
 ## My calls (Proposed; the owner confirms or changes them at review)
 
-These are the planner's defaults, recorded as Proposed decisions (D-277 to D-280). Task 1 turns them Accepted, as they stand or as the owner changes them.
+These are the planner's defaults, recorded as decisions D-277 to D-280. **The owner approved them unchanged on 2026-11-18**, and Task 1 turned them Accepted.
 
 1. **Scope.** (a) An image button in the editor's toolbar that uploads a picture into the body, with alt text required; (b) the cover image in the Publishing panel: upload, replace, remove. Product images are out: Shopee is their master (D-094). Copying the imported articles' old-site images into S3 (D-127) is out: it is its own plan, now possible because storage exists.
 2. **Types and size (D-278).** JPEG, PNG, WebP and GIF, recognised by their first bytes (magic numbers), never by the file name or the browser's declared type; GIF is in because game news uses short animated clips. SVG is refused (it can carry script), and so are HEIC, AVIF and everything else. At most **5 MB** per file. The stored `Content-Type` is the detected type.
@@ -70,10 +70,10 @@ These are the planner's defaults, recorded as Proposed decisions (D-277 to D-280
 **Files:**
 - Modify: `docs/11-decisions.md`, `docs/05-database.md`, `docs/06-api.md`, `docs/07-frontend-components.md`, `docs/08-security-testing.md`, `docs/12-glossary.md`, `CLAUDE.md`
 
-- [ ] **Step 1: Decisions.** D-277 to D-279 from Proposed to Accepted with the owner's changes, if any, and the date of approval; D-280 stays open for Task 2's version. D-237's status gains "image upload delivered by plan 017 (D-278)".
-- [ ] **Step 2: Owning documents.** `05-database.md` *News*: `featured_image_key`, the CHECK, the rule change of call 7, and `data-media-key` in the body invariant. `06-api.md` *Back-office Server Actions*: `uploadNewsImageAction` and the save's `featuredImage` field with their error keys. `07-frontend-components.md`: the image dialog and the cover panel. `08-security-testing.md` *File uploads*: the news image rules (calls 2 to 4, 10, 11).
-- [ ] **Step 3: Glossary and CLAUDE.md.** The *Media storage* rows lose "(plan 017, planned)" once their names are built; `CLAUDE.md` adds plan 017 to the code list and the "unblocked" sentence, on the owner's approval.
-- [ ] **Step 4: Commit** `docs: accept plan 017's decisions and record the news image names`
+- [x] **Step 1: Decisions.** D-277 to D-279 from Proposed to Accepted with the owner's changes, if any, and the date of approval; D-280 stays open for Task 2's version. D-237's status gains "image upload delivered by plan 017 (D-278)".
+- [x] **Step 2: Owning documents.** `05-database.md` *News*: `featured_image_key`, the CHECK, the rule change of call 7, and `data-media-key` in the body invariant. `06-api.md` *Back-office Server Actions*: `uploadNewsImageAction` and the save's `featuredImage` field with their error keys. `07-frontend-components.md`: the image dialog and the cover panel. `08-security-testing.md` *File uploads*: the news image rules (calls 2 to 4, 10, 11).
+- [x] **Step 3: Glossary and CLAUDE.md.** The *Media storage* rows lose "(plan 017, planned)" once their names are built; `CLAUDE.md` adds plan 017 to the code list and the "unblocked" sentence, on the owner's approval.
+- [x] **Step 4: Commit** `docs: accept plan 017's decisions and record the news image names`
 
 ### Task 2: Media config and the S3 adapter
 

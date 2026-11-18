@@ -103,16 +103,18 @@ Security headers: a Content-Security-Policy without `unsafe-inline`, HSTS,
 ### File uploads
 
 **There is no payment-slip upload.** Bank transfer is removed; K-Payment is
-the sole payment method (D-072, Q-030). The upload paths are the Excel import
-below and, once plan 017 is approved and built, news images:
+the sole payment method (D-072, Q-030). The upload paths are news images (plan 017)
+and the Excel import below:
 
-**News images (plan 017, planned; D-276 to D-279)** — staff-supplied pictures
-stored in a bucket whose `news/` prefix is public:
+**News images (plan 017; D-276 to D-279)** — staff-supplied pictures
+stored in a bucket whose `news/` prefix is public, sent through the Server Action `uploadNewsImageAction`:
 
-- Checked on the server by content (first bytes), never by name or declared type; JPEG, PNG, WebP and GIF only, SVG never; a size limit; the stored `Content-Type` is the detected one.
-- Location data removed from a JPEG before storing it.
-- Only `news.manage` can upload, with a per-account rate limit; nothing about the file but its key, size and type is logged.
-- Articles store keys, not URLs, and the sanitiser keeps a key only when it matches the key pattern exactly.
+- Checked on the server by content (first bytes: JPEG `FF D8 FF`, PNG's 8-byte signature, `GIF87a`/`GIF89a`, `RIFF`…`WEBP`), never by name or declared type; JPEG, PNG, WebP and GIF only; SVG (it can carry script), HEIC, AVIF and everything else refused. At most 5 MB (`NEWS_IMAGE_MAX_BYTES`); the declared size is checked before any byte is read, and `serverActions.bodySizeLimit` is `6mb` for the file plus form overhead, a limit that applies to every Server Action (D-278). The stored `Content-Type` is the detected one, never the browser's.
+- Location data: a JPEG's APP1 segments (Exif and XMP) are removed before storing it, and a minimal Exif holding only the orientation tag is written back when the photo had one; other segments, the colour profile included, are kept. PNG, WebP and GIF are stored byte for byte (their metadata is a follow-up). No re-encoding. A JPEG whose segments do not parse is refused.
+- Only `news.manage` can upload (`requirePermission` in the action, then the controller's own check), refused before the file is read; at most 60 uploads per account per hour (`hitRateLimit`, key `media_upload:account:{accountId}`), counted only for permitted calls. Logs carry the account id, the key, the byte size, the detected type and an outcome code; never the file name, the bytes, the alt text or a credential.
+- Keys are `news/{yyyy}/{mm}/{uuid}.{ext}` from the server's clock, a random uuid and the detected type, so a name from the browser never reaches a key. Written with `Cache-Control: public, max-age=31536000, immutable` and no ACL (ACLs are disabled on the bucket, D-276).
+- Articles store keys, not URLs (D-277), and the sanitiser keeps `data-media-key` only when it matches the key pattern exactly (`isNewsMediaKey`), dropping any `src` beside it; the page builds the URL from `MEDIA_PUBLIC_BASE_URL`, which the config refuses unless it is `https` with no query, fragment, user or password, so a built URL cannot break out of its attribute.
+- Nothing is deleted from the bucket (D-279); orphan clean-up is a later job.
 
 **Excel import (REQ-038)** — staff-supplied spreadsheets:
 

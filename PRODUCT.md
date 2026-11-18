@@ -36,7 +36,7 @@ Success: a visitor who finds Tinzshop elsewhere lands here and comes away sure t
 - **Requirements:** the one source is `docs/reference/client-summary-th.md`, with confirmed requirements in `docs/02-scope-and-phases.md`.
 - **Names:** come from `docs/12-glossary.md`.
 - **Out of scope:** in-store point of sale, international sales or other currencies, a marketplace for other sellers, a mobile app, wholesale pricing, and cash on delivery.
-- **Images:** no image upload until file storage is chosen (Q-063).
+- **Images:** staff upload news images to Amazon S3 in `ap-southeast-7` (plan 017, D-274); product images stay Shopee's (D-094).
 - **Undecided:**
   - order statuses (Q-023);
   - which AWS services run the site (Q-063).
