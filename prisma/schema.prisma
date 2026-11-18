@@ -279,6 +279,8 @@ model NewsArticle {
   id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug             String                   @unique
   featuredImageUrl String?                  @map("featured_image_url")
+  // An uploaded cover's media key (plan 017, D-277); at most one of the two is set. Both CHECKs are in the migration SQL.
+  featuredImageKey String?                  @map("featured_image_key")
   sourceId         BigInt?                  @unique @map("source_id")
   sourceUrl        String?                  @map("source_url")
   sourceModifiedAt DateTime?                @map("source_modified_at") @db.Timestamptz(6)

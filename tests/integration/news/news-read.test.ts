@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getLatestNewsReader, getNewsArticleReader, getNewsReader } from '@/server/composition-root';
 import { decodeSlugParam, newsArticlePath } from '@/app/[locale]/(shop)/news/news-routes';
@@ -36,6 +36,8 @@ async function article(
     en?: string;
     slug?: string;
     bodyHtml?: string;
+    featuredImageKey?: string;
+    featuredImageUrl?: string;
   } = {},
 ) {
   sequence += 1;
@@ -53,6 +55,8 @@ async function article(
       publishedAt,
       deletedAt: overrides.deletedAt ?? null,
       bylineName: 'Invented Writer',
+      featuredImageKey: overrides.featuredImageKey ?? null,
+      featuredImageUrl: overrides.featuredImageUrl ?? null,
       translations: { create: translations },
       categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
     },
@@ -229,6 +233,34 @@ describe('getNewsArticle against the database', () => {
 
     // NINTENDO's two others first, although News has three newer ones; then News's newest.
     expect(detail?.related.map((card) => card.slug)).toEqual([leafNewer, leafOlder, parentOnly[2]]);
+  });
+});
+
+describe('cover images against the database (plan 017, D-277)', () => {
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('builds a keyed cover from MEDIA_PUBLIC_BASE_URL on the list, the landing page and the article page', async () => {
+    vi.stubEnv('MEDIA_PUBLIC_BASE_URL', 'https://media.example.com/');
+    const news = await category('news', 'News', 1);
+    const keyed = await article([news], { featuredImageKey: KEY });
+    await article([news], { featuredImageUrl: 'https://old-site.test/c.jpg' });
+
+    const page = await listNews({ locale: 'th', page: 1 });
+    expect(page?.items.map((item) => item.featuredImageUrl)).toEqual(['https://old-site.test/c.jpg', `https://media.example.com/${KEY}`]);
+    const latest = await listLatestNews({ locale: 'th', limit: 3 });
+    expect(latest.map((item) => item.featuredImageUrl)).toContain(`https://media.example.com/${KEY}`);
+    expect((await getNewsArticle({ locale: 'th', slug: keyed }))?.featuredImageUrl).toBe(`https://media.example.com/${KEY}`);
+  });
+
+  it('leaves a keyed cover out when MEDIA_PUBLIC_BASE_URL is unset', async () => {
+    vi.stubEnv('MEDIA_PUBLIC_BASE_URL', '');
+    const news = await category('news', 'News', 1);
+    const keyed = await article([news], { featuredImageKey: KEY });
+    expect((await getNewsArticle({ locale: 'th', slug: keyed }))?.featuredImageUrl).toBeNull();
   });
 });
 

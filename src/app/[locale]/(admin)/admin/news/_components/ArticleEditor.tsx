@@ -211,6 +211,7 @@ export default function ArticleEditor({ locale, article, categories, defaultByli
     storedPublishedAt: article?.publishedAt ?? null,
     when,
     publishAt,
+    featuredImage: 'unchanged',
   });
   const draftKey = JSON.stringify(draft);
   const latestDraft = useRef<ArticlePreviewDraft>(draft);

@@ -372,7 +372,7 @@ describe('ArticleEditor: the live preview (D-253)', () => {
     expect(drafts(channel!)).toEqual([
       {
         type: 'draft',
-        draft: { articleId: null, contentLanguage: 'th', slug: '', title: '', excerpt: '', bodyHtml: '', bylineName: 'Nok', categoryIds: [], publishedAt: null },
+        draft: { articleId: null, contentLanguage: 'th', slug: '', title: '', excerpt: '', bodyHtml: '', bylineName: 'Nok', categoryIds: [], publishedAt: null, featuredImage: 'unchanged' },
       },
     ]);
 

@@ -4,10 +4,11 @@ import type { LandingProductCard } from '@/server/services/catalogue/landing-cat
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
 import { can } from '@/server/services/access/access-service';
 import type { PermissionKey } from '@/server/services/access/permission-keys';
-import type {
-  ArticlePreviewDraft,
-  NewsCategoryOption,
-  SaveArticleInput,
+import {
+  parseFeaturedImage,
+  type ArticlePreviewDraft,
+  type NewsCategoryOption,
+  type SaveArticleInput,
 } from '@/server/services/news/news-admin-service';
 import type { NewsArticleDetail } from '@/server/services/news/news-read-service';
 import type { NewsLocale } from '@/server/services/news/news-snapshot';
@@ -86,6 +87,7 @@ const SaveForm = z.object({
   categoryIds: z.array(uuid).max(100),
   productIds: z.array(uuid).max(100),
   tagNames: z.array(z.string().max(100)).max(100),
+  featuredImage: z.string().max(300),
 });
 
 function readString(formData: FormData, name: string): string {
@@ -163,9 +165,13 @@ export async function saveArticleCommand(
     categoryIds: readList(formData, 'categoryId'),
     productIds: readList(formData, 'productId'),
     tagNames: readList(formData, 'tag'),
+    featuredImage: readString(formData, 'featuredImage'),
   });
   if (!parsed.success) return error('invalid');
   const form = parsed.data;
+  // `unchanged`, `none` or `media:{key}`; missing (a form from before plan 017) is `unchanged`.
+  const featuredImage = parseFeaturedImage(form.featuredImage);
+  if (featuredImage === null) return error('invalid');
 
   if (form.thTitle.trim() === '') return error('titleRequired');
   if (form.thBodyHtml.trim() === '') return error('bodyRequired');
@@ -188,6 +194,7 @@ export async function saveArticleCommand(
       tagNames: form.tagNames,
       productIds: form.productIds,
       bylineName: form.bylineName,
+      featuredImage,
     },
     action: form.action,
     publishAt,
@@ -296,6 +303,8 @@ const PreviewDraftForm = z.object({
   bylineName: z.string().max(200),
   categoryIds: z.array(uuid).max(100),
   publishedAt: z.iso.datetime().nullable(),
+  // Absent from a page loaded before plan 017: the stored cover is shown.
+  featuredImage: z.string().max(300).default('unchanged'),
 });
 
 /**

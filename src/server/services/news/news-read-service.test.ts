@@ -30,6 +30,9 @@ const CATEGORIES: NewsCategoryRow[] = [
   { id: 'c-uncat', slug: 'uncategorized', parentId: null, position: 0, names: { th: 'Uncategorized' }, isListed: false },
 ];
 
+const MEDIA_BASE = 'https://media.example.com';
+const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.webp';
+
 function row(n: number, overrides: Partial<NewsArticleRow> = {}): NewsArticleRow {
   return {
     id: `a${n}`,
@@ -37,6 +40,7 @@ function row(n: number, overrides: Partial<NewsArticleRow> = {}): NewsArticleRow
     publishedAt: new Date(Date.UTC(2026, 0, n)),
     bylineName: 'Invented Writer',
     featuredImageUrl: null,
+    featuredImageKey: null,
     titles: { th: `ข่าว ${n}` },
     excerpts: { th: `สรุป ${n}` },
     categoryIds: ['c-news'],
@@ -60,6 +64,7 @@ function setup(options: {
       listLiveNewsArticles: list,
     },
     now: () => NOW,
+    mediaBaseUrl: MEDIA_BASE,
   };
   return { deps, count, list };
 }
@@ -244,9 +249,27 @@ function setupArticle(options: {
     news: { listNewsCategories: async () => CATEGORIES, findLiveNewsArticle: find, listLiveNewsArticles: list },
     products: { findProductCandidates: findProducts },
     now: () => NOW,
+    mediaBaseUrl: MEDIA_BASE as string | null,
   };
   return { deps, find, list, findProducts };
 }
+
+describe('the cover image (plan 017, D-277)', () => {
+  it('builds a keyed cover from the base URL, keeps an imported URL, and leaves a keyed cover out with no base URL', async () => {
+    const rows = [row(3, { featuredImageKey: KEY }), row(2, { featuredImageUrl: 'https://old-site.test/c.jpg' }), row(1)];
+    const { deps } = setup({ total: 3, rows });
+    const page = await listNews(deps, { locale: 'th', page: 1 });
+    expect(page?.items.map((item) => item.featuredImageUrl)).toEqual([`${MEDIA_BASE}/${KEY}`, 'https://old-site.test/c.jpg', null]);
+    const unset = await listNews({ ...deps, mediaBaseUrl: null }, { locale: 'th', page: 1 });
+    expect(unset?.items.map((item) => item.featuredImageUrl)).toEqual([null, 'https://old-site.test/c.jpg', null]);
+  });
+
+  it('builds the article page\'s cover the same way', async () => {
+    const { deps } = setupArticle({ article: detailRow(7, { featuredImageKey: KEY }) });
+    expect((await getNewsArticle(deps, { locale: 'th', slug: 'post-7' }))?.featuredImageUrl).toBe(`${MEDIA_BASE}/${KEY}`);
+    expect((await getNewsArticle({ ...deps, mediaBaseUrl: null }, { locale: 'th', slug: 'post-7' }))?.featuredImageUrl).toBeNull();
+  });
+});
 
 describe('getNewsArticle', () => {
   it('opens an article by a Thai slug', async () => {
@@ -378,7 +401,7 @@ describe('getNewsArticle', () => {
 describe('listLatestNews', () => {
   it('returns the newest live articles as cards, at most the limit', async () => {
     const list = vi.fn(async (_filter: NewsListFilter) => [row(3), row(2), row(1)]);
-    const deps = { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticles: list }, now: () => NOW };
+    const deps = { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticles: list }, now: () => NOW, mediaBaseUrl: MEDIA_BASE };
 
     const cards = await listLatestNews(deps, { locale: 'th', limit: 3 });
 
@@ -476,7 +499,7 @@ describe('listRelatedNewsForProduct', () => {
     const rows = [row(9), row(8), row(7), row(6), row(5), row(4)];
     const list = vi.fn(async (_productId: string, _now: Date) => rows);
     const cards = await listRelatedNewsForProduct(
-      { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticlesForProduct: list }, now: () => NOW },
+      { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticlesForProduct: list }, now: () => NOW, mediaBaseUrl: MEDIA_BASE },
       { productId: P1, locale: 'th' },
     );
     expect(list).toHaveBeenCalledWith(P1, NOW);
@@ -486,7 +509,7 @@ describe('listRelatedNewsForProduct', () => {
 
   it('returns nothing when no article is linked', async () => {
     const cards = await listRelatedNewsForProduct(
-      { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticlesForProduct: async () => [] }, now: () => NOW },
+      { news: { listNewsCategories: async () => CATEGORIES, listLiveNewsArticlesForProduct: async () => [] }, now: () => NOW, mediaBaseUrl: MEDIA_BASE },
       { productId: P1, locale: 'en' },
     );
     expect(cards).toEqual([]);

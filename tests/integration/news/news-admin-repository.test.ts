@@ -50,6 +50,7 @@ function input(overrides: Partial<ArticleInput> = {}): ArticleInput {
     tagNames: [],
     productIds: [],
     bylineName: '',
+    featuredImage: { kind: 'unchanged' },
     ...overrides,
   };
 }
@@ -251,7 +252,7 @@ describe('news authoring against the database', () => {
     expect(new Set([...page1.rows, ...page2.rows].map((r) => r.id)).size).toBe(23);
   });
 
-  it('never changes an imported article\'s source columns or featured image on a staff save', async () => {
+  it('never changes an imported article\'s source columns, or its featured image when the cover is unchanged, on a staff save', async () => {
     const who = await editor();
     const imported = await prisma().newsArticle.create({
       data: {
@@ -276,6 +277,76 @@ describe('news authoring against the database', () => {
       updatedByStaffId: who,
       createdByStaffId: null,
     });
+  });
+});
+
+describe('the cover image column (plan 017, D-277)', () => {
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const OTHER_KEY = 'news/2026/12/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed.png';
+
+  async function cover(id: string) {
+    return prisma().newsArticle.findUniqueOrThrow({ where: { id }, select: { featuredImageKey: true, featuredImageUrl: true } });
+  }
+
+  it.each([
+    ['a key outside news/', 'private/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg'],
+    ['a parent path', 'news/../secret.txt'],
+    ['an upper-case uuid', 'news/2026/11/0F8FAD5B-D9CB-469F-A165-70867728950E.jpg'],
+    ['a URL', `https://media.example.com/${KEY}`],
+  ])('the CHECK refuses %s', async (_, key) => {
+    await expect(
+      prisma().newsArticle.create({ data: { slug: 'bad-key', featuredImageKey: key } }),
+    ).rejects.toThrow(/news_article_featured_image_key_check/);
+  });
+
+  it('the CHECK refuses a key and a URL on one article', async () => {
+    await expect(
+      prisma().newsArticle.create({ data: { slug: 'both', featuredImageKey: KEY, featuredImageUrl: 'https://old-site.test/c.jpg' } }),
+    ).rejects.toThrow(/news_article_one_featured_image_check/);
+    await expect(prisma().newsArticle.create({ data: { slug: 'key-only', featuredImageKey: KEY } })).resolves.toBeDefined();
+  });
+
+  it('sets, keeps, replaces and removes a cover on save', async () => {
+    const who = await editor();
+    const { id } = await save(who, { input: input({ featuredImage: { kind: 'media', key: KEY } }) });
+    expect(await cover(id)).toEqual({ featuredImageKey: KEY, featuredImageUrl: null });
+    await save(who, { id, input: input({ featuredImage: { kind: 'unchanged' } }) });
+    expect(await cover(id)).toEqual({ featuredImageKey: KEY, featuredImageUrl: null });
+    await save(who, { id, input: input({ featuredImage: { kind: 'media', key: OTHER_KEY } }) });
+    expect(await cover(id)).toEqual({ featuredImageKey: OTHER_KEY, featuredImageUrl: null });
+    await save(who, { id, input: input({ featuredImage: { kind: 'none' } }) });
+    expect(await cover(id)).toEqual({ featuredImageKey: null, featuredImageUrl: null });
+  });
+
+  it('gives a new article no cover when unchanged', async () => {
+    const { id } = await save(await editor());
+    expect(await cover(id)).toEqual({ featuredImageKey: null, featuredImageUrl: null });
+  });
+
+  it('replaces an imported article\'s cover, clearing the old URL, and removes it, never touching the source columns', async () => {
+    const who = await editor();
+    const imported = await prisma().newsArticle.create({
+      data: {
+        slug: 'imported-cover',
+        sourceId: 8n,
+        sourceUrl: 'https://old-site.test/8/',
+        featuredImageUrl: 'https://old-site.test/media/8.jpg',
+        translations: { create: { locale: 'th', title: 'เก่า', bodyHtml: '<p>x</p>' } },
+      },
+    });
+    await save(who, { id: imported.id, input: input({ featuredImage: { kind: 'media', key: KEY } }) });
+    expect(await cover(imported.id)).toEqual({ featuredImageKey: KEY, featuredImageUrl: null });
+    await save(who, { id: imported.id, input: input({ featuredImage: { kind: 'none' } }) });
+    expect(await cover(imported.id)).toEqual({ featuredImageKey: null, featuredImageUrl: null });
+    expect(await prisma().newsArticle.findUniqueOrThrow({ where: { id: imported.id } })).toMatchObject({
+      sourceId: 8n,
+      sourceUrl: 'https://old-site.test/8/',
+    });
+  });
+
+  it('gives the editor the stored key', async () => {
+    const { id } = await save(await editor(), { input: input({ featuredImage: { kind: 'media', key: KEY } }) });
+    expect(await admin.get(id)).toMatchObject({ featuredImageKey: KEY });
   });
 });
 

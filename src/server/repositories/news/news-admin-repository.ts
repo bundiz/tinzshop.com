@@ -86,6 +86,7 @@ export async function findAdminArticle(id: string): Promise<AdminArticleRecord |
       publishedAt: true,
       bylineName: true,
       featuredImageUrl: true,
+      featuredImageKey: true,
       sourceId: true,
       deletedAt: true,
       updatedAt: true,
@@ -108,6 +109,7 @@ export async function findAdminArticle(id: string): Promise<AdminArticleRecord |
     publishedAt: row.publishedAt,
     bylineName: row.bylineName,
     featuredImageUrl: row.featuredImageUrl,
+    featuredImageKey: row.featuredImageKey,
     isImported: row.sourceId !== null,
     deletedAt: row.deletedAt,
     updatedAt: row.updatedAt,
@@ -169,6 +171,16 @@ async function tagIdsFor(tx: Prisma.TransactionClient, names: readonly string[])
   return rows.map((row) => row.id);
 }
 
+/**
+ * The cover columns a save writes (plan 017, D-277, D-278): an uploaded key clears an imported URL, `none` clears both,
+ * `unchanged` writes neither (a new article then has none). Never deletes an object from storage (D-279).
+ */
+function coverFields(choice: ArticleWrite['featuredImage']): { featuredImageKey?: string | null; featuredImageUrl?: null } {
+  if (choice.kind === 'media') return { featuredImageKey: choice.key, featuredImageUrl: null };
+  if (choice.kind === 'none') return { featuredImageKey: null, featuredImageUrl: null };
+  return {};
+}
+
 async function saveOnce(write: ArticleWrite): Promise<{ id: string; slug: string } | null> {
   return getPrisma().$transaction(
     async (tx) => {
@@ -189,6 +201,7 @@ async function saveOnce(write: ArticleWrite): Promise<{ id: string; slug: string
         publishedAt: write.publishedAt,
         bylineName: write.bylineName,
         updatedByStaffId: write.editorId,
+        ...coverFields(write.featuredImage),
       };
       if (id === null) {
         const created = await tx.newsArticle.create({
@@ -240,7 +253,8 @@ async function saveOnce(write: ArticleWrite): Promise<{ id: string; slug: string
 /**
  * Saves an article, its two translations, categories, tags and product links in one transaction; a link
  * not in the write is removed. Sets `updated_by_staff_id`, and `created_by_staff_id` and `author_staff_id`
- * on create. An imported article's `source_id`, `source_url` and featured image are never touched. Returns
+ * on create. An imported article's `source_id` and `source_url` are never touched; its cover changes only when the
+ * write's `featuredImage` says so (D-278). Returns
  * null for an id that names no live article. A lost slug race (two saves at once) is retried.
  */
 export async function saveArticle(write: ArticleWrite): Promise<{ id: string; slug: string } | null> {

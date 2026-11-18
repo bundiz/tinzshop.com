@@ -231,11 +231,9 @@ export function parseMediaPublicBaseUrl(env: Readonly<Record<string, string | un
   return result.data.MEDIA_PUBLIC_BASE_URL ?? null;
 }
 
-let cachedMediaPublicBaseUrl: string | null | undefined;
-
+/** Read on every call (a short string check), so nothing is cached between requests. */
 export function getMediaPublicBaseUrl(): string | null {
-  if (cachedMediaPublicBaseUrl === undefined) cachedMediaPublicBaseUrl = parseMediaPublicBaseUrl(process.env);
-  return cachedMediaPublicBaseUrl;
+  return parseMediaPublicBaseUrl(process.env);
 }
 
 let cached: ServerConfig | undefined;

@@ -5,6 +5,7 @@ import {
   type LandingProductCard,
   type StorefrontCandidate,
 } from '@/server/services/catalogue/landing-catalogue-service';
+import { resolveFeaturedImageUrl } from '@/server/services/media/media-url';
 import { productIdsIn } from './product-card-embed';
 import type { NewsLocale } from './news-snapshot';
 
@@ -30,7 +31,10 @@ export type NewsArticleRow = {
   slug: string;
   publishedAt: Date;
   bylineName: string | null;
+  /** An imported cover's stored URL (D-127). */
   featuredImageUrl: string | null;
+  /** An uploaded cover's media key (plan 017, D-277); the URL is built from `mediaBaseUrl` when the page is drawn. */
+  featuredImageKey: string | null;
   titles: LocalisedText;
   excerpts: LocalisedText;
   categoryIds: string[];
@@ -51,7 +55,10 @@ export type NewsReadRepository = {
   listLiveNewsArticles: (filter: NewsListFilter) => Promise<NewsArticleRow[]>;
 };
 
-export type NewsReadDeps = { news: NewsReadRepository; now: () => Date };
+/** `MEDIA_PUBLIC_BASE_URL`, or null when media storage is not configured: a keyed cover is then left out (D-277). */
+type MediaBaseUrlDep = { mediaBaseUrl: string | null };
+
+export type NewsReadDeps = { news: NewsReadRepository; now: () => Date } & MediaBaseUrlDep;
 
 /** One article as a card on the list pages (and, in Task 6, the landing page and related articles). */
 export type NewsCardData = {
@@ -163,6 +170,7 @@ function toCard(
   byId: ReadonlyMap<string, NewsCategoryRow>,
   tree: ReadonlyMap<string, Set<string>>,
   locale: NewsLocale,
+  mediaBaseUrl: string | null,
 ): NewsCardData {
   const tag = mostSpecific(row.categoryIds, byId, tree);
   return {
@@ -171,7 +179,7 @@ function toCard(
     excerpt: pick(row.excerpts, locale),
     bylineName: row.bylineName,
     publishedAt: row.publishedAt,
-    featuredImageUrl: row.featuredImageUrl,
+    featuredImageUrl: resolveFeaturedImageUrl(row, mediaBaseUrl),
     categoryName: tag === null ? null : pick(tag.names, locale),
   };
 }
@@ -222,7 +230,7 @@ export async function listNews(deps: NewsReadDeps, input: ListNewsInput): Promis
     .map(({ category, count }) => ({ slug: category.slug, name: pick(category.names, input.locale), count }));
 
   return {
-    items: rows.map((row) => toCard(row, byId, tree, input.locale)),
+    items: rows.map((row) => toCard(row, byId, tree, input.locale, deps.mediaBaseUrl)),
     page: input.page,
     totalPages,
     total,
@@ -251,7 +259,7 @@ export type NewsArticleReadDeps = {
   /** The mirror's products for these ids in ONE read (the cards in the body); an unknown id is simply absent. */
   products: { findProductCandidates: (ids: string[]) => Promise<StorefrontCandidate[]> };
   now: () => Date;
-};
+} & MediaBaseUrlDep;
 
 export type NewsArticleDetail = {
   slug: string;
@@ -347,12 +355,12 @@ export async function getNewsArticle(
     excerpt: fromTranslation(row.excerpts),
     bylineName: row.bylineName,
     publishedAt: row.publishedAt,
-    featuredImageUrl: row.featuredImageUrl,
+    featuredImageUrl: resolveFeaturedImageUrl(row, deps.mediaBaseUrl),
     bodyHtml: fromTranslation(row.bodies),
     categories: listedCategories(row.categoryIds, byId)
       .sort((a, b) => a.position - b.position)
       .map((category) => ({ slug: category.slug, name: pick(category.names, input.locale) })),
-    related: related.map((candidate) => toCard(candidate, byId, tree, input.locale)),
+    related: related.map((candidate) => toCard(candidate, byId, tree, input.locale, deps.mediaBaseUrl)),
     productCards,
   };
 }
@@ -390,7 +398,7 @@ export type RelatedNewsDeps = {
     listLiveNewsArticlesForProduct: (productId: string, now: Date) => Promise<NewsArticleRow[]>;
   };
   now: () => Date;
-};
+} & MediaBaseUrlDep;
 
 /**
  * Every live article linked to the product, newest first, with no limit (D-239): the product page's
@@ -406,13 +414,13 @@ export async function listRelatedNewsForProduct(
   ]);
   const byId = new Map(categories.map((category) => [category.id, category]));
   const tree = subtrees(categories);
-  return rows.map((row) => toCard(row, byId, tree, input.locale));
+  return rows.map((row) => toCard(row, byId, tree, input.locale, deps.mediaBaseUrl));
 }
 
 export type LatestNewsDeps = {
   news: Pick<NewsReadRepository, 'listNewsCategories' | 'listLiveNewsArticles'>;
   now: () => Date;
-};
+} & MediaBaseUrlDep;
 
 /** The newest live articles as cards, at most `limit`: the landing page's "ข่าวเกมล่าสุด" (D-124). */
 export async function listLatestNews(
@@ -426,7 +434,7 @@ export async function listLatestNews(
   ]);
   const byId = new Map(categories.map((category) => [category.id, category]));
   const tree = subtrees(categories);
-  return rows.map((row) => toCard(row, byId, tree, input.locale));
+  return rows.map((row) => toCard(row, byId, tree, input.locale, deps.mediaBaseUrl));
 }
 
 // ---- The header's บทความ menu (plan 012 Task 8, D-140) ----

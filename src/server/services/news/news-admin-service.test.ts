@@ -5,6 +5,7 @@ import {
   createNewsCategory,
   getAdminArticle,
   listAdminArticles,
+  parseFeaturedImage,
   restoreArticle,
   saveArticle,
   trashArticle,
@@ -23,6 +24,8 @@ const EDITOR = '11111111-1111-4111-8111-111111111111';
 const CATEGORY = '22222222-2222-4222-8222-222222222222';
 const PRODUCT = '33333333-3333-4333-8333-333333333333';
 const ARTICLE = '44444444-4444-4444-8444-444444444444';
+const MEDIA_BASE = 'https://media.example.com';
+const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
 
 function input(overrides: Partial<ArticleInput> = {}): ArticleInput {
   return {
@@ -33,6 +36,7 @@ function input(overrides: Partial<ArticleInput> = {}): ArticleInput {
     tagNames: [],
     productIds: [],
     bylineName: 'Writer',
+    featuredImage: { kind: 'unchanged' },
     ...overrides,
   };
 }
@@ -45,6 +49,7 @@ function record(overrides: Partial<AdminArticleRecord> = {}): AdminArticleRecord
     publishedAt: null,
     bylineName: 'Writer',
     featuredImageUrl: null,
+    featuredImageKey: null,
     isImported: false,
     deletedAt: null,
     updatedAt: NOW,
@@ -76,7 +81,7 @@ function setup(existing: AdminArticleRecord | null = null) {
       category: { id: CATEGORY, slug: write.slug, isListed: true, names: { th: write.th, ...(write.en === null ? {} : { en: write.en }) } },
     })),
   };
-  const deps: NewsAdminDeps = { news, sanitize: vi.fn((html: string) => html), now: () => NOW };
+  const deps: NewsAdminDeps = { news, sanitize: vi.fn((html: string) => html), now: () => NOW, mediaBaseUrl: MEDIA_BASE };
   return { deps, news };
 }
 
@@ -346,7 +351,70 @@ describe('saveArticle: bodies, tags, byline, staff', () => {
   });
 });
 
+describe('saveArticle: the cover image (plan 017, D-277, D-278)', () => {
+  it.each([
+    [{ kind: 'unchanged' } as const],
+    [{ kind: 'none' } as const],
+    [{ kind: 'media', key: KEY } as const],
+  ])('passes %o to the write', async (featuredImage) => {
+    const { deps, news } = setup();
+    expect((await save(deps, { input: input({ featuredImage }) })).ok).toBe(true);
+    expect(written(news).featuredImage).toEqual(featuredImage);
+  });
+
+  it.each([
+    '../secret.txt',
+    'news/2026/11/0F8FAD5B-D9CB-469F-A165-70867728950E.jpg',
+    `${KEY}?x=1`,
+    `https://media.example.com/${KEY}`,
+    'private/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg',
+  ])('refuses the key %s and writes nothing', async (key) => {
+    const { deps, news } = setup();
+    const result = await save(deps, { input: input({ featuredImage: { kind: 'media', key } }) });
+    expect(result).toMatchObject({ ok: false, error: { code: 'news.invalid', details: { field: 'featuredImage' } } });
+    expect(news.saveArticle).not.toHaveBeenCalled();
+  });
+
+  it('replaces and removes an imported article\'s cover (call 7)', async () => {
+    const imported = record({ isImported: true, featuredImageUrl: 'https://old-site.test/cover.jpg' });
+    for (const featuredImage of [{ kind: 'media', key: KEY } as const, { kind: 'none' } as const]) {
+      const { deps, news } = setup(imported);
+      expect((await save(deps, { id: ARTICLE, input: input({ featuredImage }) })).ok).toBe(true);
+      expect(written(news).featuredImage).toEqual(featuredImage);
+    }
+  });
+});
+
+describe('parseFeaturedImage', () => {
+  it.each([
+    ['', { kind: 'unchanged' }],
+    ['unchanged', { kind: 'unchanged' }],
+    ['none', { kind: 'none' }],
+    [`media:${KEY}`, { kind: 'media', key: KEY }],
+  ])('reads %j', (value, expected) => {
+    expect(parseFeaturedImage(value)).toEqual(expected);
+  });
+
+  it.each(['media:', 'media:../x', 'NONE', 'remove', `url:${KEY}`, ` media:${KEY}`])('refuses %j', (value) => {
+    expect(parseFeaturedImage(value)).toBeNull();
+  });
+});
+
 describe('reads, trash and restore', () => {
+  it('gives the editor a keyed cover as its built URL, with the key, and an imported one as stored', async () => {
+    expect(await getAdminArticle(setup(record({ featuredImageKey: KEY })).deps, ARTICLE)).toMatchObject({
+      featuredImageKey: KEY,
+      featuredImageUrl: `${MEDIA_BASE}/${KEY}`,
+    });
+    expect(await getAdminArticle(setup(record({ featuredImageUrl: 'https://old-site.test/c.jpg' })).deps, ARTICLE)).toMatchObject({
+      featuredImageKey: null,
+      featuredImageUrl: 'https://old-site.test/c.jpg',
+    });
+    const { deps } = setup(record({ featuredImageKey: KEY }));
+    expect(await getAdminArticle({ ...deps, mediaBaseUrl: null }, ARTICLE)).toMatchObject({ featuredImageKey: KEY, featuredImageUrl: null });
+  });
+
+
   it('derives scheduled from a future published_at, and passes the filter and page', async () => {
     const { deps, news } = setup();
     news.listAdminArticles.mockResolvedValueOnce({
@@ -444,14 +512,15 @@ describe('buildArticlePreview (D-253)', () => {
       bylineName: '',
       categoryIds: [CATEGORY, LISTED, UNKNOWN],
       publishedAt: null,
+      featuredImage: 'unchanged',
       ...overrides,
     };
   }
 
-  function previewSetup(featuredImageUrl: string | null = null) {
+  function previewSetup(featuredImageUrl: string | null = null, featuredImageKey: string | null = null) {
     const deps = {
       news: {
-        findAdminArticle: vi.fn(async () => record({ featuredImageUrl })),
+        findAdminArticle: vi.fn(async () => record({ featuredImageUrl, featuredImageKey })),
         listNewsCategories: vi.fn(async () => [
           { id: LISTED, slug: 'b', parentId: null, position: 2, names: { th: 'ข่าว', en: 'News' }, isListed: true },
           { id: CATEGORY, slug: 'a', parentId: null, position: 1, names: { th: 'รีวิว' }, isListed: true },
@@ -460,6 +529,7 @@ describe('buildArticlePreview (D-253)', () => {
       productCards: vi.fn(async () => []),
       sanitize: vi.fn((html: string) => `[s]${html}`),
       now: () => NOW,
+      mediaBaseUrl: MEDIA_BASE as string | null,
     } satisfies ArticlePreviewDeps;
     return deps;
   }
@@ -503,5 +573,18 @@ describe('buildArticlePreview (D-253)', () => {
     expect(detail.slug).toBe('my-slug');
     expect(detail.featuredImageUrl).toBe('https://old-site.test/cover.jpg');
     expect(deps.news.findAdminArticle).toHaveBeenCalledWith(ARTICLE);
+  });
+
+  it('shows the cover the editor has chosen but not saved: a new upload, none, or the stored keyed one', async () => {
+    const deps = previewSetup('https://old-site.test/cover.jpg');
+    const chosen = await buildArticlePreview(deps, { draft: draft({ articleId: ARTICLE, featuredImage: `media:${KEY}` }), locale: 'th', editorFirstName: 'Nok' });
+    expect(chosen.featuredImageUrl).toBe(`${MEDIA_BASE}/${KEY}`);
+    const removed = await buildArticlePreview(deps, { draft: draft({ articleId: ARTICLE, featuredImage: 'none' }), locale: 'th', editorFirstName: 'Nok' });
+    expect(removed.featuredImageUrl).toBeNull();
+    const stored = previewSetup(null, KEY);
+    const kept = await buildArticlePreview(stored, { draft: draft({ articleId: ARTICLE }), locale: 'th', editorFirstName: 'Nok' });
+    expect(kept.featuredImageUrl).toBe(`${MEDIA_BASE}/${KEY}`);
+    const bad = await buildArticlePreview(deps, { draft: draft({ articleId: ARTICLE, featuredImage: 'media:../x' }), locale: 'th', editorFirstName: 'Nok' });
+    expect(bad.featuredImageUrl).toBe('https://old-site.test/cover.jpg');
   });
 });

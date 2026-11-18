@@ -19,6 +19,7 @@ function input(overrides: Partial<PreviewDraftInput> = {}): PreviewDraftInput {
     storedPublishedAt: null,
     when: 'now',
     publishAt: '',
+    featuredImage: 'none',
     ...overrides,
   };
 }
@@ -35,6 +36,7 @@ describe('buildPreviewDraft (D-253)', () => {
       bylineName: 'Nok',
       categoryIds: ['c1'],
       publishedAt: null,
+      featuredImage: 'none',
     });
   });
 

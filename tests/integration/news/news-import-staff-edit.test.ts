@@ -91,6 +91,7 @@ describe('the import and a staff edit (D-236)', () => {
         tagNames: [],
         productIds: [],
         bylineName: 'ทีมงาน',
+        featuredImage: { kind: 'unchanged' },
       },
     });
     expect(saved.ok).toBe(true);
@@ -149,6 +150,7 @@ describe('the import and a staff edit (D-236)', () => {
         tagNames: [],
         productIds: [],
         bylineName: 'ทีมงาน',
+        featuredImage: { kind: 'unchanged' },
       },
     });
     expect(saved.ok).toBe(true);
@@ -166,6 +168,7 @@ describe('the import and a staff edit (D-236)', () => {
         tagNames: [],
         productIds: [],
         bylineName: 'ทีมงาน',
+        featuredImage: { kind: 'unchanged' },
       },
     });
     expect(written.ok).toBe(true);

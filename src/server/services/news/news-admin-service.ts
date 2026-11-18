@@ -1,4 +1,6 @@
+import { isNewsMediaKey } from '@/server/adapters/wordpress/sanitize';
 import { pickProductName, type LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
+import { mediaPublicUrl, resolveFeaturedImageUrl } from '@/server/services/media/media-url';
 import type { NewsArticleDetail, NewsCategoryRow } from '@/server/services/news/news-read-service';
 import type { NewsLocale } from '@/server/services/news/news-snapshot';
 import type { DomainError, Result } from '@/server/services/shared/result';
@@ -7,6 +9,12 @@ import type { DomainError, Result } from '@/server/services/shared/result';
 export type NewsAdminStatus = 'draft' | 'scheduled' | 'published';
 
 export type ArticleTranslationInput = { title: string; excerpt: string; bodyHtml: string };
+
+/**
+ * What a save does to the cover (plan 017, D-278): keep it, remove it, or set an uploaded one by its media key. Posted as
+ * the form field `featuredImage`: `unchanged`, `none` or `media:{key}`.
+ */
+export type FeaturedImageChoice = { kind: 'unchanged' } | { kind: 'none' } | { kind: 'media'; key: string };
 
 export type ArticleInput = {
   /** Null on first save: made from the Thai title; on an edit: the stored slug is kept. */
@@ -19,6 +27,8 @@ export type ArticleInput = {
   productIds: string[];
   /** Empty means the editor's first name. */
   bylineName: string;
+  /** Allowed on an imported article too (D-278): the import skips a staff-edited one (D-236). */
+  featuredImage: FeaturedImageChoice;
 };
 
 export type SaveAction = 'draft' | 'publish' | 'unpublish';
@@ -30,7 +40,10 @@ export type AdminArticleRecord = {
   status: 'draft' | 'published';
   publishedAt: Date | null;
   bylineName: string | null;
+  /** The imported cover's stored URL from the repository; from `getAdminArticle`, the cover's URL to show (D-277). */
   featuredImageUrl: string | null;
+  /** An uploaded cover's media key (plan 017); at most one of this and the stored URL is set. */
+  featuredImageKey: string | null;
   /** The row has a `source_id`: it came from the old site. */
   isImported: boolean;
   deletedAt: Date | null;
@@ -85,6 +98,8 @@ export type ArticleWrite = {
   /** Normalised display names, unique case-insensitively. */
   tagNames: string[];
   productIds: string[];
+  /** A `media` key here has passed `isNewsMediaKey`. */
+  featuredImage: FeaturedImageChoice;
 };
 
 /** A news category's names as staff typed them; English is optional. */
@@ -124,7 +139,17 @@ export type NewsAdminDeps = {
   /** Wraps the body sanitiser (`sanitizeArticleHtml(html).html`); every body written goes through it. */
   sanitize: (html: string) => string;
   now: () => Date;
+  /** `MEDIA_PUBLIC_BASE_URL`, or null when media storage is not configured (D-277). */
+  mediaBaseUrl: string | null;
 };
+
+/** The form value of `featuredImage` as a choice; an empty value is `unchanged`; null for anything else. */
+export function parseFeaturedImage(value: string): FeaturedImageChoice | null {
+  if (value === '' || value === 'unchanged') return { kind: 'unchanged' };
+  if (value === 'none') return { kind: 'none' };
+  if (value.startsWith('media:') && isNewsMediaKey(value.slice('media:'.length))) return { kind: 'media', key: value.slice('media:'.length) };
+  return null;
+}
 
 export const ADMIN_PAGE_SIZE = 20;
 
@@ -225,7 +250,8 @@ export async function getAdminArticle(
 ): Promise<(AdminArticleRecord & { derivedStatus: NewsAdminStatus }) | null> {
   if (!isUuid(id)) return null;
   const row = await deps.news.findAdminArticle(id);
-  return row === null ? null : { ...row, derivedStatus: deriveStatus(row, deps.now()) };
+  if (row === null) return null;
+  return { ...row, featuredImageUrl: resolveFeaturedImageUrl(row, deps.mediaBaseUrl), derivedStatus: deriveStatus(row, deps.now()) };
 }
 
 export type SaveArticleInput = {
@@ -260,6 +286,9 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   if (!hasContent(thBody)) return invalid('th.bodyHtml', 'The Thai body is required');
   const thExcerpt = input.th.excerpt.trim();
   if (action === 'publish' && thExcerpt === '') return invalid('th.excerpt', 'The Thai excerpt is required to publish');
+  if (input.featuredImage.kind === 'media' && !isNewsMediaKey(input.featuredImage.key)) {
+    return invalid('featuredImage', 'The cover is not a media key');
+  }
 
   let en: ArticleTranslationInput | null = null;
   const enTitle = input.en?.title.trim() ?? '';
@@ -322,6 +351,7 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
     categoryIds,
     tagNames: normaliseTagNames(input.tagNames),
     productIds,
+    featuredImage: input.featuredImage,
   });
   return saved === null ? notFound() : { ok: true, data: saved };
 }
@@ -391,9 +421,11 @@ export type ArticlePreviewDraft = {
   categoryIds: string[];
   /** An ISO instant (a scheduled time, or a live article's date); null means now. */
   publishedAt: string | null;
+  /** The cover as the editor holds it, unsaved: the save's `featuredImage` value (plan 017). */
+  featuredImage: string;
 };
 
-export type ArticlePreviewDeps = Pick<NewsAdminDeps, 'sanitize' | 'now'> & {
+export type ArticlePreviewDeps = Pick<NewsAdminDeps, 'sanitize' | 'now' | 'mediaBaseUrl'> & {
   news: Pick<NewsAdminDeps['news'], 'findAdminArticle'> & { listNewsCategories: () => Promise<NewsCategoryRow[]> };
   /** The live data of the products the body has cards for (`articleProductCards`, D-245). */
   productCards: (bodyHtml: string, locale: NewsLocale) => Promise<LandingProductCard[]>;
@@ -418,13 +450,25 @@ export async function buildArticlePreview(
   ]);
   const publishedAt = draft.publishedAt === null ? null : new Date(draft.publishedAt);
   const title = draft.title.trim();
+  // The cover the editor holds: a new upload or a removal shows before the save; otherwise the stored one.
+  const cover = parseFeaturedImage(draft.featuredImage) ?? { kind: 'unchanged' };
+  const featuredImageUrl =
+    cover.kind === 'none'
+      ? null
+      : cover.kind === 'media'
+        ? deps.mediaBaseUrl === null
+          ? null
+          : mediaPublicUrl(deps.mediaBaseUrl, cover.key)
+        : article === null
+          ? null
+          : resolveFeaturedImageUrl(article, deps.mediaBaseUrl);
   return {
     slug: normaliseSlug(draft.slug.trim() !== '' ? draft.slug : title),
     title,
     excerpt: draft.excerpt.trim(),
     bylineName: draft.bylineName.trim() !== '' ? draft.bylineName.trim() : input.editorFirstName,
     publishedAt: publishedAt !== null && !Number.isNaN(publishedAt.getTime()) ? publishedAt : deps.now(),
-    featuredImageUrl: article?.featuredImageUrl ?? null,
+    featuredImageUrl,
     bodyHtml,
     categories: [...categories]
       .sort((a, b) => a.position - b.position)

@@ -239,6 +239,7 @@ export function getNewsReader(): (input: ListNewsInput) => Promise<NewsListPage 
       {
         news: { listNewsCategories, countLiveNewsArticlesByCategory, countLiveNewsArticles, listLiveNewsArticles },
         now: () => new Date(),
+        mediaBaseUrl: getMediaPublicBaseUrl(),
       },
       input,
     );
@@ -252,6 +253,7 @@ export function getNewsArticleReader(): (input: GetNewsArticleInput) => Promise<
         news: { listNewsCategories, listLiveNewsArticles, findLiveNewsArticle },
         products: { findProductCandidates: findStorefrontCandidates },
         now: () => new Date(),
+        mediaBaseUrl: getMediaPublicBaseUrl(),
       },
       input,
     );
@@ -270,14 +272,18 @@ export function getArticleProductCardsReader(): (bodyHtml: string, locale: Local
 export function getRelatedNewsReader(): (input: { productId: string; locale: Locale }) => Promise<NewsCardData[]> {
   return (input) =>
     listRelatedNewsForProduct(
-      { news: { listNewsCategories, listLiveNewsArticlesForProduct }, now: () => new Date() },
+      { news: { listNewsCategories, listLiveNewsArticlesForProduct }, now: () => new Date(), mediaBaseUrl: getMediaPublicBaseUrl() },
       input,
     );
 }
 
 /** The landing page's newest news (plan 012 Task 6): built per call, needs no configuration beyond the database. */
 export function getLatestNewsReader(): (input: { locale: Locale; limit: number }) => Promise<NewsCardData[]> {
-  return (input) => listLatestNews({ news: { listNewsCategories, listLiveNewsArticles }, now: () => new Date() }, input);
+  return (input) =>
+    listLatestNews(
+      { news: { listNewsCategories, listLiveNewsArticles }, now: () => new Date(), mediaBaseUrl: getMediaPublicBaseUrl() },
+      input,
+    );
 }
 
 /** The header's listed news categories, for the บทความ menu (D-140): built per call, needs only the database. */
@@ -354,12 +360,14 @@ export function getNewsAdmin() {
     },
     sanitize: (html) => sanitizeArticleHtml(html).html,
     now: () => new Date(),
+    mediaBaseUrl: getMediaPublicBaseUrl(),
   };
   const previewDeps = {
     news: { findAdminArticle, listNewsCategories },
     productCards: getArticleProductCardsReader(),
     sanitize: deps.sanitize,
     now: deps.now,
+    mediaBaseUrl: deps.mediaBaseUrl,
   };
   return {
     list: (input: Parameters<typeof listAdminNewsArticles>[1]) => listAdminNewsArticles(deps, input),

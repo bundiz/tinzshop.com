@@ -71,6 +71,8 @@ export type PreviewDraftInput = {
   storedPublishedAt: string | null;
   when: 'now' | 'later';
   publishAt: string;
+  /** The cover as the editor holds it: the save's `featuredImage` value (plan 017). */
+  featuredImage: string;
 };
 
 /**
@@ -93,5 +95,6 @@ export function buildPreviewDraft(input: PreviewDraftInput): ArticlePreviewDraft
     bylineName: input.bylineName,
     categoryIds: input.categoryIds,
     publishedAt: scheduled ?? (keepsStoredDate ? input.storedPublishedAt : null),
+    featuredImage: input.featuredImage,
   };
 }

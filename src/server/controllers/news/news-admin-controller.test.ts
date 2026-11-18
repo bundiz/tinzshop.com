@@ -115,6 +115,31 @@ describe('saveArticleCommand: validation', () => {
   });
 });
 
+describe('saveArticleCommand: the cover image (plan 017)', () => {
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.png';
+
+  it.each([
+    [undefined, { kind: 'unchanged' }],
+    ['', { kind: 'unchanged' }],
+    ['unchanged', { kind: 'unchanged' }],
+    ['none', { kind: 'none' }],
+    [`media:${KEY}`, { kind: 'media', key: KEY }],
+  ])('reads featuredImage %j', async (value, expected) => {
+    const deps = setup();
+    await saveArticleCommand(deps, ACTOR, form(value === undefined ? {} : { featuredImage: value }));
+    expect(sent(deps).input.featuredImage).toEqual(expected);
+  });
+
+  it.each(['remove', 'media:', 'media:../secret.txt', `https://media.example.com/${KEY}`])(
+    'refuses featuredImage %j as invalid',
+    async (value) => {
+      const deps = setup();
+      expect(await saveArticleCommand(deps, ACTOR, form({ featuredImage: value }))).toEqual({ status: 'error', errorKey: 'invalid' });
+      expect(deps.save).not.toHaveBeenCalled();
+    },
+  );
+});
+
 describe('saveArticleCommand: caps', () => {
   it('refuses a title longer than 300 characters in either language, and accepts exactly 300', async () => {
     const deps = setup();
@@ -284,7 +309,10 @@ describe('previewArticleCommand (D-253)', () => {
     const preview = vi.fn(async () => ({ title: 'ข่าว' }));
     const deps = setup({ preview: preview as never });
     expect(await previewArticleCommand(deps, EDITOR, draft, 'en')).toEqual({ title: 'ข่าว' });
-    expect(preview).toHaveBeenCalledWith({ draft, locale: 'en', editorFirstName: 'Nok' });
+    // A draft from a page loaded before plan 017 has no cover choice: it keeps the stored cover.
+    expect(preview).toHaveBeenCalledWith({ draft: { ...draft, featuredImage: 'unchanged' }, locale: 'en', editorFirstName: 'Nok' });
+    await previewArticleCommand(deps, EDITOR, { ...draft, featuredImage: 'none' }, 'th');
+    expect(preview).toHaveBeenLastCalledWith({ draft: { ...draft, featuredImage: 'none' }, locale: 'th', editorFirstName: 'Nok' });
     expect(deps.log).not.toHaveBeenCalled();
   });
 
@@ -301,6 +329,7 @@ describe('previewArticleCommand (D-253)', () => {
       { ...draft, articleId: 'nope' },
       { ...draft, contentLanguage: 'fr' },
       { ...draft, publishedAt: 'tomorrow' },
+      { ...draft, featuredImage: 'x'.repeat(301) },
       'not an object',
     ]) {
       expect(await previewArticleCommand(deps, EDITOR, bad, 'th')).toBeNull();

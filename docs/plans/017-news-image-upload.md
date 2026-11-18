@@ -131,8 +131,8 @@ These are the planner's defaults, recorded as decisions D-277 to D-280. **The ow
 - Produces: `ArticleInput.featuredImage: { kind: 'unchanged' } | { kind: 'none' } | { kind: 'media'; key: string }`, posted as the form field `featuredImage` = `unchanged`, `none` or `media:{key}` (anything else `news.invalid`, field `featuredImage`). `media` sets the key and clears the URL; `none` clears both; `unchanged` writes neither. Allowed on imported articles too (call 7).
 - Produces: every read that returns `featuredImageUrl` (cards, detail, the admin article) returns the built URL when a key is set, else the stored URL; the admin article also returns `featuredImageKey`. The read service takes the base URL as a dependency (framework-free, D-002).
 
-- [ ] **Step 1: Write the failing tests:** unit — the three `featuredImage` kinds; a bad key refused; an imported article's cover replaced and removed; the read prefers the key and leaves a keyed cover out when the base URL is null. Integration — the CHECKs refuse a bad key and both columns set; a save of each kind; the news list and article reads build the URL.
-- [ ] **Step 2: Run** — FAIL. **Step 3: Write the migration** (adds the column and the two CHECKs; no backfill) and mirror it in the schema; `npm run db:generate`. **Step 4: Implement.** **Step 5: Run** unit, integration, typecheck — PASS. **Commit** `feat: store an uploaded cover image as a key`
+- [x] **Step 1: Write the failing tests:** unit — the three `featuredImage` kinds; a bad key refused; an imported article's cover replaced and removed; the read prefers the key and leaves a keyed cover out when the base URL is null. Integration — the CHECKs refuse a bad key and both columns set; a save of each kind; the news list and article reads build the URL.
+- [x] **Step 2: Run** — FAIL. **Step 3: Write the migration** (adds the column and the two CHECKs; no backfill) and mirror it in the schema; `npm run db:generate`. **Step 4: Implement.** **Step 5: Run** unit, integration, typecheck — PASS. **Commit** `feat: store an uploaded cover image as a key`
 
 ### Task 6: Keyed images in the body, from save to page
 
