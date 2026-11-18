@@ -392,4 +392,4 @@ Resizing a card or a video (2026-11-18, D-273). Built as described in 07 (the ri
 
 ## Not in this plan
 
-Image upload (Q-063, D-237); reader counts, SEO description, edit history, members-only visibility (D-239); the mockup's dashboard figures, orders, slips, products, Excel, Shopee and audit screens (later stages); the PROD maintenance mode (plan 017); AWS hosting (Q-063).
+Image upload (D-237; now planned as plan 017, `017-news-image-upload.md`); reader counts, SEO description, edit history, members-only visibility (D-239); the mockup's dashboard figures, orders, slips, products, Excel, Shopee and audit screens (later stages); the PROD maintenance mode (a later plan; first pencilled as "plan 017", a number now taken by the news image upload); AWS hosting (Q-063).

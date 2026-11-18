@@ -23,9 +23,10 @@ not re-litigate it, and do not introduce a second framework, ORM or database.
 **Hosting is AWS** — `docs/adr/ADR-0004-aws-hosting-and-environments.md`,
 which supersedes ADR-0002. PROD is `tinzshop.com` and DEV is `dev.tinzshop.com`.
 Feature branches merge into `develop`, which deploys to DEV; `develop` merges
-into `main` once DEV passes, which deploys to PROD. Which AWS services is still
-open (Q-063): write no infrastructure code until it is answered, and keep
-domain code off provider SDKs (D-050).
+into `main` once DEV passes, which deploys to PROD. File storage is Amazon S3 in
+`ap-southeast-7` (D-274 to D-276, the storage part of Q-063); which other AWS
+services is still open (Q-063): write no other infrastructure code until it is
+answered, and keep domain code off provider SDKs (D-050).
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
@@ -59,7 +60,9 @@ decisions of 2026-11-03 and approval of 2026-11-04
 Cognito dev-pool checks 3 to 6 (Task 2) were moved to the plan's manual test checklist (check 7 became moot under ruling R1)
 on 2026-11-11. Plan 015 is on the project owner's request of 2026-11-12
 (`docs/plans/015-storefront-redesign.md`); it changes how existing pages look, not what they do. Plan 016 is on the project owner's decisions and approval of 2026-11-14
-(`docs/superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md`, §2); staff sign up like customers, the Top-level Admin sets roles, and REQ-032's second factor is dropped (D-232). Build only what
+(`docs/superpowers/specs/2026-11-14-staff-roles-and-back-office-design.md`, §2); staff sign up like customers, the Top-level Admin sets roles, and REQ-032's second factor is dropped (D-232). Plan 017 (news image upload to Amazon S3,
+`docs/plans/017-news-image-upload.md`, D-274 to D-280) is written and awaits the
+project owner's approval: it is **not** unblocked, so build nothing from it yet. Build only what
 plans 010 to 016 describe — do not scaffold the rest of the application to
 get ahead of the other plans. K-Payment is the
 **sole** payment method (bank transfer and standalone PromptPay are removed),

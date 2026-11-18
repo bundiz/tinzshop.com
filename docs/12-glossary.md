@@ -170,6 +170,18 @@ Q-023, so nobody invents a third rival set. No transition is confirmed.
 | Sale page | Sale Page | A per-product page distinct from both the normal product page and a news article, carrying product-specific information or news. See Q-049, D-085. | `sale_page` |
 | Order-status history filter | ประวัติสถานะคำสั่งซื้อ | A customer-facing view/filter of their own order-status history by date range and status. Replaces the earlier "notification opt-out" reading. See Q-031, D-073. | `order_status_history` |
 
+### Media storage (plan 017, planned)
+
+Names reserved by plan 017 (`plans/017-news-image-upload.md`) so they are not invented twice. The storage itself is decided (D-274 to D-276); the rest is planned, awaiting the owner's approval of plan 017.
+
+| English | Thai | Definition | Identifier |
+| :--- | :--- | :--- | :--- |
+| Media storage | ที่เก็บไฟล์ | Where uploaded files live: Amazon S3 in `ap-southeast-7`, one bucket per environment (D-274, D-275). Reached only through the port `MediaStorage` (`src/server/services/media/media-storage.ts`), implemented by `createS3MediaStorage` in `src/server/adapters/s3/`, the only importer of `@aws-sdk/client-s3` (D-050). A failure is `MediaStorageError`, code `media.storage_failed`. | `MediaStorage`, `createS3MediaStorage`, `MediaStorageError` |
+| Media settings | การตั้งค่าที่เก็บไฟล์ | `MEDIA_S3_BUCKET` (the environment's bucket), `MEDIA_S3_REGION` (`ap-southeast-7`) and `MEDIA_PUBLIC_BASE_URL` (the https address keys are appended to), read by `parseMediaConfig` / `getMediaConfig` as `MediaConfig`; pages read only the last through `getMediaPublicBaseUrl`. Credentials are not settings: the AWS SDK reads `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` locally, an IAM role on AWS (D-275). | `MEDIA_S3_BUCKET`, `MEDIA_S3_REGION`, `MEDIA_PUBLIC_BASE_URL`, `MediaConfig` |
+| Media key | คีย์ไฟล์ | The object key of an uploaded news image, `news/{yyyy}/{mm}/{uuid}.{ext}` (`NEWS_MEDIA_KEY_PATTERN`, `isNewsMediaKey`), and what an article stores instead of a URL (D-277): `data-media-key` on a body `<img>`, and the column `news_article.featured_image_key` for a cover. Its URL is `mediaPublicUrl(base, key)`; `resolveMediaKeys` turns a stored body's keys into `src` attributes when a page is drawn. | `data-media-key`, `featured_image_key`, `NEWS_MEDIA_KEY_PATTERN`, `mediaPublicUrl`, `resolveMediaKeys` |
+| News image upload | อัปโหลดรูปข่าว | Staff with `news.manage` send a picture to `uploadNewsImageAction`, which checks it by content (`detectImageType`, `prepareNewsImage`, `NEWS_IMAGE_MAX_BYTES`), removes a JPEG's location data (`stripJpegMetadata`) and stores it (D-278, proposed). The editor's dialog for it is `ImageDialog`. Rate key `media_upload:account:{accountId}`. | `uploadNewsImageAction`, `ImageDialog`, `prepareNewsImage`, `detectImageType`, `stripJpegMetadata` |
+| Cover image | รูปหน้าปก | An article's featured image, shown on its news card and at the top of the article: an uploaded one is `featured_image_key`, an imported one `featured_image_url` (D-127); at most one is set. Edited in the Publishing panel's `CoverImagePanel` and posted as `featuredImage` (`unchanged`, `none` or `media:{key}`). | `featured_image_key`, `featured_image_url`, `CoverImagePanel`, `featuredImage` |
+
 ## People
 
 | English | Thai | Definition | Identifier |

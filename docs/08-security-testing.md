@@ -103,7 +103,16 @@ Security headers: a Content-Security-Policy without `unsafe-inline`, HSTS,
 ### File uploads
 
 **There is no payment-slip upload.** Bank transfer is removed; K-Payment is
-the sole payment method (D-072, Q-030). The one remaining upload path is:
+the sole payment method (D-072, Q-030). The upload paths are the Excel import
+below and, once plan 017 is approved and built, news images:
+
+**News images (plan 017, planned; D-276 to D-279)** — staff-supplied pictures
+stored in a bucket whose `news/` prefix is public:
+
+- Checked on the server by content (first bytes), never by name or declared type; JPEG, PNG, WebP and GIF only, SVG never; a size limit; the stored `Content-Type` is the detected one.
+- Location data removed from a JPEG before storing it.
+- Only `news.manage` can upload, with a per-account rate limit; nothing about the file but its key, size and type is logged.
+- Articles store keys, not URLs, and the sanitiser keeps a key only when it matches the key pattern exactly.
 
 **Excel import (REQ-038)** — staff-supplied spreadsheets:
 

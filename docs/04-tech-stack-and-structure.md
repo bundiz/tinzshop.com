@@ -29,14 +29,15 @@ this table names the choice, not the number.
 
 | Not chosen | Why not | When |
 | :--- | :--- | :--- |
-| Which AWS services run it | AWS is chosen ([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)); the services are not (Q-063) | Stage 1 |
+| Which AWS services run it | AWS is chosen ([ADR-0004](adr/ADR-0004-aws-hosting-and-environments.md)); the services are not (Q-063), except file storage: Amazon S3 (D-274) | Stage 1 |
 | Job queue / scheduler | Depends on where it runs, and on Q-043 | Phase 5 |
 | Specific mail-relay provider | Category decided (D-074); vendor and sending domain not chosen (Q-032 residual) | Phase 3 |
-| File / image storage | Product images and payment slips both need it; nothing in the source describes volume or retention | Phase 2 |
 | Error tracking, metrics | No availability or performance target exists in the source at all | Phase 7 |
 | Component library | Deliberate — see `07-frontend-components.md` | — |
 
 Plan 014 (D-172) adds two dependencies to the stack, both published by AWS and installed as exact versions: `@aws-sdk/client-cognito-identity-provider`, imported only by `src/server/adapters/cognito/`, and `aws-jwt-verify`, for ID-token checks. Hosting stays deferred (ADR-0002).
+
+File and image storage is **Amazon S3** in `ap-southeast-7` (D-274; set-up in [`10-deployment.md`](10-deployment.md#file-storage)), taken out of the table above on the project owner's decision of 2026-11-18. Today it holds only the news images staff upload (plan 017): product images stay on Shopee (D-094) and there are no payment slips (D-072). Plan 017, once approved, adds `@aws-sdk/client-s3` as an exact version, imported only by `src/server/adapters/s3/` (D-280, version recorded when installed), and the settings `MEDIA_S3_BUCKET`, `MEDIA_S3_REGION` and `MEDIA_PUBLIC_BASE_URL`.
 
 Plan 016 (D-256) adds `react-day-picker` 10.0.2, MIT, installed as an exact version (it brings `date-fns` and `@date-fns/tz`): the month grid of the news editor's "publish later" picker, imported only by `DateTimePicker.tsx` in the back office and styled in-house; it is not a component library.
 

@@ -22,7 +22,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | Status | Count | Meaning |
 | :--- | :--- | :--- |
 | **RESOLVED** | 44 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
-| **PARTIALLY RESOLVED** | 6 | Direction decided; one concrete detail still waits on data or an example. |
+| **PARTIALLY RESOLVED** | 7 | Direction decided; one concrete detail still waits on data or an example. |
 | **UNRESOLVED** | 17 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
@@ -555,17 +555,25 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Ask:** client, via the project owner — signature pending
 
 ### Q-063: Which AWS services run the application, database, jobs and backups?
-- **Status:** UNRESOLVED — not yet researched
+- **Status:** PARTIALLY RESOLVED — file storage decided (2026-11-18, project owner); compute, database, jobs, backups and the monthly cost still open
 - **Question:** ADR-0004 puts Tinzshop on AWS but names no service. What runs the Next.js application, the PostgreSQL database, the scheduled jobs (the 10-minute Shopee pull, the news import), file storage (the news images that must leave the old site before it shuts down, D-127) and the daily backup, in which region, and what does it cost each month?
-- **Answer:** None yet.
-- **Effect:** Blocks stage 1's DEV and PROD set-up and the CI/CD pipeline. Until it is answered, no infrastructure or provider-specific code is written. The answer must still meet `10-deployment.md`, including backup and restore (D-088), and its monthly cost belongs in the client's running-cost sheet (D-200).
-- **Ask:** developers, then the project owner
+- **Answer:** File storage only, from the project owner on 2026-11-18: Amazon S3 in `ap-southeast-7` (Asia Pacific (Thailand)), regional endpoint `https://s3.ap-southeast-7.amazonaws.com` (D-274); one bucket per environment, DEV reached with the IAM user `tinzshop-dev` and PROD meant to use an IAM role once hosting is chosen (D-275); images public through a bucket policy on `news/*` only (D-276). Nothing yet for the rest.
+- **Effect:** Plan 017 (news image upload) may write the S3 adapter, the only provider-specific code allowed so far, once the owner approves that plan; the set-up is in `10-deployment.md#file-storage`. Copying the imported news images into the bucket (D-127) is now possible and is a later plan. The rest still blocks stage 1's DEV and PROD set-up and the CI/CD pipeline: until it is answered, no other infrastructure or provider-specific code is written. The answer must still meet `10-deployment.md`, including backup and restore (D-088), and its monthly cost, the bucket's included, belongs in the client's running-cost sheet (D-200). Backing up the images is Q-071.
+- **Recorded in:** `11-decisions.md` D-274 to D-276.
+- **Ask (residual):** compute, database, jobs, backups and cost — developers, then the project owner
 
 ### Q-064: Is Cloudflare still in front of the site now that hosting is AWS?
 - **Status:** UNRESOLVED — not yet asked
 - **Question:** D-087 chose Cloudflare Free for security and bot protection before hosting was known. Now that hosting is AWS (ADR-0004) and phase 8 is renamed "Security" (D-198), is Cloudflare still the security layer, or is stage 4's security work done another way?
 - **Answer:** None yet.
 - **Effect:** Decides what stage 4's security item is. D-087 stands until this is answered. Either way it needs DNS access for `tinzshop.com` (Q-053).
+- **Ask:** project owner
+
+### Q-071: Are the news images in the PROD bucket backed up, and how?
+- **Status:** UNRESOLVED — raised 2026-11-18 by plan 017
+- **Question:** The daily backup (D-088) covers the database. The news images staff upload live in S3 (D-274), outside the database. Should the PROD bucket keep earlier versions (S3 versioning), be copied somewhere else, or rely on nothing being deleted by the application, and for how long is a removed image kept?
+- **Answer:** None yet.
+- **Effect:** Plan 017 deletes no object (D-279), so the application cannot lose an image; an operator's mistake or a deleted bucket could. Whatever is chosen adds to the client's running costs (D-200) and belongs in `10-deployment.md#backup`. Not a blocker for plan 017.
 - **Ask:** project owner
 
 ---
