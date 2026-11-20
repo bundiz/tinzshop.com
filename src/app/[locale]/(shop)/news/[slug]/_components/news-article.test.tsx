@@ -70,11 +70,11 @@ describe('NewsArticleView', () => {
     expect(html).toContain('บท&lt;ความ&gt;');
   });
 
-  it('loads the featured image eagerly and lazy-loads embeds in the body', () => {
+  it('does not show the cover image on the article (D-287) and lazy-loads embeds in the body', () => {
     const html = render(<NewsArticleView article={detail()} articlesMenu={[]} />);
-    expect(html).toMatch(/<img[^>]*src="https:\/\/old.example\/hero.jpg"[^>]*loading="eager"|<img[^>]*loading="eager"[^>]*src="https:\/\/old.example\/hero.jpg"/);
+    expect(html).not.toContain('https://old.example/hero.jpg');
+    expect(html).not.toContain('loading="eager"');
     expect(html).toMatch(/<iframe loading="lazy"[^>]*src="https:\/\/www.youtube.com\/embed\/abc"/);
-    expect(render(<NewsArticleView article={detail({ featuredImageUrl: null })} articlesMenu={[]} />)).not.toContain('loading="eager"');
   });
 
   it('shows the date with the Buddhist year on /th, the breadcrumb and the category links', () => {

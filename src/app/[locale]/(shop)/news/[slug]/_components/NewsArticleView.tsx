@@ -20,7 +20,7 @@ export type NewsArticleViewProps = {
 
 /**
  * One news article in the site header and footer (spec 2026-10-29 §6, D-138): breadcrumb, category labels,
- * title, byline and date, the featured image (eager, D-123), the stored body in a reading column, and
+ * title, byline and date, the stored body in a reading column (no cover image, D-287), and
  * "ข่าวที่เกี่ยวข้อง". It follows the redesign's panel and type (plan 015).
  */
 export default function NewsArticleView({ article, articlesMenu, customer = null }: NewsArticleViewProps) {
@@ -66,15 +66,7 @@ export default function NewsArticleView({ article, articlesMenu, customer = null
                 <span aria-hidden="true">·</span>
                 <time dateTime={article.publishedAt.toISOString()}>{t('date', { date: article.publishedAt })}</time>
               </p>
-              {article.featuredImageUrl !== null && (
-                // eslint-disable-next-line @next/next/no-img-element -- old-site URL, no image pipeline yet (D-127)
-                <img
-                  src={article.featuredImageUrl}
-                  alt=""
-                  loading="eager"
-                  className="mt-4 h-auto w-full rounded-md bg-sunk"
-                />
-              )}
+              {/* The cover image is for the news cards only, never repeated above the body (D-287). */}
               <div className="mt-2">
                 <ArticleBody html={article.bodyHtml} productCards={article.productCards} />
               </div>
