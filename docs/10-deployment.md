@@ -74,6 +74,7 @@ Migrations are forward-only and reviewed as SQL (`05-database.md`, D-015).
 - Rotatable without a code change and without a rebuild.
 - Readable by as few people as possible, and it is recorded who those people are.
 - The application validates its whole configuration at boot and refuses to start on a missing or malformed value. Failing at boot is a deploy that did not happen; failing lazily is a payment that did not work.
+  - **Exception today (D-282):** the application has no start-up hook yet (each setting is read on first use, so `next build` needs no environment), and `MEDIA_PUBLIC_BASE_URL` fails soft instead: a malformed value is treated as unset on pages and refuses uploads, as described under *File storage*. When a start-up check is added with the hosting (Q-063), it should refuse a malformed media setting there too.
 
 > Phase 4 introduces K-Payment merchant credentials (Q-033). Whatever is chosen
 > must handle those without a developer ever seeing a production value.
@@ -84,8 +85,8 @@ Migrations are forward-only and reviewed as SQL (`05-database.md`, D-015).
 `ap-southeast-7`** (Asia Pacific (Thailand)), regional endpoint
 `https://s3.ap-southeast-7.amazonaws.com`. This is the storage part of Q-063
 only; what runs the application, the database and the jobs is still open.
-Today the bucket holds the news images staff upload (plan 017, awaiting the
-owner's approval).
+Today the bucket holds the news images staff upload (plan 017, approved by
+the owner and built on 2026-11-18; its manual checks are still to be run).
 
 **One bucket per environment (D-275).** DEV and PROD never share a bucket,
 for the same reason DEV never holds a copy of PROD. The application reaches a
@@ -97,7 +98,7 @@ these names (placeholders in `.env.example`):
 | :--- | :--- |
 | `MEDIA_S3_BUCKET` | The environment's bucket name (not a secret, but not committed either) |
 | `MEDIA_S3_REGION` | `ap-southeast-7` |
-| `MEDIA_PUBLIC_BASE_URL` | The address image keys are appended to: `https://<bucket>.s3.ap-southeast-7.amazonaws.com` today, a CloudFront address if one is put in front later (D-277). https only, with no query, fragment, user or password; one trailing `/` is removed. Unset or empty turns image uploads off in the editor and leaves uploaded images out of pages |
+| `MEDIA_PUBLIC_BASE_URL` | The address image keys are appended to: `https://<bucket>.s3.ap-southeast-7.amazonaws.com` today, a CloudFront address if one is put in front later (D-277). https only, with no query, fragment, user or password; one trailing `/` is removed. Unset or empty turns image uploads off in the editor and leaves uploaded images out of pages. **Malformed is treated as unset (D-282):** pages still draw, with uploaded body images left out and an uploaded cover not drawn (a news card falls back to the design's gradient), exactly as when it is unset; imported images, which carry their own URL, are unaffected; the server logs `Invalid server configuration, treated as unset` once per process, naming the variable and never its value |
 
 Credentials are not settings: the AWS SDK finds them itself. On a developer's
 machine that is `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`,
@@ -163,13 +164,14 @@ a placeholder: the real name goes in `.env` only.
 
    Plan 017's application code only writes (`s3:PutObject`); reading back, listing and deleting are there for checks by hand and for a later clean-up job (D-279).
 6. **Access key.** Create one access key for `tinzshop-dev` and put it in `.env` as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. It never goes into the repository, a chat, a screenshot or a log; if it ever does, deactivate it and make a new one.
-7. **Settings.** In `.env`: `MEDIA_S3_BUCKET=<dev-media-bucket>`, `MEDIA_S3_REGION=ap-southeast-7`, `MEDIA_PUBLIC_BASE_URL=https://<dev-media-bucket>.s3.ap-southeast-7.amazonaws.com`. Restart `npm run dev` after changing them: the bucket settings are read once per process (`getMediaConfig`), the base URL on every request. With the base URL set, a missing or malformed bucket or region makes an upload fail loudly (the error names the variable, never its value).
+7. **Settings.** In `.env`: `MEDIA_S3_BUCKET=<dev-media-bucket>`, `MEDIA_S3_REGION=ap-southeast-7`, `MEDIA_PUBLIC_BASE_URL=https://<dev-media-bucket>.s3.ap-southeast-7.amazonaws.com`. All three are read again on every upload and the base URL on every page, so a corrected value takes effect without a restart. With the base URL set, a missing or malformed bucket, region or base URL refuses the upload with "การตั้งค่าที่เก็บรูปไม่ถูกต้อง" (`admin.news.error.imageMisconfigured`) and logs `news.image_upload` with the outcome `misconfigured` and the variable's name, never its value (D-282).
 
 ### The PROD bucket
 
 Its own bucket with the same steps 1 to 4. Instead of steps 5 and 6, the same
 policy is attached to the IAM role of whatever runs the application, once
-Q-063 decides it; until then there is no PROD bucket. Its backup is Q-071, and
+Q-063 decides it; until then there is no PROD bucket. Whether PROD's role is
+narrowed to `s3:PutObject` on `news/*` only is Q-072. Its backup is Q-071, and
 its monthly cost goes in the client's running-cost sheet (D-200).
 
 ## Backup

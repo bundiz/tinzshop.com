@@ -23,7 +23,7 @@ Sorted by the phase they block. Phase numbers refer to `02-scope-and-phases.md`.
 | :--- | :--- | :--- |
 | **RESOLVED** | 44 | Answered from 2026-09-13 on. Decision recorded in `11-decisions.md`. |
 | **PARTIALLY RESOLVED** | 7 | Direction decided; one concrete detail still waits on data or an example. |
-| **UNRESOLVED** | 17 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
+| **UNRESOLVED** | 18 | Explicitly deferred by the client ("wait", "inspect first", "research") or still genuinely open. |
 
 ---
 
@@ -574,6 +574,13 @@ This is the substantive finding for the cap decision: **a cap of two would repro
 - **Question:** The daily backup (D-088) covers the database. The news images staff upload live in S3 (D-274), outside the database. Should the PROD bucket keep earlier versions (S3 versioning), be copied somewhere else, or rely on nothing being deleted by the application, and for how long is a removed image kept?
 - **Answer:** None yet.
 - **Effect:** Plan 017 deletes no object (D-279), so the application cannot lose an image; an operator's mistake or a deleted bucket could. Whatever is chosen adds to the client's running costs (D-200) and belongs in `10-deployment.md#backup`. Not a blocker for plan 017.
+- **Ask:** project owner
+
+### Q-072: Should PROD's IAM role be allowed only to upload news images?
+- **Status:** UNRESOLVED — raised 2026-11-20 by plan 017's security review
+- **Question:** Should PROD's IAM role be narrowed to `s3:PutObject` on `<bucket>/news/*` only (no List, Get or Delete), since the app only uploads and there is no versioning or backup yet (Q-071)? A leaked key or a compromised server could otherwise delete every image.
+- **Answer:** None yet.
+- **Effect:** D-275 and the policy in `10-deployment.md#file-storage` are unchanged until it is answered: PROD is meant to get "the same policy" as the DEV user (`s3:ListBucket`, and `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` on every object). Plan 017's code only calls `PutObject` under `news/`, so a narrower PROD role would not change the application; the later orphan clean-up job (D-279) would need List and Delete back, or a role of its own. Not a blocker for plan 017; it must be answered before the PROD bucket exists (Q-063).
 - **Ask:** project owner
 
 ---

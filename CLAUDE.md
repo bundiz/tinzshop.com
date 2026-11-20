@@ -30,9 +30,9 @@ answered, and keep domain code off provider SDKs (D-050).
 
 **The client has confirmed the requirements (Q-001, 2026-09-13).** Every
 `REQ-0NN` in `docs/02-scope-and-phases.md` not individually marked REMOVED is
-CONFIRMED, not PROPOSED. 68 open questions are on record —
+CONFIRMED, not PROPOSED. 69 open questions are on record —
 see `docs/13-open-questions.md` for the full record: 44 RESOLVED, 7 PARTIALLY
-RESOLVED, 17 still genuinely UNRESOLVED (most waiting on a BigSeller
+RESOLVED, 18 still genuinely UNRESOLVED (most waiting on a BigSeller
 data-inspection session, the Shopee live go-live, Shopee's API call limit, or
 the choice of AWS services). Total budget is 100,000 THB, delivered in four
 payment stages due 2026-12-15, 2027-01-12, 2027-02-09 and 2027-03-02 —
