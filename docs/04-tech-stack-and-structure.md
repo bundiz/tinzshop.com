@@ -39,6 +39,8 @@ Plan 014 (D-172) adds two dependencies to the stack, both published by AWS and i
 
 File and image storage is **Amazon S3** in `ap-southeast-7` (D-274; set-up in [`10-deployment.md`](10-deployment.md#file-storage)), taken out of the table above on the project owner's decision of 2026-11-18. Today it holds only the news images staff upload (plan 017): product images stay on Shopee (D-094) and there are no payment slips (D-072). Plan 017 adds `@aws-sdk/client-s3` 3.1161.0 as an exact version (D-280, installed 2026-11-18, the newest release then at least 14 days old), imported only by `src/server/adapters/s3/` behind the port `MediaStorage` (`src/server/services/media/media-storage.ts`); a unit test fails if any other file under `src/` names the package. The settings are `MEDIA_S3_BUCKET`, `MEDIA_S3_REGION` and `MEDIA_PUBLIC_BASE_URL`, read by `parseMediaConfig`; credentials are the SDK's default chain, never a setting.
 
+The news editor's text alignment (D-286, 2026-11-20) adds `@tiptap/extension-text-align` 3.32.1, MIT, pinned exactly like the other Tiptap packages (D-244; published 2026-10-28, more than 14 days before it was installed), imported only by the back office's `editor-extensions.ts`.
+
 Plan 016 (D-256) adds `react-day-picker` 10.0.2, MIT, installed as an exact version (it brings `date-fns` and `@date-fns/tz`): the month grid of the news editor's "publish later" picker, imported only by `DateTimePicker.tsx` in the back office and styled in-house; it is not a component library.
 
 Adding anything to the left column requires a `D-0NN` row in
