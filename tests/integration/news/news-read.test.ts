@@ -270,6 +270,23 @@ describe('cover images against the database (plan 017, D-277)', () => {
     const keyed = await article([news], { featuredImageKey: KEY });
     expect((await getNewsArticle({ locale: 'th', slug: keyed }))?.featuredImageUrl).toBeNull();
   });
+
+  it('draws every page with keyed images left out when MEDIA_PUBLIC_BASE_URL is malformed, never a 500 (D-282)', async () => {
+    vi.stubEnv('MEDIA_PUBLIC_BASE_URL', 'https://media.example.com/a"onerror="x');
+    const news = await category('news', 'News', 1);
+    const keyed = await article([news], {
+      featuredImageKey: KEY,
+      bodyHtml: `<p>x</p><img data-media-key="${KEY}" alt="รูป" />`,
+    });
+    await article([news], { featuredImageUrl: 'https://old-site.test/c.jpg' });
+
+    const page = await listNews({ locale: 'th', page: 1 });
+    expect(page?.items.map((item) => item.featuredImageUrl)).toEqual(['https://old-site.test/c.jpg', null]);
+    expect((await listLatestNews({ locale: 'th', limit: 3 })).map((item) => item.featuredImageUrl)).toContain(null);
+    const detail = await getNewsArticle({ locale: 'th', slug: keyed });
+    expect(detail?.featuredImageUrl).toBeNull();
+    expect(detail?.bodyHtml).toBe('<p>x</p>');
+  });
 });
 
 describe('listLatestNews against the database', () => {

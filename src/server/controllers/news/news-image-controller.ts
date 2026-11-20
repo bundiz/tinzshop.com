@@ -8,6 +8,7 @@ import { NEWS_IMAGE_MAX_BYTES, prepareNewsImage } from '@/server/services/media/
 export type NewsImageErrorKey =
   | 'forbidden'
   | 'imageUnavailable'
+  | 'imageMisconfigured'
   | 'imageRateLimited'
   | 'imageTooLarge'
   | 'imageType'
@@ -19,9 +20,17 @@ export type NewsImageUploadState =
   | { status: 'uploaded'; key: string; url: string }
   | { status: 'error'; errorKey: NewsImageErrorKey };
 
+/**
+ * Media storage as an upload sees it: `unset` while `MEDIA_PUBLIC_BASE_URL` is unset (not configured), `invalid` when a
+ * media setting is malformed, with the variables' names and reasons only (never values, D-282), else ready.
+ */
+export type NewsImageMedia =
+  | { status: 'ready'; storage: MediaStorage; publicBaseUrl: string }
+  | { status: 'unset' }
+  | { status: 'invalid'; issues: string };
+
 export type NewsImageUploadDeps = {
-  /** The storage and the base URL, or null when media storage is not configured (no `MEDIA_PUBLIC_BASE_URL`). */
-  media: () => { storage: MediaStorage; publicBaseUrl: string } | null;
+  media: () => NewsImageMedia;
   /** Increments and returns the count for (key, windowStart); deletes counters older than sweepBefore (plan 014). */
   hitRateLimit: (key: string, windowStart: Date, sweepBefore: Date) => Promise<number>;
   now: () => Date;
@@ -65,9 +74,14 @@ export async function uploadNewsImageCommand(
   const log = (fields: Record<string, unknown>): void => deps.log('news.image_upload', { actor: actor.id, ...fields });
 
   const media = deps.media();
-  if (media === null) {
+  if (media.status === 'unset') {
     log({ outcome: 'unavailable' });
     return refuse('imageUnavailable');
+  }
+  if (media.status === 'invalid') {
+    // A malformed setting refuses with its own key rather than a 500, and the log names the variable (D-282).
+    log({ outcome: 'misconfigured', issues: media.issues });
+    return refuse('imageMisconfigured');
   }
 
   const now = deps.now();

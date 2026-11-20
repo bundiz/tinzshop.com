@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { parseMediaConfig, parseMediaPublicBaseUrl } from './config';
+import { createMediaPublicBaseUrlReader, parseMediaConfig, parseMediaConfigState } from './config';
 
 const valid = {
   MEDIA_S3_BUCKET: 'example-media-dev',
@@ -80,17 +80,72 @@ describe('parseMediaConfig', () => {
   });
 });
 
-describe('parseMediaPublicBaseUrl', () => {
-  it('reads only the base URL, so pages work without the bucket settings', () => {
-    expect(parseMediaPublicBaseUrl({ MEDIA_PUBLIC_BASE_URL: 'https://media.example.com/' })).toBe('https://media.example.com');
+describe('createMediaPublicBaseUrlReader (pages: fail soft)', () => {
+  const bad = 'https://example.com/a"onerror="x';
+
+  it('reads only the base URL, normalised, so pages work without the bucket settings', () => {
+    const warn = vi.fn();
+    expect(createMediaPublicBaseUrlReader(() => ({ MEDIA_PUBLIC_BASE_URL: 'https://media.example.com/' }), warn)()).toBe(
+      'https://media.example.com',
+    );
+    expect(createMediaPublicBaseUrlReader(() => ({}), warn)()).toBeNull();
+    expect(createMediaPublicBaseUrlReader(() => ({ MEDIA_PUBLIC_BASE_URL: '' }), warn)()).toBeNull();
+    expect(warn).not.toHaveBeenCalled();
   });
 
-  it('is null when the base URL is unset or empty', () => {
-    expect(parseMediaPublicBaseUrl({})).toBeNull();
-    expect(parseMediaPublicBaseUrl({ MEDIA_PUBLIC_BASE_URL: '' })).toBeNull();
+  it.each([bad, 'http://example.com', 'https://example.com/media?x=1', 'https://example.com/media#x'])(
+    'treats the malformed base URL %s as unset instead of throwing, so a page still draws and never writes it',
+    (url) => {
+      const read = createMediaPublicBaseUrlReader(() => ({ MEDIA_PUBLIC_BASE_URL: url }), vi.fn());
+      expect(read()).toBeNull();
+    },
+  );
+
+  it('picks up a corrected value on the next read', () => {
+    const env: Record<string, string> = { MEDIA_PUBLIC_BASE_URL: bad };
+    const read = createMediaPublicBaseUrlReader(() => env, vi.fn());
+    expect(read()).toBeNull();
+    env.MEDIA_PUBLIC_BASE_URL = 'https://media.example.com';
+    expect(read()).toBe('https://media.example.com');
   });
 
-  it('refuses a bad base URL rather than letting a page write it', () => {
-    expect(() => parseMediaPublicBaseUrl({ MEDIA_PUBLIC_BASE_URL: 'https://example.com/"' })).toThrow(/MEDIA_PUBLIC_BASE_URL/);
+  it('warns once per reader, naming the variable and never the value', () => {
+    const warn = vi.fn();
+    const read = createMediaPublicBaseUrlReader(() => ({ MEDIA_PUBLIC_BASE_URL: bad }), warn);
+    read();
+    read();
+    read();
+    expect(warn).toHaveBeenCalledTimes(1);
+    const message = String(warn.mock.calls[0]?.[0]);
+    expect(message).toMatch(/MEDIA_PUBLIC_BASE_URL/);
+    expect(message).not.toContain(bad);
+    expect(message).not.toContain('onerror');
+  });
+});
+
+describe('parseMediaConfigState (uploads: refuse, never throw)', () => {
+  it('is ready with the parsed settings', () => {
+    expect(parseMediaConfigState(valid)).toEqual({
+      status: 'ready',
+      config: { bucket: 'example-media-dev', region: 'ap-southeast-7', publicBaseUrl: valid.MEDIA_PUBLIC_BASE_URL },
+    });
+  });
+
+  it('is unset while the base URL is unset or empty, whatever the bucket settings', () => {
+    expect(parseMediaConfigState({})).toEqual({ status: 'unset' });
+    expect(parseMediaConfigState({ ...valid, MEDIA_PUBLIC_BASE_URL: '', MEDIA_S3_BUCKET: 'Bad Name' })).toEqual({ status: 'unset' });
+  });
+
+  it.each([
+    ['a malformed base URL', { ...valid, MEDIA_PUBLIC_BASE_URL: 'https://example.com/media?x=1' }, 'MEDIA_PUBLIC_BASE_URL'],
+    ['a malformed bucket', { ...valid, MEDIA_S3_BUCKET: 'Secret_Bucket' }, 'MEDIA_S3_BUCKET'],
+    ['a missing region', { ...valid, MEDIA_S3_REGION: undefined }, 'MEDIA_S3_REGION'],
+  ])('is invalid for %s, naming the variable and never the value', (_, env, name) => {
+    const state = parseMediaConfigState(env);
+    expect(state.status).toBe('invalid');
+    const issues = state.status === 'invalid' ? state.issues : '';
+    expect(issues).toMatch(new RegExp(name));
+    expect(issues).not.toContain('Secret_Bucket');
+    expect(issues).not.toContain('x=1');
   });
 });

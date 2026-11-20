@@ -14,12 +14,16 @@ const FILE_NAME = 'somchai.j@example.com-holiday.jpg';
 
 type Fakes = NewsImageUploadDeps & { putObject: Mock; hitRateLimit: Mock; log: Mock };
 
-function setup(overrides: { configured?: boolean; count?: number; putObject?: Mock } = {}): Fakes {
+function setup(overrides: { media?: 'unset' | 'invalid'; count?: number; putObject?: Mock } = {}): Fakes {
   const putObject = overrides.putObject ?? vi.fn(async () => undefined);
   const hitRateLimit = vi.fn(async () => overrides.count ?? 1);
   const log = vi.fn();
   return {
-    media: () => (overrides.configured === false ? null : { storage: { putObject }, publicBaseUrl: BASE }),
+    media: () => {
+      if (overrides.media === 'unset') return { status: 'unset' };
+      if (overrides.media === 'invalid') return { status: 'invalid', issues: 'MEDIA_PUBLIC_BASE_URL: must be an https URL' };
+      return { status: 'ready', storage: { putObject }, publicBaseUrl: BASE };
+    },
     hitRateLimit,
     now: () => NOW,
     uuid: () => UUID,
@@ -78,9 +82,21 @@ describe('uploadNewsImageCommand', () => {
   });
 
   it('answers imageUnavailable when media storage is not configured, before counting', async () => {
-    const deps = setup({ configured: false });
+    const deps = setup({ media: 'unset' });
     expect(await uploadNewsImageCommand(deps, ACTOR, upload(PNG))).toEqual({ status: 'error', errorKey: 'imageUnavailable' });
     expect(deps.hitRateLimit).not.toHaveBeenCalled();
+  });
+
+  it('refuses with imageMisconfigured when a media setting is malformed, logging the variable and storing nothing (D-282)', async () => {
+    const deps = setup({ media: 'invalid' });
+    expect(await uploadNewsImageCommand(deps, ACTOR, upload(PNG))).toEqual({ status: 'error', errorKey: 'imageMisconfigured' });
+    expect(deps.hitRateLimit).not.toHaveBeenCalled();
+    expect(deps.putObject).not.toHaveBeenCalled();
+    expect(deps.log).toHaveBeenCalledWith('news.image_upload', {
+      actor: ACTOR.id,
+      outcome: 'misconfigured',
+      issues: 'MEDIA_PUBLIC_BASE_URL: must be an https URL',
+    });
   });
 
   it(`takes the ${NEWS_IMAGE_UPLOADS_PER_HOUR}th upload in an hour and refuses the next`, async () => {

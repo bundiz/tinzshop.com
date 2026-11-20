@@ -210,30 +210,70 @@ export function parseMediaConfig(env: Readonly<Record<string, string | undefined
   };
 }
 
-let cachedMedia: MediaConfig | undefined;
-
-/** Read lazily: only an upload needs the bucket settings. */
-export function getMediaConfig(): MediaConfig {
-  cachedMedia ??= parseMediaConfig(process.env);
-  return cachedMedia;
-}
-
 const mediaPublicBaseUrlSchema = z.object({
   MEDIA_PUBLIC_BASE_URL: z.preprocess(emptyAsUndefined, publicBaseUrlSchema.optional()),
 });
 
-/** Only the base URL, for pages: null when it is unset, so a keyed image is left out rather than drawn broken (D-277). */
-export function parseMediaPublicBaseUrl(env: Readonly<Record<string, string | undefined>>): string | null {
-  const result = mediaPublicBaseUrlSchema.safeParse(env);
-  if (!result.success) {
-    throw new Error(`Invalid server configuration. ${describeIssues(result.error)}`);
-  }
-  return result.data.MEDIA_PUBLIC_BASE_URL ?? null;
+/**
+ * The base URL for pages, failing soft (D-282): a malformed value is treated as unset, so keyed images are left out
+ * of the page (D-277) instead of the landing, news and product pages answering 500. The first malformed read in a
+ * process is warned about, naming the variable and the reason, never the value. Read on every call, so a corrected
+ * value takes effect without a restart.
+ */
+export function createMediaPublicBaseUrlReader(
+  readEnv: () => Readonly<Record<string, string | undefined>>,
+  warn: (message: string) => void,
+): () => string | null {
+  // A one-way flag that only silences a repeated warning: it holds no request data, so sharing it across requests is safe.
+  let warned = false;
+  return () => {
+    const result = mediaPublicBaseUrlSchema.safeParse(readEnv());
+    if (result.success) return result.data.MEDIA_PUBLIC_BASE_URL ?? null;
+    if (!warned) {
+      warned = true;
+      warn(`Invalid server configuration, treated as unset: images from media storage are left out of pages. ${describeIssues(result.error)}`);
+    }
+    return null;
+  };
 }
 
-/** Read on every call (a short string check), so nothing is cached between requests. */
+const readMediaPublicBaseUrl = createMediaPublicBaseUrlReader(
+  () => process.env,
+  (message) => console.error(message),
+);
+
+/** The base URL for pages and the editor: null when unset or malformed (D-282). Never throws. */
 export function getMediaPublicBaseUrl(): string | null {
-  return parseMediaPublicBaseUrl(process.env);
+  return readMediaPublicBaseUrl();
+}
+
+/**
+ * The media settings for an upload, never thrown (D-282): `unset` while `MEDIA_PUBLIC_BASE_URL` is unset or empty
+ * (media is not configured), `invalid` with the variables' names and reasons (never their values) when any of the
+ * three is malformed, else `ready`.
+ */
+export type MediaConfigState =
+  | { readonly status: 'ready'; readonly config: MediaConfig }
+  | { readonly status: 'unset' }
+  | { readonly status: 'invalid'; readonly issues: string };
+
+export function parseMediaConfigState(env: Readonly<Record<string, string | undefined>>): MediaConfigState {
+  if (emptyAsUndefined(env.MEDIA_PUBLIC_BASE_URL) === undefined) return { status: 'unset' };
+  const result = mediaEnvSchema.safeParse(env);
+  if (!result.success) return { status: 'invalid', issues: describeIssues(result.error) };
+  return {
+    status: 'ready',
+    config: {
+      bucket: result.data.MEDIA_S3_BUCKET,
+      region: result.data.MEDIA_S3_REGION,
+      publicBaseUrl: result.data.MEDIA_PUBLIC_BASE_URL,
+    },
+  };
+}
+
+/** Read on every upload (three short string checks), so a corrected setting takes effect without a restart. */
+export function getMediaConfigState(): MediaConfigState {
+  return parseMediaConfigState(process.env);
 }
 
 let cached: ServerConfig | undefined;

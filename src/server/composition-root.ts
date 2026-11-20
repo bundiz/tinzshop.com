@@ -12,8 +12,9 @@ import { createS3MediaStorage } from '@/server/adapters/s3/media-storage';
 import {
   getAccountRoleJobConfig,
   getAuthConfig,
-  getMediaConfig,
+  getMediaConfigState,
   getMediaPublicBaseUrl,
+  type MediaConfig,
   getNewsImportJobConfig,
   getServerConfig,
 } from '@/server/config';
@@ -414,25 +415,32 @@ export function getNewsAdminCommands() {
   };
 }
 
-let mediaStorage: MediaStorage | undefined;
+let mediaStorage: { readonly bucket: string; readonly region: string; readonly storage: MediaStorage } | undefined;
 
-/** The media storage (plan 017), built on first use so a page that never uploads never reads the bucket settings. */
-export function getMediaStorage(): MediaStorage {
-  mediaStorage ??= createS3MediaStorage(getMediaConfig());
-  return mediaStorage;
+/**
+ * The media storage (plan 017), built on first use so a page that never uploads never reads the bucket settings, and
+ * built again only if the bucket or region changes.
+ */
+function getMediaStorage(config: MediaConfig): MediaStorage {
+  if (mediaStorage === undefined || mediaStorage.bucket !== config.bucket || mediaStorage.region !== config.region) {
+    mediaStorage = { bucket: config.bucket, region: config.region, storage: createS3MediaStorage(config) };
+  }
+  return mediaStorage.storage;
 }
 
 /**
- * The news image upload (plan 017): media is "not configured" while `MEDIA_PUBLIC_BASE_URL` is unset; with it set, the
- * bucket settings must be valid too, or the upload fails loudly. Logs carry ids, the key, size, type and an outcome.
+ * The news image upload (plan 017): media is "not configured" while `MEDIA_PUBLIC_BASE_URL` is unset, and a malformed
+ * media setting refuses the upload with `imageMisconfigured` rather than throwing (D-282). Logs carry ids, the key,
+ * size, type and an outcome.
  */
 export function getNewsImageUpload(): (actor: NewsAdminActor, formData: FormData) => Promise<NewsImageUploadState> {
   return (actor, formData) =>
     uploadNewsImageCommand(
       {
         media: () => {
-          if (getMediaPublicBaseUrl() === null) return null;
-          return { storage: getMediaStorage(), publicBaseUrl: getMediaConfig().publicBaseUrl };
+          const state = getMediaConfigState();
+          if (state.status !== 'ready') return state;
+          return { status: 'ready', storage: getMediaStorage(state.config), publicBaseUrl: state.config.publicBaseUrl };
         },
         hitRateLimit,
         now: () => new Date(),
