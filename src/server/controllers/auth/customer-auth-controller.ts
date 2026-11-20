@@ -10,7 +10,7 @@ import {
   signOut,
   type CustomerAuthDeps,
 } from '@/server/services/auth/customer-auth-service';
-import { passwordSchema } from '@/server/services/auth/password-policy';
+import { PASSWORD_MAX_LENGTH, passwordSchema } from '@/server/services/auth/password-policy';
 import { safeReturnTo } from '@/server/services/auth/return-to';
 import type { DomainError } from '@/server/services/shared/result';
 
@@ -80,14 +80,24 @@ const emailSchema = z
   .max(254, 'shop.auth.error.emailInvalid')
   .pipe(z.email('shop.auth.error.emailInvalid'));
 const codeSchema = z.string().trim().regex(/^\d{6}$/, 'shop.auth.error.codeFormat');
+const INVALID_CREDENTIALS = 'shop.auth.error.invalidCredentials';
+// Server Actions take bodies up to 6mb (D-278), so every password sent to Cognito is capped at its maximum
+// (`passwordSchema`, and sign-in below). The confirmation needs no cap of its own: it is only compared, never sent,
+// and one over the maximum either differs from the password (the mismatch error) or equals an over-long password that
+// fails its own check. A cap here would add a false "passwords don't match" when both are the same over-long value.
+const passwordConfirmSchema = z.string();
 const passwordPair = z
-  .object({ password: passwordSchema, passwordConfirm: z.string() })
+  .object({ password: passwordSchema, passwordConfirm: passwordConfirmSchema })
   .refine((v) => v.password === v.passwordConfirm, { path: ['passwordConfirm'], message: 'shop.auth.error.passwordMismatch' });
 
 const registerSchema = z
-  .object({ firstName: nameSchema, lastName: nameSchema, email: emailSchema, password: passwordSchema, passwordConfirm: z.string() })
+  .object({ firstName: nameSchema, lastName: nameSchema, email: emailSchema, password: passwordSchema, passwordConfirm: passwordConfirmSchema })
   .refine((v) => v.password === v.passwordConfirm, { path: ['passwordConfirm'], message: 'shop.auth.error.passwordMismatch' });
-const signInSchema = z.object({ email: emailSchema, password: z.string().min(1, 'shop.auth.error.passwordRequired') });
+// No account has a password longer than Cognito's maximum, so sign-in answers one as a wrong password (D-227).
+const signInSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'shop.auth.error.passwordRequired').max(PASSWORD_MAX_LENGTH, INVALID_CREDENTIALS),
+});
 const emailOnlySchema = z.object({ email: emailSchema });
 const codeOnlySchema = z.object({ code: codeSchema });
 const codeAndPasswordSchema = z.object({ code: codeSchema }).and(passwordPair);
@@ -190,14 +200,17 @@ export async function handleSignIn(deps: CustomerAuthDeps, formData: FormData, c
   if (!parsed.success) {
     const outcome = invalid(parsed.error, fields);
     const { fieldErrors = {}, ...state } = outcome.state;
-    const { email: emailError, ...otherErrors } = fieldErrors;
-    if (emailError === undefined) return outcome;
-    // No account has a malformed address, so sign-in answers it exactly as a wrong password: the customer is told
-    // their email or password is wrong, never about the email's format (D-227). A missing password is still asked for.
+    const { email: emailError, password: passwordError, ...rest } = fieldErrors;
+    const passwordTooLong = passwordError === INVALID_CREDENTIALS;
+    if (emailError === undefined && !passwordTooLong) return outcome;
+    // No account has a malformed address or a password over the maximum, so sign-in answers either exactly as a wrong
+    // password: the customer is told their email or password is wrong, nothing more (D-227). A missing password is
+    // still asked for.
+    const otherErrors = passwordError === undefined || passwordTooLong ? rest : { ...rest, password: passwordError };
     return {
       state: {
         ...state,
-        formError: 'shop.auth.error.invalidCredentials',
+        formError: INVALID_CREDENTIALS,
         ...(Object.keys(otherErrors).length > 0 ? { fieldErrors: otherErrors } : {}),
       },
     };

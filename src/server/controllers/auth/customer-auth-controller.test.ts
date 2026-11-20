@@ -331,6 +331,47 @@ describe('sign-in, resend, reset and sign-out', () => {
     expect(t.getCognito).not.toHaveBeenCalled();
   });
 
+  // Server Actions accept bodies up to 6mb (D-278): no password over Cognito's 256 (PASSWORD_MAX_LENGTH) reaches Cognito.
+  const tooLong = `Aa1!${'x'.repeat(253)}`;
+
+  it('a sign-in password over 256 characters reads the same as a wrong password, before Cognito (D-227)', async () => {
+    const t = build();
+    const out = await handleSignIn(t.deps, form({ email: 'ann@example.com', password: tooLong }), ctx());
+    expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'ann@example.com' } });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('a too-long sign-in password with a malformed email is still only the one form error', async () => {
+    const t = build();
+    const out = await handleSignIn(t.deps, form({ email: 'nope', password: tooLong }), ctx());
+    expect(out.state).toEqual({ formError: 'shop.auth.error.invalidCredentials', values: { email: 'nope' } });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('a sign-in password of exactly 256 characters still reaches Cognito', async () => {
+    const t = build();
+    const max = `Aa1!${'x'.repeat(252)}`;
+    await handleSignIn(t.deps, form({ email: 'ann@example.com', password: max }), ctx());
+    expect(t.cognito.signInWithPassword).toHaveBeenCalled();
+  });
+
+  it('a register confirmation over 256 characters is the mismatch error, before Cognito, as before the cap', async () => {
+    const t = build();
+    const out = await handleRegister(t.deps, form({ ...good, passwordConfirm: tooLong }), ctx());
+    expect(out.state.fieldErrors).toEqual({ passwordConfirm: 'shop.auth.error.passwordMismatch' });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
+  it('a reset password or confirmation over 256 characters is refused before Cognito', async () => {
+    const t = build();
+    const pending = ctx({ pendingEmail: 'ann@example.com' });
+    const both = await handleResetPassword(t.deps, form({ code: '123456', password: tooLong, passwordConfirm: tooLong }), pending);
+    expect(both.state.fieldErrors).toEqual({ password: 'shop.auth.error.passwordPolicy' });
+    const confirm = await handleResetPassword(t.deps, form({ code: '123456', password: 'N3wpass!x', passwordConfirm: tooLong }), pending);
+    expect(confirm.state.fieldErrors).toEqual({ passwordConfirm: 'shop.auth.error.passwordMismatch' });
+    expect(t.getCognito).not.toHaveBeenCalled();
+  });
+
   it('sign-out with a token ends that session and clears the cookie', async () => {
     const deleted: string[] = [];
     const t = build();
