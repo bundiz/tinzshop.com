@@ -37,6 +37,54 @@ export function parseEmbedWidth(value: string | null | undefined): number | null
   return width >= MIN_EMBED_WIDTH && width < MAX_EMBED_WIDTH ? width : null;
 }
 
+/** The text alignments a paragraph or a heading may carry (D-286); left is the default and the editor writes none for it. */
+export const TEXT_ALIGNMENTS = ["left", "center", "right"] as const;
+export type TextAlignment = (typeof TEXT_ALIGNMENTS)[number];
+
+/**
+ * A `style` attribute's declarations, split at each `;` that is outside quotes and brackets, so a `;` inside a quoted
+ * value or a `url(…)` never starts a declaration of its own. Each is `[property, value]`, both trimmed and as written.
+ */
+function styleDeclarations(style: string): [string, string][] {
+  const parts: string[] = [];
+  let current = "";
+  let quote: string | null = null;
+  let depth = 0;
+  for (const character of style) {
+    if (quote !== null) {
+      if (character === quote) quote = null;
+    } else if (character === '"' || character === "'") quote = character;
+    else if (character === "(") depth += 1;
+    else if (character === ")") depth = Math.max(0, depth - 1);
+    else if (character === ";" && depth === 0) {
+      parts.push(current);
+      current = "";
+      continue;
+    }
+    current += character;
+  }
+  parts.push(current);
+  return parts.flatMap((part) => {
+    const colon = part.indexOf(":");
+    return colon === -1 ? [] : [[part.slice(0, colon).trim(), part.slice(colon + 1).trim()] as [string, string]];
+  });
+}
+
+/**
+ * The text alignment of a `style` attribute (D-286): its last `text-align` declaration, as the browser reads it, when
+ * that is exactly `left`, `center` or `right` (lower case, nothing else in the value: no `!important`, comment, escape or
+ * quote); otherwise null. The sanitiser, the editor's guard and nothing else read a stored style, all through this rule.
+ */
+export function parseTextAlign(style: string | null | undefined): TextAlignment | null {
+  if (style === null || style === undefined) return null;
+  let value: string | null = null;
+  for (const [property, declared] of styleDeclarations(style)) if (property === "text-align") value = declared;
+  return (TEXT_ALIGNMENTS as readonly string[]).includes(value ?? "") ? (value as TextAlignment) : null;
+}
+
+/** An uploaded image's alignment (D-286): `left` floats it with the text round it; centred is the default and stores nothing. */
+export const IMAGE_ALIGN_LEFT = "left";
+
 /** A tag of already-sanitised HTML (sanitize-html escapes `<` and `>` inside attribute values, so this never splits one). */
 const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
 const VOID_TAGS = new Set(["br", "img"]);
@@ -82,7 +130,7 @@ function keepTopLevelProductCards(html: string): string {
 
 /**
  * The article body allow-list (spec 2026-10-29 §5, D-133). Everything else — every script, style,
- * event handler and other attribute — is stripped. A disallowed tag's text is kept; a script's or
+ * event handler and other attribute — is stripped, except a text alignment on a paragraph or heading (D-286). A disallowed tag's text is kept; a script's or
  * style's is not.
  */
 const ALLOWED_TAGS = [
@@ -141,6 +189,21 @@ function youTubeEmbedSrc(src: string | undefined): string | null {
   return url.href;
 }
 
+/** The elements that may carry a text alignment (D-286): paragraphs and headings. */
+const ALIGNABLE_TAGS = ["p", "h1", "h2", "h3", "h4", "h5", "h6"];
+
+/**
+ * A paragraph's or heading's attributes reduced to its text alignment (D-286): `style="text-align: X;"` when its style
+ * holds one `parseTextAlign` accepts, written exactly as the editor writes it (so an aligned body round-trips byte for
+ * byte), and nothing otherwise.
+ */
+const alignText: sanitizeHtml.Transformer = (tagName, attribs) => {
+  const align = parseTextAlign(attribs.style);
+  const kept: sanitizeHtml.Attributes = {};
+  if (align !== null) kept.style = `text-align: ${align};`;
+  return { tagName, attribs: kept };
+};
+
 export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds: number } {
   let embedsSeen = 0;
   let iframesKept = 0;
@@ -154,7 +217,9 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     allowedTags: ALLOWED_TAGS,
     allowedAttributes: {
       a: ["href", "rel"],
-      img: ["src", "alt", "data-media-key", "data-width"],
+      // Only a text alignment, rebuilt by `alignText` below as `text-align: …;` (D-286).
+      ...Object.fromEntries(ALIGNABLE_TAGS.map((tag) => [tag, ["style"]])),
+      img: ["src", "alt", "data-media-key", "data-width", "data-align"],
       iframe: ["src", "allowfullscreen", "data-width"],
       [PRODUCT_CARD_TAG]: ["data-id", "data-width"],
     },
@@ -164,7 +229,11 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     allowedIframeHostnames: [...YOUTUBE_EMBED_HOSTS],
     allowIframeRelativeUrls: false,
     nonTextTags: ["script", "style", "textarea", "option", "noscript", "object", "embed"],
+    // The only style that survives is the one `alignText` writes, from a fixed set of strings, so it needs no CSS parser
+    // (sanitize-html's needs postcss, which does not run in the browser, where the editor's guard runs this same code).
+    parseStyleAttributes: false,
     transformTags: {
+      ...Object.fromEntries(ALIGNABLE_TAGS.map((tag) => [tag, alignText])),
       ...Object.fromEntries(EMBED_TAGS.map((tag) => [tag, countEmbed])),
       // A link whose href is not an absolute http/https URL loses it, and is then unwrapped below.
       a: (tagName, attribs) => {
@@ -186,13 +255,16 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
           // Only an uploaded image can be resized (D-283): its width as on a card or a video (D-273).
           const width = parseEmbedWidth(attribs["data-width"]);
           if (width !== null) keyed["data-width"] = String(width);
+          // And only an uploaded image can be aligned left (D-286), written last.
+          if (attribs["data-align"] === IMAGE_ALIGN_LEFT) keyed["data-align"] = IMAGE_ALIGN_LEFT;
           return { tagName, attribs: keyed };
         }
         // Copied so the attributes keep their order (an imported image's output is unchanged); an imported image is never
-        // resized, so it keeps no `data-width`.
+        // resized or aligned, so it keeps no `data-width` and no `data-align`.
         const kept: sanitizeHtml.Attributes = { ...attribs };
         delete kept["data-media-key"];
         delete kept["data-width"];
+        delete kept["data-align"];
         if (absoluteHttpUrl(attribs.src) === null) delete kept.src;
         else kept.src = attribs.src?.trim() ?? "";
         return { tagName, attribs: kept };

@@ -1,4 +1,4 @@
-import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
+import { parseTextAlign, sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
 
 /**
  * The guard's comparison (ruling R14). `normaliseBody` reduces a stored body to what it means and shows, and
@@ -9,8 +9,9 @@ import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
  * and around a line break), the order of bold, italic and link marks on the same text, the editor's single `<p>` inside
  * a list item, a quote or a table cell, the implicit `<tbody>`, `<br>` against `<br />`, an absent `alt` against an empty
  * one. Everything else counts as a loss, including a table's `<thead>` or `<tfoot>`, an iframe's whole `src`, its
- * `allowfullscreen`, a card's, a video's or an uploaded picture's `data-width` (D-273, D-283), and a picture's `data-media-key` (plan 017). Browser only
- * (it needs `DOMParser`).
+ * `allowfullscreen`, a card's, a video's or an uploaded picture's `data-width` (D-273, D-283), a picture's `data-media-key` (plan 017)
+ * and `data-align`, and a paragraph's or heading's text alignment (D-286; compared as the alignment `parseTextAlign` reads,
+ * so only how the declaration is spaced is ignored). Browser only (it needs `DOMParser`).
  */
 
 type Marks = { href: string | null; strong: boolean; em: boolean };
@@ -42,14 +43,28 @@ function widthOf(element: Element): string {
   return width === null ? '' : ` data-width="${escapeAttr(width)}"`;
 }
 
+/** A paragraph's or heading's text alignment (D-286), or a picture's `data-align`, as stored. */
+function alignOf(element: Element): string {
+  const tag = element.tagName.toLowerCase();
+  if (tag === 'img') {
+    const align = element.getAttribute('data-align');
+    return align === null ? '' : ` data-align="${escapeAttr(align)}"`;
+  }
+  const align = ALIGNABLE.has(tag) ? parseTextAlign(element.getAttribute('style')) : null;
+  return align === null ? '' : ` style="text-align:${align}"`;
+}
+
+const ALIGNABLE = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+
 function attributesOf(element: Element): string {
   const tag = element.tagName.toLowerCase();
   if (tag === 'img') {
     // An uploaded picture's key (plan 017) counts like its src: a lost or changed key is a loss.
     const key = element.getAttribute('data-media-key');
     const keyed = key === null ? '' : ` data-media-key="${escapeAttr(key)}"`;
-    return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${keyed} alt="${escapeAttr(element.getAttribute('alt') ?? '')}"${widthOf(element)}`;
+    return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${keyed} alt="${escapeAttr(element.getAttribute('alt') ?? '')}"${widthOf(element)}${alignOf(element)}`;
   }
+  if (ALIGNABLE.has(tag)) return alignOf(element);
   if (tag === 'iframe') return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${element.hasAttribute('allowfullscreen') ? ' allowfullscreen' : ''}${widthOf(element)}`;
   if (tag === 'a') return ` href="${escapeAttr(element.getAttribute('href') ?? '')}"`;
   if (tag === 'tinz-product') return ` data-id="${escapeAttr(element.getAttribute('data-id') ?? '')}"${widthOf(element)}`;
@@ -121,10 +136,11 @@ export function normaliseBody(html: string): string {
   const unwrap = (element: Element) => element.replaceWith(...Array.from(element.childNodes));
   body.querySelectorAll('colgroup').forEach((element) => element.remove());
   body.querySelectorAll('tbody').forEach(unwrap);
-  // The editor puts a list item's, quote's or cell's text in one `<p>`; a lone `<p>` there means the same as bare text.
+  // The editor puts a list item's, quote's or cell's text in one `<p>`; a lone `<p>` there means the same as bare text,
+  // unless it is aligned (D-286).
   for (const container of Array.from(body.querySelectorAll('li, blockquote, td, th')).reverse()) {
     const paragraphs = Array.from(container.children).filter((child) => child.tagName === 'P');
-    if (paragraphs.length === 1) unwrap(paragraphs[0]!);
+    if (paragraphs.length === 1 && parseTextAlign(paragraphs[0]!.getAttribute('style')) === null) unwrap(paragraphs[0]!);
   }
   return renderChildren(body);
 }

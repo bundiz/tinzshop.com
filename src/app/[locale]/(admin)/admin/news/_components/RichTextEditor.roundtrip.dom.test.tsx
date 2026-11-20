@@ -426,3 +426,43 @@ describe('the embed width of an uploaded image (D-283)', () => {
     expect(wouldLoseContent(image('60'), image('60'))).toBe(false);
   });
 });
+
+describe('text alignment and an uploaded image’s alignment (D-286)', () => {
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const picture = (attributes = '') => `<p><img data-media-key="${KEY}" alt="รูป"${attributes} /></p>`;
+
+  it('a stored body with aligned paragraphs, headings and a left picture is not locked and comes back byte for byte, edited or not', async () => {
+    const stored = sanitizeArticleHtml(
+      `<h2 style="text-align:center">a</h2><p style="text-align:right">b</p><p style="text-align:left">c</p>` +
+        `${picture(' data-width="50" data-align="left"')}<ul><li><p style="text-align:center">d</p></li></ul><p>e</p>`,
+    ).html;
+    expect(stored).toBe(
+      `<h2 style="text-align: center;">a</h2><p style="text-align: right;">b</p><p style="text-align: left;">c</p>` +
+        `${picture(' data-width="50" data-align="left"')}<ul><li><p style="text-align: center;">d</p></li></ul><p>e</p>`,
+    );
+    const onChange = vi.fn();
+    const editor = await mount(stored, onChange);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(editor.isEditable).toBe(true);
+    expect(wouldLoseContent(stored, editor.getHTML())).toBe(false);
+    expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
+    await act(async () => {
+      editor.chain().focus('end').insertContent('x').run();
+    });
+    expect(sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html).toBe(stored.replace('<p>e</p>', '<p>ex</p>'));
+  });
+
+  it('counts a lost, added or changed alignment as a difference', () => {
+    expect(normaliseBody('<p style="text-align: center;">a</p>')).not.toBe(normaliseBody('<p>a</p>'));
+    expect(normaliseBody('<h3 style="text-align: center;">a</h3>')).not.toBe(normaliseBody('<h3 style="text-align: right;">a</h3>'));
+    expect(normaliseBody('<ul><li><p style="text-align: center;">a</p></li></ul>')).not.toBe(normaliseBody('<ul><li>a</li></ul>'));
+    expect(normaliseBody(picture(' data-align="left"'))).not.toBe(normaliseBody(picture()));
+    expect(wouldLoseContent('<p style="text-align: center;">a</p>', '<p>a</p>')).toBe(true);
+    expect(wouldLoseContent(picture(' data-align="left"'), picture())).toBe(true);
+    expect(wouldLoseContent('<p style="text-align: center;">a</p>', '<p style="text-align: center;">a</p>')).toBe(false);
+  });
+
+  it('ignores how the declaration is spaced, as the sanitiser rewrites it', () => {
+    expect(normaliseBody('<p style="text-align:center;">a</p>')).toBe(normaliseBody('<p style="text-align: center;">a</p>'));
+  });
+});

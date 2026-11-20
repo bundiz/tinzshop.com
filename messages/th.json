@@ -771,6 +771,9 @@
           "link": "แทรกลิงก์",
           "bulletList": "รายการแบบจุด",
           "orderedList": "รายการแบบตัวเลข",
+          "alignLeft": "ชิดซ้าย",
+          "alignCenter": "กึ่งกลาง",
+          "alignRight": "ชิดขวา",
           "youtube": "แทรกวิดีโอ YouTube",
           "image": "รูปภาพ",
           "product": "แทรกการ์ดสินค้า"
@@ -866,6 +869,7 @@
           "file": "เลือกไฟล์รูปหน้าปก"
         },
         "mediaUnavailable": "ยังไม่ได้ตั้งค่าที่เก็บรูป",
+        "imageNoAlignRight": "รูปจัดชิดขวาไม่ได้",
         "categoriesEmpty": "ยังไม่มีหมวดหมู่",
         "categoryNotListed": "ไม่แสดงในรายการ",
         "addCategory": {

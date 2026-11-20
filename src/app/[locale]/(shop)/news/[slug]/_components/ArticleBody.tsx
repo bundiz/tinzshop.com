@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 import type { CSSProperties } from 'react';
-import { parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
+import { isNewsMediaKey, MAX_EMBED_WIDTH, parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import { splitAtProductCards } from '@/server/services/news/product-card-embed';
 import ArticleProductCard from './ArticleProductCard';
@@ -18,29 +18,49 @@ const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
 const VOID_TAGS = new Set(['br', 'img']);
 
 /**
- * Gives every top-level `<iframe>` with a valid stored `data-width` (D-273), and every `<img>` with one that stands alone
- * in a top-level `<p>` (an uploaded image as the editor inserts it, D-283; the sanitiser keeps the width on no other
- * image), the style `--embed-w:NN%`, at render time, for the reading styles' rules (`PROSE`) that draw it centred at
- * that width from `sm`. The width is re-read through `parseEmbedWidth`, so only a whole number from 40 to 99 ever
- * reaches the style; a video or image anywhere else is left as stored. Safe on the same grounds as `lazyEmbeds`: in
- * sanitised HTML a tag never contains `>` or `<`, and the sanitiser keeps no `style`, so none is doubled.
+ * Whether an `<img>` start tag of a drawn body is an uploaded picture (D-285): its `src` ends in a media key, as
+ * `resolveMediaKeys` builds it (`{MEDIA_PUBLIC_BASE_URL}/{key}`, the key anchored to `news/{yyyy}/{mm}/{uuid}.{ext}`). An
+ * imported picture's old-site URL never ends that way.
+ */
+function isUploadedImage(attributes: string): boolean {
+  const src = /\ssrc="([^"]*)"/.exec(attributes)?.[1];
+  if (src === undefined) return false;
+  const at = src.lastIndexOf('/news/');
+  return at !== -1 && isNewsMediaKey(src.slice(at + 1));
+}
+
+/**
+ * Gives every top-level `<iframe>` with a valid stored `data-width` (D-273) the style `--embed-w:NN%`, and every uploaded
+ * `<img>` that stands alone in a top-level `<p>` (as the editor inserts it, whatever the paragraph's alignment) the style
+ * `--embed-w:NN%` for its stored width (D-283) or `--embed-w:100%` with none (D-285), at render time, for the reading
+ * styles' rules (`PROSE`): a video centred at its width from `sm`; a picture as wide as the column below `sm`, and from
+ * `sm` centred at its width, or floated left at it when it carries `data-align="left"` (D-286). The width is re-read
+ * through `parseEmbedWidth`, so only a whole number from 40 to 99 (or 100) ever reaches the style; a video or image
+ * anywhere else, and every imported image, is left as stored. Safe on the same grounds as `lazyEmbeds`: in sanitised HTML
+ * a tag never contains `>` or `<`, and the sanitiser keeps a `style` only on a paragraph or heading, so none is doubled.
  */
 export function sizeEmbeds(html: string): string {
   let depth = 0;
+  // Where the last top-level `<p …>` start tag ends: an image starting there is the first thing in that paragraph.
+  let paragraphEnd = -1;
   return html.replace(TAG, (tag: string, slash: string, rawName: string, attributes: string | undefined, offset: number) => {
     const name = rawName.toLowerCase();
     if (slash === '/') {
       depth = Math.max(0, depth - 1);
       return tag;
     }
-    // The depth this tag opens at: an image right after `<p>` at depth 1 is in a top-level paragraph.
+    // The depth this tag opens at: an image right after a top-level `<p>` is in a top-level paragraph.
     const at = depth;
     if (!VOID_TAGS.has(name) && !tag.endsWith('/>')) depth += 1;
-    const sizable =
-      (name === 'iframe' && at === 0) ||
-      (name === 'img' && at === 1 && html.slice(offset - 3, offset) === '<p>' && html.startsWith('</p>', offset + tag.length));
-    if (!sizable) return tag;
-    const width = parseEmbedWidth(/\sdata-width="([^"]*)"/.exec(attributes ?? '')?.[1]);
+    if (name === 'p' && at === 0) paragraphEnd = offset + tag.length;
+    if (name === 'iframe' && at === 0) {
+      const width = parseEmbedWidth(/\sdata-width="([^"]*)"/.exec(attributes ?? '')?.[1]);
+      return width === null ? tag : `<${rawName} style="--embed-w:${width}%"${tag.slice(rawName.length + 1)}`;
+    }
+    const alone = name === 'img' && at === 1 && paragraphEnd === offset && html.startsWith('</p>', offset + tag.length);
+    if (!alone) return tag;
+    // The sanitiser keeps a `data-width` only on an uploaded image, so one with a valid width is uploaded.
+    const width = parseEmbedWidth(/\sdata-width="([^"]*)"/.exec(attributes ?? '')?.[1]) ?? (isUploadedImage(attributes ?? '') ? MAX_EMBED_WIDTH : null);
     return width === null ? tag : `<${rawName} style="--embed-w:${width}%"${tag.slice(rawName.length + 1)}`;
   });
 }
@@ -62,7 +82,8 @@ export function titleIframes(html: string, title: string): string {
 
 // Reading styles for the body's allow-listed elements (D-135); Tailwind's preflight resets them all.
 const PROSE = [
-  'text-base leading-[1.8] [overflow-wrap:anywhere]',
+  // `flow-root` holds a left picture's float (D-286), so nothing after the body (or a card after it) overlaps it.
+  'flow-root text-base leading-[1.8] [overflow-wrap:anywhere]',
   '[&_p]:my-4 [&_br]:leading-[1.8]',
   '[&_h1]:mt-8 [&_h1]:mb-3 [&_h1]:text-2xl [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-xl',
   '[&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-lg [&_h4]:mt-6 [&_h4]:mb-2 [&_h4]:text-base',
@@ -76,8 +97,11 @@ const PROSE = [
   '[&_iframe]:my-4 [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-md',
   // A top-level video given a width by `sizeEmbeds` (the only iframes with a `style`) is centred at it from `sm` (D-273).
   'sm:[&>iframe[style]]:mx-auto sm:[&>iframe[style]]:w-(--embed-w)',
-  // An uploaded image alone in a top-level paragraph, given a width the same way, keeps its shape (`h-auto`) (D-283).
-  'sm:[&>p>img[style]]:block sm:[&>p>img[style]]:mx-auto sm:[&>p>img[style]]:w-(--embed-w)',
+  // An uploaded image alone in a top-level paragraph, given a width the same way, keeps its shape (`h-auto`) (D-283): as
+  // wide as the column below `sm` (D-285), centred at its width from `sm`, or floated left at it with the mockup's gap
+  // (`.ed-fig[data-align=left]`) so the following text wraps beside it (D-286).
+  '[&>p>img[style]]:block [&>p>img[style]]:w-full sm:[&>p>img[style]]:mx-auto sm:[&>p>img[style]]:w-(--embed-w)',
+  'sm:[&>p>img[data-align=left][style]]:float-left sm:[&>p>img[data-align=left][style]]:mt-1.5 sm:[&>p>img[data-align=left][style]]:mr-6 sm:[&>p>img[data-align=left][style]]:mb-3',
   '[&_table]:my-4 [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse',
   '[&_td]:border [&_td]:border-line [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-line [&_th]:bg-page [&_th]:px-2 [&_th]:py-1',
   // A cell keeps its words whole; a wide table scrolls sideways inside itself instead.
@@ -93,7 +117,9 @@ const PROSE = [
  * product in `productCards`; one with no entry there (unknown, inactive or hidden) renders nothing. The HTML
  * around the cards is processed segment by segment, exactly as a body without cards is. A card or a top-level video
  * with a stored width (D-273), or an uploaded image alone in a top-level paragraph with one (D-283), is centred at that
- * width from `sm` and drawn as at full width below it.
+ * width from `sm` and drawn as at full width below it; such an image with no width fills the column (D-285), and one
+ * aligned left floats left at its width from `sm` (D-286). A paragraph's or heading's stored `text-align` is drawn as
+ * stored (D-286).
  */
 export default function ArticleBody({ html, productCards = [] }: { html: string; productCards?: LandingProductCard[] }) {
   const t = useTranslations('shop.news');

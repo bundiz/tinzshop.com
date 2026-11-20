@@ -1,10 +1,11 @@
 import { mergeAttributes, Node, type Extensions, type NodeViewRenderer } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
+import TextAlign from '@tiptap/extension-text-align';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-import { isNewsMediaKey, parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
+import { IMAGE_ALIGN_LEFT, isNewsMediaKey, parseEmbedWidth, TEXT_ALIGNMENTS } from '@/server/adapters/wordpress/sanitize';
 import ProductCardView from './ProductCardView';
 import ImageView from './ImageView';
 import { isStoredYoutubeEmbed } from './youtube-embed';
@@ -66,9 +67,10 @@ function imageView(mediaBaseUrl: string | null): NodeViewRenderer {
 
 /**
  * The inline picture, with the media key (plan 017). An uploaded one also has `embedWidth` (D-283), the card's and video's
- * `data-width` (D-273) under another name because the image extension already has a `width`; it is written last, after
- * `alt`, as the sanitiser writes it. An uploaded picture is drawn by `ImageView` (with the resize handle when it stands
- * alone in a top-level paragraph); an imported one keeps the plain view.
+ * `data-width` (D-273) under another name because the image extension already has a `width`, and `embedAlign` (D-286),
+ * `data-align="left"` or nothing (centred); they are written last, after `alt`, width then alignment, as the sanitiser
+ * writes them. An uploaded picture is drawn by `ImageView` (with the resize handle when it stands alone in a top-level
+ * paragraph); an imported one keeps the plain view.
  */
 function inlineImage(mediaBaseUrl: string | null) {
   return Image.extend({
@@ -84,6 +86,12 @@ function inlineImage(mediaBaseUrl: string | null) {
           ...embedWidth,
           renderHTML: (attributes: Record<string, unknown>) =>
             typeof attributes.embedWidth === 'number' ? { 'data-width': String(attributes.embedWidth) } : {},
+        },
+        embedAlign: {
+          default: null,
+          parseHTML: (element: HTMLElement) => (element.getAttribute('data-align') === IMAGE_ALIGN_LEFT ? IMAGE_ALIGN_LEFT : null),
+          renderHTML: (attributes: Record<string, unknown>) =>
+            attributes.embedAlign === IMAGE_ALIGN_LEFT ? { 'data-align': IMAGE_ALIGN_LEFT } : {},
         },
       };
     },
@@ -250,5 +258,13 @@ export function buildExtensions(productCardLabel: string, mediaBaseUrl: string |
     TableCell,
     YoutubeEmbed,
     ProductCard.configure({ label: productCardLabel }),
+    // Paragraphs and headings (D-286): `style="text-align: center|right"` (or `left`, read from a stored body); the left
+    // button unsets it, so a new left paragraph stores nothing. No keyboard shortcuts: the toolbar buttons also align a
+    // selected picture, which these commands would not.
+    TextAlign.extend({ addKeyboardShortcuts: () => ({}) }).configure({
+      types: ['heading', 'paragraph'],
+      alignments: [...TEXT_ALIGNMENTS],
+      defaultAlignment: null,
+    }),
   ];
 }

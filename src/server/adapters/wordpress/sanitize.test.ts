@@ -337,3 +337,109 @@ describe("sanitizeArticleHtml: the embed width of an uploaded image (D-283)", ()
     );
   });
 });
+
+describe("sanitizeArticleHtml: text alignment (D-286)", () => {
+  it("keeps text-align left, center or right on a paragraph and every heading, written as the editor writes it", () => {
+    for (const tag of ["p", "h1", "h2", "h3", "h4", "h5", "h6"]) {
+      for (const align of ["left", "center", "right"]) {
+        expect(sanitizeArticleHtml(`<${tag} style="text-align:${align}">x</${tag}>`).html, `${tag} ${align}`).toBe(
+          `<${tag} style="text-align: ${align};">x</${tag}>`,
+        );
+      }
+    }
+    expect(sanitizeArticleHtml('<p style="  text-align :  center ; ">x</p>').html).toBe('<p style="text-align: center;">x</p>');
+  });
+
+  it("keeps only the text-align of a style with other declarations, and drops a style with none", () => {
+    expect(sanitizeArticleHtml('<p style="text-align: center; color:red">x</p>').html).toBe('<p style="text-align: center;">x</p>');
+    expect(sanitizeArticleHtml('<p style="color:red;text-align:right;font-size:40px">x</p>').html).toBe('<p style="text-align: right;">x</p>');
+    expect(sanitizeArticleHtml('<h2 class="wp-block-heading" style="color:red">Title</h2>').html).toBe("<h2>Title</h2>");
+  });
+
+  it.each([
+    ["an expression()", "text-align: expression(alert(1))"],
+    ["a url()", "background:url(https://evil.test/x.png)"],
+    ["a url() beside a bad text-align", "text-align: url(javascript:alert(1))"],
+    ["position", "position:fixed;top:0;left:0;width:100%"],
+    ["an upper-case value", "text-align: CENTER"],
+    ["an upper-case property", "TEXT-ALIGN: center"],
+    ["justify", "text-align: justify"],
+    ["start", "text-align: start"],
+    ["!important", "text-align: center !important"],
+    ["a comment", "text-align: /**/center"],
+    ["an escape", "text-align: \\63 enter"],
+    ["a quoted value", 'text-align: "center"'],
+    ["a later justify, which the browser would draw", "text-align: center; text-align: justify"],
+    ["a text-align hidden in a quoted value", "font-family:'x;text-align:center;y'"],
+    ["a text-align hidden in a url", "background:url(x;text-align:center)"],
+    ["an empty style", ""],
+  ])("drops %s", (_, style) => {
+    expect(sanitizeArticleHtml(`<p style="${style.replace(/"/g, "&quot;")}">x</p>`).html).toBe("<p>x</p>");
+  });
+
+  it("takes the last of two text-align declarations, as the browser does", () => {
+    expect(sanitizeArticleHtml('<p style="text-align:center;text-align:right">x</p>').html).toBe('<p style="text-align: right;">x</p>');
+  });
+
+  it("drops style on every other element, text-align included", () => {
+    const html = sanitizeArticleHtml(
+      '<ul style="text-align:center"><li style="text-align:center">a</li></ul><blockquote style="text-align:center">b</blockquote>' +
+        '<table style="text-align:center"><tbody><tr><td style="text-align:center">c</td></tr></tbody></table>' +
+        '<p><a href="https://ok.test/" style="text-align:center">d</a><strong style="text-align:center">e</strong></p>' +
+        '<figure style="text-align:center"><img src="https://x.test/a.png" style="text-align:center"><figcaption style="text-align:center">f</figcaption></figure>',
+    ).html;
+    expect(html).not.toContain("style");
+  });
+
+  it("is stable: an aligned body sanitises to itself", () => {
+    const once = sanitizeArticleHtml('<h2 style="text-align:center">a</h2><p style="color:red;text-align:right">b</p>').html;
+    expect(sanitizeArticleHtml(once).html).toBe(once);
+  });
+
+  it("adds nothing to an imported body: the fixture posts sanitise with no style", () => {
+    for (const post of posts as { id: number; content: { rendered: string } }[]) {
+      expect(sanitizeArticleHtml(post.content.rendered).html, String(post.id)).not.toContain("style=");
+    }
+  });
+});
+
+describe("sanitizeArticleHtml: the alignment of an uploaded image (D-286)", () => {
+  const KEY = "news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg";
+
+  it('keeps data-align="left" on an image with a valid media key, after its key, alt and width', () => {
+    expect(sanitizeArticleHtml(`<p><img data-align="left" data-width="50" alt="a" data-media-key="${KEY}"></p>`).html).toBe(
+      `<p><img data-media-key="${KEY}" alt="a" data-width="50" data-align="left" /></p>`,
+    );
+    expect(sanitizeArticleHtml(`<p><img data-media-key="${KEY}" data-align="left"></p>`).html).toBe(
+      `<p><img data-media-key="${KEY}" data-align="left" /></p>`,
+    );
+  });
+
+  it("drops any other value", () => {
+    for (const align of ["right", "center", "wide", "LEFT", " left", "left ", ""]) {
+      expect(sanitizeArticleHtml(`<p><img data-media-key="${KEY}" alt="a" data-align="${align}"></p>`).html, align).toBe(
+        `<p><img data-media-key="${KEY}" alt="a" /></p>`,
+      );
+    }
+  });
+
+  it("drops it on an imported image, one whose key does not match, and every other element", () => {
+    expect(sanitizeArticleHtml('<p><img src="https://x.test/a.png" alt="a" data-align="left"></p>').html).toBe(
+      '<p><img src="https://x.test/a.png" alt="a" /></p>',
+    );
+    expect(sanitizeArticleHtml('<p><img src="https://x.test/a.png" data-media-key="news/x.jpg" data-align="left"></p>').html).toBe(
+      '<p><img src="https://x.test/a.png" /></p>',
+    );
+    const other = sanitizeArticleHtml(
+      '<p data-align="left">a</p><h2 data-align="left">b</h2><iframe src="https://www.youtube.com/embed/x" data-align="left"></iframe>' +
+        '<tinz-product data-id="7d1b0a52-3a8e-4f0c-9b8a-2a7c1e4d5f60" data-align="left"></tinz-product>',
+    ).html;
+    expect(other).not.toContain("data-align");
+  });
+
+  it("leaves the imported fixture posts with no data-align", () => {
+    for (const post of posts as { id: number; content: { rendered: string } }[]) {
+      expect(sanitizeArticleHtml(post.content.rendered).html, String(post.id)).not.toContain("data-align");
+    }
+  });
+});

@@ -127,21 +127,18 @@ describe('ArticleBody: the embed width of an uploaded image (D-283)', () => {
       expect(img.getAttribute('src')).toBe(URL_);
       expect(img.getAttribute('loading')).toBe('lazy');
       expect(img.closest('p')!.parentElement!.className.split(/\s+/)).toEqual(
-        expect.arrayContaining(['sm:[&>p>img[style]]:block', 'sm:[&>p>img[style]]:mx-auto', 'sm:[&>p>img[style]]:w-(--embed-w)', '[&_img]:h-auto']),
+        expect.arrayContaining(['[&>p>img[style]]:block', 'sm:[&>p>img[style]]:mx-auto', 'sm:[&>p>img[style]]:w-(--embed-w)', '[&_img]:h-auto']),
       );
     }
   });
 
-  it('leaves an image with an invalid width, beside text, or in a list, quote or figure without the width style', () => {
+  it('leaves an image beside text, or in a list, quote or figure without the width style', () => {
     for (const body of [
-      `<p>${image('100')}</p>`,
-      `<p>${image('6O')}</p>`,
       `<p>x${image('60')}</p>`,
       `<p>${image('60')} y</p>`,
       `<ul><li><p>${image('60')}</p></li></ul>`,
       `<blockquote><p>${image('60')}</p></blockquote>`,
       `<figure>${image('60')}</figure>`,
-      `<p><img src="${URL_}" alt="a" /></p>`,
     ]) {
       expect(parse(body).querySelector('img')!.hasAttribute('style'), body).toBe(false);
     }
@@ -155,5 +152,82 @@ describe('sizeEmbeds: images (D-283)', () => {
     );
     const nested = '<blockquote><p><img src="https://m.example/a.jpg" data-width="45" /></p></blockquote>';
     expect(sizeEmbeds(nested)).toBe(nested);
+  });
+});
+
+describe('ArticleBody: an uploaded image at 100% fills the column (D-285)', () => {
+  const URL_ = 'https://media.example.com/news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const classes = (doc: Document) => doc.querySelector('img')!.closest('p')!.parentElement!.className.split(/\s+/);
+
+  it('gives an uploaded image alone in a top-level paragraph with no width (or an invalid one) the full width, at every size', () => {
+    for (const body of [`<p><img src="${URL_}" alt="a" /></p>`, `<p><img src="${URL_}" alt="a" data-width="100" /></p>`, `<p><img src="${URL_}" alt="a" data-width="6O" /></p>`]) {
+      const doc = parse(`<p>x</p>${body}`);
+      expect(doc.querySelector('img')!.getAttribute('style'), body).toBe('--embed-w:100%');
+    }
+    expect(classes(parse(`<p><img src="${URL_}" alt="a" /></p>`))).toEqual(
+      expect.arrayContaining(['[&>p>img[style]]:block', '[&>p>img[style]]:w-full', 'sm:[&>p>img[style]]:w-(--embed-w)', '[&_img]:h-auto']),
+    );
+  });
+
+  it('also when its paragraph is aligned', () => {
+    const doc = parse(`<p style="text-align: center;"><img src="${URL_}" alt="a" /></p>`);
+    expect(doc.querySelector('img')!.getAttribute('style')).toBe('--embed-w:100%');
+  });
+
+  it('leaves an imported image as it was: its own size, up to the column', () => {
+    for (const body of ['<p><img src="https://old.example/wp-content/uploads/2024/05/a.jpg" alt="a" /></p>', `<p><img src="${URL_}?x=1" alt="a" /></p>`]) {
+      expect(parse(body).querySelector('img')!.hasAttribute('style'), body).toBe(false);
+    }
+  });
+});
+
+describe('sizeEmbeds: an uploaded image (D-285, D-286)', () => {
+  const URL_ = 'https://media.example.com/news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+
+  it('styles an uploaded image at 100%, and one in an aligned paragraph', () => {
+    expect(sizeEmbeds(`<p><img src="${URL_}" alt="a" /></p>`)).toBe(`<p><img style="--embed-w:100%" src="${URL_}" alt="a" /></p>`);
+    expect(sizeEmbeds(`<p style="text-align: right;"><img src="${URL_}" alt="a" data-width="45" data-align="left" /></p>`)).toBe(
+      `<p style="text-align: right;"><img style="--embed-w:45%" src="${URL_}" alt="a" data-width="45" data-align="left" /></p>`,
+    );
+  });
+});
+
+describe('ArticleBody: alignment (D-286)', () => {
+  const URL_ = 'https://media.example.com/news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const left = `<p><img src="${URL_}" alt="a" data-width="50" data-align="left" /></p>`;
+
+  it('draws a stored text alignment as stored, with no reading style that overrides it', () => {
+    const doc = parse('<h2 style="text-align: center;">a</h2><p style="text-align: right;">b</p>');
+    expect(doc.querySelector('h2')!.getAttribute('style')).toBe('text-align: center;');
+    expect(doc.querySelector('p')!.getAttribute('style')).toBe('text-align: right;');
+    // Only a figure's caption is centred by the reading styles; nothing sets a paragraph's or heading's alignment.
+    const names = doc.querySelector('p')!.parentElement!.className.split(/\s+/);
+    expect(names.filter((name) => /text-(left|center|right|start|justify)$/.test(name) && !name.startsWith('[&_figcaption]:'))).toEqual([]);
+  });
+
+  it('floats a left picture at its width from sm only, with a gap, and full width with no float below sm', () => {
+    const doc = parse(`${left}<p>wraps</p>`);
+    const img = doc.querySelector('img')!;
+    expect(img.getAttribute('style')).toBe('--embed-w:50%');
+    expect(img.getAttribute('data-align')).toBe('left');
+    const names = img.closest('p')!.parentElement!.className.split(/\s+/);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'sm:[&>p>img[data-align=left][style]]:float-left',
+        'sm:[&>p>img[data-align=left][style]]:mr-6',
+        'sm:[&>p>img[data-align=left][style]]:mb-3',
+        'sm:[&>p>img[data-align=left][style]]:mt-1.5',
+        '[&>p>img[style]]:w-full',
+      ]),
+    );
+    expect(names.filter((name) => name.includes('float') && !name.startsWith('sm:'))).toEqual([]);
+  });
+
+  it('contains its floats, so nothing after the article overlaps a left picture, with or without cards', () => {
+    expect(parse(`${left}<p>x</p>`).querySelector('img')!.closest('p')!.parentElement!.className.split(/\s+/)).toContain('flow-root');
+    const withCard = parse(`${left}<p>x</p>${placeholder}<p>y</p>`);
+    const segments = [...withCard.querySelectorAll('p')].filter((p) => p.textContent === 'x' || p.textContent === 'y' || p.querySelector('img'));
+    expect(segments).toHaveLength(3);
+    for (const p of segments) expect(p.parentElement!.className.split(/\s+/), p.textContent ?? '').toContain('flow-root');
   });
 });

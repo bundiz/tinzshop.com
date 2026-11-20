@@ -30,6 +30,9 @@ export type IconName =
   | 'link'
   | 'bulletList'
   | 'orderedList'
+  | 'alignLeft'
+  | 'alignCenter'
+  | 'alignRight'
   | 'video'
   | 'image'
   | 'more'
@@ -181,6 +184,10 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   orderedList: <path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.2V9M3.8 9h2.6M3.8 14.2c.3-.7 2.5-.9 2.4.5-.1 1-2.4 2-2.4 3.3h2.6" />,
+  // The admin mockup's i-al-l, i-al-c and i-al-r (D-286: the editor's alignment buttons).
+  alignLeft: <path d="M4 6h16M4 10h10M4 14h16M4 18h10" />,
+  alignCenter: <path d="M4 6h16M7 10h10M4 14h16M7 18h10" />,
+  alignRight: <path d="M4 6h16M10 10h10M4 14h16M10 18h10" />,
   video: (
     <>
       <rect x="3" y="6" width="13" height="12" rx="2" />

@@ -100,7 +100,19 @@ describe('RichTextEditor', () => {
     await mount(() => {});
     const labels = [...container.querySelectorAll('button')].map((button) => button.getAttribute('aria-label'));
     expect(labels).toEqual(
-      expect.arrayContaining(['Bold', 'Italic', 'Insert link', 'Bulleted list', 'Numbered list', 'Insert YouTube video', 'Image', 'Insert product card']),
+      expect.arrayContaining([
+        'Bold',
+        'Italic',
+        'Insert link',
+        'Bulleted list',
+        'Numbered list',
+        'Align left',
+        'Align centre',
+        'Align right',
+        'Insert YouTube video',
+        'Image',
+        'Insert product card',
+      ]),
     );
     expect(container.querySelector('input[type="file"]')).toBeNull();
   });
@@ -110,7 +122,7 @@ describe('RichTextEditor', () => {
     const toolbar = container.querySelector('[role="toolbar"]')!;
     // The block type is the themed Select (D-258), a combobox button with its label as text.
     const buttons = [...toolbar.querySelectorAll<HTMLButtonElement>('button:not([role="combobox"])')];
-    expect(buttons).toHaveLength(8);
+    expect(buttons).toHaveLength(11);
     for (const button of buttons) {
       expect(button.getAttribute('aria-label')).toBeTruthy();
       expect(button.title).toContain(button.getAttribute('aria-label'));
@@ -868,5 +880,208 @@ describe('RichTextEditor: images (plan 017, D-277, D-278)', () => {
       expect(container.querySelector('[role="alert"]')).not.toBeNull();
       expect(handles()).toHaveLength(0);
     });
+  });
+  describe('an uploaded image at 100% fills the column (D-285)', () => {
+    const image = (attributes = '') => `<p><img data-media-key="${KEY}" alt="a"${attributes}></p>`;
+
+    it('draws an uploaded image alone in a top-level paragraph with no width as wide as the column, keeping its shape', async () => {
+      await mountWithImages(`<p>x</p>${image()}`);
+      const img = container.querySelector<HTMLImageElement>(`.ProseMirror img[data-media-key]`)!;
+      expect(img.className.split(/\s+/)).toEqual(expect.arrayContaining(['block', 'w-full', 'h-auto']));
+      const frame = img.parentElement!;
+      expect(frame.className.split(/\s+/)).toEqual(expect.arrayContaining(['block', 'w-full']));
+      expect(frame.className.split(/\s+/)).not.toContain('inline-block');
+    });
+
+    it('leaves an uploaded image beside text and an imported image at their own size', async () => {
+      await mountWithImages(`<p>x<img data-media-key="${KEY}" alt="b"></p><p><img src="https://old.example/a.jpg" alt="old"></p>`);
+      const keyed = container.querySelector<HTMLImageElement>('.ProseMirror img[data-media-key]')!;
+      expect(keyed.className.split(/\s+/)).not.toContain('w-full');
+      const imported = container.querySelector<HTMLImageElement>('.ProseMirror img[src^="https://old"]')!;
+      expect(imported.className.split(/\s+/)).not.toContain('w-full');
+    });
+
+    it('starts the drag from the frame’s measured width', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image()}`);
+      const slider = container.querySelector<HTMLElement>('.ProseMirror [role="slider"]')!;
+      const paragraph = slider.closest('p')!;
+      paragraph.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, right: 1000, top: 0, bottom: 300, width: 1000, height: 300, toJSON: () => ({}) }) as DOMRect;
+      slider.parentElement!.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, right: 1000, top: 0, bottom: 300, width: 1000, height: 300, toJSON: () => ({}) }) as DOMRect;
+      const pointer = (type: string, clientX: number) =>
+        act(async () => {
+          slider.dispatchEvent(new MouseEvent(type, { clientX, button: 0, bubbles: true, cancelable: true }));
+        });
+      await pointer('pointerdown', 1000);
+      await pointer('pointermove', 800);
+      await pointer('pointerup', 800);
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(' data-width="60"')}`);
+    });
+  });
+
+  describe('aligning a selected uploaded image with the toolbar (D-286)', () => {
+    const image = (attributes = '') => `<p><img data-media-key="${KEY}" alt="a"${attributes}></p>`;
+    const tool = (label: string) => container.querySelector<HTMLButtonElement>(`[role="toolbar"] button[aria-label="${label}"]`)!;
+    const click = (label: string) =>
+      act(async () => {
+        tool(label).click();
+      });
+    async function selectImage(editor: Editor) {
+      let at = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'image' && at === -1) at = pos;
+      });
+      await act(async () => {
+        editor.commands.setNodeSelection(at);
+      });
+    }
+
+    it('floats the picture left at its width with ชิดซ้าย, and centres it again with กึ่งกลาง, each one undo step', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image(' data-width="60"')}<p>y</p>`);
+      await selectImage(editor);
+      expect(tool('Align centre').getAttribute('aria-pressed')).toBe('true');
+      expect(tool('Align left').getAttribute('aria-pressed')).toBe('false');
+      await click('Align left');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(' data-width="60" data-align="left"')}<p>y</p>`);
+      expect(tool('Align left').getAttribute('aria-pressed')).toBe('true');
+      expect(tool('Align centre').getAttribute('aria-pressed')).toBe('false');
+      const frame = container.querySelector<HTMLImageElement>('.ProseMirror img[data-media-key]')!.parentElement!;
+      expect(frame.style.float).toBe('left');
+      expect(frame.style.width).toBe('60%');
+      expect(frame.querySelector('[role="slider"]')).not.toBeNull();
+      await act(async () => {
+        editor.commands.undo();
+      });
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(' data-width="60"')}<p>y</p>`);
+      await act(async () => {
+        editor.commands.redo();
+      });
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(' data-width="60" data-align="left"')}<p>y</p>`);
+      await selectImage(editor);
+      await click('Align centre');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(' data-width="60"')}<p>y</p>`);
+      expect(tool('Align centre').getAttribute('aria-pressed')).toBe('true');
+      const after = container.querySelector<HTMLImageElement>('.ProseMirror img[data-media-key]')!.parentElement!;
+      expect(after.style.float).toBe('');
+      expect(after.style.marginInline).toBe('auto');
+    });
+
+    it('makes a full-width picture 50% wide when it is aligned left, in the same undo step', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image()}`);
+      await selectImage(editor);
+      await click('Align left');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(' data-width="50" data-align="left"')}`);
+      await act(async () => {
+        editor.commands.undo();
+      });
+      expect(editor.getHTML()).toBe(`<p>x</p>${image()}`);
+    });
+
+    it('centres a left picture again when it is resized to 100%', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image(' data-width="50" data-align="left"')}`);
+      const slider = container.querySelector<HTMLElement>('.ProseMirror [role="slider"]')!;
+      await act(async () => {
+        slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+      });
+      expect(editor.getHTML()).toBe(`<p>x</p>${image()}`);
+    });
+
+    it('turns ชิดขวา off while a picture is selected, and says why', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image()}`);
+      expect(tool('Align right').disabled).toBe(false);
+      await selectImage(editor);
+      expect(tool('Align right').disabled).toBe(true);
+      expect(tool('Align right').getAttribute('aria-description')).toBe(en.admin.news.editor.imageNoAlignRight);
+      expect(tool('Align right').title).toContain(en.admin.news.editor.imageNoAlignRight);
+      expect(th.admin.news.editor.imageNoAlignRight).toBe('รูปจัดชิดขวาไม่ได้');
+    });
+
+    it('aligns the paragraph, not the picture, when the picture is beside text', async () => {
+      const editor = await mountWithImages(`<p>x<img data-media-key="${KEY}" alt="a"></p>`);
+      await selectImage(editor);
+      expect(tool('Align right').disabled).toBe(false);
+      await click('Align centre');
+      expect(editor.getHTML()).toBe(`<p style="text-align: center;">x<img data-media-key="${KEY}" alt="a"></p>`);
+    });
+
+    it('lets text in the following paragraphs wrap round a left picture, and the writing area contains its floats', async () => {
+      await mountWithImages(`${image(' data-width="40" data-align="left"')}<p>y</p>`);
+      const frame = container.querySelector<HTMLImageElement>('.ProseMirror img[data-media-key]')!.parentElement!;
+      expect(frame.style.float).toBe('left');
+      expect(frame.style.marginRight).toBe('24px');
+      expect(container.querySelector('.ProseMirror')!.className.split(/\s+/)).toContain('flow-root');
+    });
+  });
+});
+
+describe('RichTextEditor: text alignment (D-286)', () => {
+  const tool = (label: string) => container.querySelector<HTMLButtonElement>(`[role="toolbar"] button[aria-label="${label}"]`)!;
+  const click = (label: string) =>
+    act(async () => {
+      tool(label).click();
+    });
+
+  it('offers ชิดซ้าย, กึ่งกลาง and ชิดขวา after the lists, in their own group, named in Thai first', async () => {
+    await mount(() => {}, '<p>Hello</p>');
+    const toolbar = container.querySelector('[role="toolbar"]')!;
+    const items = [...toolbar.children].map((child) => (child.tagName === 'BUTTON' ? child.getAttribute('aria-label') : child.tagName === 'SPAN' ? '|' : null));
+    const at = items.indexOf('Numbered list');
+    expect(items.slice(at, at + 6)).toEqual(['Numbered list', '|', 'Align left', 'Align centre', 'Align right', '|']);
+    const toolbarTh = (th.admin.news.editor as { toolbar: Record<string, string> }).toolbar;
+    expect([toolbarTh.alignLeft, toolbarTh.alignCenter, toolbarTh.alignRight]).toEqual(['ชิดซ้าย', 'กึ่งกลาง', 'ชิดขวา']);
+  });
+
+  it('aligns the paragraph, shows which is on, and ชิดซ้าย stores nothing', async () => {
+    const editor = await mount(() => {}, '<p>Hello</p><p>Two</p>');
+    await act(async () => {
+      editor.chain().focus().setTextSelection(2).run();
+    });
+    expect(tool('Align left').getAttribute('aria-pressed')).toBe('true');
+    expect(tool('Align centre').getAttribute('aria-pressed')).toBe('false');
+    await click('Align centre');
+    expect(editor.getHTML()).toBe('<p style="text-align: center;">Hello</p><p>Two</p>');
+    expect(tool('Align centre').getAttribute('aria-pressed')).toBe('true');
+    expect(tool('Align left').getAttribute('aria-pressed')).toBe('false');
+    await act(async () => {
+      editor.commands.undo();
+    });
+    expect(editor.getHTML()).toBe('<p>Hello</p><p>Two</p>');
+    await act(async () => {
+      editor.commands.redo();
+    });
+    await click('Align right');
+    expect(editor.getHTML()).toBe('<p style="text-align: right;">Hello</p><p>Two</p>');
+    expect(tool('Align right').getAttribute('aria-pressed')).toBe('true');
+    await click('Align left');
+    expect(editor.getHTML()).toBe('<p>Hello</p><p>Two</p>');
+    expect(tool('Align left').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('aligns headings two and three', async () => {
+    const editor = await mount(() => {}, '<h2>Two</h2><h3>Three</h3>');
+    await act(async () => {
+      editor.chain().focus().setTextSelection(2).run();
+    });
+    await click('Align centre');
+    await act(async () => {
+      editor.chain().focus().setTextSelection(7).run();
+    });
+    await click('Align right');
+    expect(editor.getHTML()).toBe('<h2 style="text-align: center;">Two</h2><h3 style="text-align: right;">Three</h3><p></p>');
+    expect(tool('Align right').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('reads a stored alignment and shows it pressed', async () => {
+    const editor = await mount(() => {}, '<p style="text-align: right">Hello</p>');
+    await act(async () => {
+      editor.chain().focus().setTextSelection(2).run();
+    });
+    expect(tool('Align right').getAttribute('aria-pressed')).toBe('true');
+    expect(editor.getHTML()).toBe('<p style="text-align: right;">Hello</p>');
+  });
+
+  it('offers no alignment in a read-only (locked) body', async () => {
+    await mount(() => {}, '<p>x</p><dl><dt>t</dt><dd>d</dd></dl>');
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    for (const label of ['Align left', 'Align centre', 'Align right']) expect(tool(label).disabled, label).toBe(true);
   });
 });

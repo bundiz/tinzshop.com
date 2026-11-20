@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { NodeSelection } from '@tiptap/pm/state';
 
 import { buttonClass } from '@/components/ui/button-class';
 import Icon, { type IconName } from '@/components/ui/Icon';
@@ -12,10 +13,12 @@ import Select from '@/components/ui/Select';
 import { useModalDialog } from '@/components/ui/use-modal-dialog';
 import type { LandingProductCard } from '@/server/services/catalogue/landing-catalogue-service';
 import type { ProductPickerHit } from '@/server/services/catalogue/product-search-service';
+import { IMAGE_ALIGN_LEFT, MAX_EMBED_WIDTH, type TextAlignment } from '@/server/adapters/wordpress/sanitize';
 import { wouldLoseContent } from './body-roundtrip';
 import { buildExtensions } from './editor-extensions';
 import { BodyLockedContext } from './EmbedResizeHandle';
 import ImageDialog, { type ImageUpload } from './ImageDialog';
+import { aloneInTopLevelParagraph } from './ImageView';
 import { ProductCardsContext, type ProductCards } from './ProductCardView';
 import { youtubeEmbedFromUrl } from './youtube-embed';
 import { ProductCombobox, type ProductSearch } from './ProductPicker';
@@ -43,6 +46,60 @@ function setBlock(editor: Editor, kind: BlockKind): void {
   }
   chain.run();
 }
+
+/** The text alignment at the selection (D-286): centre or right when the block says so, else left, the default. */
+function textAlignOf(editor: Editor | null): TextAlignment {
+  if (editor?.isActive({ textAlign: 'center' })) return 'center';
+  if (editor?.isActive({ textAlign: 'right' })) return 'right';
+  return 'left';
+}
+
+/**
+ * The selected uploaded picture the alignment buttons act on (D-286): a picture with a media key, selected as a node and
+ * standing alone in a top-level paragraph, as the resize handle needs. Null for anything else, and the buttons then align
+ * the paragraph or heading.
+ */
+function selectedPicture(editor: Editor | null): { pos: number; align: 'left' | 'center'; width: number | null } | null {
+  const selection = editor?.state.selection;
+  if (editor === null || editor === undefined || !(selection instanceof NodeSelection)) return null;
+  const { node, from } = selection;
+  if (node.type.name !== 'image' || typeof node.attrs.mediaKey !== 'string' || !aloneInTopLevelParagraph(editor, from)) return null;
+  return {
+    pos: from,
+    align: node.attrs.embedAlign === IMAGE_ALIGN_LEFT ? 'left' : 'center',
+    width: typeof node.attrs.embedWidth === 'number' ? node.attrs.embedWidth : null,
+  };
+}
+
+/**
+ * One alignment button pressed (D-286), as one transaction. With an uploaded picture selected, left floats it (from 100%
+ * it also becomes 50% wide, since a full-width float has no text beside it) and centre centres it; right is never asked
+ * for then. Otherwise it aligns the paragraphs and headings in the selection: left unsets the alignment, so it stores
+ * nothing.
+ */
+function align(editor: Editor, alignment: TextAlignment): void {
+  const picture = selectedPicture(editor);
+  const chain = editor.chain().focus();
+  if (picture !== null) {
+    if (alignment === 'right') return;
+    const attributes =
+      alignment === 'left'
+        ? { embedAlign: IMAGE_ALIGN_LEFT, ...(picture.width === null || picture.width >= MAX_EMBED_WIDTH ? { embedWidth: LEFT_PICTURE_WIDTH } : {}) }
+        : { embedAlign: null };
+    chain.command(({ tr }) => {
+      const node = tr.doc.nodeAt(picture.pos);
+      if (node === null) return false;
+      tr.setNodeMarkup(picture.pos, undefined, { ...node.attrs, ...attributes });
+      tr.setSelection(NodeSelection.create(tr.doc, picture.pos));
+      return true;
+    });
+  } else if (alignment === 'left') chain.unsetTextAlign();
+  else chain.setTextAlign(alignment);
+  chain.run();
+}
+
+/** The width a full-width picture takes when it is aligned left (D-286), in percent of the column. */
+const LEFT_PICTURE_WIDTH = 50;
 
 // The admin mockup's `.tb`, `.tsep` and `.ed-block` (D-257): 38px icon buttons, ink when pressed. Below `sm` each
 // button's tap target is 44px tall (3px above and below); the toolbar's rows are 6px apart there so targets never overlap.
@@ -239,8 +296,9 @@ export type RichTextEditorProps = {
 
 /**
  * The article body editor (D-244): Tiptap on ProseMirror, writing plain HTML. Its toolbar: paragraph style, bold, italic,
- * link, the two lists, a YouTube video, a picture (plan 017: uploaded through `ImageDialog`, with required alt text,
- * stored as its media key, D-277) and a product card. Paste and drop of image files stay off (D-237), so every picture
+ * link, the two lists, alignment (left, centre, right: of the paragraphs and headings, or of a selected uploaded picture,
+ * D-286), a YouTube video, a picture (plan 017: uploaded through `ImageDialog`, with optional alt text, D-284, stored as
+ * its media key, D-277) and a product card. Paste and drop of image files stay off (D-237), so every picture
  * passes the alt dialog. Client-only: nothing on a storefront page imports this file.
  */
 export default function RichTextEditor({
@@ -283,8 +341,10 @@ export default function RichTextEditor({
         'aria-label': label,
         // The text styles skip the product card's node view (`:not(tinz-product …)`), so its name, price and stock look
         // exactly as on the storefront card (D-266); links and paragraphs in the article text are unchanged.
+        // `flow-root` holds a left picture's float (D-286), so the writing area is as tall as what it shows; a card and a
+        // video clear it, drawn below the picture as the article page draws them.
         class:
-          'min-h-[320px] px-4 py-3 outline-none lg:min-h-[560px] [&_p:not(tinz-product_p)]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3:not(tinz-product_h3)]:my-3 [&_h3:not(tinz-product_h3)]:text-lg [&_h3:not(tinz-product_h3)]:font-bold [&_a:not(tinz-product_a)]:text-brand [&_a:not(tinz-product_a)]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img:not(tinz-product_img)]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
+          'flow-root min-h-[320px] px-4 py-3 outline-none lg:min-h-[560px] [&>tinz-product]:clear-both [&>.node-youtube]:clear-both [&_p:not(tinz-product_p)]:my-3 [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h3:not(tinz-product_h3)]:my-3 [&_h3:not(tinz-product_h3)]:text-lg [&_h3:not(tinz-product_h3)]:font-bold [&_a:not(tinz-product_a)]:text-brand [&_a:not(tinz-product_a)]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-page [&_blockquote]:px-4 [&_blockquote]:py-1 [&_img:not(tinz-product_img)]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full',
       },
     },
     // Even a selection-only transaction can change the document (the trailing paragraph, a split figure), so a locked body
@@ -368,6 +428,9 @@ export default function RichTextEditor({
       imageType: current?.isActive('figureImage') ? 'figureImage' : current?.isActive('image') ? 'image' : null,
       imageAlt: String((current?.isActive('figureImage') ? current.getAttributes('figureImage').alt : current?.getAttributes('image').alt) ?? ''),
       block: blockOf(current),
+      textAlign: textAlignOf(current),
+      // A selected uploaded picture's alignment (D-286): the alignment buttons then act on the picture.
+      pictureAlign: selectedPicture(current)?.align ?? null,
     }),
   });
 
@@ -381,6 +444,8 @@ export default function RichTextEditor({
   const flag = (value: boolean | undefined) => value === true;
   const off = editor === null || locked;
   const mediaReady = mediaBaseUrl !== null && uploadImage !== undefined;
+  const pictureAlign = state?.pictureAlign ?? null;
+  const alignment = pictureAlign ?? state?.textAlign ?? 'left';
 
   return (
     <div className="rounded-md border border-line bg-surface">
@@ -410,6 +475,17 @@ export default function RichTextEditor({
         <span className={SEP} aria-hidden="true" />
         <Tool icon="bulletList" label={t('toolbar.bulletList')} pressed={flag(state?.bulletList)} disabled={off} onClick={() => editor?.chain().focus().toggleBulletList().run()} />
         <Tool icon="orderedList" label={t('toolbar.orderedList')} pressed={flag(state?.orderedList)} disabled={off} onClick={() => editor?.chain().focus().toggleOrderedList().run()} />
+        <span className={SEP} aria-hidden="true" />
+        <Tool icon="alignLeft" label={t('toolbar.alignLeft')} pressed={alignment === 'left'} disabled={off} onClick={() => editor && align(editor, 'left')} />
+        <Tool icon="alignCenter" label={t('toolbar.alignCenter')} pressed={alignment === 'center'} disabled={off} onClick={() => editor && align(editor, 'center')} />
+        <Tool
+          icon="alignRight"
+          label={t('toolbar.alignRight')}
+          note={pictureAlign === null ? undefined : t('imageNoAlignRight')}
+          pressed={alignment === 'right'}
+          disabled={off || pictureAlign !== null}
+          onClick={() => editor && align(editor, 'right')}
+        />
         <span className={SEP} aria-hidden="true" />
         <Tool icon="video" label={t('toolbar.youtube')} disabled={off} onClick={open('youtube')} />
         <Tool

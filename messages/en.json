@@ -771,6 +771,9 @@
           "link": "Insert link",
           "bulletList": "Bulleted list",
           "orderedList": "Numbered list",
+          "alignLeft": "Align left",
+          "alignCenter": "Align centre",
+          "alignRight": "Align right",
           "youtube": "Insert YouTube video",
           "image": "Image",
           "product": "Insert product card"
@@ -866,6 +869,7 @@
           "file": "Choose a cover image file"
         },
         "mediaUnavailable": "Image storage is not set up yet.",
+        "imageNoAlignRight": "A picture cannot be aligned right.",
         "categoriesEmpty": "There are no categories yet",
         "categoryNotListed": "not listed",
         "addCategory": {
