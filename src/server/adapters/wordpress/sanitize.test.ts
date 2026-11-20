@@ -307,3 +307,33 @@ describe("sanitizeArticleHtml: uploaded images kept as media keys (plan 017, D-2
     expect(sanitizeArticleHtml(once).html).toBe(once);
   });
 });
+
+describe("sanitizeArticleHtml: the embed width of an uploaded image (D-283)", () => {
+  const KEY = "news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg";
+
+  it("keeps a valid data-width on an image with a valid media key, after its key and alt", () => {
+    expect(sanitizeArticleHtml(`<p><img data-width="60" alt="a" data-media-key="${KEY}"></p>`).html).toBe(
+      `<p><img data-media-key="${KEY}" alt="a" data-width="60" /></p>`,
+    );
+    expect(sanitizeArticleHtml(`<p><img data-media-key="${KEY}" data-width="40"></p>`).html).toBe(
+      `<p><img data-media-key="${KEY}" data-width="40" /></p>`,
+    );
+  });
+
+  it("drops an invalid data-width on a keyed image", () => {
+    for (const width of ["100", "39", "60%", "060", "abc", ""]) {
+      expect(sanitizeArticleHtml(`<p><img data-media-key="${KEY}" alt="a" data-width="${width}"></p>`).html, width).toBe(
+        `<p><img data-media-key="${KEY}" alt="a" /></p>`,
+      );
+    }
+  });
+
+  it("drops data-width on an imported image (absolute src, no key) and on one whose key does not match", () => {
+    expect(sanitizeArticleHtml('<p><img src="https://x.test/a.png" alt="a" data-width="60"></p>').html).toBe(
+      '<p><img src="https://x.test/a.png" alt="a" /></p>',
+    );
+    expect(sanitizeArticleHtml('<p><img src="https://x.test/a.png" data-media-key="news/x.jpg" data-width="60"></p>').html).toBe(
+      '<p><img src="https://x.test/a.png" /></p>',
+    );
+  });
+});

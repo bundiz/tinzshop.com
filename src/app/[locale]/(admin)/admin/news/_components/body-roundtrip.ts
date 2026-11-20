@@ -9,7 +9,7 @@ import { sanitizeArticleHtml } from '@/server/adapters/wordpress/sanitize';
  * and around a line break), the order of bold, italic and link marks on the same text, the editor's single `<p>` inside
  * a list item, a quote or a table cell, the implicit `<tbody>`, `<br>` against `<br />`, an absent `alt` against an empty
  * one. Everything else counts as a loss, including a table's `<thead>` or `<tfoot>`, an iframe's whole `src`, its
- * `allowfullscreen`, a card's or a video's `data-width` (D-273), and a picture's `data-media-key` (plan 017). Browser only
+ * `allowfullscreen`, a card's, a video's or an uploaded picture's `data-width` (D-273, D-283), and a picture's `data-media-key` (plan 017). Browser only
  * (it needs `DOMParser`).
  */
 
@@ -48,7 +48,7 @@ function attributesOf(element: Element): string {
     // An uploaded picture's key (plan 017) counts like its src: a lost or changed key is a loss.
     const key = element.getAttribute('data-media-key');
     const keyed = key === null ? '' : ` data-media-key="${escapeAttr(key)}"`;
-    return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${keyed} alt="${escapeAttr(element.getAttribute('alt') ?? '')}"`;
+    return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${keyed} alt="${escapeAttr(element.getAttribute('alt') ?? '')}"${widthOf(element)}`;
   }
   if (tag === 'iframe') return ` src="${escapeAttr(element.getAttribute('src') ?? '')}"${element.hasAttribute('allowfullscreen') ? ' allowfullscreen' : ''}${widthOf(element)}`;
   if (tag === 'a') return ` href="${escapeAttr(element.getAttribute('href') ?? '')}"`;

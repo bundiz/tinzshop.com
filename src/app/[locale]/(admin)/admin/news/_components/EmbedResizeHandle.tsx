@@ -40,11 +40,14 @@ const HANDLE_HIDDEN =
 const ARROWS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 };
 
 /**
- * The corner handle that resizes a product card or a top-level YouTube video in the news editor (D-273). It sits as a
- * direct child of the node view's frame (`NodeViewWrapper`), whose parent is the node's own block, as wide as the
- * writing area: a drag sets the width so the handle stays under the pointer while the frame stays centred (twice the
- * distance from the column's centre), as a whole-number percentage from 40 to 100, drawn live through `onDraft` with a
- * readout, and committed once on release through `onCommit` (one transaction, one undo step). It is a `slider`: the
+ * The corner handle that resizes a product card or a top-level YouTube video (D-273), or an uploaded image alone in a
+ * top-level paragraph (D-283), in the news editor. It sits as a direct child of the node view's frame (`NodeViewWrapper`);
+ * the column it measures against is the node's own block, as wide as the writing area (the frame's parent), or what
+ * `columnOf` returns (an image's paragraph). A drag moves the frame's right edge with the pointer while the frame stays
+ * centred: the width changes by twice the pointer's travel, from the width the frame had when the drag began (measured,
+ * so an image drawn smaller than the column at 100% does not jump), as a whole-number percentage from 40 to 100, drawn
+ * live through `onDraft` with a readout, and committed once on release through `onCommit` (one transaction, one undo
+ * step). It is a `slider`: the
  * arrow keys step 5%, Home and End go to 40% and 100%. Its events are handled on the element itself and stopped there,
  * so ProseMirror never sees the press and never starts the node's drag-to-move; a native `dragstart` during the
  * gesture is cancelled too.
@@ -55,6 +58,7 @@ export default function EmbedResizeHandle({
   selected,
   onDraft,
   onCommit,
+  columnOf,
 }: {
   label: string;
   /** The stored width, 40 to 100. */
@@ -64,18 +68,20 @@ export default function EmbedResizeHandle({
   onDraft: (width: number | null) => void;
   /** The new width, 40 to 100, once per change. */
   onCommit: (width: number) => void;
+  /** The element whose width is 100%; by default the frame's parent. */
+  columnOf?: (handle: HTMLElement) => Element | null;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<number | null>(null);
-  const latest = useRef({ width, onDraft, onCommit });
+  const latest = useRef({ width, onDraft, onCommit, columnOf });
   useEffect(() => {
-    latest.current = { width, onDraft, onCommit };
+    latest.current = { width, onDraft, onCommit, columnOf };
   });
 
   useEffect(() => {
     const handle = ref.current;
     if (handle === null) return;
-    let gesture: { pointerId: number | undefined; column: DOMRect; width: number } | null = null;
+    let gesture: { pointerId: number | undefined; column: DOMRect; startX: number; startWidth: number; width: number } | null = null;
     const cancelDrag = (event: Event) => event.preventDefault();
     const stop = (event: Event) => {
       event.preventDefault();
@@ -98,9 +104,12 @@ export default function EmbedResizeHandle({
         (event: PointerEvent) => {
           if (event.button !== 0) return;
           stop(event);
-          const column = handle.parentElement?.parentElement?.getBoundingClientRect();
+          const columnOf = latest.current.columnOf ?? ((element: HTMLElement) => element.parentElement?.parentElement ?? null);
+          const column = columnOf(handle)?.getBoundingClientRect();
           if (column === undefined) return;
-          gesture = { pointerId: event.pointerId, column, width: latest.current.width };
+          const frame = handle.parentElement?.getBoundingClientRect().width ?? 0;
+          const startWidth = frame > 0 && column.width > 0 ? (frame / column.width) * 100 : latest.current.width;
+          gesture = { pointerId: event.pointerId, column, startX: event.clientX, startWidth, width: latest.current.width };
           if (event.pointerId !== undefined) handle.setPointerCapture?.(event.pointerId);
           window.addEventListener('dragstart', cancelDrag, true);
           handle.focus({ preventScroll: true });
@@ -112,9 +121,9 @@ export default function EmbedResizeHandle({
         (event: PointerEvent) => {
           if (gesture === null) return;
           stop(event);
-          const { column } = gesture;
+          const { column, startX, startWidth } = gesture;
           if (column.width <= 0) return;
-          gesture.width = clampEmbedWidth(((2 * (event.clientX - (column.left + column.width / 2))) / column.width) * 100);
+          gesture.width = clampEmbedWidth(startWidth + ((2 * (event.clientX - startX)) / column.width) * 100);
           setDragging(gesture.width);
           latest.current.onDraft(gesture.width);
         },

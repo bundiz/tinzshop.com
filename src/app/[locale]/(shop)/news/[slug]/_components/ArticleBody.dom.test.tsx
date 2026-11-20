@@ -114,3 +114,46 @@ describe('sizeEmbeds (D-273)', () => {
     expect(sizeEmbeds(`<p>x<br>y<img src="z" /></p><iframe src="${SRC}" data-width="45"></iframe>`)).toContain('style="--embed-w:45%"');
   });
 });
+
+describe('ArticleBody: the embed width of an uploaded image (D-283)', () => {
+  const URL_ = 'https://media.example.com/news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const image = (width: string) => `<img src="${URL_}" alt="a" data-width="${width}" />`;
+
+  it('draws an image alone in a top-level paragraph centred at its stored width from sm, keeping its shape', () => {
+    for (const withCard of [false, true]) {
+      const doc = parse(`<p>a</p><p>${image('60')}</p>${withCard ? placeholder : ''}`);
+      const img = doc.querySelector('img')!;
+      expect(img.getAttribute('style')).toBe('--embed-w:60%');
+      expect(img.getAttribute('src')).toBe(URL_);
+      expect(img.getAttribute('loading')).toBe('lazy');
+      expect(img.closest('p')!.parentElement!.className.split(/\s+/)).toEqual(
+        expect.arrayContaining(['sm:[&>p>img[style]]:block', 'sm:[&>p>img[style]]:mx-auto', 'sm:[&>p>img[style]]:w-(--embed-w)', '[&_img]:h-auto']),
+      );
+    }
+  });
+
+  it('leaves an image with an invalid width, beside text, or in a list, quote or figure without the width style', () => {
+    for (const body of [
+      `<p>${image('100')}</p>`,
+      `<p>${image('6O')}</p>`,
+      `<p>x${image('60')}</p>`,
+      `<p>${image('60')} y</p>`,
+      `<ul><li><p>${image('60')}</p></li></ul>`,
+      `<blockquote><p>${image('60')}</p></blockquote>`,
+      `<figure>${image('60')}</figure>`,
+      `<p><img src="${URL_}" alt="a" /></p>`,
+    ]) {
+      expect(parse(body).querySelector('img')!.hasAttribute('style'), body).toBe(false);
+    }
+  });
+});
+
+describe('sizeEmbeds: images (D-283)', () => {
+  it('styles only an image alone in a top-level paragraph', () => {
+    expect(sizeEmbeds('<p><img src="https://m.example/a.jpg" alt="a" data-width="45" /></p>')).toBe(
+      '<p><img style="--embed-w:45%" src="https://m.example/a.jpg" alt="a" data-width="45" /></p>',
+    );
+    const nested = '<blockquote><p><img src="https://m.example/a.jpg" data-width="45" /></p></blockquote>';
+    expect(sizeEmbeds(nested)).toBe(nested);
+  });
+});

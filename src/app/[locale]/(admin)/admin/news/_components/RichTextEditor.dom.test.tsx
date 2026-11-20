@@ -495,7 +495,7 @@ describe('RichTextEditor: resizing a card or a video by its corner (D-273)', () 
       expect.arrayContaining(['opacity-0', 'group-hover/embed:opacity-100', 'group-focus-within/embed:opacity-100', '[@media(hover:none)]:opacity-100']),
     );
     expect(onCard.parentElement!.className).toContain('group/embed');
-    expect((th.admin.news.editor as { resize: { card: string; video: string } }).resize).toEqual({ card: 'ปรับขนาดการ์ดสินค้า', video: 'ปรับขนาดวิดีโอ' });
+    expect((th.admin.news.editor as { resize: { card: string; video: string } }).resize).toMatchObject({ card: 'ปรับขนาดการ์ดสินค้า', video: 'ปรับขนาดวิดีโอ' });
   });
 
   it('changes the width by 5% with the arrow keys and to 40% or 100% with Home and End; 100% writes no attribute', async () => {
@@ -744,5 +744,104 @@ describe('RichTextEditor: images (plan 017, D-277, D-278)', () => {
     await mountWithImages('<p>Hello</p>', { mediaBaseUrl: null });
     expect(imageButton().disabled).toBe(true);
     expect(imageButton().title).toContain('Image storage is not set up');
+  });
+
+  describe('resizing an uploaded image by its corner (D-283)', () => {
+    const image = (width?: number, alt = 'a') => `<p><img data-media-key="${KEY}" alt="${alt}"${width === undefined ? '' : ` data-width="${width}"`}></p>`;
+    const handles = () => [...container.querySelectorAll<HTMLElement>('.ProseMirror [role="slider"]')];
+    const handle = () => handles().find((element) => element.getAttribute('aria-label') === 'Resize image')!;
+    const press = (element: HTMLElement, key: string) =>
+      act(async () => {
+        element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      });
+    const pointer = (element: HTMLElement, type: string, clientX: number) =>
+      act(async () => {
+        element.dispatchEvent(new MouseEvent(type, { clientX, button: 0, bubbles: true, cancelable: true }));
+      });
+
+    it('offers the slider on an uploaded image alone in a top-level paragraph, drawn centred at its width, keeping its shape', async () => {
+      await mountWithImages(`<p>x</p>${image(60)}`);
+      expect(handles()).toHaveLength(1);
+      const slider = handle();
+      expect(slider.tabIndex).toBe(0);
+      expect(slider.getAttribute('aria-valuenow')).toBe('60');
+      expect(slider.getAttribute('aria-valuemin')).toBe('40');
+      expect(slider.getAttribute('aria-valuemax')).toBe('100');
+      const frame = slider.parentElement!;
+      expect(frame.style.width).toBe('60%');
+      expect(frame.style.marginInline).toBe('auto');
+      expect(frame.style.display).toBe('block');
+      const img = frame.querySelector('img')!;
+      expect(img.getAttribute('src')).toBe(`${BASE}/${KEY}`);
+      expect(img.className.split(/\s+/)).toEqual(expect.arrayContaining(['w-full', 'h-auto']));
+      expect((th.admin.news.editor as { resize: Record<string, string> }).resize.image).toBe('ปรับขนาดรูป');
+    });
+
+    it('offers no slider on an imported image, an image beside text, or one in a list, quote or figure', async () => {
+      await mountWithImages(
+        `<p><img src="https://old.example/a.jpg" alt="old"></p><p>x<img data-media-key="${KEY}" alt="b"></p>` +
+          `<ul><li><p><img data-media-key="${KEY}" alt="c"></p></li></ul><blockquote><p><img data-media-key="${KEY}" alt="d"></p></blockquote>` +
+          `<figure><img data-media-key="${KEY}" alt="e"><figcaption>f</figcaption></figure>`,
+      );
+      expect(container.querySelector('[role="alert"]')).toBeNull();
+      expect(container.querySelectorAll('.ProseMirror img:not(.ProseMirror-separator)')).toHaveLength(5);
+      expect(handles()).toHaveLength(0);
+    });
+
+    it('drops the slider once text is typed beside the image, and offers it again when the text goes', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image()}`);
+      expect(handles()).toHaveLength(1);
+      let at = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'image') at = pos;
+      });
+      await act(async () => {
+        editor.chain().insertContentAt(at, 'y').run();
+      });
+      expect(handles()).toHaveLength(0);
+      await act(async () => {
+        editor.commands.undo();
+      });
+      expect(handles()).toHaveLength(1);
+    });
+
+    it('changes the width with the keys; 100% writes no attribute', async () => {
+      const onChange = vi.fn();
+      const editor = await mountWithImages(`<p>x</p>${image()}`, { onChange });
+      await press(handle(), 'ArrowLeft');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(95)}`);
+      await press(handle(), 'Home');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(40)}`);
+      await press(handle(), 'End');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image()}`);
+      expect(onChange.mock.calls.at(-1)?.[0]).toBe(editor.getHTML());
+    });
+
+    it('resizes on a corner drag against the paragraph’s width, in one undoable step, and keeps the press from ProseMirror', async () => {
+      const editor = await mountWithImages(`<p>x</p>${image()}`);
+      const slider = handle();
+      const paragraph = slider.closest('p')!;
+      paragraph.getBoundingClientRect = () => ({ x: 100, y: 0, left: 100, right: 1100, top: 0, bottom: 300, width: 1000, height: 300, toJSON: () => ({}) }) as DOMRect;
+      const seen = vi.fn();
+      container.querySelector('.ProseMirror')!.addEventListener('mousedown', seen);
+      container.querySelector('.ProseMirror')!.addEventListener('pointerdown', seen);
+      await pointer(slider, 'pointerdown', 1100);
+      expect(seen).not.toHaveBeenCalled();
+      await pointer(slider, 'pointermove', 901);
+      expect(slider.parentElement!.style.width).toBe('60%');
+      expect(editor.getHTML()).toBe(`<p>x</p>${image()}`);
+      await pointer(slider, 'pointerup', 901);
+      expect(editor.getHTML()).toBe(`<p>x</p>${image(60)}`);
+      await act(async () => {
+        editor.commands.undo();
+      });
+      expect(editor.getHTML()).toBe(`<p>x</p>${image()}`);
+    });
+
+    it('offers no slider in a read-only (locked) body', async () => {
+      await mountWithImages(`${image(60)}<dl><dt>t</dt><dd>d</dd></dl>`);
+      expect(container.querySelector('[role="alert"]')).not.toBeNull();
+      expect(handles()).toHaveLength(0);
+    });
   });
 });

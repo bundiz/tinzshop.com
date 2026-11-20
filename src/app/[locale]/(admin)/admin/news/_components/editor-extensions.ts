@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 
 import { isNewsMediaKey, parseEmbedWidth } from '@/server/adapters/wordpress/sanitize';
 import ProductCardView from './ProductCardView';
+import ImageView from './ImageView';
 import { isStoredYoutubeEmbed } from './youtube-embed';
 import YoutubeView from './YoutubeView';
 
@@ -63,17 +64,38 @@ function imageView(mediaBaseUrl: string | null): NodeViewRenderer {
   };
 }
 
-/** The inline picture, with the media key (plan 017). */
+/**
+ * The inline picture, with the media key (plan 017). An uploaded one also has `embedWidth` (D-283), the card's and video's
+ * `data-width` (D-273) under another name because the image extension already has a `width`; it is written last, after
+ * `alt`, as the sanitiser writes it. An uploaded picture is drawn by `ImageView` (with the resize handle when it stands
+ * alone in a top-level paragraph); an imported one keeps the plain view.
+ */
 function inlineImage(mediaBaseUrl: string | null) {
   return Image.extend({
+    addOptions() {
+      return { ...this.parent!(), mediaBaseUrl };
+    },
     addAttributes() {
-      return { mediaKey: mediaKeyAttribute, ...this.parent?.(), src: srcAttribute };
+      return {
+        mediaKey: mediaKeyAttribute,
+        ...this.parent?.(),
+        src: srcAttribute,
+        embedWidth: {
+          ...embedWidth,
+          renderHTML: (attributes: Record<string, unknown>) =>
+            typeof attributes.embedWidth === 'number' ? { 'data-width': String(attributes.embedWidth) } : {},
+        },
+      };
     },
     // A keyed picture has no `src`, so the base rule (`img[src]`) would not read it.
     parseHTML() {
       return [...(this.parent?.() ?? []), { tag: 'img[data-media-key]' }];
     },
-    addNodeView: () => imageView(mediaBaseUrl),
+    addNodeView: () => {
+      const keyed = ReactNodeViewRenderer(ImageView);
+      const plain = imageView(mediaBaseUrl);
+      return (props) => (typeof props.node.attrs.mediaKey === 'string' ? keyed(props) : plain(props));
+    },
   }).configure({ inline: true, allowBase64: false });
 }
 

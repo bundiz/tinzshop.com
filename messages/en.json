@@ -828,7 +828,8 @@
         },
         "resize": {
           "card": "Resize product card",
-          "video": "Resize video"
+          "video": "Resize video",
+          "image": "Resize image"
         },
         "panel": {
           "publish": "Publishing",

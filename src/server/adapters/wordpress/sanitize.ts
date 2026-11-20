@@ -23,13 +23,13 @@ export const NEWS_IMAGE_ALT_MAX_LENGTH = 300;
 
 /** The narrowest a product card or a video may be drawn, as a whole-number percentage of the article column (D-273). */
 export const MIN_EMBED_WIDTH = 40;
-/** Full width: the default, never stored (a card or video at 100% has no `data-width`). */
+/** Full width: the default, never stored (a card, video or uploaded image at 100% has no `data-width`). */
 export const MAX_EMBED_WIDTH = 100;
 
 /**
- * The embed width stored in `data-width` on a product card or a YouTube iframe (D-273): a whole number from 40 to 99
- * written as plain digits, or null for anything else (absent, 100, under 40, a percentage, a decimal, a leading zero,
- * spaces). The sanitiser, the editor and the article page all read it through this one rule.
+ * The embed width stored in `data-width` on a product card, a YouTube iframe (D-273) or an uploaded image (D-283): a
+ * whole number from 40 to 99 written as plain digits, or null for anything else (absent, 100, under 40, a percentage, a
+ * decimal, a leading zero, spaces). The sanitiser, the editor and the article page all read it through this one rule.
  */
 export function parseEmbedWidth(value: string | null | undefined): number | null {
   if (value === null || value === undefined || !/^[1-9][0-9]$/.test(value)) return null;
@@ -154,7 +154,7 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
     allowedTags: ALLOWED_TAGS,
     allowedAttributes: {
       a: ["href", "rel"],
-      img: ["src", "alt", "data-media-key"],
+      img: ["src", "alt", "data-media-key", "data-width"],
       iframe: ["src", "allowfullscreen", "data-width"],
       [PRODUCT_CARD_TAG]: ["data-id", "data-width"],
     },
@@ -183,11 +183,16 @@ export function sanitizeArticleHtml(html: string): { html: string; removedEmbeds
         if (key !== undefined && isNewsMediaKey(key)) {
           const keyed: sanitizeHtml.Attributes = { "data-media-key": key };
           if (attribs.alt !== undefined) keyed.alt = attribs.alt;
+          // Only an uploaded image can be resized (D-283): its width as on a card or a video (D-273).
+          const width = parseEmbedWidth(attribs["data-width"]);
+          if (width !== null) keyed["data-width"] = String(width);
           return { tagName, attribs: keyed };
         }
-        // Copied so the attributes keep their order (an imported image's output is unchanged).
+        // Copied so the attributes keep their order (an imported image's output is unchanged); an imported image is never
+        // resized, so it keeps no `data-width`.
         const kept: sanitizeHtml.Attributes = { ...attribs };
         delete kept["data-media-key"];
+        delete kept["data-width"];
         if (absoluteHttpUrl(attribs.src) === null) delete kept.src;
         else kept.src = attribs.src?.trim() ?? "";
         return { tagName, attribs: kept };

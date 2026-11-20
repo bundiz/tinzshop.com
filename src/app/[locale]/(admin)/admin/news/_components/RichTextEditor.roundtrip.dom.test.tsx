@@ -399,3 +399,30 @@ describe('uploaded images in a stored body (plan 017, D-277)', () => {
     expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
   });
 });
+
+describe('the embed width of an uploaded image (D-283)', () => {
+  const KEY = 'news/2026/11/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+  const image = (width?: string) => `<p><img data-media-key="${KEY}" alt="รูป"${width === undefined ? '' : ` data-width="${width}"`} /></p>`;
+
+  it('a stored body with a sized uploaded image is not locked and comes back byte for byte, edited or not', async () => {
+    const stored = sanitizeArticleHtml(`<p>a</p>${image('60')}<p>b</p>`).html;
+    expect(stored).toBe(`<p>a</p>${image('60')}<p>b</p>`);
+    const onChange = vi.fn();
+    const editor = await mount(stored, onChange);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(editor.isEditable).toBe(true);
+    expect(wouldLoseContent(stored, editor.getHTML())).toBe(false);
+    expect(sanitizeArticleHtml(editor.getHTML()).html).toBe(stored);
+    await act(async () => {
+      editor.chain().focus('end').insertContent('x').run();
+    });
+    expect(sanitizeArticleHtml(onChange.mock.calls.at(-1)![0] as string).html).toBe(`<p>a</p>${image('60')}<p>bx</p>`);
+  });
+
+  it('counts a changed, added or lost image width as a difference', () => {
+    expect(normaliseBody(image('60'))).not.toBe(normaliseBody(image()));
+    expect(normaliseBody(image('60'))).not.toBe(normaliseBody(image('45')));
+    expect(wouldLoseContent(image('60'), image())).toBe(true);
+    expect(wouldLoseContent(image('60'), image('60'))).toBe(false);
+  });
+});

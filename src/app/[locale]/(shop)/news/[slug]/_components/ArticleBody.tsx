@@ -18,25 +18,30 @@ const TAG = /<(\/?)([a-z][a-z0-9-]*)(\s[^>]*)?>/gi;
 const VOID_TAGS = new Set(['br', 'img']);
 
 /**
- * Gives every top-level `<iframe>` with a valid stored `data-width` (D-273) the style `--embed-w:NN%`, at render time,
- * for the reading styles' rule (`PROSE`) that draws it centred at that width from `sm`. The width is re-read through
- * `parseEmbedWidth`, so only a whole number from 40 to 99 ever reaches the style; a video inside a figure, or any other
- * element, is left as stored. Safe on the same grounds as `lazyEmbeds`: in sanitised HTML a tag never contains `>` or
- * `<`, and the sanitiser keeps no `style`, so none is doubled.
+ * Gives every top-level `<iframe>` with a valid stored `data-width` (D-273), and every `<img>` with one that stands alone
+ * in a top-level `<p>` (an uploaded image as the editor inserts it, D-283; the sanitiser keeps the width on no other
+ * image), the style `--embed-w:NN%`, at render time, for the reading styles' rules (`PROSE`) that draw it centred at
+ * that width from `sm`. The width is re-read through `parseEmbedWidth`, so only a whole number from 40 to 99 ever
+ * reaches the style; a video or image anywhere else is left as stored. Safe on the same grounds as `lazyEmbeds`: in
+ * sanitised HTML a tag never contains `>` or `<`, and the sanitiser keeps no `style`, so none is doubled.
  */
 export function sizeEmbeds(html: string): string {
   let depth = 0;
-  return html.replace(TAG, (tag, slash: string, rawName: string, attributes: string | undefined) => {
+  return html.replace(TAG, (tag: string, slash: string, rawName: string, attributes: string | undefined, offset: number) => {
     const name = rawName.toLowerCase();
     if (slash === '/') {
       depth = Math.max(0, depth - 1);
       return tag;
     }
-    const top = depth === 0;
+    // The depth this tag opens at: an image right after `<p>` at depth 1 is in a top-level paragraph.
+    const at = depth;
     if (!VOID_TAGS.has(name) && !tag.endsWith('/>')) depth += 1;
-    if (!top || name !== 'iframe') return tag;
+    const sizable =
+      (name === 'iframe' && at === 0) ||
+      (name === 'img' && at === 1 && html.slice(offset - 3, offset) === '<p>' && html.startsWith('</p>', offset + tag.length));
+    if (!sizable) return tag;
     const width = parseEmbedWidth(/\sdata-width="([^"]*)"/.exec(attributes ?? '')?.[1]);
-    return width === null ? tag : `<iframe style="--embed-w:${width}%"${tag.slice('<iframe'.length)}`;
+    return width === null ? tag : `<${rawName} style="--embed-w:${width}%"${tag.slice(rawName.length + 1)}`;
   });
 }
 
@@ -71,6 +76,8 @@ const PROSE = [
   '[&_iframe]:my-4 [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:rounded-md',
   // A top-level video given a width by `sizeEmbeds` (the only iframes with a `style`) is centred at it from `sm` (D-273).
   'sm:[&>iframe[style]]:mx-auto sm:[&>iframe[style]]:w-(--embed-w)',
+  // An uploaded image alone in a top-level paragraph, given a width the same way, keeps its shape (`h-auto`) (D-283).
+  'sm:[&>p>img[style]]:block sm:[&>p>img[style]]:mx-auto sm:[&>p>img[style]]:w-(--embed-w)',
   '[&_table]:my-4 [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse',
   '[&_td]:border [&_td]:border-line [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-line [&_th]:bg-page [&_th]:px-2 [&_th]:py-1',
   // A cell keeps its words whole; a wide table scrolls sideways inside itself instead.
@@ -85,7 +92,8 @@ const PROSE = [
  * A product card placeholder (`<tinz-product data-id>`, D-245) is replaced by an `ArticleProductCard` of the live
  * product in `productCards`; one with no entry there (unknown, inactive or hidden) renders nothing. The HTML
  * around the cards is processed segment by segment, exactly as a body without cards is. A card or a top-level video
- * with a stored width (D-273) is centred at that width from `sm` and full width below it.
+ * with a stored width (D-273), or an uploaded image alone in a top-level paragraph with one (D-283), is centred at that
+ * width from `sm` and drawn as at full width below it.
  */
 export default function ArticleBody({ html, productCards = [] }: { html: string; productCards?: LandingProductCard[] }) {
   const t = useTranslations('shop.news');
