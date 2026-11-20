@@ -58,7 +58,7 @@ export type ImageDialogProps = {
   /** `insert` uploads a new picture; `alt` edits the alt text of the selected one. */
   mode: { kind: 'insert' } | { kind: 'alt'; alt: string };
   upload: ImageUpload;
-  /** Called after a successful upload with the key the body stores (D-277) and the alt text. */
+  /** Called after a successful upload with the key the body stores (D-277) and the alt text, empty when none was given. */
   onInsert: (key: string, alt: string) => void;
   onSaveAlt: (alt: string) => void;
   onClose: () => void;
@@ -66,9 +66,9 @@ export type ImageDialogProps = {
 };
 
 /**
- * The editor's image dialog (plan 017, the shared modal behaviour): a file chooser, a local preview and the required alt
- * text, then แทรกรูป, which uploads and inserts. With a picture selected it edits the alt text only. It sits inside the
- * article's form, so its fields have no `name` and its buttons are `type="button"`: nothing of it is posted.
+ * The editor's image dialog (plan 017, the shared modal behaviour): a file chooser, a local preview and the optional alt
+ * text (D-284), then แทรกรูป, which uploads and inserts. With a picture selected it edits the alt text only. It sits inside
+ * the article's form, so its fields have no `name` and its buttons are `type="button"`: nothing of it is posted.
  */
 export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose, returnFocusRef }: ImageDialogProps) {
   const t = useTranslations('admin.news.editor.imageDialog');
@@ -81,10 +81,9 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
   const [alt, setAlt] = useState(mode.kind === 'alt' ? mode.alt : '');
   const [errorKey, setErrorKey] = useState<NewsImageErrorKey | null>(null);
   const [uploading, setUploading] = useState(false);
-  // What a press of แทรกรูป found missing: shown beside its field, which gets the focus (the button never looks dead).
-  const [missing, setMissing] = useState<'file' | 'alt' | null>(null);
+  // A press of แทรกรูป with no file chosen: said beside the file field, which gets the focus (the button never looks dead).
+  const [fileMissing, setFileMissing] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const altInput = useRef<HTMLInputElement>(null);
   const preview = usePreviewUrl(file);
   useModalDialog({ open: true, onClose: () => (uploading ? undefined : onClose()), containerRef: container, returnFocusRef });
 
@@ -105,16 +104,11 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
   async function submit(): Promise<void> {
     if (uploading) return;
     if (inserting && file === null) {
-      setMissing('file');
+      setFileMissing(true);
       fileInput.current?.focus();
       return;
     }
-    if (altText === '') {
-      setMissing('alt');
-      altInput.current?.focus();
-      return;
-    }
-    setMissing(null);
+    setFileMissing(false);
     if (!inserting) {
       onSaveAlt(altText);
       return;
@@ -153,14 +147,14 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
               accept={NEWS_IMAGE_ACCEPT}
               disabled={uploading}
               onChange={(event) => {
-                if (missing === 'file') setMissing(null);
+                setFileMissing(false);
                 choose(event.target.files?.[0] ?? null);
               }}
-              aria-invalid={missing === 'file' ? true : undefined}
-              aria-describedby={missing === 'file' ? `${fileId}-missing ${fileId}-hint` : `${fileId}-hint`}
+              aria-invalid={fileMissing ? true : undefined}
+              aria-describedby={fileMissing ? `${fileId}-missing ${fileId}-hint` : `${fileId}-hint`}
               className="block w-full min-w-0 text-ink file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-sm file:border-[1.5px] file:border-line-2 file:bg-surface file:px-3 file:font-semibold file:text-ink"
             />
-            {missing === 'file' ? (
+            {fileMissing ? (
               <p id={`${fileId}-missing`} role="alert" className="mt-1 text-sm font-medium text-sale">
                 {t('fileMissing')}
               </p>
@@ -176,25 +170,16 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
         ) : null}
         <div className="mt-3.5">
           <label htmlFor={altId} className="mb-1 block font-semibold text-ink">
-            {t('alt')}
-            <span aria-hidden="true" className="text-sale">
-              {' '}
-              *
-            </span>
+            {t('alt')} <span className="font-normal text-muted">({t('optional')})</span>
           </label>
           <input
-            ref={altInput}
             id={altId}
             type="text"
             lang="th"
-            required
             value={alt}
             maxLength={NEWS_IMAGE_ALT_MAX_LENGTH}
             disabled={uploading}
-            onChange={(event) => {
-              setAlt(event.target.value);
-              if (missing === 'alt' && event.target.value.trim() !== '') setMissing(null);
-            }}
+            onChange={(event) => setAlt(event.target.value)}
             onKeyDown={(event) => {
               // The dialog sits inside the article's form: Enter must never submit it.
               if (event.key === 'Enter') {
@@ -202,15 +187,9 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
                 void submit();
               }
             }}
-            aria-invalid={missing === 'alt' ? true : undefined}
-            aria-describedby={missing === 'alt' ? `${altId}-missing ${altId}-hint` : `${altId}-hint`}
-            className={`min-h-11 w-full rounded-sm border-[1.5px] bg-surface px-3 text-ink ${missing === 'alt' ? 'border-sale' : 'border-line-2'}`}
+            aria-describedby={`${altId}-hint`}
+            className="min-h-11 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink"
           />
-          {missing === 'alt' ? (
-            <p id={`${altId}-missing`} role="alert" className="mt-1 text-sm font-medium text-sale">
-              {t('altMissing')}
-            </p>
-          ) : null}
           <p id={`${altId}-hint`} className="mt-1 text-sm text-muted">
             {t('altHint')}
           </p>

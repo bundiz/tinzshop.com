@@ -390,13 +390,9 @@ describe('saveArticle: the cover image (plan 017, D-277, D-278)', () => {
 describe('saveArticle: uploaded images in the body (plan 017)', () => {
   const realSanitize = (html: string) => sanitizeArticleHtml(html).html;
 
-  it.each([
-    ['no alt', `<img data-media-key="${KEY}">`],
-    ['an empty alt', `<img data-media-key="${KEY}" alt="">`],
-    ['a blank alt', `<img data-media-key="${KEY}" alt="   ">`],
-    ['an alt over 300 characters', `<img data-media-key="${KEY}" alt="${'ก'.repeat(301)}">`],
-  ])('refuses a keyed image with %s', async (_, image) => {
+  it('refuses a keyed image with an alt over 300 characters', async () => {
     const { deps, news } = setup();
+    const image = `<img data-media-key="${KEY}" alt="${'ก'.repeat(301)}">`;
     const result = await save({ ...deps, sanitize: realSanitize }, { input: input({ th: { title: 'ข่าว', excerpt: '', bodyHtml: `<p>x</p>${image}` } }) });
     expect(result).toMatchObject({ ok: false, error: { code: 'news.invalid', details: { field: 'body' } } });
     expect(news.saveArticle).not.toHaveBeenCalled();
@@ -406,9 +402,21 @@ describe('saveArticle: uploaded images in the body (plan 017)', () => {
     const { deps } = setup();
     const result = await save(
       { ...deps, sanitize: realSanitize },
-      { input: input({ en: { title: 'News', excerpt: '', bodyHtml: `<img data-media-key="${KEY}">` } }) },
+      { input: input({ en: { title: 'News', excerpt: '', bodyHtml: `<img data-media-key="${KEY}" alt="${'a'.repeat(301)}">` } }) },
     );
     expect(result).toMatchObject({ ok: false, error: { details: { field: 'body' } } });
+  });
+
+  // The alt text is optional (D-284): the editor writes an empty alt when staff leave it blank.
+  it.each([
+    ['an empty alt', `<img data-media-key="${KEY}" alt="">`, `<img data-media-key="${KEY}" alt="" />`],
+    ['a blank alt', `<img data-media-key="${KEY}" alt="   ">`, `<img data-media-key="${KEY}" alt="   " />`],
+    ['no alt', `<img data-media-key="${KEY}">`, `<img data-media-key="${KEY}" />`],
+  ])('accepts a keyed image with %s', async (_, image, stored) => {
+    const { deps, news } = setup();
+    const result = await save({ ...deps, sanitize: realSanitize }, { input: input({ th: { title: 'ข่าว', excerpt: '', bodyHtml: `<p>x</p>${image}` } }) });
+    expect(result.ok).toBe(true);
+    expect(written(news).th.bodyHtml).toBe(`<p>x</p>${stored}`);
   });
 
   it('accepts a keyed image with alt up to 300 characters, entities counted as one', async () => {

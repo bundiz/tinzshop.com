@@ -810,8 +810,8 @@
           "fileMissing": "Choose an image file first.",
           "previewAlt": "Preview of the chosen image",
           "alt": "Image description",
-          "altHint": "This is read aloud to people who cannot see the picture: say briefly what it shows (up to 300 characters).",
-          "altMissing": "Add a description of the image first.",
+          "optional": "optional",
+          "altHint": "This is read aloud to people who cannot see the picture. Say briefly what it shows, or leave it blank if the picture is only decoration (up to 300 characters).",
           "insert": "Insert image",
           "save": "Save",
           "cancel": "Cancel",
@@ -942,7 +942,7 @@
         "imageType": "Only JPEG, PNG, WebP and GIF files are accepted.",
         "imageInvalid": "This file is not a usable image. Please choose another file.",
         "imageUploadFailed": "The image could not be uploaded. Please try again.",
-        "imageAlt": "Every uploaded image needs a description (alt text) of up to 300 characters."
+        "imageAlt": "An image description can be up to 300 characters."
       }
     },
     "toast": {

@@ -647,28 +647,53 @@ describe('RichTextEditor: images (plan 017, D-277, D-278)', () => {
     expect(dialog()!.querySelector('input[type="file"]')!.hasAttribute('name')).toBe(false);
   });
 
-  it('keeps "Insert image" pressable and says what is missing: the file, then the alt text, each beside its field and focused', async () => {
+  it('keeps "Insert image" pressable and, with no file, says so beside the file field and focuses it', async () => {
     const upload = vi.fn<Upload>(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }));
     await mountWithImages('<p>Hello</p>', { upload });
     await act(async () => imageButton().click());
     expect(insertButton().disabled).toBe(false);
     const file = () => dialog()!.querySelector<HTMLInputElement>('input[type="file"]')!;
-    const alt = () => dialog()!.querySelector<HTMLInputElement>('input[type="text"]')!;
     await act(async () => insertButton().click());
     expect(file().getAttribute('aria-invalid')).toBe('true');
     expect(document.activeElement).toBe(file());
     expect(dialog()!.textContent).toContain(en.admin.news.editor.imageDialog.fileMissing);
+    expect(upload).not.toHaveBeenCalled();
+    await chooseFile(jpeg());
+    expect(file().getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('treats the alt text as optional (D-284): no star or required, and a blank one inserts the picture with an empty alt', async () => {
+    const upload = vi.fn<Upload>(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }));
+    const editor = await mountWithImages('<p>Hello</p>', { upload });
+    await act(async () => imageButton().click());
+    const alt = dialog()!.querySelector<HTMLInputElement>('input[type="text"]')!;
+    expect(alt.required).toBe(false);
+    expect(dialog()!.querySelector(`label[for="${alt.id}"]`)!.textContent).toBe(
+      `${en.admin.news.editor.imageDialog.alt} (${en.admin.news.editor.imageDialog.optional})`,
+    );
     await chooseFile(jpeg());
     await typeAlt('   ');
     await act(async () => insertButton().click());
-    expect(alt().getAttribute('aria-invalid')).toBe('true');
-    expect(document.activeElement).toBe(alt());
-    expect(dialog()!.textContent).toContain(en.admin.news.editor.imageDialog.altMissing);
-    expect(upload).not.toHaveBeenCalled();
-    await typeAlt('A game box');
-    expect(alt().getAttribute('aria-invalid')).toBeNull();
-    await act(async () => insertButton().click());
     expect(upload).toHaveBeenCalledTimes(1);
+    expect(dialog()).toBeNull();
+    expect(editor.getHTML()).toBe(`<p>Hello</p><p><img data-media-key="${KEY}" alt=""></p>`);
+  });
+
+  it('clears the alt text of a selected picture when it is emptied', async () => {
+    const editor = await mountWithImages(`<p>a</p><p><img data-media-key="${KEY}" alt="old"></p>`);
+    let at = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'image') at = pos;
+    });
+    await act(async () => {
+      editor.commands.setNodeSelection(at);
+    });
+    await act(async () => imageButton().click());
+    await typeAlt('');
+    const save = [...dialog()!.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === 'Save')!;
+    await act(async () => save.click());
+    expect(dialog()).toBeNull();
+    expect(editor.getHTML()).toBe(`<p>a</p><p><img data-media-key="${KEY}" alt=""></p>`);
   });
 
   it.each([

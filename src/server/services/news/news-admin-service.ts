@@ -218,14 +218,14 @@ function hasContent(html: string): boolean {
 }
 
 /**
- * Whether every uploaded image in a sanitised body has alt text of 1 to 300 characters (plan 017 call 8): a picture
- * staff upload is described for people who cannot see it. An imported `<img src>` without alt is left as it is.
+ * Whether every uploaded image in a sanitised body has alt text of at most 300 characters (plan 017 call 8). The alt
+ * text is optional (D-284, owner 2026-11-20): an empty one is accepted. An imported `<img src>` is left as it is.
  */
-function keyedImagesHaveAlt(html: string): boolean {
+function keyedImageAltsFit(html: string): boolean {
   for (const tag of html.match(/<img\b[^>]*>/gi) ?? []) {
     if (!/\sdata-media-key="/.test(tag)) continue;
     const alt = decodeHtmlEntities(/\salt="([^"]*)"/.exec(tag)?.[1] ?? '').trim();
-    if (alt === '' || [...alt].length > NEWS_IMAGE_ALT_MAX_LENGTH) return false;
+    if ([...alt].length > NEWS_IMAGE_ALT_MAX_LENGTH) return false;
   }
   return true;
 }
@@ -297,7 +297,7 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   if (thTitle === '') return invalid('th.title', 'The Thai title is required');
   const thBody = deps.sanitize(input.th.bodyHtml);
   if (!hasContent(thBody)) return invalid('th.bodyHtml', 'The Thai body is required');
-  if (!keyedImagesHaveAlt(thBody)) return invalid('body', 'An uploaded image needs alt text of up to 300 characters');
+  if (!keyedImageAltsFit(thBody)) return invalid('body', 'An uploaded image has alt text over 300 characters');
   const thExcerpt = input.th.excerpt.trim();
   if (action === 'publish' && thExcerpt === '') return invalid('th.excerpt', 'The Thai excerpt is required to publish');
   if (input.featuredImage.kind === 'media' && !isNewsMediaKey(input.featuredImage.key)) {
@@ -310,7 +310,7 @@ export async function saveArticle(deps: NewsAdminDeps, request: SaveArticleInput
   if (input.en !== null && (enTitle !== '' || enBodyRaw !== '' || input.en.excerpt.trim() !== '')) {
     const enBody = deps.sanitize(input.en.bodyHtml);
     if (enTitle === '' || !hasContent(enBody)) return invalid('en', 'English needs a title and a body, or neither');
-    if (!keyedImagesHaveAlt(enBody)) return invalid('body', 'An uploaded image needs alt text of up to 300 characters');
+    if (!keyedImageAltsFit(enBody)) return invalid('body', 'An uploaded image has alt text over 300 characters');
     en = { title: enTitle, excerpt: input.en.excerpt.trim(), bodyHtml: enBody };
   }
 
