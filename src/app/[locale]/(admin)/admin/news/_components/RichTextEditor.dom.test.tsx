@@ -647,16 +647,28 @@ describe('RichTextEditor: images (plan 017, D-277, D-278)', () => {
     expect(dialog()!.querySelector('input[type="file"]')!.hasAttribute('name')).toBe(false);
   });
 
-  it('keeps "Insert image" disabled until a file and an alt text are given', async () => {
-    await mountWithImages('<p>Hello</p>');
+  it('keeps "Insert image" pressable and says what is missing: the file, then the alt text, each beside its field and focused', async () => {
+    const upload = vi.fn<Upload>(async () => ({ status: 'uploaded', key: KEY, url: `${BASE}/${KEY}` }));
+    await mountWithImages('<p>Hello</p>', { upload });
     await act(async () => imageButton().click());
-    expect(insertButton().disabled).toBe(true);
-    await chooseFile(jpeg());
-    expect(insertButton().disabled).toBe(true);
-    await typeAlt('   ');
-    expect(insertButton().disabled).toBe(true);
-    await typeAlt('A game box');
     expect(insertButton().disabled).toBe(false);
+    const file = () => dialog()!.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const alt = () => dialog()!.querySelector<HTMLInputElement>('input[type="text"]')!;
+    await act(async () => insertButton().click());
+    expect(file().getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(file());
+    expect(dialog()!.textContent).toContain(en.admin.news.editor.imageDialog.fileMissing);
+    await chooseFile(jpeg());
+    await typeAlt('   ');
+    await act(async () => insertButton().click());
+    expect(alt().getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(alt());
+    expect(dialog()!.textContent).toContain(en.admin.news.editor.imageDialog.altMissing);
+    expect(upload).not.toHaveBeenCalled();
+    await typeAlt('A game box');
+    expect(alt().getAttribute('aria-invalid')).toBeNull();
+    await act(async () => insertButton().click());
+    expect(upload).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -669,7 +681,7 @@ describe('RichTextEditor: images (plan 017, D-277, D-278)', () => {
     await chooseFile(file);
     await typeAlt('alt');
     expect(dialog()!.querySelector('[role="alert"]')?.textContent).toBe(message);
-    expect(insertButton().disabled).toBe(true);
+    await act(async () => insertButton().click());
     expect(upload).not.toHaveBeenCalled();
   });
 

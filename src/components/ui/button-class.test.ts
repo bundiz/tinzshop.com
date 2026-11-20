@@ -53,7 +53,7 @@ describe('buttonClass', () => {
   it('md and lg keep the storefront class sets they had before the back-office sizes (D-257)', () => {
     const sorted = (value: string) => value.split(' ').sort().join(' ');
     const before =
-      'inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border-[1.5px] border-transparent px-[22px] font-body text-base leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985]';
+      'inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border-[1.5px] border-transparent px-[22px] font-body text-base leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100';
     const brand = 'bg-brand text-white hover:bg-brand-dark';
     expect(sorted(buttonClass({ variant: 'brand' }))).toBe(sorted(`${before} ${brand}`));
     expect(sorted(buttonClass({ variant: 'brand', size: 'lg' }))).toBe(sorted(`${before} ${brand} min-h-[54px] text-[17px]`));
@@ -78,5 +78,12 @@ describe('buttonClass', () => {
       const classes = buttonClass({ variant: 'buy', size: 'admin' }).split(' ');
       expect(classes).toEqual(expect.arrayContaining(['inline-flex', 'border-[1.5px]', 'font-semibold', 'bg-accent', 'text-ink']));
     });
+  });
+
+  it('makes a disabled button look disabled, on every variant and size', () => {
+    for (const variant of ['buy', 'brand', 'line', 'ghost', 'lineApp', 'danger'] as const) {
+      const classes = buttonClass({ variant, size: 'admin' }).split(' ');
+      expect(classes).toEqual(expect.arrayContaining(['disabled:cursor-not-allowed', 'disabled:opacity-50']));
+    }
   });
 });

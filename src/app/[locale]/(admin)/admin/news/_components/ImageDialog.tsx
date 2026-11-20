@@ -81,12 +81,15 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
   const [alt, setAlt] = useState(mode.kind === 'alt' ? mode.alt : '');
   const [errorKey, setErrorKey] = useState<NewsImageErrorKey | null>(null);
   const [uploading, setUploading] = useState(false);
+  // What a press of แทรกรูป found missing: shown beside its field, which gets the focus (the button never looks dead).
+  const [missing, setMissing] = useState<'file' | 'alt' | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const altInput = useRef<HTMLInputElement>(null);
   const preview = usePreviewUrl(file);
   useModalDialog({ open: true, onClose: () => (uploading ? undefined : onClose()), containerRef: container, returnFocusRef });
 
   const inserting = mode.kind === 'insert';
   const altText = alt.trim();
-  const ready = altText !== '' && (!inserting || file !== null) && !uploading;
 
   function choose(chosen: File | null): void {
     setErrorKey(null);
@@ -100,7 +103,18 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
   }
 
   async function submit(): Promise<void> {
-    if (!ready) return;
+    if (uploading) return;
+    if (inserting && file === null) {
+      setMissing('file');
+      fileInput.current?.focus();
+      return;
+    }
+    if (altText === '') {
+      setMissing('alt');
+      altInput.current?.focus();
+      return;
+    }
+    setMissing(null);
     if (!inserting) {
       onSaveAlt(altText);
       return;
@@ -133,14 +147,24 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
               {t('file')}
             </label>
             <input
+              ref={fileInput}
               id={fileId}
               type="file"
               accept={NEWS_IMAGE_ACCEPT}
               disabled={uploading}
-              onChange={(event) => choose(event.target.files?.[0] ?? null)}
-              aria-describedby={`${fileId}-hint`}
+              onChange={(event) => {
+                if (missing === 'file') setMissing(null);
+                choose(event.target.files?.[0] ?? null);
+              }}
+              aria-invalid={missing === 'file' ? true : undefined}
+              aria-describedby={missing === 'file' ? `${fileId}-missing ${fileId}-hint` : `${fileId}-hint`}
               className="block w-full min-w-0 text-ink file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-sm file:border-[1.5px] file:border-line-2 file:bg-surface file:px-3 file:font-semibold file:text-ink"
             />
+            {missing === 'file' ? (
+              <p id={`${fileId}-missing`} role="alert" className="mt-1 text-sm font-medium text-sale">
+                {t('fileMissing')}
+              </p>
+            ) : null}
             <p id={`${fileId}-hint`} className="mt-1 text-sm text-muted">
               {t('fileHint')}
             </p>
@@ -159,6 +183,7 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
             </span>
           </label>
           <input
+            ref={altInput}
             id={altId}
             type="text"
             lang="th"
@@ -166,7 +191,10 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
             value={alt}
             maxLength={NEWS_IMAGE_ALT_MAX_LENGTH}
             disabled={uploading}
-            onChange={(event) => setAlt(event.target.value)}
+            onChange={(event) => {
+              setAlt(event.target.value);
+              if (missing === 'alt' && event.target.value.trim() !== '') setMissing(null);
+            }}
             onKeyDown={(event) => {
               // The dialog sits inside the article's form: Enter must never submit it.
               if (event.key === 'Enter') {
@@ -174,9 +202,15 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
                 void submit();
               }
             }}
-            aria-describedby={`${altId}-hint`}
-            className="min-h-11 w-full rounded-sm border-[1.5px] border-line-2 bg-surface px-3 text-ink"
+            aria-invalid={missing === 'alt' ? true : undefined}
+            aria-describedby={missing === 'alt' ? `${altId}-missing ${altId}-hint` : `${altId}-hint`}
+            className={`min-h-11 w-full rounded-sm border-[1.5px] bg-surface px-3 text-ink ${missing === 'alt' ? 'border-sale' : 'border-line-2'}`}
           />
+          {missing === 'alt' ? (
+            <p id={`${altId}-missing`} role="alert" className="mt-1 text-sm font-medium text-sale">
+              {t('altMissing')}
+            </p>
+          ) : null}
           <p id={`${altId}-hint`} className="mt-1 text-sm text-muted">
             {t('altHint')}
           </p>
@@ -193,7 +227,7 @@ export default function ImageDialog({ mode, upload, onInsert, onSaveAlt, onClose
           <button type="button" onClick={onClose} disabled={uploading} className={buttonClass({ variant: 'line', size: 'admin' })}>
             {t('cancel')}
           </button>
-          <button type="button" onClick={() => void submit()} disabled={!ready} className={buttonClass({ variant: 'brand', size: 'admin' })}>
+          <button type="button" onClick={() => void submit()} disabled={uploading} className={buttonClass({ variant: 'brand', size: 'admin' })}>
             {inserting ? t('insert') : t('save')}
           </button>
         </div>

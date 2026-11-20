@@ -3,7 +3,7 @@ export type ButtonSize = 'md' | 'lg' | 'admin' | 'adminSm';
 
 // Height, side padding, text size and corners live in SIZE, so a back-office size replaces them rather than competing.
 const BASE =
-  'inline-flex items-center justify-center gap-2 border-[1.5px] font-body leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985]';
+  'inline-flex items-center justify-center gap-2 border-[1.5px] font-body leading-none font-semibold whitespace-nowrap transition-[transform,background-color,border-color,box-shadow] duration-[180ms] ease-soft hover:-translate-y-px active:translate-y-px active:scale-[.985] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100';
 
 const STOREFRONT = 'min-h-12 rounded-sm px-[22px] text-base';
 

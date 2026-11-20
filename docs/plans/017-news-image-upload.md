@@ -219,6 +219,9 @@ Built on `feat/win/news-image-upload` on 2026-11-18, one commit per task. Not pu
 
 **Before the manual checks, the owner must:** set up the DEV bucket and the `tinzshop-dev` IAM user as in `10-deployment.md#file-storage`; put the five variables in `.env` (`MEDIA_S3_BUCKET`, `MEDIA_S3_REGION=ap-southeast-7`, `MEDIA_PUBLIC_BASE_URL=https://<dev-media-bucket>.s3.ap-southeast-7.amazonaws.com`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`); restart `npm run dev`. The dev database already has the `featured_image_key` migration (applied with `prisma migrate dev`, a nullable column and two CHECKs, no data change).
 
+
+Owner's first try (2026-11-20): pressing แทรกรูป with the description empty did nothing, because the button was disabled but did not look it. The button now stays pressable (only an upload in progress disables it) and says which field is missing, beside it, with the focus moved there; and `buttonClass` gives every disabled button a faded, not-allowed look.
+
 ## Follow-ups (not in this plan)
 
 - Copy the imported articles' old-site images into the bucket before the old site shuts down (D-127, ADR-0004): its own plan.
